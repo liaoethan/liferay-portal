@@ -11,3 +11,21 @@
  * FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
  * details.
  */
+
+const menuButtonGroup = document.querySelector('.menu-button-group');
+
+const tabletMobileNavSection = document.querySelector('.tablet-mobile-nav-section');
+
+const menuBtn = document.querySelector('.menu-btn');
+
+const closeBtn = document.querySelector('.close-btn');
+
+menuBtn.addEventListener('click', () => {
+	menuButtonGroup.classList.toggle('menu-open');
+	tabletMobileNavSection.classList.toggle('menu-open');
+});
+
+closeBtn.addEventListener('click', () => {
+	menuButtonGroup.classList.toggle('menu-open');
+	tabletMobileNavSection.classList.toggle('menu-open');
+});
