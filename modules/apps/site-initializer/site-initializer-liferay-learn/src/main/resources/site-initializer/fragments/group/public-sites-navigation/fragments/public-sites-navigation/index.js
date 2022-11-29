@@ -116,6 +116,18 @@ function navSearch(query) {
 
 			searchSuggestions.appendChild(newSuggestion);
 		}
+
+		// search highlighting
+
+		const searchSuggestionItemContents = document.querySelectorAll('.search-suggestion-item-content');
+
+		const highlightedTerm = "<b>" + query + "</b>";
+
+		if (searchSuggestionItemContents) {
+			for (const searchSuggestionItemContent of searchSuggestionItemContents) {
+				searchSuggestionItemContent.innerHTML = searchSuggestionItemContent.innerHTML.replaceAll(query, highlightedTerm);
+			}
+		}
 	});
 }
 

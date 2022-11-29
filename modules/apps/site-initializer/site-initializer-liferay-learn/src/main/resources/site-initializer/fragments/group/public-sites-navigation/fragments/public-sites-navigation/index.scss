@@ -1121,6 +1121,10 @@ html body:not(.has-edit-mode-menu) .content #main-content.layout-content {
 				font-weight: 400;
 				opacity: 0.9;
 				padding-bottom: 12px;
+
+				b {
+					font-weight: var(--font-weight-bold);
+				}
 			}
 
 			.search-suggestion-item-link {
