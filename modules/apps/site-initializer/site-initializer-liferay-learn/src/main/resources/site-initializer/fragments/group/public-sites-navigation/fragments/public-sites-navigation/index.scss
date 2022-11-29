@@ -1152,6 +1152,10 @@ html body:not(.has-edit-mode-menu) .content #main-content.layout-content {
 				font-weight: var(--font-weight-semi-bold);
 			}
 
+			.search-suggestions-see-all-results-arrow {
+				color: var(--white);
+			}
+
 			&:hover {
 				background-color: var(--color-brand-primary-lighten-3);
 				border-color: var(--white);
