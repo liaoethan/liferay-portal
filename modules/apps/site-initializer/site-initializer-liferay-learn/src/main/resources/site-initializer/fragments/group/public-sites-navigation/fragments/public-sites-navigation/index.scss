@@ -1161,7 +1161,7 @@ html body:not(.has-edit-mode-menu) .content #main-content.layout-content {
 
 	.close-search {
 		background-color: var(--color-brand-primary-lighten-2);
-		border: 1px solid var(--white);
+		border: 1px solid transparent;
 		border-radius: var(--border-radius-sm);
 		bottom: auto;
 		display: flex;
@@ -1174,7 +1174,7 @@ html body:not(.has-edit-mode-menu) .content #main-content.layout-content {
 		width: 2rem;
 
 		&:hover {
-			border: 1px solid var(--white);
+			border-color: var(--white);
 			opacity: 1;
 		}
 	}
