@@ -32,6 +32,8 @@ const searchWrapper = fragmentElement.querySelector('.search-wrapper');
 
 const closeSearch = fragmentElement.querySelector('.close-search');
 
+const searchSuggestionsSeeAllResults = fragmentElement.querySelector('.search-suggestions-see-all-results');
+
 const sites = fragmentElement.querySelector('.sites');
 
 menuBtn.addEventListener('click', () => {
@@ -70,6 +72,12 @@ searchSuggestionsInput.onkeydown = function() {
 
 	const query = searchSuggestionsInput.value;
 	navSearch(query);
+
+	if (!searchSuggestionsInput.value) {
+		searchSuggestionsSeeAllResults.classList.add('d-none')
+	} else {
+		searchSuggestionsSeeAllResults.classList.remove('d-none')
+	}
 };
 
 function navSearch(query) {
