@@ -73,8 +73,10 @@ searchSuggestionsInput.onkeydown = function() {
 };
 
 function navSearch(query) {
+	const postDataUrl = window.location.origin + `/o/portal-search-rest/v1.0/suggestions?currentURL=${window.location.origin}&destinationFriendlyURL=/search&groupId=${Liferay.ThemeDisplay.getScopeGroupId()}&plid=${Liferay.ThemeDisplay.getPlid()}&scope=this-site&search=${query}`;
+
 	postData(
-		`http://localhost:8888/o/portal-search-rest/v1.0/suggestions?currentURL=http://localhost:8888/web/learn&destinationFriendlyURL=/search&groupId=43091&plid=28&scope=this-site&search=${query}`,
+		postDataUrl,
 		[{
 			attributes: {
 				fields: ['content_en_US'],
