@@ -80,10 +80,10 @@ function navSearch(query) {
 				fields: ['content_en_US'],
 				includeAssetSearchSummary: true,
 				includeAssetURL: true,
-				sxpBlueprintId: 43650
+				sxpBlueprintId: configuration.searchBlueprintId
 			},
 			contributorName: 'sxpBlueprint',
-			displayGroupName: 'test',
+			displayGroupName: 'Public Nav Search Recommendations',
 			size: '3'
 		}]
 	).then((data) => {

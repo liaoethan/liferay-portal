@@ -49,6 +49,14 @@
 					"label": "site-navigation-menu-id",
 					"name": "siteNavigationMenuId",
 					"type": "text"
+				},
+				{
+					"dataType": "int",
+					"defaultValue": "0",
+					"description": "search-blueprint-id",
+					"label": "Search Blueprint ID",
+					"name": "searchBlueprintId",
+					"type": "text"
 				}
 			]
 		}
