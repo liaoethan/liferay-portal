@@ -32,9 +32,13 @@ const searchWrapper = fragmentElement.querySelector('.search-wrapper');
 
 const closeSearch = fragmentElement.querySelector('.close-search');
 
-const searchSuggestionsSeeAllResults = fragmentElement.querySelector('.search-suggestions-see-all-results');
-
 const sites = fragmentElement.querySelector('.sites');
+
+const suggestedText = fragmentElement.querySelector('.suggested-text');
+
+const noResultsMessage = fragmentElement.querySelector('.no-results-message');
+
+const searchSuggestionsSeeAllResults = fragmentElement.querySelector('.search-suggestions-see-all-results');
 
 menuBtn.addEventListener('click', () => {
 	menuButtonGroup.classList.toggle('menu-open');
@@ -67,17 +71,11 @@ sites.addEventListener('click', () => {
 const searchSuggestionsInput = fragmentElement.querySelector(".search-suggestions-input");
 const searchSuggestionsResult = fragmentElement.querySelector(".search-suggestions");
 
-searchSuggestionsInput.onkeydown = function() {
+searchSuggestionsInput.oninput = function() {
 	searchSuggestionsResult.innerHTML = "";
 
 	const query = searchSuggestionsInput.value;
 	navSearch(query);
-
-	if (!searchSuggestionsInput.value) {
-		searchSuggestionsSeeAllResults.classList.add('d-none')
-	} else {
-		searchSuggestionsSeeAllResults.classList.remove('d-none')
-	}
 };
 
 function navSearch(query) {
@@ -98,45 +96,58 @@ function navSearch(query) {
 		}]
 	).then((data) => {
 
-		const searchSuggestions = document.querySelector(".search-suggestions");
-		const myjson = JSON.parse(JSON.stringify(data.items[0]));
+		const searchSuggestions = fragmentElement.querySelector(".search-suggestions");
 
-		for (const suggestion of myjson.suggestions) {
-			const newSuggestion = document.createElement("div");
-			newSuggestion.classList.add("search-suggestion-item");
+		if (data.items[0] !== void(0)) {
+			const myjson = JSON.parse(JSON.stringify(data.items[0]));
+			if (myjson) {
+				for (const suggestion of myjson.suggestions) {
+					const newSuggestion = document.createElement("div");
+					newSuggestion.classList.add("search-suggestion-item");
+					newSuggestion.href = suggestion.attributes.assetURL;
 
-			const suggestionTitle = document.createElement("div");
-			const suggestionTitleText = document.createTextNode(suggestion.text);
-			suggestionTitle.classList.add("search-suggestion-item-title");
-			suggestionTitle.appendChild(suggestionTitleText);
+					const suggestionTitle = document.createElement("div");
+					const suggestionTitleText = document.createTextNode(suggestion.text);
+					suggestionTitle.classList.add("search-suggestion-item-title");
+					suggestionTitle.appendChild(suggestionTitleText);
 
-			const suggestionContent = document.createElement("div");
-			let suggestionContentTextValue = suggestion.attributes.fields.content_en_US;
+					const suggestionContent = document.createElement("div");
+					let suggestionContentTextValue = suggestion.attributes.fields.content_en_US;
 
-			if (!suggestionContentTextValue) {
-				suggestionContentTextValue = "No content preview";
+					if (!suggestionContentTextValue) {
+						suggestionContentTextValue = "No content preview";
+					}
+
+					const suggestionContentText = document.createTextNode(suggestionContentTextValue);
+					suggestionContent.classList.add("search-suggestion-item-content");
+					suggestionContent.appendChild(suggestionContentText);
+
+					newSuggestion.appendChild(suggestionTitle);
+					newSuggestion.appendChild(suggestionContent);
+
+					searchSuggestions.appendChild(newSuggestion);
+
+					searchSuggestionsSeeAllResults.classList.remove('d-none');
+					suggestedText.classList.remove('d-none');
+					noResultsMessage.classList.add('d-none');
+				}
+
+				// search highlighting
+
+				const searchSuggestionItemContents = document.querySelectorAll('.search-suggestion-item-content');
+
+				const highlightedTerm = "<b>" + query + "</b>";
+
+				if (searchSuggestionItemContents) {
+					for (const searchSuggestionItemContent of searchSuggestionItemContents) {
+						searchSuggestionItemContent.innerHTML = searchSuggestionItemContent.innerHTML.replaceAll(query, highlightedTerm);
+					}
+				}
 			}
-
-			const suggestionContentText = document.createTextNode(suggestionContentTextValue);
-			suggestionContent.classList.add("search-suggestion-item-content");
-			suggestionContent.appendChild(suggestionContentText);
-
-			newSuggestion.appendChild(suggestionTitle);
-			newSuggestion.appendChild(suggestionContent);
-
-			searchSuggestions.appendChild(newSuggestion);
-		}
-
-		// search highlighting
-
-		const searchSuggestionItemContents = document.querySelectorAll('.search-suggestion-item-content');
-
-		const highlightedTerm = "<b>" + query + "</b>";
-
-		if (searchSuggestionItemContents) {
-			for (const searchSuggestionItemContent of searchSuggestionItemContents) {
-				searchSuggestionItemContent.innerHTML = searchSuggestionItemContent.innerHTML.replaceAll(query, highlightedTerm);
-			}
+		} else {
+			searchSuggestionsSeeAllResults.classList.add('d-none');
+			suggestedText.classList.add('d-none');
+			noResultsMessage.classList.remove('d-none');
 		}
 	});
 }

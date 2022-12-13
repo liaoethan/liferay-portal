@@ -39,7 +39,7 @@
 
 			<div class="align-items-center d-flex search-account-container">
 				<div class="search-icon-container">
-					<span class="pr-2 search-icon"> [@clay["icon"] symbol="search"/] </span>
+					<span class="search-icon"> [@clay["icon"] symbol="search"/] </span>
 				</div>
 					[#if configuration.showAccountMenu]
 						<div class="account position-relative">
@@ -262,15 +262,12 @@
 			<input class="search-input search-suggestions-input w-100" id="searchInput" placeholder="${languageUtil.get(locale, 'search')}" type="text" />
 
 			<a class="search-submit" href="/search" id="searchSubmitBtn" type="submit">
-				<svg fill="none" viewBox="0 0 40 40">
-					<path d="M18.25 25.6875C22.116 25.6875 25.25 22.5535 25.25 18.6875C25.25 14.8215 22.116 11.6875 18.25 11.6875C14.384 11.6875 11.25 14.8215 11.25 18.6875C11.25 22.5535 14.384 25.6875 18.25 25.6875Z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.33333"></path>
-					<path d="M26.5625 26.5625L29.625 29.625" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.33333"></path>
-				</svg>
+				<span>[@clay["icon"] symbol="search"/]
 			</a>
 		</form>
 
 		<div class="suggestions">
-			<div class="mt-5 suggestions-popular">
+			<div class="mb-4 mt-5 suggestions-popular">
 				<div class="mb-3 suggestions-popular-text">
 					${languageUtil.get(locale, "popular", "Popular")}
 				</div>
@@ -302,15 +299,19 @@
 				</div>
 			</div>
 
-			<div class="my-4 suggested-text">
+			<div class="d-none mb-4 suggested-text">
 				${languageUtil.get(locale, "suggested", "Suggested")}
 			</div>
 
 			<div class="search-suggestions">
 			</div>
 
-			<div class="mt-3 search-suggestions-see-all-results">
-				<a class="d-inline-block search-suggestions-see-all-results-text text-decoration-none" data-lfr-editable-id="searchSeeAllResultsButton" data-lfr-editable-type="link">
+			<div class="d-none no-results-message">
+				${languageUtil.get(locale, "there-are-no-results", "There are no results.")}
+			</div>
+
+			<div class="d-none mt-3 search-suggestions-see-all-results">
+				<a class="d-inline-block search-suggestions-see-all-results-text text-decoration-none" data-lfr-editable-id="searchSeeAllResultsButton" data-lfr-editable-type="link" href="/search">
 					${languageUtil.get(locale, "see-all-results", "See All Results")}
 				</a>
 
