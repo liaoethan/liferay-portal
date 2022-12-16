@@ -49,6 +49,8 @@ const noResultsMessage = fragmentElement.querySelector('.no-results-message');
 
 const searchSuggestionsSeeAllResults = fragmentElement.querySelector('.search-suggestions-see-all-results');
 
+const suggestionsPopular = fragmentElement.querySelector('.suggestions-popular');
+
 menuBtn.addEventListener('click', () => {
 	menuButtonGroup.classList.toggle('menu-open');
 	tabletMobileNavSection.classList.toggle('menu-open');
@@ -147,6 +149,7 @@ function navSearch(query) {
 					searchSuggestionsSeeAllResults.classList.remove('d-none');
 					suggestedText.classList.remove('d-none');
 					noResultsMessage.classList.add('d-none');
+					suggestionsPopular.classList.add('d-none');
 				}
 
 				// search highlighting
@@ -165,6 +168,7 @@ function navSearch(query) {
 			searchSuggestionsSeeAllResults.classList.add('d-none');
 			suggestedText.classList.add('d-none');
 			noResultsMessage.classList.remove('d-none');
+			suggestionsPopular.classList.remove('d-none');
 		}
 	});
 }
