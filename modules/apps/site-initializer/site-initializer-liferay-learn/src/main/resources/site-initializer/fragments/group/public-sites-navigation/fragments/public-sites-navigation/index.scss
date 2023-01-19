@@ -1,10 +1,26 @@
-.has-control-menu nav.public-sites-navigation {
-	margin-top: 3.5rem;
+$primary-nav-height: 4rem;
+$utility-nav-height: 3rem;
+$edit-menu-height: 3.5rem;
+
+.public-sites-navigation-padding {
+	padding-top: calc($primary-nav-height + $utility-nav-height);
 }
 
-.has-control-menu.has-edit-mode-menu nav.public-sites-navigation {
-	margin-top: 0;
-	position: static;
+.has-control-menu {
+	nav.public-sites-navigation {
+		margin-top: $edit-menu-height;
+	}
+
+	&.has-edit-mode-menu {
+		.public-sites-navigation-padding {
+			padding-top: 0;
+		}
+
+		nav.public-sites-navigation {
+			margin-top: 0;
+			position: static;
+		}
+	}
 }
 
 nav.public-sites-navigation {
@@ -14,8 +30,8 @@ nav.public-sites-navigation {
 	width: 100%;
 	z-index: 3;
 
-	.primary-nav {
-		min-height: 4rem;
+	.utility-nav {
+		max-height: $utility-nav-height;
 	}
 
 	.primary-nav,
@@ -25,6 +41,7 @@ nav.public-sites-navigation {
 
 	.primary-nav {
 		background: var(--white);
+		max-height: $primary-nav-height;
 		padding-bottom: 0.375rem;
 		padding-top: 0.375rem;
 	}
