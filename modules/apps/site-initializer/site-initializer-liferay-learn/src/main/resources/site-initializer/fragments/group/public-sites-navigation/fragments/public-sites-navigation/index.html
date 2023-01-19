@@ -34,10 +34,10 @@
 					</div>
 				</div>
 				[#if configuration.showLanguageMenu]
-					<div class="language-selector-container">
-						<div class="language language-selector p-2 utility-nav-link" tabindex="7">
-							<div class="language-selector-globe-icon">[@clay["icon"] symbol="globe-lines"/]</div>
-							<div class="language-selector-text">
+					<div class="language-selector-container ml-2">
+						<div class="language language-selector pl-2 py-2 utility-nav-link" tabindex="7">
+							<div class="language-selector-globe-icon opacity-50">[@clay["icon"] symbol="globe-lines"/]</div>
+							<div class="language-selector-text opacity-80">
 								[#assign current_locale = locale ]
 
 								[#if current_locale?has_content]
@@ -47,7 +47,7 @@
 								${current_locale?upper_case}
 							</div>
 
-							<div class="language-caret-icon">[@clay["icon"] symbol="caret-bottom-l"/]</div>
+							<div class="language-caret-icon opacity-30">[@clay["icon"] symbol="caret-bottom-l"/]</div>
 						</div>
 
 						<div class="language-dropdown-list-container">

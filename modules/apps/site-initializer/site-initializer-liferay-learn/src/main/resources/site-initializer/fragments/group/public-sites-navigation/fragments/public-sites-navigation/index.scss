@@ -148,45 +148,14 @@ nav.public-sites-navigation {
 	}
 
 	.language-selector-container {
-		.language {
+		.language-selector {
 			color: var(--black);
 			cursor: pointer;
 			display: inline-block;
-			margin-left: auto;
-			margin-right: auto;
-			outline: none;
-			padding: 1.5rem;
-			padding-right: 2.5rem;
-			position: relative;
-			text-align: left;
-			text-decoration: none;
-			-webkit-user-select: none;
-			-moz-user-select: none;
-			-ms-user-select: none;
-			user-select: none;
-			vertical-align: top;
-			white-space: nowrap;
-		}
+			padding-right: 0;
 
-		.language-selector {
 			svg {
-				height: 1rem;
-				margin-bottom: 0.0625rem;
 				margin-right: 0.25rem;
-				transition-duration: 0.2s;
-				transition-property: fill;
-				transition-timing-function: ease;
-				width: 1rem;
-			}
-
-			&:hover {
-				background-color: var(--color-action-primary-hover-lighten);
-				color: var(--color-action-primary-active);
-				opacity: 1;
-
-				svg {
-					fill: var(--color-action-primary-default);
-				}
 			}
 
 			&.list-open {
@@ -195,19 +164,41 @@ nav.public-sites-navigation {
 						rotateX(180deg) rotateY(0deg) rotateZ(0deg)
 						skew(0deg, 0deg);
 				}
+
+				.language-selector-globe-icon, .language-caret-icon {
+					opacity: 0.7;
+				}
+			}
+
+			&:hover, &:focus {
+				background-color: var(--color-action-primary-hover-lighten);
+
+				.language-selector-globe-icon, .language-caret-icon {
+					opacity: 1;
+				}
+			}
+
+
+			&:hover, &:focus, &.list-open {
+				color: var(--color-action-primary-hover);
+
+				.language-selector-text {
+					opacity: 1;
+				}
+
+				svg {
+					fill: var(--color-action-primary-hover);
+				}
 			}
 		}
 
 		.utility-nav-link {
-			align-items: center;
 			border-radius: var(--border-radius-xs);
 			color: var(--black);
 			display: flex;
 			font-weight: var(--font-weight-semi-bold);
-			opacity: 0.7;
-			padding: 0.625rem;
 			transition-duration: 0.2s, 0.2s, 0.2s;
-			transition-property: color, background-color, opacity;
+			transition-property: background-color, opacity;
 			transition-timing-function: ease, ease, ease;
 		}
 
@@ -389,11 +380,11 @@ nav.public-sites-navigation {
 			&:focus,
 			&.show {
 				.sites-icon svg {
-					fill: var(--color-action-primary-default);
+					fill: var(--color-action-primary-hover);
 				}
 
 				.liferay-sites {
-					color: var(--color-action-primary-active);
+					color: var(--color-action-primary-hover);
 
 					.liferay-sites-text {
 						opacity: 1;
