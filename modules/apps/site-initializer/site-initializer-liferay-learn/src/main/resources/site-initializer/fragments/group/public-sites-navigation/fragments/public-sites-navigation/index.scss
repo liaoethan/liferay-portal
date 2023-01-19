@@ -284,6 +284,7 @@ nav.public-sites-navigation {
 	}
 
 	&.light-nav {
+		background-color: var(--white);
 		color: var(--color-neutral-10);
 
 		.svg-liferay-text {
@@ -357,43 +358,46 @@ nav.public-sites-navigation {
 
 	.sites-container {
 		.sites {
-			border-radius: 6px;
+			border-radius: var(--border-radius-sm);
 			color: var(--color-neutral-10);
 			cursor: pointer;
+			max-height: 2.5rem;
 
-			.liferay-sites {
+			&.show {
+				.sites-icon {
+					opacity: 0.7;
+				}
+
 				.caret-bottom-icon {
-					margin-top: 1px;
+					opacity: 0.7;
+					transform: translate3d(0, 0, 0) scale3d(1, 1, 1)
+					rotateX(180deg) rotateY(0deg) rotateZ(0deg)
+					skew(0deg, 0deg);
 				}
 			}
-		}
 
-		&.show {
-			.sites {
+			&:hover,
+			&:focus {
 				background-color: var(--color-action-primary-hover-lighten);
 
-				.sites-icon {
+				.caret-bottom-icon, .sites-icon {
 					opacity: 1;
-
-					svg {
-						fill: var(--color-action-primary-default);
-					}
 				}
 			}
 
-			.liferay-sites {
-				color: var(--color-action-primary-active);
-
-				.caret-bottom-icon {
+			&:hover,
+			&:focus,
+			&.show {
+				.sites-icon svg {
 					fill: var(--color-action-primary-default);
-					opacity: 1;
-					transform: translate3d(0, 0, 0) scale3d(1, 1, 1)
-						rotateX(180deg) rotateY(0deg) rotateZ(0deg)
-						skew(0deg, 0deg);
 				}
 
-				.liferay-sites-text {
-					opacity: 1;
+				.liferay-sites {
+					color: var(--color-action-primary-active);
+
+					.liferay-sites-text {
+						opacity: 1;
+					}
 				}
 			}
 		}
@@ -413,12 +417,6 @@ nav.public-sites-navigation {
 			&.show {
 				display: block;
 			}
-		}
-
-		&:hover,
-		&:active,
-		&:focus {
-			background-color: var(--color-action-primary-hover-lighten);
 		}
 	}
 
@@ -523,6 +521,7 @@ nav.public-sites-navigation {
 
 	.lexicon-icon-caret-bottom-l {
 		height: 1.5rem;
+		padding-bottom: 0.1rem;
 		width: 1.5rem;
 	}
 
