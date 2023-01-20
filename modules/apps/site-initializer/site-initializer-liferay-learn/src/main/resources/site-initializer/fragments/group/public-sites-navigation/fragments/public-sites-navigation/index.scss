@@ -276,45 +276,64 @@ nav.public-sites-navigation {
 	.account {
 		cursor: pointer;
 
-		.user-icon {
-			height: 1rem;
-			margin-top: -5px;
-			width: 1rem;
-		}
+		.account-info {
+			border-radius: var(--border-radius-sm);
 
-		&:hover,
-		&.menu-open {
-			background: var(--color-action-primary-hover-lighten);
-			border-radius: var(--border-radius-xs);
-			color: var(--color-action-primary-active);
-		}
-
-		&.menu-open {
-			.dropdown-content {
-				display: block;
+			.user-icon {
+				height: 1rem;
+				margin-top: -5px;
+				width: 1rem;
 			}
 
-			.user-icon,
-			.account-text,
-			.account-dropdown-icon {
-				opacity: 1;
-				transform: translate3d(0, 0, 0) scale3d(1, 1, 1) rotateX(180deg)
-					rotateY(0deg) rotateZ(0deg) skew(0deg, 0deg);
+			&:hover, &:focus, &.menu-open {
+				.user-icon, .account-dropdown-icon, .account-text {
+					color: var(--color-action-primary-hover);
+				}
+
+				.account-text {
+					opacity: 1;
+				}
 			}
-		}
 
-		&.mobile {
-			.dropdown-content {
-				left: 0;
+			&.menu-open {
+				.account-dropdown {
+					display: block;
+				}
+
+				.user-icon {
+					opacity: 0.7;
+				}
+
+				.account-dropdown-icon {
+					opacity: 0.7;
+					transform: translate3d(0, 0, 0) scale3d(1, 1, 1)
+					rotateX(180deg) rotateY(0deg) rotateZ(0deg)
+					skew(0deg, 0deg);
+				}
 			}
-		}
 
-		.user-avatar {
-			height: 2rem;
-			width: 2rem;
+			&:hover, &:focus {
+				background-color: var(--color-action-primary-hover-lighten);
 
-			img {
-				border-radius: 3.5rem;
+				.user-icon, .account-dropdown-icon {
+					opacity: 1;
+				}
+			}
+
+
+			&.mobile {
+				.dropdown-content {
+					left: 0;
+				}
+			}
+
+			.user-avatar {
+				height: 2rem;
+				width: 2rem;
+
+				img {
+					border-radius: 3.5rem;
+				}
 			}
 		}
 	}
@@ -383,7 +402,7 @@ nav.public-sites-navigation {
 		}
 	}
 
-	.dropdown-content {
+	.account-dropdown {
 		background: var(--white);
 		border: 1px solid var(--color-neutral-3);
 		border-radius: var(--border-radius);
