@@ -28,14 +28,21 @@ spatialNavigationProvider.addFocusableClasses(primaryNav);
 
 window.addEventListener('load', () => {
 	new navigation.default.DropdownProvider(
-		'.account',
-		'.account',
+		'.account-info',
+		'.account-info',
 		'menu-open'
 	);
 
 	new navigation.default.DropdownProvider(
 		'.sites',
 		'.liferay-sites-dropdown',
+		'show',
+		true
+	);
+
+	new navigation.default.DropdownProvider(
+		'.sites',
+		'.sites',
 		'show',
 		true
 	);
