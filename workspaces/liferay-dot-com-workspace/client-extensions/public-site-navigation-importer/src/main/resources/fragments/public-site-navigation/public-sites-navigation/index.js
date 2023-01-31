@@ -152,7 +152,7 @@ function performSearch(query) {
 				if (items) {
 					searchSuggestions.innerHTML = '';
 
-					const searchTermRegExp = new RegExp(query, 'ig');
+					const searchTermRegExp = new RegExp("(" + query + ")", 'gi');
 
 					for (const suggestion of items.suggestions) {
 						const suggestionLink = document.importNode(
@@ -186,7 +186,7 @@ function performSearch(query) {
 							suggestionContent.innerHTML =
 								suggestionContentTextValue.replace(
 									searchTermRegExp,
-									`<b>${query}</b>`
+									`<b>$1</b>`
 								);
 						}
 
