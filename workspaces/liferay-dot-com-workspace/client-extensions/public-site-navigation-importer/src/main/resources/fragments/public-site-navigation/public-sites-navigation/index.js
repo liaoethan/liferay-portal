@@ -113,7 +113,7 @@ const searchSuggestionItemTemplate = suggestions.querySelector('template');
 const searchSuggestionItem =
 	searchSuggestionItemTemplate.content.querySelector('a');
 
-searchSuggestionsInput.oninput = function () {
+const updateSearch = () => {
 	searchSuggestions.innerHTML = '';
 
 	if (searchSuggestionsInput.value) {
@@ -122,12 +122,29 @@ searchSuggestionsInput.oninput = function () {
 	}
 	else {
 		suggestions.classList.remove(
+			'loading-search',
 			'performing-search',
 			'search-error',
 			'search-results-found'
 		);
 	}
+}
+
+let debounceTimer;
+
+const debounce = (callback, time) => {
+	window.clearTimeout(debounceTimer);
+	debounceTimer = window.setTimeout(callback, time);
 };
+
+searchSuggestionsInput.addEventListener(
+	"input",
+	() => {
+	suggestions.classList.add('loading-search');
+	debounce(updateSearch, 500)
+	},
+	false
+);
 
 function performSearch(query) {
 	const postDataURL = `/o/portal-search-rest/v1.0/suggestions?currentURL=${
@@ -203,11 +220,13 @@ function performSearch(query) {
 						searchSuggestions.appendChild(suggestionLink);
 
 						suggestions.classList.add('search-results-found');
+						suggestions.classList.remove('loading-search');
 					}
 				}
 			}
 			else {
 				suggestions.classList.remove('search-results-found');
+				suggestions.classList.remove('loading-search');
 			}
 			suggestions.classList.remove('search-error');
 		})
