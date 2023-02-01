@@ -47,12 +47,7 @@ window.addEventListener('load', () => {
 		true
 	);
 
-	new navigation.default.DropdownProvider(
-		'.sites',
-		'.sites',
-		'show',
-		true
-	);
+	new navigation.default.DropdownProvider('.sites', '.sites', 'show', true);
 
 	new navigation.default.DropdownProvider(
 		'.menu-button-group',
@@ -110,7 +105,9 @@ const searchSuggestions = fragmentElement.querySelector('.search-suggestions');
 
 const searchSuggestionItemTemplate = suggestions.querySelector('template');
 
-const seeAllResultsLink = fragmentElement.querySelector('.search-suggestions-see-all-results-text');
+const seeAllResultsLink = fragmentElement.querySelector(
+	'.search-suggestions-see-all-results-text'
+);
 
 const searchSuggestionItem =
 	searchSuggestionItemTemplate.content.querySelector('a');
@@ -121,7 +118,7 @@ const updateSearch = () => {
 	const searchSuggestionsInputValue = searchSuggestionsInput.value;
 
 	if (searchSuggestionsInputValue) {
-		seeAllResultsLink.href = "/search?q=" + searchSuggestionsInputValue;
+		seeAllResultsLink.href = '/search?q=' + searchSuggestionsInputValue;
 		suggestions.classList.add('performing-search');
 		performSearch(searchSuggestionsInputValue);
 	}
@@ -133,7 +130,7 @@ const updateSearch = () => {
 			'search-results-found'
 		);
 	}
-}
+};
 
 let debounceTimer;
 
@@ -143,10 +140,10 @@ const debounce = (callback, time) => {
 };
 
 searchSuggestionsInput.addEventListener(
-	"input",
+	'input',
 	() => {
-	suggestions.classList.add('loading-search');
-	debounce(updateSearch, 500)
+		suggestions.classList.add('loading-search');
+		debounce(updateSearch, 500);
 	},
 	false
 );
@@ -174,7 +171,10 @@ function performSearch(query) {
 				if (items) {
 					searchSuggestions.innerHTML = '';
 
-					const searchTermRegExp = new RegExp("(" + query + ")", 'gi');
+					const searchTermRegExp = new RegExp(
+						'(' + query + ')',
+						'gi'
+					);
 
 					for (const suggestion of items.suggestions) {
 						const suggestionLink = document.importNode(
@@ -182,7 +182,10 @@ function performSearch(query) {
 							true
 						);
 
-						const assetURL = suggestion.attributes.assetURL.replace(/\?.*$/, '');
+						const assetURL = suggestion.attributes.assetURL.replace(
+							/\?.*$/,
+							''
+						);
 
 						suggestionLink.href = assetURL;
 
@@ -257,29 +260,35 @@ async function postData(url = '', data = {}) {
 	return response.json();
 }
 
-const convertUrlToBreadcrumb = url => {
-    if (!url) {
-      return '';
-    }
+const convertUrlToBreadcrumb = (url) => {
+	if (!url) {
+		return '';
+	}
 
-    url = url.replaceAll('/web/guest/w/', 'home/').replaceAll('/web/guest/', 'home/').replaceAll('/', ' / ').replaceAll('-', ' ');
+	url = url
+		.replaceAll('/web/guest/w/', 'home/')
+		.replaceAll('/web/guest/', 'home/')
+		.replaceAll('/', ' / ')
+		.replaceAll('-', ' ');
 
 	const ancronymList = ['api', 'ccr', 'dxp', 'mvc', ' ui ', 'url'];
 
 	ancronymList.forEach((word) => {
 		if (url.includes(word)) {
-			const regEx = new RegExp(word, "ig");
+			const regEx = new RegExp(word, 'ig');
 			url = url.replace(regEx, word.toUpperCase());
 		}
 	});
 
-    let breadcrumbs = [];
-    const excludeWords = ['a', 'and', 'of', 'the', 'to', 'via']
-    breadcrumbs = url.split(' ');
+	let breadcrumbs = [];
+	const excludeWords = ['a', 'and', 'of', 'the', 'to', 'via'];
+	breadcrumbs = url.split(' ');
 
-    return breadcrumbs.map((word, i) =>
-    {
-       return excludeWords.includes(word) && i!==0 ? [word] : word.charAt(0).toUpperCase() + word.slice(1);
-
-    }).join(' ');
-}
+	return breadcrumbs
+		.map((word, i) => {
+			return excludeWords.includes(word) && i !== 0
+				? [word]
+				: word.charAt(0).toUpperCase() + word.slice(1);
+		})
+		.join(' ');
+};
