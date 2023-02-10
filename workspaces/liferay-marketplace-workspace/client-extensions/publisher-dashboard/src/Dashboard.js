@@ -13,15 +13,12 @@
  */
 
 import './Dashboard.css';
-import Table from './components/Table';
+
+import AppRoutes from "./Routes";
 
 function Dashboard(props) {
 	return (
-		<div>
-			<h1>Apps</h1>
-			<div>Manage and publish apps on the Marketplace</div>
-			<Table />
-		</div>
+		<AppRoutes />
 	);
 }
 
