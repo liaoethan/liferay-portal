@@ -7,8 +7,8 @@ export default function AppRoutes() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path='/' element={<DashboardPage />} />
-                <Route path='/create-new-app' element={<AppCreationFlow />} />
+                <Route path='/publisher-dashboard' element={<DashboardPage />} />
+                <Route path='/publisher-dashboard/create-new-app' element={<AppCreationFlow />} />
             </Routes>
         </BrowserRouter>
     );
