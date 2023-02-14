@@ -108,7 +108,7 @@ export function DashboardPage() {
 
                             <button
                                 className="dashboard-page-body-header-button"
-                                onClick={() => navigate("/create-new-app")}
+                                onClick={() => navigate("/publisher-dashboard/create-new-app")}
                             >
                                 + New App
                             </button>
