@@ -23,7 +23,7 @@ class WebComponent extends HTMLElement {
 	}
 }
 
-const ELEMENT_ID = 'dashboard-remote-app';
+const ELEMENT_ID = 'liferay-marketplace-custom-element';
 
 if (!customElements.get(ELEMENT_ID)) {
 	customElements.define(ELEMENT_ID, WebComponent);
