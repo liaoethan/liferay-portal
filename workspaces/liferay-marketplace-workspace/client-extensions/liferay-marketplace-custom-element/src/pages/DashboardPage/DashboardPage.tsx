@@ -9,6 +9,7 @@ import {
 import {Footer} from '../../components/Footer/Footer';
 import {Header} from '../../components/Header/Header';
 import {getProducts} from '../../utils/api';
+import {getProductSpecifications} from '../../utils/api';
 import {AppDetailsPage} from '../AppDetailsPage/AppDetailsPage';
 import {initialDashboardNavigationItems} from './DashboardPageUtil';
 
@@ -21,13 +22,52 @@ export function DashboardPage() {
 		initialDashboardNavigationItems
 	);
 
+	const formatDate = (date: string) => {
+		var dateObject = new Date(date);
+
+		var monthNames = [
+			"Jan", "Feb", "Mar",
+			"Apr", "May", "Jun", "Jul",
+			"Aug", "Sep", "Oct",
+			"Nov", "Dec"
+		];
+
+		var day = dateObject.getDate();
+		var monthIndex = dateObject.getMonth();
+		var year = dateObject.getFullYear();
+
+  		return monthNames[monthIndex] + ', ' + day + ' ' + year;
+	}
+
+	const getProductTypeList = async () => {
+		const products = await getProducts();
+
+		const productTypeList : string[] = [];
+
+		products.items.map((product: any) => {
+			const productId : number = product.productId;
+
+			getProductSpecifications({appProductId : productId}).then(productSpecifications =>
+				productTypeList.push(productSpecifications.items[0].value.en_US)
+			);
+		})
+
+		return productTypeList;
+	}
+
 	useEffect(() => {
 		(async () => {
-			const products = await getProducts();
+			let [products, productTypeList] = await Promise.all([getProducts(), getProductTypeList()]);
 
-			const liferayApps = products.items.map((product: any) => ({
+			const liferayApps = products.items.map((product: any, index: number) => ({
+				thumbnail: product.thumbnail,
 				name: product.name.en_US,
-			}));
+				updatedDate: formatDate(product.modifiedDate),
+				updatedBy: product.catalogId,
+				version: product.version,
+				status: product.productStatus,
+				type: productTypeList[index]
+			}))
 			setApps(liferayApps);
 		})();
 	}, []);
