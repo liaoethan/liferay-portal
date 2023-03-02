@@ -5,16 +5,36 @@
 				"definition": {
 					"fragmentStyle": {
 						"borderWidth": "0",
-						"marginLeft": "6",
-						"marginRight": "6",
 						"textAlign": ""
 					},
+					"fragmentViewports": [
+						{
+							"fragmentViewportStyle": {
+								"paddingLeft": "0",
+								"paddingRight": "0"
+							},
+							"id": "landscapeMobile"
+						},
+						{
+							"fragmentViewportStyle": {
+								"hidden": false
+							},
+							"id": "portraitMobile"
+						},
+						{
+							"fragmentViewportStyle": {
+								"paddingLeft": "0",
+								"paddingRight": "0"
+							},
+							"id": "tablet"
+						}
+					],
 					"indexed": true,
 					"layout": {
 						"borderWidth": 0,
 						"marginBottom": 0,
-						"marginLeft": 6,
-						"marginRight": 6,
+						"marginLeft": 0,
+						"marginRight": 0,
 						"marginTop": 0,
 						"paddingBottom": 0,
 						"paddingLeft": 0,
@@ -64,6 +84,14 @@
 													}
 												}
 											}
+										}
+									],
+									"fragmentViewports": [
+										{
+											"fragmentViewportStyle": {
+												"marginLeft": "0"
+											},
+											"id": "portraitMobile"
 										}
 									],
 									"indexed": true
@@ -120,6 +148,7 @@
 										{
 											"id": "tablet",
 											"rowViewportDefinition": {
+												"modulesPerRow": 1
 											}
 										}
 									],
@@ -142,6 +171,7 @@
 												},
 												{
 													"columnViewportDefinition": {
+														"size": 12
 													},
 													"id": "tablet"
 												}
@@ -181,6 +211,7 @@
 												},
 												{
 													"columnViewportDefinition": {
+														"size": 12
 													},
 													"id": "tablet"
 												}
@@ -211,8 +242,8 @@
 								"definition": {
 									"gutters": true,
 									"indexed": true,
-									"modulesPerRow": 3,
-									"numberOfColumns": 3,
+									"modulesPerRow": 2,
+									"numberOfColumns": 2,
 									"reverseOrder": false,
 									"rowViewports": [
 										{
@@ -229,6 +260,7 @@
 										{
 											"id": "tablet",
 											"rowViewportDefinition": {
+												"modulesPerRow": 1
 											}
 										}
 									],
@@ -251,11 +283,12 @@
 												},
 												{
 													"columnViewportDefinition": {
+														"size": 12
 													},
 													"id": "tablet"
 												}
 											],
-											"size": 4
+											"size": 6
 										},
 										"pageElements": [
 											{
@@ -290,50 +323,12 @@
 												},
 												{
 													"columnViewportDefinition": {
-													},
-													"id": "tablet"
-												}
-											],
-											"size": 4
-										},
-										"pageElements": [
-											{
-												"definition": {
-													"fragment": {
-														"key": "level-chart"
-													},
-													"fragmentConfig": {
-													},
-													"fragmentFields": [
-													],
-													"indexed": true
-												},
-												"type": "Fragment"
-											}
-										],
-										"type": "Column"
-									},
-									{
-										"definition": {
-											"columnViewports": [
-												{
-													"columnViewportDefinition": {
 														"size": 12
 													},
-													"id": "landscapeMobile"
-												},
-												{
-													"columnViewportDefinition": {
-													},
-													"id": "portraitMobile"
-												},
-												{
-													"columnViewportDefinition": {
-													},
 													"id": "tablet"
 												}
 											],
-											"size": 4
+											"size": 6
 										},
 										"pageElements": [
 											{
@@ -366,7 +361,7 @@
 	},
 	"settings": {
 		"masterPage": {
-			"key": "dashboard-template"
+			"key": "main-template"
 		}
 	},
 	"version": 1.1

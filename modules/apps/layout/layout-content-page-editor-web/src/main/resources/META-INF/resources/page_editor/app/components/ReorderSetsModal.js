@@ -21,19 +21,20 @@ import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayModal, {useModal} from '@clayui/modal';
 import ClayTabs from '@clayui/tabs';
 import classNames from 'classnames';
+import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {getEmptyImage} from 'react-dnd-html5-backend';
 
 import updateSetsOrder from '../../app/thunks/updateSetsOrder';
-import {useId} from '../../core/hooks/useId';
+import {useId} from '../../common/hooks/useId';
 import {useDispatch, useSelector} from '../contexts/StoreContext';
 import selectWidgetFragmentEntryLinks from '../selectors/selectWidgetFragmentEntryLinks';
 import loadWidgets from '../thunks/loadWidgets';
 
-const FRAGMENTS_ID = 'fragments';
-const WIDGETS_ID = 'widgets';
+const FRAGMENTS_ID = 0;
+const WIDGETS_ID = 1;
 
 const ACCEPTING_ITEM_TYPE = 'acceptingItemType';
 
@@ -188,26 +189,26 @@ function Tabs({updateLists}) {
 
 	return (
 		<>
-			<ClayTabs className="px-3">
+			<ClayTabs
+				activation="automatic"
+				active={activeTabId}
+				className="px-3"
+				onActiveChange={setActiveTabId}
+			>
 				{tabs.map(({id, label}) => (
 					<ClayTabs.Item
-						active={activeTabId === id}
 						innerProps={{
 							'aria-controls': getTabPanelId(id),
 							'id': getTabId(id),
 						}}
 						key={id}
-						onClick={() => setActiveTabId(id)}
 					>
 						{label}
 					</ClayTabs.Item>
 				))}
 			</ClayTabs>
 
-			<ClayTabs.Content
-				activeIndex={tabs.findIndex((tab) => tab.id === activeTabId)}
-				fade
-			>
+			<ClayTabs.Content activeIndex={activeTabId} fade>
 				{tabs.map(({id, items}) => (
 					<ClayTabs.TabPane
 						aria-labelledby={getTabId(id)}
@@ -221,7 +222,7 @@ function Tabs({updateLists}) {
 								updateLists={updateLists}
 							/>
 						) : (
-							<ClayLoadingIndicator small />
+							<ClayLoadingIndicator size="sm" />
 						)}
 					</ClayTabs.TabPane>
 				))}
@@ -267,7 +268,7 @@ function Items({items: initialItems, listId, updateLists}) {
 
 Items.propTypes = {
 	items: PropTypes.array,
-	listId: PropTypes.string.isRequired,
+	listId: PropTypes.number.isRequired,
 	updateLists: PropTypes.func.isRequired,
 };
 
@@ -346,9 +347,10 @@ function ReorderDropdown({index, item, numberOfItems, onChangeItemPosition}) {
 			items={items}
 			trigger={
 				<ClayButtonWithIcon
+					aria-label={sub(Liferay.Language.get('move-x'), item.name)}
 					className="text-secondary"
 					displayType="unstyled"
-					small
+					size="sm"
 					symbol="ellipsis-v"
 				/>
 			}

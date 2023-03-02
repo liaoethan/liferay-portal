@@ -16,10 +16,11 @@ import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import {ClayDropDownWithItems} from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import ClayManagementToolbar from '@clayui/management-toolbar';
-import {ReactNode, useState} from 'react';
+import {ReactNode, useContext} from 'react';
 
+import {ListViewContext, ListViewTypes} from '../../context/ListViewContext';
 import i18n from '../../i18n';
-import {RendererFields} from '../Form/Renderer';
+import {FilterSchema} from '../../schema/filter';
 import ManagementToolbarFilter from './ManagementToolbarFilter';
 
 export type IItem = {
@@ -54,7 +55,7 @@ type ManagementToolbarRightProps = {
 	display?: {
 		columns?: boolean;
 	};
-	filterFields?: RendererFields[];
+	filterSchema?: FilterSchema;
 };
 
 const ManagementToolbarRight: React.FC<ManagementToolbarRightProps> = ({
@@ -64,25 +65,28 @@ const ManagementToolbarRight: React.FC<ManagementToolbarRightProps> = ({
 	display = {columns: true},
 	columns,
 	disabled,
-	filterFields,
+	filterSchema,
 }) => {
-	const [pinned, setPinned] = useState(false);
+	const [{pin}, dispatch] = useContext(ListViewContext);
 
 	return (
 		<ClayManagementToolbar.ItemList>
-			{filterFields?.length && (
+			{filterSchema?.fields?.length && (
 				<>
 					<ClayManagementToolbar.Item>
 						<ClayButtonWithIcon
+							aria-label={i18n.translate('add-pin')}
 							className="nav-btn nav-btn-monospaced"
 							displayType="unstyled"
-							onClick={() => setPinned(!pinned)}
-							symbol={pinned ? 'unpin' : 'pin'}
-							title={pinned ? 'Unpin' : 'Pin'}
+							onClick={() =>
+								dispatch({type: ListViewTypes.SET_PIN})
+							}
+							symbol={i18n.translate(pin ? 'unpin' : 'pin')}
+							title={i18n.translate(pin ? 'unpin' : 'pin')}
 						/>
 					</ClayManagementToolbar.Item>
 
-					<ManagementToolbarFilter filterFields={filterFields} />
+					<ManagementToolbarFilter filterSchema={filterSchema} />
 				</>
 			)}
 

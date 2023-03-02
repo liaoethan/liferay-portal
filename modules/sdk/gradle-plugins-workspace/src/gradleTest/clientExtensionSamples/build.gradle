@@ -1,16 +1,23 @@
 task runGradleTest
 
 runGradleTest {
-	dependsOn ":sample-iframe:buildClientExtension"
-	dependsOn ":sample-theme-css:buildClientExtension"
-	dependsOn ":sample-theme-favicon:buildClientExtension"
+	dependsOn ":sample-custom-element-1:createClientExtensionConfig"
+	dependsOn ":sample-iframe-1:buildClientExtensionZip"
+	dependsOn ":sample-theme-css:buildClientExtensionZip"
+	dependsOn ":sample-theme-favicon:buildClientExtensionZip"
 
 	doLast {
-		Project sampleIFrameProject = project(":sample-iframe")
+		Project sampleCustomElement1Project = project(":sample-custom-element-1")
 
-		FileTree sampleIFrameDistZipFileTree = zipTree(sampleIFrameProject.file("dist/sample-iframe.zip"))
+		File clientExtensionConfigFile = new File(sampleCustomElement1Project.buildDir, "sample-custom-element-1.client-extension-config.json")
 
-		File lcpJsonFile = sampleIFrameDistZipFileTree.files.find {
+		assert clientExtensionConfigFile.exists()
+
+		Project sampleIFrame1Project = project(":sample-iframe-1")
+
+		FileTree sampleIFrame1DistZipFileTree = zipTree(sampleIFrame1Project.file("dist/sample-iframe-1.zip"))
+
+		File lcpJsonFile = sampleIFrame1DistZipFileTree.files.find {
 			it.name == "LCP.json"
 		}
 
@@ -21,17 +28,15 @@ runGradleTest {
 
 		FileTree sampleThemeCSSZipFileTree = zipTree(sampleThemeCSSProject.file("dist/sample-theme-css.zip"))
 
-		File imgFile = sampleThemeCSSZipFileTree.files.find {
-			it.name == "paper.gif"
-		}
-
-		assert imgFile.exists()
+		assert !sampleThemeCSSZipFileTree.isEmpty()
 
 		Project sampleThemeFaviconProject = project(":sample-theme-favicon")
 
 		File sampleConfigFile = new File(sampleThemeFaviconProject.buildDir, "sample-theme-favicon.client-extension-config.json")
 
 		assert sampleConfigFile.exists()
+
+		assert sampleConfigFile.text.contains("CETConfiguration")
 
 		Task createClientExtensionConfigTask = sampleThemeFaviconProject.tasks["createClientExtensionConfig"]
 

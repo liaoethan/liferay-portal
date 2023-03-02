@@ -42,7 +42,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 						).put(
 							"draggable", dlViewEntriesDisplayContext.isDraggable(fileEntry)
 						).put(
-							"title", fileEntry.getTitle()
+							"title", HtmlUtil.unescape(fileEntry.getTitle())
 						).build());
 
 					DLViewFileVersionDisplayContext dlViewFileVersionDisplayContext = null;
@@ -145,7 +145,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 													</aui:a>
 
 													<div class="card-subtitle text-truncate">
-														<%= LanguageUtil.format(request, "x-ago-by-x", new String[] {LanguageUtil.getTimeDescription(locale, System.currentTimeMillis() - latestFileVersion.getCreateDate().getTime(), true), HtmlUtil.escape(latestFileVersion.getUserName())}, false) %>
+														<%= LanguageUtil.format(request, "modified-x-ago-by-x", new String[] {LanguageUtil.getTimeDescription(locale, System.currentTimeMillis() - fileEntry.getModifiedDate().getTime(), true), HtmlUtil.escape(latestFileVersion.getUserName())}, false) %>
 													</div>
 
 													<div class="card-detail">
@@ -175,6 +175,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 												<c:if test="<%= dlPortletInstanceSettingsHelper.isShowActions() %>">
 													<div class="autofit-col">
 														<clay:dropdown-actions
+															aria-label='<%= LanguageUtil.get(request, "actions") %>'
 															dropdownItems="<%= dlViewFileVersionDisplayContext.getActionDropdownItems() %>"
 															propsTransformer="document_library/js/DLFileEntryDropdownPropsTransformer"
 														/>
@@ -208,7 +209,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 
 												<div class="autofit-col autofit-col-expand">
 													<div class="table-title">
-														<aui:a href="<%= dlViewEntriesDisplayContext.getViewFileEntryURL(fileEntry) %>"><%= latestFileVersion.getTitle() %></aui:a>
+														<aui:a href="<%= dlViewEntriesDisplayContext.getViewFileEntryURL(fileEntry) %>"><%= HtmlUtil.unescape(latestFileVersion.getTitle()) %></aui:a>
 													</div>
 												</div>
 											</div>
@@ -298,7 +299,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 										<liferay-ui:search-container-column-date
 											cssClass="table-cell-expand-smallest table-cell-ws-nowrap"
 											name="modified-date"
-											value="<%= latestFileVersion.getModifiedDate() %>"
+											value="<%= fileEntry.getModifiedDate() %>"
 										/>
 									</c:when>
 									<c:when test='<%= curEntryColumn.equals("action") %>'>
@@ -330,7 +331,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 						).put(
 							"folder-id", curFolder.getFolderId()
 						).put(
-							"title", curFolder.getName()
+							"title", HtmlUtil.unescape(curFolder.getName())
 						).build());
 
 					row.setPrimaryKey(String.valueOf(curFolder.getPrimaryKey()));
@@ -417,7 +418,7 @@ DLViewEntriesDisplayContext dlViewEntriesDisplayContext = new DLViewEntriesDispl
 																).buildString()
 															%>'
 														>
-															<%= HtmlUtil.escape(curFolder.getName()) %>
+															<%= HtmlUtil.unescape(curFolder.getName()) %>
 														</aui:a>
 													</div>
 												</div>

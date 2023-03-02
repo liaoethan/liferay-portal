@@ -71,6 +71,10 @@ public class LinkTag extends BaseContainerTag {
 		return _borderless;
 	}
 
+	public String getDecoration() {
+		return _decoration;
+	}
+
 	public String getDisplayType() {
 		return _displayType;
 	}
@@ -79,12 +83,20 @@ public class LinkTag extends BaseContainerTag {
 		return _download;
 	}
 
+	public String getFontSize() {
+		return _fontSize;
+	}
+
 	public String getHref() {
 		return _href;
 	}
 
 	public String getIcon() {
 		return _icon;
+	}
+
+	public String getIconAfter() {
+		return _iconAfter;
 	}
 
 	public String getLabel() {
@@ -107,12 +119,20 @@ public class LinkTag extends BaseContainerTag {
 		return _type;
 	}
 
+	public String getWeight() {
+		return _weight;
+	}
+
 	public void setBlock(boolean block) {
 		_block = block;
 	}
 
 	public void setBorderless(boolean borderless) {
 		_borderless = borderless;
+	}
+
+	public void setDecoration(String decoration) {
+		_decoration = decoration;
 	}
 
 	public void setDisplayType(String displayType) {
@@ -123,12 +143,20 @@ public class LinkTag extends BaseContainerTag {
 		_download = download;
 	}
 
+	public void setFontSize(String fontSize) {
+		_fontSize = fontSize;
+	}
+
 	public void setHref(String href) {
 		_href = href;
 	}
 
 	public void setIcon(String icon) {
 		_icon = icon;
+	}
+
+	public void setIconAfter(String iconAfter) {
+		_iconAfter = iconAfter;
 	}
 
 	public void setLabel(String label) {
@@ -151,27 +179,35 @@ public class LinkTag extends BaseContainerTag {
 		_type = type;
 	}
 
+	public void setWeight(String weight) {
+		_weight = weight;
+	}
+
 	@Override
 	protected void cleanUp() {
 		super.cleanUp();
 
 		_block = false;
 		_borderless = false;
+		_decoration = null;
 		_displayType = null;
 		_download = null;
+		_fontSize = null;
 		_href = null;
 		_icon = null;
+		_iconAfter = null;
 		_label = null;
 		_monospaced = false;
 		_outline = false;
 		_small = false;
 		_type = "link";
+		_weight = null;
 	}
 
 	@Override
 	protected String getHydratedModuleName() {
 		if ((getAdditionalProps() != null) || (getPropsTransformer() != null)) {
-			return "frontend-taglib-clay/Link";
+			return "{Link} from frontend-taglib-clay";
 		}
 
 		return null;
@@ -182,8 +218,12 @@ public class LinkTag extends BaseContainerTag {
 		props.put("block", _block);
 		props.put("borderless", _borderless);
 		props.put("button", _type.equals("button"));
+		props.put("decoration", _decoration);
 		props.put("displayType", _displayType);
+		props.put("fontSize", _fontSize);
 		props.put("icon", _icon);
+		props.put("iconAfter", _iconAfter);
+		props.put("weight", _weight);
 
 		if (Validator.isNotNull(_label)) {
 			props.put(
@@ -226,6 +266,10 @@ public class LinkTag extends BaseContainerTag {
 			cssClasses.add(cssPrefix + "sm");
 		}
 
+		if (Validator.isNotNull(_decoration)) {
+			cssClasses.add("text-decoration-" + _decoration);
+		}
+
 		if (Validator.isNotNull(_displayType)) {
 			if (_outline || _borderless) {
 				cssClasses.add(cssPrefix + "outline-" + _displayType);
@@ -235,6 +279,14 @@ public class LinkTag extends BaseContainerTag {
 			}
 		}
 
+		if (Validator.isNotNull(_fontSize)) {
+			cssClasses.add("text-" + _fontSize);
+		}
+
+		if (Validator.isNotNull(_weight)) {
+			cssClasses.add("font-weight-" + _weight);
+		}
+
 		return super.processCssClasses(cssClasses);
 	}
 
@@ -242,7 +294,9 @@ public class LinkTag extends BaseContainerTag {
 	protected int processStartTag() throws Exception {
 		super.processStartTag();
 
-		if (Validator.isNotNull(_icon) || Validator.isNotNull(_label)) {
+		if (Validator.isNotNull(_icon) || Validator.isNotNull(_iconAfter) ||
+			Validator.isNotNull(_label)) {
+
 			JspWriter jspWriter = pageContext.getOut();
 
 			if (Validator.isNotNull(_icon)) {
@@ -265,6 +319,18 @@ public class LinkTag extends BaseContainerTag {
 				jspWriter.write(HtmlUtil.escape(label));
 			}
 
+			if (Validator.isNotNull(_iconAfter)) {
+				IconTag iconAfterTag = new IconTag();
+
+				if (Validator.isNotNull(_label)) {
+					iconAfterTag.setCssClass("inline-item inline-item-after");
+				}
+
+				iconAfterTag.setSymbol(_iconAfter);
+
+				iconAfterTag.doTag(pageContext);
+			}
+
 			return SKIP_BODY;
 		}
 
@@ -275,14 +341,18 @@ public class LinkTag extends BaseContainerTag {
 
 	private boolean _block;
 	private boolean _borderless;
+	private String _decoration;
 	private String _displayType;
 	private String _download;
+	private String _fontSize;
 	private String _href;
 	private String _icon;
+	private String _iconAfter;
 	private String _label;
 	private boolean _monospaced;
 	private boolean _outline;
 	private boolean _small;
 	private String _type = "link";
+	private String _weight;
 
 }

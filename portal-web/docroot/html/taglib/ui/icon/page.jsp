@@ -23,7 +23,7 @@ String listItemAnchorAriaHasPopup = "false";
 String listItemAnchorAriaRole = "menuitem";
 String listItemAriaRole = "presentation";
 
-if (useDialog || (urlIsNotNull && url.startsWith("javascript:"))) {
+if (!linkCssClass.contains("keep-aria-attributes") && (useDialog || (urlIsNotNull && url.startsWith("javascript:")))) {
 	listItemAnchorAriaHasPopup = "dialog";
 	listItemAnchorAriaRole = null;
 	listItemAriaRole = "";
@@ -64,6 +64,11 @@ if (useDialog || (urlIsNotNull && url.startsWith("javascript:"))) {
 	<c:otherwise>
 		<span
 			class="<%= cssClass %>"
+
+			<c:if test="<%= toolTip && !urlIsNotNull %>">
+				tabindex="0"
+			</c:if>
+
 			<c:if test="<%= !label && Validator.isNotNull(message) %>">
 				title="<%= HtmlUtil.escapeAttribute(LanguageUtil.get(resourceBundle, HtmlUtil.stripHtml(message))) %>"
 			</c:if>

@@ -68,6 +68,7 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -187,6 +188,30 @@ public class DDLRecordLocalServiceImpl extends DDLRecordLocalServiceBaseImpl {
 		}
 
 		return record;
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public DDLRecord addRecord(
+			long userId, long groupId, long recordSetId, int displayIndex,
+			Map<String, Serializable> fieldsMap, ServiceContext serviceContext)
+		throws PortalException {
+
+		DDLRecordSet recordSet = _ddlRecordSetPersistence.findByPrimaryKey(
+			recordSetId);
+
+		DDMStructure ddmStructure = recordSet.getDDMStructure();
+
+		Fields fields = toFields(
+			ddmStructure.getStructureId(), fieldsMap,
+			serviceContext.getLocale(), LocaleUtil.getSiteDefault());
+
+		DDMFormValues ddmFormValues = fieldsToDDMFormValuesConverter.convert(
+			ddmStructure, fields);
+
+		return addRecord(
+			userId, groupId, recordSetId, displayIndex, ddmFormValues,
+			serviceContext);
 	}
 
 	/**
@@ -818,6 +843,46 @@ public class DDLRecordLocalServiceImpl extends DDLRecordLocalServiceBaseImpl {
 	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public DDLRecord updateRecord(
+			long userId, long recordId, int displayIndex,
+			Map<String, Serializable> fieldsMap, boolean mergeFields,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		DDLRecord record = ddlRecordPersistence.findByPrimaryKey(recordId);
+
+		DDMFormValues oldDDMFormValues = record.getDDMFormValues();
+
+		DDLRecordSet recordSet = record.getRecordSet();
+
+		DDMStructure ddmStructure = recordSet.getDDMStructure();
+
+		Fields fields = toFields(
+			ddmStructure.getStructureId(), fieldsMap,
+			serviceContext.getLocale(), oldDDMFormValues.getDefaultLocale());
+
+		if (mergeFields) {
+			DDLRecordVersion recordVersion = record.getLatestRecordVersion();
+
+			DDMFormValues existingDDMFormValues =
+				storageEngine.getDDMFormValues(recordVersion.getDDMStorageId());
+
+			Fields existingFields = ddmFormValuesToFieldsConverter.convert(
+				recordSet.getDDMStructure(), existingDDMFormValues);
+
+			fields = ddm.mergeFields(fields, existingFields);
+		}
+
+		DDMFormValues ddmFormValues = fieldsToDDMFormValuesConverter.convert(
+			recordSet.getDDMStructure(), fields);
+
+		return updateRecord(
+			userId, recordId, false, displayIndex, ddmFormValues,
+			serviceContext);
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public DDLRecord updateRecord(
 			long userId, long recordId, long ddmStorageId,
 			ServiceContext serviceContext)
 		throws PortalException {
@@ -908,7 +973,8 @@ public class DDLRecordLocalServiceImpl extends DDLRecordLocalServiceBaseImpl {
 			}
 		}
 		else {
-			if (Objects.equals(
+			if ((status != WorkflowConstants.STATUS_PENDING) &&
+				Objects.equals(
 					record.getVersion(), recordVersion.getVersion())) {
 
 				String newVersion = DDLRecordConstants.VERSION_DEFAULT;

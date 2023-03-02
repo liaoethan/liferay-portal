@@ -38,7 +38,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcos Martins
  */
 @Component(
-	immediate = true,
 	property = "batch.engine.task.item.delegate.name=account-group-analytics-dxp-entities",
 	service = BatchEngineTaskItemDelegate.class
 )
@@ -61,9 +60,7 @@ public class AccountGroupAnalyticsDXPEntityBatchEngineTaskItemDelegate
 				filter, AccountGroup.class.getName(), null, vulcanPagination,
 				queryConfig -> queryConfig.setSelectedFieldNames(
 					Field.ENTRY_CLASS_PK),
-				searchContext -> searchContext.setCompanyId(
-					contextCompany.getCompanyId()),
-				null,
+				this::getSearchContext, null,
 				document -> _dxpEntityDTOConverter.toDTO(
 					_accountGroupLocalService.getAccountGroup(
 						GetterUtil.getLong(

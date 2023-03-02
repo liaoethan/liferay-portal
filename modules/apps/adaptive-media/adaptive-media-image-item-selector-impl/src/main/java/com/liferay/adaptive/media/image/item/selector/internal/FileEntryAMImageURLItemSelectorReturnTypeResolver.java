@@ -21,16 +21,12 @@ import com.liferay.adaptive.media.image.media.query.MediaQueryProvider;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.item.selector.ItemSelectorReturnTypeResolver;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-
-import java.util.List;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -39,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Roberto Díaz
  */
 @Component(
-	immediate = true, property = "service.ranking:Integer=100",
+	property = "service.ranking:Integer=100",
 	service = ItemSelectorReturnTypeResolver.class
 )
 public class FileEntryAMImageURLItemSelectorReturnTypeResolver
@@ -74,25 +70,15 @@ public class FileEntryAMImageURLItemSelectorReturnTypeResolver
 				themeDisplay, fileEntry, "&imagePreview=1", false);
 		}
 
-		JSONArray sourcesJSONArray = JSONFactoryUtil.createJSONArray();
-
-		List<MediaQuery> mediaQueries = _mediaQueryProvider.getMediaQueries(
-			fileEntry);
-
-		Stream<MediaQuery> mediaQueryStream = mediaQueries.stream();
-
-		mediaQueryStream.map(
-			this::_getSourceJSONObject
-		).forEach(
-			sourcesJSONArray::put
-		);
-
 		return JSONUtil.put(
 			"defaultSource", previewURL
 		).put(
 			"fileEntryId", String.valueOf(fileEntry.getFileEntryId())
 		).put(
-			"sources", sourcesJSONArray
+			"sources",
+			JSONUtil.toJSONArray(
+				_mediaQueryProvider.getMediaQueries(fileEntry),
+				this::_getSourceJSONObject)
 		).toString();
 	}
 
@@ -101,7 +87,7 @@ public class FileEntryAMImageURLItemSelectorReturnTypeResolver
 			"attributes",
 			() -> {
 				JSONObject attributesJSONObject =
-					JSONFactoryUtil.createJSONObject();
+					_jsonFactory.createJSONObject();
 
 				for (Condition condition : mediaQuery.getConditions()) {
 					attributesJSONObject.put(
@@ -117,6 +103,9 @@ public class FileEntryAMImageURLItemSelectorReturnTypeResolver
 
 	@Reference
 	private DLURLHelper _dlURLHelper;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private MediaQueryProvider _mediaQueryProvider;

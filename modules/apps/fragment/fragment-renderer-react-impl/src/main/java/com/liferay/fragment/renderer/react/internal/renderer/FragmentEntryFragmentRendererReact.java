@@ -14,12 +14,13 @@
 
 package com.liferay.fragment.renderer.react.internal.renderer;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.renderer.constants.FragmentRendererConstants;
+import com.liferay.fragment.renderer.react.internal.helper.FragmentEntryLinkJSModuleInitializerHelper;
 import com.liferay.fragment.renderer.react.internal.util.FragmentEntryFragmentRendererReactUtil;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.frontend.js.loader.modules.extender.npm.JSPackage;
@@ -28,7 +29,7 @@ import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.servlet.taglib.util.OutputData;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -95,6 +96,8 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 			HttpServletResponse httpServletResponse)
 		throws IOException {
 
+		_fragmentEntryLinkJSModuleInitializerHelper.ensureInitialized();
+
 		try {
 			PrintWriter printWriter = httpServletResponse.getWriter();
 
@@ -102,7 +105,7 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 				fragmentRendererContext);
 
 			JSONObject configurationJSONObject =
-				JSONFactoryUtil.createJSONObject();
+				_jsonFactory.createJSONObject();
 
 			if (Validator.isNotNull(fragmentEntryLink.getConfiguration())) {
 				configurationJSONObject =
@@ -117,6 +120,7 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 				_renderFragmentEntry(
 					fragmentEntryLink,
 					fragmentRendererContext.getFragmentElementId(),
+					fragmentRendererContext,
 					HashMapBuilder.<String, Object>put(
 						"configuration", configurationJSONObject
 					).build(),
@@ -130,13 +134,15 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 	@Activate
 	protected void activate() {
 		_jsPackage = _npmResolver.getJSPackage();
+
+		_fragmentEntryLinkJSModuleInitializerHelper.ensureInitialized();
 	}
 
 	private FragmentEntry _getContributedFragmentEntry(
 		FragmentEntryLink fragmentEntryLink) {
 
 		Map<String, FragmentEntry> fragmentCollectionContributorEntries =
-			_fragmentCollectionContributorTracker.getFragmentEntries();
+			_fragmentCollectionContributorRegistry.getFragmentEntries();
 
 		return fragmentCollectionContributorEntries.get(
 			fragmentEntryLink.getRendererKey());
@@ -163,6 +169,7 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 
 	private String _renderFragmentEntry(
 			FragmentEntryLink fragmentEntryLink, String fragmentElementId,
+			FragmentRendererContext fragmentRendererContext,
 			Map<String, Object> data, HttpServletRequest httpServletRequest)
 		throws IOException {
 
@@ -190,43 +197,54 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 		sb.append("</div>");
 
 		if (Validator.isNotNull(fragmentEntryLink.getCss())) {
-			String outputKey = fragmentEntryLink.getFragmentEntryId() + "_CSS";
+			if (fragmentRendererContext.isEditMode() ||
+				fragmentRendererContext.isIndexMode()) {
 
-			OutputData outputData = (OutputData)httpServletRequest.getAttribute(
-				WebKeys.OUTPUT_DATA);
-
-			boolean cssLoaded = false;
-
-			if (outputData != null) {
-				Set<String> outputKeys = outputData.getOutputKeys();
-
-				cssLoaded = outputKeys.contains(outputKey);
-
-				StringBundler cssSB = outputData.getDataSB(
-					outputKey, StringPool.BLANK);
-
-				if (cssSB != null) {
-					cssLoaded = Objects.equals(
-						cssSB.toString(), fragmentEntryLink.getCss());
-				}
-			}
-			else {
-				outputData = new OutputData();
-			}
-
-			if (!cssLoaded) {
 				sb.append("<style>");
 				sb.append(fragmentEntryLink.getCss());
 				sb.append("</style>");
+			}
+			else {
+				String outputKey =
+					fragmentEntryLink.getFragmentEntryId() + "_CSS";
 
-				outputData.addOutputKey(outputKey);
+				OutputData outputData =
+					(OutputData)httpServletRequest.getAttribute(
+						WebKeys.OUTPUT_DATA);
 
-				outputData.setDataSB(
-					outputKey, StringPool.BLANK,
-					new StringBundler(fragmentEntryLink.getCss()));
+				boolean cssLoaded = false;
 
-				httpServletRequest.setAttribute(
-					WebKeys.OUTPUT_DATA, outputData);
+				if (outputData != null) {
+					Set<String> outputKeys = outputData.getOutputKeys();
+
+					cssLoaded = outputKeys.contains(outputKey);
+
+					StringBundler cssSB = outputData.getDataSB(
+						outputKey, StringPool.BLANK);
+
+					if (cssSB != null) {
+						cssLoaded = Objects.equals(
+							cssSB.toString(), fragmentEntryLink.getCss());
+					}
+				}
+				else {
+					outputData = new OutputData();
+				}
+
+				if (!cssLoaded) {
+					sb.append("<style>");
+					sb.append(fragmentEntryLink.getCss());
+					sb.append("</style>");
+
+					outputData.addOutputKey(outputKey);
+
+					outputData.setDataSB(
+						outputKey, StringPool.BLANK,
+						new StringBundler(fragmentEntryLink.getCss()));
+
+					httpServletRequest.setAttribute(
+						WebKeys.OUTPUT_DATA, outputData);
+				}
 			}
 		}
 
@@ -234,11 +252,18 @@ public class FragmentEntryFragmentRendererReact implements FragmentRenderer {
 	}
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
+
+	@Reference
+	private FragmentEntryLinkJSModuleInitializerHelper
+		_fragmentEntryLinkJSModuleInitializerHelper;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	private JSPackage _jsPackage;
 

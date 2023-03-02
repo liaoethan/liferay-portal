@@ -44,27 +44,45 @@
 				},
 				{
 					"dataType": "string",
-					"defaultValue": "",
-					"description": "Button Type",
-					"label": "Button Type",
-					"name": "buttonType",
+					"defaultValue": "NAVIGATION_PRIMARY",
+					"description": "Navigation DDM Template Key",
+					"label": "Navigation DDM Template Key",
+					"name": "navigationDDMTemplateKey",
 					"type": "select",
 					"typeOptions": {
 						"validValues": [
 							{
-								"label": "none",
-								"value": ""
+								"value": "NAVIGATION_BASIC"
 							},
 							{
-								"label": "CTA",
-								"value": "cta"
-							},
-							{
-								"label": "Sign In",
-								"value": "signin"
+								"value": "NAVIGATION_PRIMARY"
 							}
 						]
 					}
+				},
+				{
+					"dataType": "int",
+					"defaultValue": "0",
+					"description": "site-navigation-menu-id",
+					"label": "site-navigation-menu-id",
+					"name": "siteNavigationMenuId",
+					"type": "text"
+				},
+				{
+					"dataType": "int",
+					"defaultValue": "0",
+					"description": "search-blueprint-id",
+					"label": "Search Blueprint ID",
+					"name": "searchBlueprintId",
+					"type": "text"
+				},
+				{
+					"dataType": "int",
+					"defaultValue": "0",
+					"description": "account-menu-id",
+					"label": "Account Menu ID",
+					"name": "accountMenuId",
+					"type": "text"
 				}
 			]
 		}

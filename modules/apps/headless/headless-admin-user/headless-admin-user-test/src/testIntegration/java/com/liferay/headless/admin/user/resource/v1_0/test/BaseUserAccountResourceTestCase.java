@@ -238,19 +238,11 @@ public abstract class BaseUserAccountResourceTestCase {
 			userAccountResource.
 				deleteAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeHttpResponse(
 					testDeleteAccountByExternalReferenceCodeUserAccountByExternalReferenceCode_getAccountExternalReferenceCode(),
-					testDeleteAccountByExternalReferenceCodeUserAccountByExternalReferenceCode_getUserAccountExternalReferenceCode()));
+					userAccount.getExternalReferenceCode()));
 	}
 
 	protected String
 			testDeleteAccountByExternalReferenceCodeUserAccountByExternalReferenceCode_getAccountExternalReferenceCode()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected String
-			testDeleteAccountByExternalReferenceCodeUserAccountByExternalReferenceCode_getUserAccountExternalReferenceCode()
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -277,13 +269,13 @@ public abstract class BaseUserAccountResourceTestCase {
 			204,
 			userAccountResource.
 				postAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeHttpResponse(
-					null, null));
+					null, userAccount.getExternalReferenceCode()));
 
 		assertHttpResponseStatusCode(
 			404,
 			userAccountResource.
 				postAccountByExternalReferenceCodeUserAccountByExternalReferenceCodeHttpResponse(
-					null, null));
+					null, userAccount.getExternalReferenceCode()));
 	}
 
 	protected UserAccount
@@ -328,7 +320,10 @@ public abstract class BaseUserAccountResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantUserAccount),
 				(List<UserAccount>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetAccountUserAccountsByExternalReferenceCodePage_getExpectedActions(
+					irrelevantExternalReferenceCode));
 		}
 
 		UserAccount userAccount1 =
@@ -350,11 +345,24 @@ public abstract class BaseUserAccountResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(userAccount1, userAccount2),
 			(List<UserAccount>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetAccountUserAccountsByExternalReferenceCodePage_getExpectedActions(
+				externalReferenceCode));
 
 		userAccountResource.deleteUserAccount(userAccount1.getId());
 
 		userAccountResource.deleteUserAccount(userAccount2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetAccountUserAccountsByExternalReferenceCodePage_getExpectedActions(
+				String externalReferenceCode)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -725,7 +733,17 @@ public abstract class BaseUserAccountResourceTestCase {
 			204,
 			userAccountResource.
 				deleteAccountUserAccountsByExternalReferenceCodeByEmailAddressHttpResponse(
-					userAccount.getExternalReferenceCode(), null));
+					testDeleteAccountUserAccountsByExternalReferenceCodeByEmailAddress_getExternalReferenceCode(
+						userAccount),
+					null));
+	}
+
+	protected String
+			testDeleteAccountUserAccountsByExternalReferenceCodeByEmailAddress_getExternalReferenceCode(
+				UserAccount userAccount)
+		throws Exception {
+
+		return userAccount.getExternalReferenceCode();
 	}
 
 	protected UserAccount
@@ -777,8 +795,17 @@ public abstract class BaseUserAccountResourceTestCase {
 			204,
 			userAccountResource.
 				deleteAccountUserAccountByExternalReferenceCodeByEmailAddressHttpResponse(
-					userAccount.getExternalReferenceCode(),
+					testDeleteAccountUserAccountByExternalReferenceCodeByEmailAddress_getExternalReferenceCode(
+						userAccount),
 					userAccount.getEmailAddress()));
+	}
+
+	protected String
+			testDeleteAccountUserAccountByExternalReferenceCodeByEmailAddress_getExternalReferenceCode(
+				UserAccount userAccount)
+		throws Exception {
+
+		return userAccount.getExternalReferenceCode();
 	}
 
 	protected UserAccount
@@ -844,7 +871,10 @@ public abstract class BaseUserAccountResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantUserAccount),
 				(List<UserAccount>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetAccountUserAccountsPage_getExpectedActions(
+					irrelevantAccountId));
 		}
 
 		UserAccount userAccount1 =
@@ -863,11 +893,30 @@ public abstract class BaseUserAccountResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(userAccount1, userAccount2),
 			(List<UserAccount>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetAccountUserAccountsPage_getExpectedActions(accountId));
 
 		userAccountResource.deleteUserAccount(userAccount1.getId());
 
 		userAccountResource.deleteUserAccount(userAccount2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetAccountUserAccountsPage_getExpectedActions(Long accountId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/headless-admin-user/v1.0/accounts/{accountId}/user-accounts/batch".
+				replace("{accountId}", String.valueOf(accountId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
 	}
 
 	@Test
@@ -1357,7 +1406,10 @@ public abstract class BaseUserAccountResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantUserAccount),
 				(List<UserAccount>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetOrganizationUserAccountsPage_getExpectedActions(
+					irrelevantOrganizationId));
 		}
 
 		UserAccount userAccount1 =
@@ -1376,11 +1428,24 @@ public abstract class BaseUserAccountResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(userAccount1, userAccount2),
 			(List<UserAccount>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetOrganizationUserAccountsPage_getExpectedActions(
+				organizationId));
 
 		userAccountResource.deleteUserAccount(userAccount1.getId());
 
 		userAccountResource.deleteUserAccount(userAccount2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetOrganizationUserAccountsPage_getExpectedActions(
+				String organizationId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -1722,7 +1787,10 @@ public abstract class BaseUserAccountResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantUserAccount),
 				(List<UserAccount>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetSiteUserAccountsPage_getExpectedActions(
+					irrelevantSiteId));
 		}
 
 		UserAccount userAccount1 = testGetSiteUserAccountsPage_addUserAccount(
@@ -1739,11 +1807,21 @@ public abstract class BaseUserAccountResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(userAccount1, userAccount2),
 			(List<UserAccount>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetSiteUserAccountsPage_getExpectedActions(siteId));
 
 		userAccountResource.deleteUserAccount(userAccount1.getId());
 
 		userAccountResource.deleteUserAccount(userAccount2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSiteUserAccountsPage_getExpectedActions(Long siteId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -2052,11 +2130,20 @@ public abstract class BaseUserAccountResourceTestCase {
 
 		assertContains(userAccount1, (List<UserAccount>)page.getItems());
 		assertContains(userAccount2, (List<UserAccount>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetUserAccountsPage_getExpectedActions());
 
 		userAccountResource.deleteUserAccount(userAccount1.getId());
 
 		userAccountResource.deleteUserAccount(userAccount2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetUserAccountsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -3063,6 +3150,13 @@ public abstract class BaseUserAccountResourceTestCase {
 	}
 
 	protected void assertValid(Page<UserAccount> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<UserAccount> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<UserAccount> userAccounts = page.getItems();
@@ -3077,6 +3171,20 @@ public abstract class BaseUserAccountResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -3530,6 +3638,10 @@ public abstract class BaseUserAccountResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

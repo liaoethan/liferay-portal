@@ -24,7 +24,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.notifications.UserNotificationDefinition;
 import com.liferay.portal.kernel.notifications.UserNotificationHandler;
-import com.liferay.portal.kernel.poller.PollerProcessor;
 import com.liferay.portal.kernel.pop.MessageListener;
 import com.liferay.portal.kernel.portlet.ConfigurationAction;
 import com.liferay.portal.kernel.portlet.ControlPanelEntry;
@@ -33,7 +32,6 @@ import com.liferay.portal.kernel.portlet.PortletBag;
 import com.liferay.portal.kernel.portlet.PortletConfigurationListener;
 import com.liferay.portal.kernel.portlet.PortletLayoutListener;
 import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
-import com.liferay.portal.kernel.scheduler.messaging.SchedulerEventMessageListener;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.OpenSearch;
 import com.liferay.portal.kernel.security.permission.propagator.PermissionPropagator;
@@ -49,7 +47,6 @@ import com.liferay.portal.language.LanguageResources;
 import com.liferay.social.kernel.model.SocialActivityInterpreter;
 import com.liferay.social.kernel.model.SocialRequestInterpreter;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.List;
@@ -233,20 +230,6 @@ public class PortletBagImpl implements PortletBag {
 	}
 
 	@Override
-	public List<PollerProcessor> getPollerProcessorInstances() {
-		if (_pollerProcessorInstances == null) {
-			synchronized (this) {
-				if (_pollerProcessorInstances == null) {
-					_pollerProcessorInstances = ServiceTrackerListFactory.open(
-						_bundleContext, PollerProcessor.class, _filterString);
-				}
-			}
-		}
-
-		return _toList(_pollerProcessorInstances);
-	}
-
-	@Override
 	public List<MessageListener> getPopMessageListenerInstances() {
 		if (_popMessageListenerInstances == null) {
 			synchronized (this) {
@@ -374,24 +357,6 @@ public class PortletBagImpl implements PortletBag {
 	@Override
 	public String getResourceBundleBaseName() {
 		return _resourceBundleBaseName;
-	}
-
-	@Override
-	public List<SchedulerEventMessageListener>
-		getSchedulerEventMessageListeners() {
-
-		if (_schedulerEventMessageListeners == null) {
-			synchronized (this) {
-				if (_schedulerEventMessageListeners == null) {
-					_schedulerEventMessageListeners =
-						ServiceTrackerListFactory.open(
-							_bundleContext, SchedulerEventMessageListener.class,
-							_filterString);
-				}
-			}
-		}
-
-		return _toList(_schedulerEventMessageListeners);
 	}
 
 	@Override
@@ -587,11 +552,7 @@ public class PortletBagImpl implements PortletBag {
 	}
 
 	private <T> List<T> _toList(ServiceTrackerList<T> serviceTrackerList) {
-		List<T> list = new ArrayList<>(serviceTrackerList.size());
-
-		serviceTrackerList.forEach(list::add);
-
-		return Collections.unmodifiableList(list);
+		return Collections.unmodifiableList(serviceTrackerList.toList());
 	}
 
 	private static final BundleContext _bundleContext =
@@ -611,8 +572,6 @@ public class PortletBagImpl implements PortletBag {
 	private volatile ServiceTrackerList<OpenSearch> _openSearchInstances;
 	private volatile ServiceTrackerList<PermissionPropagator>
 		_permissionPropagatorInstances;
-	private volatile ServiceTrackerList<PollerProcessor>
-		_pollerProcessorInstances;
 	private volatile ServiceTrackerList<MessageListener>
 		_popMessageListenerInstances;
 	private volatile ServiceTrackerList<PortletConfigurationListener>
@@ -627,8 +586,6 @@ public class PortletBagImpl implements PortletBag {
 		_preferencesValidatorInstances;
 	private final String _resourceBundleBaseName;
 	private volatile ResourceBundleLoader _resourceBundleLoader;
-	private volatile ServiceTrackerList<SchedulerEventMessageListener>
-		_schedulerEventMessageListeners;
 	private final List<ServiceRegistration<?>> _serviceRegistrations;
 	private final ServletContext _servletContext;
 	private volatile ServiceTrackerList<SocialActivityInterpreter>

@@ -15,7 +15,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -32,7 +32,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-68599."
-	@priority = "5"
+	@priority = 5
 	@refactordone
 	test CanAddCommentToWorkflowSubmission {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
@@ -85,11 +85,10 @@ definition {
 	}
 
 	@e2etest
-	@priority = "4"
+	@priority = 4
 	@refactordone
 	test CanViewPendingContent {
 		property portal.acceptance = "true";
-		property test.name.skip.portal.instance = "KBWorkflow#CanViewPendingContent";
 
 		Navigator.openURL();
 
@@ -111,14 +110,14 @@ definition {
 		KBArticle.viewCP(
 			kbArticleContent = "Knowledge Base Article Content",
 			kbArticleTitle = "Knowledge Base Article Title",
-			kbWorkflowStatus = "Pending");
+			kbStatus = "Pending");
 
 		KBArticle.viewInfoPanel(
 			kbArticleTitle = "Knowledge Base Article Title",
 			workflowStatus = "PENDING");
 	}
 
-	@priority = "4"
+	@priority = 4
 	@refactorneeded
 	test ViewKBArticleSuggestionsWorkflow {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
@@ -128,7 +127,7 @@ definition {
 			layoutName = "Knowledge Base Display Page");
 
 		JSONLayout.addWidgetToPublicLayout(
-			column = "1",
+			column = 1,
 			groupName = "Guest",
 			layoutName = "Knowledge Base Display Page",
 			widgetName = "Knowledge Base Display");
@@ -191,7 +190,7 @@ definition {
 
 		KBArticle.gotoSuggestionsNavigationCP();
 
-		KBArticleSuggestion.gotoSuggestionStatusNew(suggestionCount = "1");
+		KBArticleSuggestion.gotoSuggestionStatusNew(suggestionCount = 1);
 
 		KBArticleSuggestion.moveToInProgressStatus(
 			kbArticleTitle = "Knowledge Base Article Title",

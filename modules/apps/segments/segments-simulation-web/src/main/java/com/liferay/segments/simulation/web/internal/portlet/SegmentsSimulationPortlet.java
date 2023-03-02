@@ -25,7 +25,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-segments-simulation",
@@ -46,7 +45,7 @@ import org.osgi.service.component.annotations.Component;
 		"javax.portlet.security-role-ref=power-user,user",
 		"javax.portlet.version=3.0"
 	},
-	service = {Portlet.class, SegmentsSimulationPortlet.class}
+	service = Portlet.class
 )
 public class SegmentsSimulationPortlet extends MVCPortlet {
 }

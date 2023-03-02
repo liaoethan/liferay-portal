@@ -155,6 +155,13 @@ components:
                         type:
                             type: string
                     type: object
+                indexConfiguration:
+                    properties:
+                        external:
+                            type: boolean
+                        indexName:
+                            type: string
+                    type: object
                 parameterConfiguration:
                     properties:
                         parameters:
@@ -305,6 +312,29 @@ components:
                         type: object
                     type: object
             type: object
+        EmbeddingProviderConfiguration:
+            properties:
+                attributes:
+                    type: object
+                embeddingVectorDimensions:
+                    type: integer
+                languageIds:
+                    items:
+                        type: string
+                    type: array
+                modelClassNames:
+                    items:
+                        type: string
+                    type: array
+                providerName:
+                    type: string
+            type: object
+        EmbeddingProviderValidationResult:
+            properties:
+                errorMessage:
+                    type: string
+                expectedDimensions:
+                    type: integer
         FieldMappingInfo:
             properties:
                 languageIdPosition:
@@ -454,6 +484,12 @@ components:
                 templateVariable:
                     type: string
             type: object
+        SearchIndex:
+            properties:
+                external:
+                    type: boolean
+                name:
+                    type: string
         SearchRequest:
             properties:
                 queryString:
@@ -525,7 +561,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.search.experiences.rest.client', and version '3.0.5'."
+        'com.liferay.search.experiences.rest.client', and version '3.0.12'."
     license:
         name: "Apache 2.0"
         url: "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -572,6 +608,14 @@ paths:
             operationId: getFieldMappingInfosPage
             parameters:
                 - in: query
+                  name: external
+                  schema:
+                      type: boolean
+                - in: query
+                  name: indexName
+                  schema:
+                      type: string
+                - in: query
                   name: query
                   schema:
                       type: string
@@ -606,40 +650,6 @@ paths:
                                     $ref: "#/components/schemas/KeywordQueryContributor"
                                 type: array
             tags: ["KeywordQueryContributor"]
-    /ml-models:
-        get:
-            operationId: getMLModelsPage
-            parameters:
-                - in: query
-                  name: limit
-                  schema:
-                      type: integer
-                - in: query
-                  name: pipelineTag
-                  schema:
-                      type: string
-                - in: query
-                  name: query
-                  schema:
-                      type: string
-                - in: query
-                  name: tag
-                  schema:
-                      type: string
-            responses:
-                200:
-                    content:
-                        application/json:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/MLModel"
-                                type: array
-                        application/xml:
-                            schema:
-                                items:
-                                    $ref: "#/components/schemas/MLModel"
-                                type: array
-            tags: ["MLModel"]
     /model-prefilter-contributors:
         get:
             operationId: getModelPrefilterContributorsPage
@@ -674,6 +684,23 @@ paths:
                                     $ref: "#/components/schemas/QueryPrefilterContributor"
                                 type: array
             tags: ["QueryPrefilterContributor"]
+    /search-indexes:
+        get:
+            operationId: getSearchIndexesPage
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/SearchIndex"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/SearchIndex"
+                                type: array
+            tags: ["SearchIndex"]
     /searchable-asset-names:
         get:
             operationId: getSearchableAssetNamesPage
@@ -714,6 +741,40 @@ paths:
                                     $ref: "#/components/schemas/SearchableAssetNameDisplay"
                                 type: array
             tags: ["SearchableAssetNameDisplay"]
+    /sentence-transformer/ml-models:
+        get:
+            operationId: getSentenceTransformerMLModelsPage
+            parameters:
+                - in: query
+                  name: limit
+                  schema:
+                      type: integer
+                - in: query
+                  name: pipelineTag
+                  schema:
+                      type: string
+                - in: query
+                  name: query
+                  schema:
+                      type: string
+                - in: query
+                  name: tag
+                  schema:
+                      type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/MLModel"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/MLModel"
+                                type: array
+            tags: ["MLModel"]
     /sxp-blueprints:
         get:
             operationId: getSXPBlueprintsPage
@@ -1105,3 +1166,24 @@ paths:
                                     $ref: "#/components/schemas/SXPParameterContributorDefinition"
                                 type: array
             tags: ["SXPParameterContributorDefinition"]
+    /text-embeddings/validate-provider-configuration:
+        post:
+            operationId: postTextEmbeddingValidateProviderConfiguration
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/EmbeddingProviderConfiguration"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/EmbeddingProviderConfiguration"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/EmbeddingProviderValidationResult"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/EmbeddingProviderValidationResult"
+            tags: ["EmbeddingProviderValidationResult"]

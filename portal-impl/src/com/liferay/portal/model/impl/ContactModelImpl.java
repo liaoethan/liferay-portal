@@ -80,7 +80,7 @@ public class ContactModelImpl
 		{"classPK", Types.BIGINT}, {"parentContactId", Types.BIGINT},
 		{"emailAddress", Types.VARCHAR}, {"firstName", Types.VARCHAR},
 		{"middleName", Types.VARCHAR}, {"lastName", Types.VARCHAR},
-		{"prefixId", Types.BIGINT}, {"suffixId", Types.BIGINT},
+		{"prefixListTypeId", Types.BIGINT}, {"suffixListTypeId", Types.BIGINT},
 		{"male", Types.BOOLEAN}, {"birthday", Types.TIMESTAMP},
 		{"smsSn", Types.VARCHAR}, {"facebookSn", Types.VARCHAR},
 		{"jabberSn", Types.VARCHAR}, {"skypeSn", Types.VARCHAR},
@@ -107,8 +107,8 @@ public class ContactModelImpl
 		TABLE_COLUMNS_MAP.put("firstName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("middleName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("lastName", Types.VARCHAR);
-		TABLE_COLUMNS_MAP.put("prefixId", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("suffixId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("prefixListTypeId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("suffixListTypeId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("male", Types.BOOLEAN);
 		TABLE_COLUMNS_MAP.put("birthday", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("smsSn", Types.VARCHAR);
@@ -124,7 +124,7 @@ public class ContactModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table Contact_ (mvccVersion LONG default 0 not null,contactId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,classNameId LONG,classPK LONG,parentContactId LONG,emailAddress VARCHAR(254) null,firstName VARCHAR(75) null,middleName VARCHAR(75) null,lastName VARCHAR(75) null,prefixId LONG,suffixId LONG,male BOOLEAN,birthday DATE null,smsSn VARCHAR(75) null,facebookSn VARCHAR(75) null,jabberSn VARCHAR(75) null,skypeSn VARCHAR(75) null,twitterSn VARCHAR(75) null,employeeStatusId VARCHAR(75) null,employeeNumber VARCHAR(75) null,jobTitle VARCHAR(100) null,jobClass VARCHAR(75) null,hoursOfOperation VARCHAR(75) null)";
+		"create table Contact_ (mvccVersion LONG default 0 not null,contactId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,classNameId LONG,classPK LONG,parentContactId LONG,emailAddress VARCHAR(254) null,firstName VARCHAR(75) null,middleName VARCHAR(75) null,lastName VARCHAR(75) null,prefixListTypeId LONG,suffixListTypeId LONG,male BOOLEAN,birthday DATE null,smsSn VARCHAR(75) null,facebookSn VARCHAR(75) null,jabberSn VARCHAR(75) null,skypeSn VARCHAR(75) null,twitterSn VARCHAR(75) null,employeeStatusId VARCHAR(75) null,employeeNumber VARCHAR(75) null,jobTitle VARCHAR(100) null,jobClass VARCHAR(75) null,hoursOfOperation VARCHAR(75) null)";
 
 	public static final String TABLE_SQL_DROP = "drop table Contact_";
 
@@ -177,11 +177,17 @@ public class ContactModelImpl
 	public static final long COMPANYID_COLUMN_BITMASK = 4L;
 
 	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long USERID_COLUMN_BITMASK = 8L;
+
+	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long CONTACTID_COLUMN_BITMASK = 8L;
+	public static final long CONTACTID_COLUMN_BITMASK = 16L;
 
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
 		com.liferay.portal.util.PropsUtil.get(
@@ -262,125 +268,154 @@ public class ContactModelImpl
 	public Map<String, Function<Contact, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<Contact, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<Contact, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<Contact, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<Contact, Object>> attributeGetterFunctions =
-			new LinkedHashMap<String, Function<Contact, Object>>();
-		Map<String, BiConsumer<Contact, ?>> attributeSetterBiConsumers =
-			new LinkedHashMap<String, BiConsumer<Contact, ?>>();
+		private static final Map<String, Function<Contact, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put("mvccVersion", Contact::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion", (BiConsumer<Contact, Long>)Contact::setMvccVersion);
-		attributeGetterFunctions.put("contactId", Contact::getContactId);
-		attributeSetterBiConsumers.put(
-			"contactId", (BiConsumer<Contact, Long>)Contact::setContactId);
-		attributeGetterFunctions.put("companyId", Contact::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId", (BiConsumer<Contact, Long>)Contact::setCompanyId);
-		attributeGetterFunctions.put("userId", Contact::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId", (BiConsumer<Contact, Long>)Contact::setUserId);
-		attributeGetterFunctions.put("userName", Contact::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName", (BiConsumer<Contact, String>)Contact::setUserName);
-		attributeGetterFunctions.put("createDate", Contact::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate", (BiConsumer<Contact, Date>)Contact::setCreateDate);
-		attributeGetterFunctions.put("modifiedDate", Contact::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<Contact, Date>)Contact::setModifiedDate);
-		attributeGetterFunctions.put("classNameId", Contact::getClassNameId);
-		attributeSetterBiConsumers.put(
-			"classNameId", (BiConsumer<Contact, Long>)Contact::setClassNameId);
-		attributeGetterFunctions.put("classPK", Contact::getClassPK);
-		attributeSetterBiConsumers.put(
-			"classPK", (BiConsumer<Contact, Long>)Contact::setClassPK);
-		attributeGetterFunctions.put(
-			"parentContactId", Contact::getParentContactId);
-		attributeSetterBiConsumers.put(
-			"parentContactId",
-			(BiConsumer<Contact, Long>)Contact::setParentContactId);
-		attributeGetterFunctions.put("emailAddress", Contact::getEmailAddress);
-		attributeSetterBiConsumers.put(
-			"emailAddress",
-			(BiConsumer<Contact, String>)Contact::setEmailAddress);
-		attributeGetterFunctions.put("firstName", Contact::getFirstName);
-		attributeSetterBiConsumers.put(
-			"firstName", (BiConsumer<Contact, String>)Contact::setFirstName);
-		attributeGetterFunctions.put("middleName", Contact::getMiddleName);
-		attributeSetterBiConsumers.put(
-			"middleName", (BiConsumer<Contact, String>)Contact::setMiddleName);
-		attributeGetterFunctions.put("lastName", Contact::getLastName);
-		attributeSetterBiConsumers.put(
-			"lastName", (BiConsumer<Contact, String>)Contact::setLastName);
-		attributeGetterFunctions.put("prefixId", Contact::getPrefixId);
-		attributeSetterBiConsumers.put(
-			"prefixId", (BiConsumer<Contact, Long>)Contact::setPrefixId);
-		attributeGetterFunctions.put("suffixId", Contact::getSuffixId);
-		attributeSetterBiConsumers.put(
-			"suffixId", (BiConsumer<Contact, Long>)Contact::setSuffixId);
-		attributeGetterFunctions.put("male", Contact::getMale);
-		attributeSetterBiConsumers.put(
-			"male", (BiConsumer<Contact, Boolean>)Contact::setMale);
-		attributeGetterFunctions.put("birthday", Contact::getBirthday);
-		attributeSetterBiConsumers.put(
-			"birthday", (BiConsumer<Contact, Date>)Contact::setBirthday);
-		attributeGetterFunctions.put("smsSn", Contact::getSmsSn);
-		attributeSetterBiConsumers.put(
-			"smsSn", (BiConsumer<Contact, String>)Contact::setSmsSn);
-		attributeGetterFunctions.put("facebookSn", Contact::getFacebookSn);
-		attributeSetterBiConsumers.put(
-			"facebookSn", (BiConsumer<Contact, String>)Contact::setFacebookSn);
-		attributeGetterFunctions.put("jabberSn", Contact::getJabberSn);
-		attributeSetterBiConsumers.put(
-			"jabberSn", (BiConsumer<Contact, String>)Contact::setJabberSn);
-		attributeGetterFunctions.put("skypeSn", Contact::getSkypeSn);
-		attributeSetterBiConsumers.put(
-			"skypeSn", (BiConsumer<Contact, String>)Contact::setSkypeSn);
-		attributeGetterFunctions.put("twitterSn", Contact::getTwitterSn);
-		attributeSetterBiConsumers.put(
-			"twitterSn", (BiConsumer<Contact, String>)Contact::setTwitterSn);
-		attributeGetterFunctions.put(
-			"employeeStatusId", Contact::getEmployeeStatusId);
-		attributeSetterBiConsumers.put(
-			"employeeStatusId",
-			(BiConsumer<Contact, String>)Contact::setEmployeeStatusId);
-		attributeGetterFunctions.put(
-			"employeeNumber", Contact::getEmployeeNumber);
-		attributeSetterBiConsumers.put(
-			"employeeNumber",
-			(BiConsumer<Contact, String>)Contact::setEmployeeNumber);
-		attributeGetterFunctions.put("jobTitle", Contact::getJobTitle);
-		attributeSetterBiConsumers.put(
-			"jobTitle", (BiConsumer<Contact, String>)Contact::setJobTitle);
-		attributeGetterFunctions.put("jobClass", Contact::getJobClass);
-		attributeSetterBiConsumers.put(
-			"jobClass", (BiConsumer<Contact, String>)Contact::setJobClass);
-		attributeGetterFunctions.put(
-			"hoursOfOperation", Contact::getHoursOfOperation);
-		attributeSetterBiConsumers.put(
-			"hoursOfOperation",
-			(BiConsumer<Contact, String>)Contact::setHoursOfOperation);
+		static {
+			Map<String, Function<Contact, Object>> attributeGetterFunctions =
+				new LinkedHashMap<String, Function<Contact, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", Contact::getMvccVersion);
+			attributeGetterFunctions.put("contactId", Contact::getContactId);
+			attributeGetterFunctions.put("companyId", Contact::getCompanyId);
+			attributeGetterFunctions.put("userId", Contact::getUserId);
+			attributeGetterFunctions.put("userName", Contact::getUserName);
+			attributeGetterFunctions.put("createDate", Contact::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", Contact::getModifiedDate);
+			attributeGetterFunctions.put(
+				"classNameId", Contact::getClassNameId);
+			attributeGetterFunctions.put("classPK", Contact::getClassPK);
+			attributeGetterFunctions.put(
+				"parentContactId", Contact::getParentContactId);
+			attributeGetterFunctions.put(
+				"emailAddress", Contact::getEmailAddress);
+			attributeGetterFunctions.put("firstName", Contact::getFirstName);
+			attributeGetterFunctions.put("middleName", Contact::getMiddleName);
+			attributeGetterFunctions.put("lastName", Contact::getLastName);
+			attributeGetterFunctions.put(
+				"prefixListTypeId", Contact::getPrefixListTypeId);
+			attributeGetterFunctions.put(
+				"suffixListTypeId", Contact::getSuffixListTypeId);
+			attributeGetterFunctions.put("male", Contact::getMale);
+			attributeGetterFunctions.put("birthday", Contact::getBirthday);
+			attributeGetterFunctions.put("smsSn", Contact::getSmsSn);
+			attributeGetterFunctions.put("facebookSn", Contact::getFacebookSn);
+			attributeGetterFunctions.put("jabberSn", Contact::getJabberSn);
+			attributeGetterFunctions.put("skypeSn", Contact::getSkypeSn);
+			attributeGetterFunctions.put("twitterSn", Contact::getTwitterSn);
+			attributeGetterFunctions.put(
+				"employeeStatusId", Contact::getEmployeeStatusId);
+			attributeGetterFunctions.put(
+				"employeeNumber", Contact::getEmployeeNumber);
+			attributeGetterFunctions.put("jobTitle", Contact::getJobTitle);
+			attributeGetterFunctions.put("jobClass", Contact::getJobClass);
+			attributeGetterFunctions.put(
+				"hoursOfOperation", Contact::getHoursOfOperation);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<Contact, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<Contact, ?>> attributeSetterBiConsumers =
+				new LinkedHashMap<String, BiConsumer<Contact, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<Contact, Long>)Contact::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"contactId", (BiConsumer<Contact, Long>)Contact::setContactId);
+			attributeSetterBiConsumers.put(
+				"companyId", (BiConsumer<Contact, Long>)Contact::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId", (BiConsumer<Contact, Long>)Contact::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName", (BiConsumer<Contact, String>)Contact::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<Contact, Date>)Contact::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<Contact, Date>)Contact::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"classNameId",
+				(BiConsumer<Contact, Long>)Contact::setClassNameId);
+			attributeSetterBiConsumers.put(
+				"classPK", (BiConsumer<Contact, Long>)Contact::setClassPK);
+			attributeSetterBiConsumers.put(
+				"parentContactId",
+				(BiConsumer<Contact, Long>)Contact::setParentContactId);
+			attributeSetterBiConsumers.put(
+				"emailAddress",
+				(BiConsumer<Contact, String>)Contact::setEmailAddress);
+			attributeSetterBiConsumers.put(
+				"firstName",
+				(BiConsumer<Contact, String>)Contact::setFirstName);
+			attributeSetterBiConsumers.put(
+				"middleName",
+				(BiConsumer<Contact, String>)Contact::setMiddleName);
+			attributeSetterBiConsumers.put(
+				"lastName", (BiConsumer<Contact, String>)Contact::setLastName);
+			attributeSetterBiConsumers.put(
+				"prefixListTypeId",
+				(BiConsumer<Contact, Long>)Contact::setPrefixListTypeId);
+			attributeSetterBiConsumers.put(
+				"suffixListTypeId",
+				(BiConsumer<Contact, Long>)Contact::setSuffixListTypeId);
+			attributeSetterBiConsumers.put(
+				"male", (BiConsumer<Contact, Boolean>)Contact::setMale);
+			attributeSetterBiConsumers.put(
+				"birthday", (BiConsumer<Contact, Date>)Contact::setBirthday);
+			attributeSetterBiConsumers.put(
+				"smsSn", (BiConsumer<Contact, String>)Contact::setSmsSn);
+			attributeSetterBiConsumers.put(
+				"facebookSn",
+				(BiConsumer<Contact, String>)Contact::setFacebookSn);
+			attributeSetterBiConsumers.put(
+				"jabberSn", (BiConsumer<Contact, String>)Contact::setJabberSn);
+			attributeSetterBiConsumers.put(
+				"skypeSn", (BiConsumer<Contact, String>)Contact::setSkypeSn);
+			attributeSetterBiConsumers.put(
+				"twitterSn",
+				(BiConsumer<Contact, String>)Contact::setTwitterSn);
+			attributeSetterBiConsumers.put(
+				"employeeStatusId",
+				(BiConsumer<Contact, String>)Contact::setEmployeeStatusId);
+			attributeSetterBiConsumers.put(
+				"employeeNumber",
+				(BiConsumer<Contact, String>)Contact::setEmployeeNumber);
+			attributeSetterBiConsumers.put(
+				"jobTitle", (BiConsumer<Contact, String>)Contact::setJobTitle);
+			attributeSetterBiConsumers.put(
+				"jobClass", (BiConsumer<Contact, String>)Contact::setJobClass);
+			attributeSetterBiConsumers.put(
+				"hoursOfOperation",
+				(BiConsumer<Contact, String>)Contact::setHoursOfOperation);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -467,6 +502,15 @@ public class ContactModelImpl
 
 	@Override
 	public void setUserUuid(String userUuid) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public long getOriginalUserId() {
+		return GetterUtil.getLong(this.<Long>getColumnOriginalValue("userId"));
 	}
 
 	@JSON
@@ -691,32 +735,32 @@ public class ContactModelImpl
 
 	@JSON
 	@Override
-	public long getPrefixId() {
-		return _prefixId;
+	public long getPrefixListTypeId() {
+		return _prefixListTypeId;
 	}
 
 	@Override
-	public void setPrefixId(long prefixId) {
+	public void setPrefixListTypeId(long prefixListTypeId) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_prefixId = prefixId;
+		_prefixListTypeId = prefixListTypeId;
 	}
 
 	@JSON
 	@Override
-	public long getSuffixId() {
-		return _suffixId;
+	public long getSuffixListTypeId() {
+		return _suffixListTypeId;
 	}
 
 	@Override
-	public void setSuffixId(long suffixId) {
+	public void setSuffixListTypeId(long suffixListTypeId) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_suffixId = suffixId;
+		_suffixListTypeId = suffixListTypeId;
 	}
 
 	@JSON
@@ -1025,8 +1069,8 @@ public class ContactModelImpl
 		contactImpl.setFirstName(getFirstName());
 		contactImpl.setMiddleName(getMiddleName());
 		contactImpl.setLastName(getLastName());
-		contactImpl.setPrefixId(getPrefixId());
-		contactImpl.setSuffixId(getSuffixId());
+		contactImpl.setPrefixListTypeId(getPrefixListTypeId());
+		contactImpl.setSuffixListTypeId(getSuffixListTypeId());
 		contactImpl.setMale(isMale());
 		contactImpl.setBirthday(getBirthday());
 		contactImpl.setSmsSn(getSmsSn());
@@ -1075,8 +1119,10 @@ public class ContactModelImpl
 			this.<String>getColumnOriginalValue("middleName"));
 		contactImpl.setLastName(
 			this.<String>getColumnOriginalValue("lastName"));
-		contactImpl.setPrefixId(this.<Long>getColumnOriginalValue("prefixId"));
-		contactImpl.setSuffixId(this.<Long>getColumnOriginalValue("suffixId"));
+		contactImpl.setPrefixListTypeId(
+			this.<Long>getColumnOriginalValue("prefixListTypeId"));
+		contactImpl.setSuffixListTypeId(
+			this.<Long>getColumnOriginalValue("suffixListTypeId"));
 		contactImpl.setMale(this.<Boolean>getColumnOriginalValue("male"));
 		contactImpl.setBirthday(this.<Date>getColumnOriginalValue("birthday"));
 		contactImpl.setSmsSn(this.<String>getColumnOriginalValue("smsSn"));
@@ -1252,9 +1298,9 @@ public class ContactModelImpl
 			contactCacheModel.lastName = null;
 		}
 
-		contactCacheModel.prefixId = getPrefixId();
+		contactCacheModel.prefixListTypeId = getPrefixListTypeId();
 
-		contactCacheModel.suffixId = getSuffixId();
+		contactCacheModel.suffixListTypeId = getSuffixListTypeId();
 
 		contactCacheModel.male = isMale();
 
@@ -1423,8 +1469,8 @@ public class ContactModelImpl
 	private String _firstName;
 	private String _middleName;
 	private String _lastName;
-	private long _prefixId;
-	private long _suffixId;
+	private long _prefixListTypeId;
+	private long _suffixListTypeId;
 	private boolean _male;
 	private Date _birthday;
 	private String _smsSn;
@@ -1439,8 +1485,9 @@ public class ContactModelImpl
 	private String _hoursOfOperation;
 
 	public <T> T getColumnValue(String columnName) {
-		Function<Contact, Object> function = _attributeGetterFunctions.get(
-			columnName);
+		Function<Contact, Object> function =
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(
@@ -1479,8 +1526,8 @@ public class ContactModelImpl
 		_columnOriginalValues.put("firstName", _firstName);
 		_columnOriginalValues.put("middleName", _middleName);
 		_columnOriginalValues.put("lastName", _lastName);
-		_columnOriginalValues.put("prefixId", _prefixId);
-		_columnOriginalValues.put("suffixId", _suffixId);
+		_columnOriginalValues.put("prefixListTypeId", _prefixListTypeId);
+		_columnOriginalValues.put("suffixListTypeId", _suffixListTypeId);
 		_columnOriginalValues.put("male", _male);
 		_columnOriginalValues.put("birthday", _birthday);
 		_columnOriginalValues.put("smsSn", _smsSn);
@@ -1534,9 +1581,9 @@ public class ContactModelImpl
 
 		columnBitmasks.put("lastName", 8192L);
 
-		columnBitmasks.put("prefixId", 16384L);
+		columnBitmasks.put("prefixListTypeId", 16384L);
 
-		columnBitmasks.put("suffixId", 32768L);
+		columnBitmasks.put("suffixListTypeId", 32768L);
 
 		columnBitmasks.put("male", 65536L);
 

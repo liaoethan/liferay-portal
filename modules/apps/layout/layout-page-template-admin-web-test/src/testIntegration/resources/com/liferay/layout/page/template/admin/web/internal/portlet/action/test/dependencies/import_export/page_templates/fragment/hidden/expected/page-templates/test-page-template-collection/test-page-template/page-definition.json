@@ -4,7 +4,8 @@
 			{
 				"definition": {
 					"fragment": {
-						"key": "test-text-fragment"
+						"key": "test-text-fragment",
+						"siteKey": "£{SITE_KEY}"
 					},
 					"fragmentConfig": {
 					},
@@ -23,10 +24,7 @@
 						}
 					],
 					"fragmentStyle": {
-						"borderRadius": "",
-						"hidden": true,
-						"shadow": "",
-						"textAlign": ""
+						"hidden": true
 					},
 					"fragmentViewports": [
 						{

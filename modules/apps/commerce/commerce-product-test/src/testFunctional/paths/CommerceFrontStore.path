@@ -11,6 +11,11 @@
 
 <tbody>
 <tr>
+	<td>ACCOUNT_SELECTOR_SELECTED_ACCOUNT</td>
+	<td>//div[contains(@class,'account-name')]/span/span</td>
+	<td></td>
+</tr>
+<tr>
 	<td>COUPON_CODE_BODY</td>
 	<td>//div[@class='coupon-code-body']/h3[text()='${key_couponCode}']</td>
 	<td></td>
@@ -258,6 +263,11 @@
 <tr>
 	<td>PRODUCT_CARD_IMAGE_SPECIFIC</td>
 	<td>//a[contains(@href,'${key_productName}')]//img[contains(@src,'${key_image}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_CARD_BODY</td>
+	<td>//p[@class='card-title' and contains(@title,'${key_productName}')]/../../../div[contains(@class,'card-body')]</td>
 	<td></td>
 </tr>
 <tr>

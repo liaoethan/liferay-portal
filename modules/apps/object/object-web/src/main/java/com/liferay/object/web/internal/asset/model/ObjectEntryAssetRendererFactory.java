@@ -14,13 +14,14 @@
 
 package com.liferay.object.web.internal.asset.model;
 
+import com.liferay.asset.display.page.portlet.AssetDisplayPageFriendlyURLProvider;
 import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.BaseAssetRendererFactory;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.web.internal.object.entries.display.context.ObjectEntryDisplayContextFactory;
-import com.liferay.object.web.internal.util.ObjectDefinitionPermissionUtil;
+import com.liferay.object.web.internal.security.permission.resource.util.ObjectDefinitionResourcePermissionUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -35,13 +36,17 @@ public class ObjectEntryAssetRendererFactory
 	extends BaseAssetRendererFactory<ObjectEntry> {
 
 	public ObjectEntryAssetRendererFactory(
+		AssetDisplayPageFriendlyURLProvider assetDisplayPageFriendlyURLProvider,
 		ObjectDefinition objectDefinition,
 		ObjectEntryDisplayContextFactory objectEntryDisplayContextFactory,
 		ObjectEntryService objectEntryService, ServletContext servletContext) {
 
 		setClassName(objectDefinition.getClassName());
+		setSearchable(true);
 		setPortletId(objectDefinition.getPortletId());
 
+		_assetDisplayPageFriendlyURLProvider =
+			assetDisplayPageFriendlyURLProvider;
 		_objectDefinition = objectDefinition;
 		_objectEntryDisplayContextFactory = objectEntryDisplayContextFactory;
 		_objectEntryService = objectEntryService;
@@ -54,7 +59,8 @@ public class ObjectEntryAssetRendererFactory
 
 		ObjectEntryAssetRenderer objectEntryAssetRenderer =
 			new ObjectEntryAssetRenderer(
-				_objectDefinition, _objectEntryService.getObjectEntry(classPK),
+				_assetDisplayPageFriendlyURLProvider, _objectDefinition,
+				_objectEntryService.getObjectEntry(classPK),
 				_objectEntryDisplayContextFactory, _objectEntryService);
 
 		objectEntryAssetRenderer.setServletContext(_servletContext);
@@ -73,8 +79,9 @@ public class ObjectEntryAssetRendererFactory
 		throws Exception {
 
 		try {
-			return ObjectDefinitionPermissionUtil.hasModelResourcePermission(
-				_objectDefinition, classPK, _objectEntryService, actionId);
+			return ObjectDefinitionResourcePermissionUtil.
+				hasModelResourcePermission(
+					_objectDefinition, classPK, _objectEntryService, actionId);
 		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
@@ -85,9 +92,20 @@ public class ObjectEntryAssetRendererFactory
 		}
 	}
 
+	@Override
+	public boolean isActive(long companyId) {
+		if (_objectDefinition.getCompanyId() == companyId) {
+			return true;
+		}
+
+		return false;
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		ObjectEntryAssetRendererFactory.class);
 
+	private final AssetDisplayPageFriendlyURLProvider
+		_assetDisplayPageFriendlyURLProvider;
 	private final ObjectDefinition _objectDefinition;
 	private final ObjectEntryDisplayContextFactory
 		_objectEntryDisplayContextFactory;

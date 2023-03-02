@@ -48,7 +48,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 /**
  * @author Tomas Polesovsky
  */
-@Component(immediate = true, service = UserPersonalSitePermissions.class)
+@Component(service = UserPersonalSitePermissions.class)
 public class UserPersonalSitePermissions {
 
 	public void initPermissions(long companyId, List<Portlet> portlets) {
@@ -66,10 +66,12 @@ public class UserPersonalSitePermissions {
 
 		for (Portlet portlet : portlets) {
 			try {
-				initPermissions(
-					companyId, powerUserRole.getRoleId(),
-					portlet.getRootPortletId(),
-					userPersonalSiteGroup.getGroupId());
+				if (companyId == portlet.getCompanyId()) {
+					initPermissions(
+						companyId, powerUserRole.getRoleId(),
+						portlet.getRootPortletId(),
+						userPersonalSiteGroup.getGroupId());
+				}
 			}
 			catch (PortalException portalException) {
 				_log.error(
@@ -186,9 +188,12 @@ public class UserPersonalSitePermissions {
 		}
 
 		try {
-			initPermissions(
-				companyId, powerUserRole.getRoleId(),
-				portlet.getRootPortletId(), userPersonalSiteGroup.getGroupId());
+			if (companyId == portlet.getCompanyId()) {
+				initPermissions(
+					companyId, powerUserRole.getRoleId(),
+					portlet.getRootPortletId(),
+					userPersonalSiteGroup.getGroupId());
+			}
 		}
 		catch (PortalException portalException) {
 			_log.error(

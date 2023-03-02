@@ -15,7 +15,6 @@
 package com.liferay.wiki.model;
 
 import com.liferay.portal.kernel.bean.AutoEscape;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.ContainerModel;
 import com.liferay.portal.kernel.model.MVCCModel;
@@ -24,6 +23,7 @@ import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.StagedGroupedModel;
 import com.liferay.portal.kernel.model.TrashedModel;
 import com.liferay.portal.kernel.model.WorkflowedModel;
+import com.liferay.portal.kernel.model.change.tracking.CTModel;
 
 import java.util.Date;
 
@@ -42,8 +42,9 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface WikiPageModel
-	extends BaseModel<WikiPage>, ContainerModel, MVCCModel, ResourcedModel,
-			ShardedModel, StagedGroupedModel, TrashedModel, WorkflowedModel {
+	extends BaseModel<WikiPage>, ContainerModel, CTModel<WikiPage>, MVCCModel,
+			ResourcedModel, ShardedModel, StagedGroupedModel, TrashedModel,
+			WorkflowedModel {
 
 	/*
 	 * NOTE FOR DEVELOPERS:
@@ -56,6 +57,7 @@ public interface WikiPageModel
 	 *
 	 * @return the primary key of this wiki page
 	 */
+	@Override
 	public long getPrimaryKey();
 
 	/**
@@ -63,6 +65,7 @@ public interface WikiPageModel
 	 *
 	 * @param primaryKey the primary key of this wiki page
 	 */
+	@Override
 	public void setPrimaryKey(long primaryKey);
 
 	/**
@@ -80,6 +83,22 @@ public interface WikiPageModel
 	 */
 	@Override
 	public void setMvccVersion(long mvccVersion);
+
+	/**
+	 * Returns the ct collection ID of this wiki page.
+	 *
+	 * @return the ct collection ID of this wiki page
+	 */
+	@Override
+	public long getCtCollectionId();
+
+	/**
+	 * Sets the ct collection ID of this wiki page.
+	 *
+	 * @param ctCollectionId the ct collection ID of this wiki page
+	 */
+	@Override
+	public void setCtCollectionId(long ctCollectionId);
 
 	/**
 	 * Returns the uuid of this wiki page.
@@ -517,15 +536,6 @@ public interface WikiPageModel
 	public void setStatusDate(Date statusDate);
 
 	/**
-	 * Returns the trash entry created when this wiki page was moved to the Recycle Bin. The trash entry may belong to one of the ancestors of this wiki page.
-	 *
-	 * @return the trash entry created when this wiki page was moved to the Recycle Bin
-	 */
-	@Override
-	public com.liferay.trash.kernel.model.TrashEntry getTrashEntry()
-		throws PortalException;
-
-	/**
 	 * Returns the class primary key of the trash entry for this wiki page.
 	 *
 	 * @return the class primary key of the trash entry for this wiki page
@@ -540,20 +550,6 @@ public interface WikiPageModel
 	 */
 	@Override
 	public boolean isInTrash();
-
-	/**
-	 * Returns <code>true</code> if the parent of this wiki page is in the Recycle Bin.
-	 *
-	 * @return <code>true</code> if the parent of this wiki page is in the Recycle Bin; <code>false</code> otherwise
-	 */
-	@Override
-	public boolean isInTrashContainer();
-
-	@Override
-	public boolean isInTrashExplicitly();
-
-	@Override
-	public boolean isInTrashImplicitly();
 
 	/**
 	 * Returns <code>true</code> if this wiki page is approved.
@@ -661,5 +657,9 @@ public interface WikiPageModel
 
 	@Override
 	public WikiPage cloneWithOriginalValues();
+
+	public default String toXmlString() {
+		return null;
+	}
 
 }

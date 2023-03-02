@@ -18,6 +18,7 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryConstants;
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalService;
@@ -52,9 +53,10 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
 import com.liferay.trash.constants.TrashEntryConstants;
-import com.liferay.trash.kernel.exception.RestoreEntryException;
+import com.liferay.trash.exception.RestoreEntryException;
 import com.liferay.trash.kernel.model.TrashEntry;
 
 import javax.portlet.PortletRequest;
@@ -186,7 +188,9 @@ public class DLFileEntryTrashHandler extends BaseDLTrashHandler {
 
 		DLFolder dlFolder = dlFileEntry.getFolder();
 
-		return DLUtil.getAbsolutePath(portletRequest, dlFolder.getFolderId());
+		return DLUtil.getAbsolutePath(
+			portletRequest, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			dlFolder.getFolderId());
 	}
 
 	@Override
@@ -259,7 +263,7 @@ public class DLFileEntryTrashHandler extends BaseDLTrashHandler {
 			return false;
 		}
 
-		return !dlFileEntry.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(dlFileEntry);
 	}
 
 	@Override
@@ -492,5 +496,8 @@ public class DLFileEntryTrashHandler extends BaseDLTrashHandler {
 		target = "(model.class.name=com.liferay.portal.kernel.repository.model.Folder)"
 	)
 	private ModelResourcePermission<Folder> _folderModelResourcePermission;
+
+	@Reference
+	private TrashHelper _trashHelper;
 
 }

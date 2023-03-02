@@ -1,0 +1,253 @@
+definition {
+
+	macro _curlUserAccount {
+		var portalURL = JSONCompany.getPortalURL();
+
+		if (isSet(userAccountId)) {
+			var api = "user-accounts/${userAccountId}";
+
+			if (isSet(parameter)) {
+				var api = "user-accounts/${userAccountId}?${parameter}=${parameterValue}";
+			}
+
+			if (isSet(relationshipName) && isSet(customObjectEntryId) && isSet(userAccountId)) {
+				var api = "user-accounts/${userAccountId}/${relationshipName}/${customObjectEntryId}";
+			}
+		}
+		else {
+			var api = "user-accounts";
+		}
+
+		var curl = '''
+			${portalURL}/o/headless-admin-user/v1.0/${api} \
+				-H accept: application/json \
+				-H Content-Type: application/json \
+				-u test@liferay.com:test \
+		''';
+
+		return ${curl};
+	}
+
+	macro assertResponseHasCorrectRelatedEntryName {
+		Variables.assertDefined(parameterList = "${userAccountId},${relationshipName},${expectedValue}");
+
+		var response = UserAccountAPI.getRelationshipByUserAccountId(
+			relationshipName = ${relationshipName},
+			userAccountId = ${userAccountId});
+
+		var actual = JSONUtil.getWithJSONPath(${response}, "$.items[?(@.id==${customObjectEntryId})].name");
+
+		TestUtils.assertEquals(
+			actual = ${actual},
+			expected = ${expectedValue});
+	}
+
+	macro assertResponseNotIncludeDetailsOfDeletedObjectEntry {
+		Variables.assertDefined(parameterList = "${userAccountId},${relationshipName},${expectedValue}");
+
+		var response = UserAccountAPI.getRelationshipByUserAccountId(
+			relationshipName = ${relationshipName},
+			userAccountId = ${userAccountId});
+
+		var actual = JSONUtil.getWithJSONPath(${response}, "$..items");
+
+		TestUtils.assertEquals(
+			actual = ${actual},
+			expected = ${expectedValue});
+	}
+
+	macro createUserAccount {
+		Variables.assertDefined(parameterList = "${alternateName},${emailAddress},${familyName},${givenName}");
+
+		var curl = UserAccountAPI._curlUserAccount();
+		var body = '''"alternateName": "${alternateName}","emailAddress": "${emailAddress}","familyName": "${familyName}","givenName": "${givenName}"''';
+
+		if (isSet(fieldName) && isSet(fieldValue)) {
+			var body = StringUtil.add("${body},", "\"${fieldName}\":\"${fieldValue}\"", "");
+		}
+
+		var curl = StringUtil.add(${curl}, "-d {${body}}", " ");
+
+		var response = JSONCurlUtil.post(${curl});
+
+		return ${response};
+	}
+
+	macro createUserRoleByUserAccountId {
+		Variables.assertDefined(parameterList = "${roleName},${streetNumber},${userAccountId}");
+
+		var portalURL = JSONCompany.getPortalURL();
+		var roleId = UserAccountAPI.getRoleId(
+			roleName = ${roleName},
+			streetNumber = ${streetNumber});
+
+		var curl = '''
+			${portalURL}/o/headless-admin-user/v1.0/roles/${roleId}/association/user-account/${userAccountId} \
+				-H accept: application/json \
+				-u test@liferay.com:test \
+		''';
+
+		var response = JSONCurlUtil.post(${curl});
+
+		return ${response};
+	}
+
+	macro deleteObjectEntryRelatedToUserAccount {
+		Variables.assertDefined(parameterList = "${userAccountId},${relationshipName},${customObjectEntryId}");
+
+		var curl = UserAccountAPI._curlUserAccount(
+			customObjectEntryId = ${customObjectEntryId},
+			relationshipName = ${relationshipName},
+			userAccountId = ${userAccountId});
+
+		JSONCurlUtil.delete(${curl});
+	}
+
+	macro getRelationshipByUserAccountId {
+		Variables.assertDefined(parameterList = "${userAccountId},${relationshipName}");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+			${portalURL}/o/headless-admin-user/v1.0/user-accounts/${userAccountId}/${relationshipName} \
+				-H accept: application/json \
+				-H Content-Type: application/json \
+				-u test@liferay.com:test \
+		''';
+
+		var response = JSONCurlUtil.get(${curl});
+
+		return ${response};
+	}
+
+	macro getRoleId {
+		Variables.assertDefined(parameterList = "${roleName},${streetNumber}");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+			${portalURL}/o/headless-admin-user/v1.0/roles \
+				-H accept: application/json \
+				-u test@liferay.com:test \
+		''';
+
+		var response = JSONCurlUtil.get(${curl});
+
+		if (isSet(streetNumber)) {
+			var roleId = JSONUtil.getWithJSONPath(${response}, "$.items[${streetNumber}].id");
+
+			return ${roleId};
+		}
+		else {
+			return ${response};
+		}
+	}
+
+	macro getSystemObjectsWithNestedField {
+		var curl = UserAccountAPI._curlUserAccount(
+			parameter = ${parameter},
+			parameterValue = ${parameterValue},
+			userAccountId = ${userAccountId});
+
+		var response = JSONCurlUtil.get(${curl});
+
+		return ${response};
+	}
+
+	macro getUpdatedFieldOfUserAccountWithPatchRequest {
+		Variables.assertDefined(parameterList = "${fieldName},${updatedFieldValue}");
+
+		if (!(isSet(userAccountId))) {
+			var userAccountId = ${UserAccountId};
+		}
+
+		var curl = UserAccountAPI._curlUserAccount(userAccountId = ${userAccountId});
+		var body = '''-d {"${fieldName}":"${updatedFieldValue}"}''';
+
+		var curl = StringUtil.add(${curl}, ${body}, "");
+
+		var valueOfField = JSONCurlUtil.patch(${curl}, "$.${fieldName}");
+
+		return ${valueOfField};
+	}
+
+	macro getUpdatedFieldOfUserAccountWithPutRequest {
+		Variables.assertDefined(parameterList = "${alternateName},${emailAddress},${familyName},${givenName},${fieldName},${updatedFieldValue}");
+
+		if (!(isSet(userAccountId))) {
+			var userAccountId = ${UserAccountId};
+		}
+
+		var curl = UserAccountAPI._curlUserAccount(userAccountId = ${userAccountId});
+		var body = '''
+			-d {
+				"alternateName": "${alternateName}",
+				"emailAddress": "${emailAddress}",
+				"familyName": "${familyName}",
+				"givenName": "${givenName}",
+				"${fieldName}":"${updatedFieldValue}"
+			}
+		''';
+
+		var curl = StringUtil.add(${curl}, ${body}, "");
+
+		var valueOfField = JSONCurlUtil.put(${curl}, "$.${fieldName}");
+
+		return ${valueOfField};
+	}
+
+	macro relateObjectEntries {
+		Variables.assertDefined(parameterList = "${userAccountId},${customObjectId},${relationshipName}");
+
+		var portalURL = JSONCompany.getPortalURL();
+
+		var curl = '''
+			${portalURL}/o/headless-admin-user/v1.0/user-accounts/${userAccountId}/${relationshipName}/${customObjectId} \
+				-H accept: application/json \
+				-H Content-Type: application/json \
+				-u test@liferay.com:test \
+		''';
+
+		var response = JSONCurlUtil.put(${curl});
+
+		return ${response};
+	}
+
+	macro setUpGlobalUserAccountId {
+		var response = UserAccountAPI.createUserAccount(
+			alternateName = ${alternateName},
+			emailAddress = ${emailAddress},
+			familyName = ${familyName},
+			fieldName = ${fieldName},
+			fieldValue = ${fieldValue},
+			givenName = ${givenName});
+
+		static var staticResponse = ${response};
+
+		static var staticUserAccountId = JSONUtil.getWithJSONPath(${staticResponse}, "$.id");
+
+		return ${staticResponse};
+
+		return ${staticUserAccountId};
+	}
+
+	macro setUpGlobalUserAccountIds {
+		var response1 = UserAccountAPI.createUserAccount(
+			alternateName = ${alternateName1},
+			emailAddress = ${emailAddress1},
+			familyName = ${familyName1},
+			givenName = ${givenName1});
+		var response2 = UserAccountAPI.createUserAccount(
+			alternateName = ${alternateName2},
+			emailAddress = ${emailAddress2},
+			familyName = ${familyName2},
+			givenName = ${givenName2});
+		static var staticUserAccountId1 = JSONUtil.getWithJSONPath(${response1}, "$.id");
+		static var staticUserAccountId2 = JSONUtil.getWithJSONPath(${response2}, "$.id");
+
+		return ${staticUserAccountId1};
+
+		return ${staticUserAccountId2};
+	}
+
+}

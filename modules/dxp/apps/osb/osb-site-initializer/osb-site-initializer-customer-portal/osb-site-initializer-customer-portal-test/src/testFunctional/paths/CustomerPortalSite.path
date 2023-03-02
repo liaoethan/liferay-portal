@@ -11,8 +11,28 @@
 
 <tbody>
 <tr>
+	<td>ANY_LINK</td>
+	<td>//*[contains(@href, 'liferay') and text()='${key_text}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SVG_ACTIVATION_STATUS</td>
+	<td>//*[contains(@class, 'cp-label-activation-status')]//div/descendant::button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SVG_STATUS_OPTION</td>
+	<td>//*[contains(@class, 'dropdown-item')]//*[text()='${key_text}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>BUTTON</td>
 	<td>//*[contains(@class, btn) and text()='${key_text}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>BODY</td>
+	<td>//body</td>
 	<td></td>
 </tr>
 <tr>
@@ -92,7 +112,7 @@
 </tr>
 <tr>
 	<td>PROJECT_LOGO</td>
-	<td>//div[contains(@class, 'card-subscription')]//img[contains(@src, '${logo}')]</td>
+	<td>//*[contains(@class, 'subscription-card')]//img[contains(@src, '${logo}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -107,12 +127,12 @@
 </tr>
 <tr>
 	<td>CARD_DATE</td>
-	<td>//div[contains(@class, 'card-subscription')]//p[(text()='${date}')]//..//span[(text()='${status}')]</td>
+	<td>//*[contains(@class, 'card-body')]//*[(text()='${date}')]//..//*[(text()='${status}')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>CARD_INSTANCE</td>
-	<td>xpath=(//div[contains(@class, 'card-subscription')]//..//p[contains(text(), '${title}')])[${key_index}]</td>
+	<td>xpath=(//*[contains(@class, 'subscription-card')]//..//p[contains(text(), '${title}')])[${key_index}]</td>
 	<td></td>
 </tr>
 <tr>
@@ -127,12 +147,12 @@
 </tr>
 <tr>
 	<td>SUBSCRIPTION_NAVBAR</td>
-	<td>//div[@id='subscription-navbar']/button[@value='${value}']</td>
+	<td>//*[contains(@class, 'nav-segment')]//*[contains(text(), '${value}')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>SUBSCRIPTION_DROPDOWN</td>
-	<td>//*[contains(text(), '${key_dropdownLabel}')]/following-sibling::*[@class='dropdown']</td>
+	<td>//*[@data-testid= 'subscriptionDropDown']</td>
 	<td></td>
 </tr>
 <tr>
@@ -158,6 +178,16 @@
 <tr>
 	<td>MODAL</td>
 	<td>//div[contains(@class, 'modal-dialog')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>MODAL_INFO</td>
+	<td>//*[contains(text(), '${key_text}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>MODAL_SETUP</td>
+	<td>//*[contains(@class, 'form-control')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -221,18 +251,23 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SPECIFIC_ERROR_MESSAGE</td>
+	<td>//*[contains(@name, '${value}')]/parent::*//following-sibling::*//*[text()='${key_errorMessage}']</td>
+	<td></td>
+</tr>
+<tr>
 	<td>SUCCESS_MESSAGE</td>
 	<td>//div[contains(@class, 'text-center') and contains(text(), 'Thank you for submitting this request!')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>SLA_CARD</td>
-	<td>//div[contains(text(), '${type}')]</td>
+	<td>//*[contains(text(), '${type}')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>FRAGMENT_HEADING</td>
-	<td>///*[contains(@class, 'customer-portal-welcome-banner') and contains(.,'${key_title}')]</td>
+	<td>//*[contains(@class, 'customer-portal-welcome-banner') and contains(.,'${key_title}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -273,6 +308,11 @@
 <tr>
 	<td>SETUP_VALUE</td>
 	<td>xpath=(//*[contains(@name,'${label}') and contains(@value,'${value}')])[${key_index}]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>FIELD_VALUE</td>
+	<td>//input[contains(@id,'${label}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -341,6 +381,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SEARCH</td>
+	<td>//input[contains(@placeholder, 'Search')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>ALERT_NOTIFICATIONS</td>
 	<td>//*[contains(@class, 'alert-notifications')]//*[text()='${key_alertText}']</td>
 	<td></td>
@@ -353,6 +398,31 @@
 <tr>
 	<td>SUPPORT_SEAT</td>
 	<td>//p[contains(text(), 'Support Seat')]//..//*[*[name()='svg'][contains(@class,'lexicon-icon-info-circle')]]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DROPDOWN_STATUS</td>
+	<td>//span[contains(text(), 'In Progress')]/ancestor::span/following-sibling::div//button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ID_CONFIRMATION</td>
+	<td>//input[@id='basicInputText']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VERSION_DROPDOWN</td>
+	<td>//*[contains(text(), 'Developer Keys')]/following-sibling::div//select</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DEPLOY_ARTICLE_PAGE</td>
+	<td>//*[contains(text(), ' Liferay Portal instance, please read the')]/*[contains(@href, 'Deploying-Activation-Keys')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DEPLOY_ACTIVATION_PAGE</td>
+	<td>//*//h1[contains(text(), 'Deploying Activation Keys')]</td>
 	<td></td>
 </tr>
 </tbody>

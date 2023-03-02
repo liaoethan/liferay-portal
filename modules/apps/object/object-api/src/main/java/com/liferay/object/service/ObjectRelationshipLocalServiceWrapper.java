@@ -80,6 +80,17 @@ public class ObjectRelationshipLocalServiceWrapper
 			serviceContext);
 	}
 
+	@Override
+	public com.liferay.object.model.ObjectRelationship
+			createManyToManyObjectRelationshipTable(
+				long userId,
+				com.liferay.object.model.ObjectRelationship objectRelationship)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectRelationshipLocalService.
+			createManyToManyObjectRelationshipTable(userId, objectRelationship);
+	}
+
 	/**
 	 * Creates a new object relationship with the primary key. Does not add the object relationship to the database.
 	 *
@@ -299,13 +310,22 @@ public class ObjectRelationshipLocalServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectRelationship
-			fetchObjectRelationshipByObjectDefinitionId(
-				long objectDefinitionId, String name)
-		throws Exception {
+		fetchObjectRelationshipByObjectDefinitionId(
+			long objectDefinitionId, String name) {
 
 		return _objectRelationshipLocalService.
 			fetchObjectRelationshipByObjectDefinitionId(
 				objectDefinitionId, name);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectRelationship
+		fetchObjectRelationshipByObjectDefinitionId1(
+			long objectDefinitionId1, String name) {
+
+		return _objectRelationshipLocalService.
+			fetchObjectRelationshipByObjectDefinitionId1(
+				objectDefinitionId1, name);
 	}
 
 	@Override
@@ -346,6 +366,14 @@ public class ObjectRelationshipLocalServiceWrapper
 		getActionableDynamicQuery() {
 
 		return _objectRelationshipLocalService.getActionableDynamicQuery();
+	}
+
+	@Override
+	public java.util.List<com.liferay.object.model.ObjectRelationship>
+		getAllObjectRelationships(long objectDefinitionId) {
+
+		return _objectRelationshipLocalService.getAllObjectRelationships(
+			objectDefinitionId);
 	}
 
 	@Override
@@ -394,12 +422,11 @@ public class ObjectRelationshipLocalServiceWrapper
 	@Override
 	public com.liferay.object.model.ObjectRelationship
 			getObjectRelationshipByObjectDefinitionId(
-				long objectDefinitionId, String objectRelationshipName)
+				long objectDefinitionId, String name)
 		throws Exception {
 
 		return _objectRelationshipLocalService.
-			getObjectRelationshipByObjectDefinitionId(
-				objectDefinitionId, objectRelationshipName);
+			getObjectRelationshipByObjectDefinitionId(objectDefinitionId, name);
 	}
 
 	/**
@@ -461,6 +488,14 @@ public class ObjectRelationshipLocalServiceWrapper
 
 		return _objectRelationshipLocalService.getObjectRelationships(
 			objectDefinitionId1, objectDefinition2, type);
+	}
+
+	@Override
+	public java.util.List<com.liferay.object.model.ObjectRelationship>
+		getObjectRelationships(long objectDefinitionId, String type) {
+
+		return _objectRelationshipLocalService.getObjectRelationships(
+			objectDefinitionId, type);
 	}
 
 	@Override

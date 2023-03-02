@@ -54,8 +54,12 @@ package ${packagePath}.service.persistence.impl;
 
 import ${serviceBuilder.getCompatJavaClassName("StringBundler")};
 
-<#assign noSuchEntity = serviceBuilder.getNoSuchEntityException(entity) />
+<#assign
+	duplicateEntityExternalReferenceCode = serviceBuilder.getDuplicateEntityExternalReferenceCodeException(entity)
+	noSuchEntity = serviceBuilder.getNoSuchEntityException(entity)
+/>
 
+import ${apiPackagePath}.exception.${duplicateEntityExternalReferenceCode}Exception;
 import ${apiPackagePath}.exception.${noSuchEntity}Exception;
 import ${apiPackagePath}.model.${entity.name};
 
@@ -226,11 +230,7 @@ import org.osgi.service.component.annotations.Reference;
 />
 
 <#if dependencyInjectorDS>
-	<#if serviceBuilder.isVersionGTE_7_4_0()>
-		@Component(service = {${entity.name}Persistence.class, BasePersistence.class})
-	<#else>
-		@Component(service = ${entity.name}Persistence.class)
-	</#if>
+	@Component(service = ${entity.name}Persistence.class)
 
 	<#assign
 		columnBitmaskCacheEnabled = "_columnBitmaskEnabled"
@@ -818,6 +818,28 @@ public class ${entity.name}PersistenceImpl extends BasePersistenceImpl<${entity.
 					${entity.variableName}.setExternalReferenceCode(String.valueOf(${entity.variableName}.getPrimaryKey()));
 				</#if>
 			}
+
+			<#if serviceBuilder.isVersionGTE_7_3_0() && entity.hasExternalReferenceCode()>
+				else {
+					<#if serviceBuilder.isVersionGTE_7_4_0()>
+						${entity.name} erc${entity.name} = fetchByERC_${entity.externalReferenceCode?cap_first[0..0]}(${entity.variableName}.getExternalReferenceCode(), ${entity.variableName}.get${entity.externalReferenceCode?cap_first}Id());
+					<#else>
+						${entity.name} erc${entity.name} = fetchBy${entity.externalReferenceCode?cap_first[0..0]}_ERC(${entity.variableName}.get${entity.externalReferenceCode?cap_first}Id(), ${entity.variableName}.getExternalReferenceCode());
+					</#if>
+
+					if (isNew) {
+						if (erc${entity.name} != null) {
+								throw new ${duplicateEntityExternalReferenceCode}Exception("Duplicate ${entity.humanName} with external reference code " + ${entity.variableName}.getExternalReferenceCode() + " and ${entity.externalReferenceCode} " + ${entity.variableName}.get${entity.externalReferenceCode?cap_first}Id());
+						}
+					}
+					else {
+						if ((erc${entity.name} != null) &&
+							(${entity.variableName}.get${entity.PKMethodName}() != erc${entity.name}.get${entity.PKMethodName}())) {
+								throw new ${duplicateEntityExternalReferenceCode}Exception("Duplicate ${entity.humanName} with external reference code " + ${entity.variableName}.getExternalReferenceCode() + " and ${entity.externalReferenceCode} " + ${entity.variableName}.get${entity.externalReferenceCode?cap_first}Id());
+						}
+					}
+				}
+			</#if>
 		</#if>
 
 		<#if entity.hasEntityColumn("createDate", "Date") && entity.hasEntityColumn("modifiedDate", "Date")>
@@ -1862,8 +1884,6 @@ public class ${entity.name}PersistenceImpl extends BasePersistenceImpl<${entity.
 			}
 
 			<#if entityColumn.isMappingManyToMany()>
-				<#assign noSuchTempEntity = serviceBuilder.getNoSuchEntityException(referenceEntity) />
-
 				/**
 				 * Adds an association between the ${entity.humanName} and the ${referenceEntity.humanName}. Also notifies the appropriate model listeners and clears the mapping table finder cache.
 				 *

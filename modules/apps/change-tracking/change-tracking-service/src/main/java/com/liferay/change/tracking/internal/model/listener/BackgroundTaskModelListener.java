@@ -32,7 +32,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Preston Crary
  */
-@Component(immediate = true, service = ModelListener.class)
+@Component(service = ModelListener.class)
 public class BackgroundTaskModelListener
 	extends BaseModelListener<BackgroundTask> {
 
@@ -48,6 +48,12 @@ public class BackgroundTaskModelListener
 				BackgroundTaskConstants.STATUS_CANCELLED) ||
 			 (backgroundTask.getStatus() ==
 				 BackgroundTaskConstants.STATUS_FAILED))) {
+
+			String name = backgroundTask.getName();
+
+			if (name.contains("_")) {
+				return;
+			}
 
 			CTCollection ctCollection =
 				_ctCollectionLocalService.fetchCTCollection(

@@ -45,7 +45,7 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 		_testrayServer = _testrayRoutine.getTestrayServer();
 
 		_testrayProductVersion = _testrayProject.getTestrayProductVersionByID(
-			_jsonObject.getInt("testrayProductVersionId"));
+			_jsonObject.getLong("testrayProductVersionId"));
 	}
 
 	@Override
@@ -54,7 +54,7 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 			throw new NullPointerException("Testray build is null");
 		}
 
-		Integer id = testrayBuild.getID();
+		Long id = testrayBuild.getID();
 
 		return id.compareTo(getID());
 	}
@@ -63,12 +63,23 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 		return _jsonObject.getString("description");
 	}
 
-	public int getID() {
-		return _jsonObject.getInt("testrayBuildId");
+	public long getID() {
+		return _jsonObject.getLong("testrayBuildId");
 	}
 
 	public String getName() {
 		return _jsonObject.getString("name");
+	}
+
+	public String getPortalBranch() {
+		Matcher matcher = _portalBranchPattern.matcher(
+			_jsonObject.optString("description"));
+
+		if (!matcher.find()) {
+			return null;
+		}
+
+		return matcher.group("portalBranch");
 	}
 
 	public String getPortalSHA() {
@@ -326,7 +337,7 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 			_testrayProductVersion =
 				_testrayProject.getTestrayProductVersionByID(
-					_jsonObject.getInt("testrayProductVersionId"));
+					_jsonObject.getLong("testrayProductVersionId"));
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(ioException);
@@ -394,6 +405,8 @@ public class TestrayBuild implements Comparable<TestrayBuild> {
 
 	private static final int _PAGE_DELTA = 200;
 
+	private static final Pattern _portalBranchPattern = Pattern.compile(
+		"Portal Branch: (?<portalBranch>[^;]+);");
 	private static final Pattern _portalSHAPattern = Pattern.compile(
 		"Portal SHA: (?<portalSHA>[^;]+);");
 	private static final Pattern _testrayAttachmentURLPattern = Pattern.compile(

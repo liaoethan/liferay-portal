@@ -16,6 +16,8 @@ package com.liferay.redirect.web.internal.display.context;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
@@ -32,6 +34,7 @@ import com.liferay.portal.kernel.search.SearchResult;
 import com.liferay.portal.kernel.search.SearchResultUtil;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -42,7 +45,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.redirect.model.RedirectNotFoundEntry;
 import com.liferay.redirect.service.RedirectNotFoundEntryLocalService;
 import com.liferay.redirect.web.internal.search.RedirectNotFoundEntrySearch;
-import com.liferay.redirect.web.internal.security.permission.resource.RedirectPermission;
 import com.liferay.redirect.web.internal.util.RedirectUtil;
 import com.liferay.staging.StagingGroupHelper;
 import com.liferay.staging.StagingGroupHelperUtil;
@@ -53,8 +55,6 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.portlet.PortletURL;
 
@@ -69,11 +69,13 @@ public class RedirectNotFoundEntriesDisplayContext {
 		HttpServletRequest httpServletRequest,
 		LiferayPortletRequest liferayPortletRequest,
 		LiferayPortletResponse liferayPortletResponse,
+		PortletResourcePermission portletResourcePermission,
 		RedirectNotFoundEntryLocalService redirectNotFoundEntryLocalService) {
 
 		_httpServletRequest = httpServletRequest;
 		_liferayPortletRequest = liferayPortletRequest;
 		_liferayPortletResponse = liferayPortletResponse;
+		_portletResourcePermission = portletResourcePermission;
 		_redirectNotFoundEntryLocalService = redirectNotFoundEntryLocalService;
 
 		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
@@ -113,7 +115,7 @@ public class RedirectNotFoundEntriesDisplayContext {
 				StagingGroupHelper stagingGroupHelper =
 					StagingGroupHelperUtil.getStagingGroupHelper();
 
-				return RedirectPermission.contains(
+				return _portletResourcePermission.contains(
 					_themeDisplay.getPermissionChecker(),
 					_themeDisplay.getScopeGroupId(), ActionKeys.ADD_ENTRY) &&
 					   !(stagingGroupHelper.isLocalStagingGroup(
@@ -139,6 +141,30 @@ public class RedirectNotFoundEntriesDisplayContext {
 		).build();
 	}
 
+	public String getActionURL() throws Exception {
+		SearchContainer<RedirectNotFoundEntry> searchContainer =
+			getSearchContainer();
+
+		return String.valueOf(searchContainer.getIteratorURL());
+	}
+
+	public String getAvailableActions(
+		RedirectNotFoundEntry redirectNotFoundEntry) {
+
+		if (redirectNotFoundEntry.isIgnored()) {
+			return "unignoreSelectedRedirectNotFoundEntries";
+		}
+
+		return "ignoreSelectedRedirectNotFoundEntries";
+	}
+
+	public String getEmptyResultsMessage() throws Exception {
+		SearchContainer<RedirectNotFoundEntry> searchContainer =
+			getSearchContainer();
+
+		return searchContainer.getEmptyResultsMessage();
+	}
+
 	public RedirectNotFoundEntriesManagementToolbarDisplayContext
 			getRedirectNotFoundEntriesManagementToolbarDisplayContext()
 		throws Exception {
@@ -146,14 +172,10 @@ public class RedirectNotFoundEntriesDisplayContext {
 		return new RedirectNotFoundEntriesManagementToolbarDisplayContext(
 			_httpServletRequest, _liferayPortletRequest,
 			_liferayPortletResponse, _redirectNotFoundEntryLocalService,
-			searchContainer());
+			getSearchContainer());
 	}
 
-	public String getSearchContainerId() {
-		return "redirectNotFoundEntries";
-	}
-
-	public SearchContainer<RedirectNotFoundEntry> searchContainer()
+	public SearchContainer<RedirectNotFoundEntry> getSearchContainer()
 		throws Exception {
 
 		if (_redirectNotFoundEntrySearch != null) {
@@ -167,6 +189,26 @@ public class RedirectNotFoundEntriesDisplayContext {
 		_populateWithSearchIndex(_redirectNotFoundEntrySearch);
 
 		return _redirectNotFoundEntrySearch;
+	}
+
+	public String getSearchContainerId() {
+		return "redirectNotFoundEntries";
+	}
+
+	public String getURL(RedirectNotFoundEntry redirectNotFoundEntry) {
+		return RedirectUtil.getGroupBaseURL(_themeDisplay) + StringPool.SLASH +
+			redirectNotFoundEntry.getUrl();
+	}
+
+	public boolean hasResults() throws Exception {
+		SearchContainer<RedirectNotFoundEntry> searchContainer =
+			getSearchContainer();
+
+		if (searchContainer.getTotal() == 0) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private Boolean _getIgnored() {
@@ -241,22 +283,19 @@ public class RedirectNotFoundEntriesDisplayContext {
 		List<SearchResult> searchResults = SearchResultUtil.getSearchResults(
 			hits, LocaleUtil.getDefault());
 
-		Stream<SearchResult> stream = searchResults.stream();
-
 		redirectNotFoundEntrySearch.setResultsAndTotal(
-			() -> stream.map(
-				SearchResult::getClassPK
-			).map(
-				_redirectNotFoundEntryLocalService::fetchRedirectNotFoundEntry
-			).collect(
-				Collectors.toList()
-			),
+			() -> TransformUtil.transform(
+				searchResults,
+				searchResult ->
+					_redirectNotFoundEntryLocalService.
+						fetchRedirectNotFoundEntry(searchResult.getClassPK())),
 			hits.getLength());
 	}
 
 	private final HttpServletRequest _httpServletRequest;
 	private final LiferayPortletRequest _liferayPortletRequest;
 	private final LiferayPortletResponse _liferayPortletResponse;
+	private final PortletResourcePermission _portletResourcePermission;
 	private final RedirectNotFoundEntryLocalService
 		_redirectNotFoundEntryLocalService;
 	private RedirectNotFoundEntrySearch _redirectNotFoundEntrySearch;

@@ -14,11 +14,12 @@
 
 package com.liferay.segments.internal.search.spi.model.index.contributor;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.util.LocalizationUtil;
+import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.search.localization.SearchLocalizationHelper;
@@ -28,9 +29,7 @@ import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsEntryRole;
 import com.liferay.segments.service.SegmentsEntryRoleLocalService;
 
-import java.util.List;
 import java.util.Locale;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -39,7 +38,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.segments.model.SegmentsEntry",
 	service = ModelDocumentContributor.class
 )
@@ -61,27 +59,19 @@ public class SegmentsEntryModelDocumentContributor
 
 		document.addLocalizedKeyword(
 			"localized_name",
-			LocalizationUtil.populateLocalizationMap(
+			_localization.populateLocalizationMap(
 				segmentsEntry.getNameMap(),
 				segmentsEntry.getDefaultLanguageId(),
 				segmentsEntry.getGroupId()),
 			true, true);
 		document.addKeyword(
-			"roleIds", _getRoleIds(segmentsEntry.getSegmentsEntryId()));
+			"roleIds",
+			TransformUtil.transformToLongArray(
+				_segmentsEntryRoleLocalService.getSegmentsEntryRoles(
+					segmentsEntry.getSegmentsEntryId()),
+				SegmentsEntryRole::getRoleId));
 		document.addKeyword(
 			"source", StringUtil.toLowerCase(segmentsEntry.getSource()));
-	}
-
-	private long[] _getRoleIds(long segmentsEntryId) {
-		List<SegmentsEntryRole> segmentsEntryRoles =
-			_segmentsEntryRoleLocalService.getSegmentsEntryRoles(
-				segmentsEntryId);
-
-		Stream<SegmentsEntryRole> stream = segmentsEntryRoles.stream();
-
-		return stream.mapToLong(
-			SegmentsEntryRole::getRoleId
-		).toArray();
 	}
 
 	private Locale _getSiteDefaultLocale(long groupId) {
@@ -92,6 +82,9 @@ public class SegmentsEntryModelDocumentContributor
 			throw new SystemException(portalException);
 		}
 	}
+
+	@Reference
+	private Localization _localization;
 
 	@Reference
 	private Portal _portal;

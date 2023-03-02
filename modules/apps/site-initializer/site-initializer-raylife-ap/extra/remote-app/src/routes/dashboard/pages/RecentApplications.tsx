@@ -33,31 +33,47 @@ import InsuranceProducts from '../../applications/contents/InsuranceProducts';
 const HEADERS = [
 	{
 		clickable: true,
+		clickableSort: false,
 		greyColor: true,
 		key: 'applicationCreateDate',
+		requestLabel: 'applicationCreateDate',
 		type: 'link',
 		value: 'Date',
 	},
 	{
+		clickableSort: false,
 		key: 'productName',
+		requestLabel: 'productName',
 		value: 'Product',
 	},
 	{
 		bold: true,
 		clickable: true,
+		clickableSort: false,
 		key: 'externalReferenceCode',
+		requestLabel: 'externalReferenceCode',
 		type: 'link',
 		value: 'Application Number',
 	},
 	{
+		clickableSort: false,
 		greyColor: true,
 		key: 'name',
-		type: 'status',
+		requestLabel: 'name',
+		type: 'hasBubble',
 		value: 'Status',
 	},
 ];
 
-const STATUS_DISABLED = ['Bound', 'Quoted'];
+const STATUS_EDIT_DISABLED = ['Bound', 'Quoted'];
+
+const STATUS_DELETE_DISABLED = [
+	'Bound',
+	'Quoted',
+	'Rejected',
+	'Reviewed',
+	'Underwriting',
+];
 
 const PARAMETERS = {
 	sort: 'applicationCreateDate:desc',
@@ -77,7 +93,38 @@ enum ModalType {
 	insuranceProducts = 2,
 }
 
+type TableItemType = {
+	centered?: boolean;
+	clickable?: boolean;
+	clickableSort?: boolean;
+	greyColor?: boolean;
+	hasSort?: boolean;
+	icon?: boolean;
+	key: string;
+	redColor?: boolean;
+	requestLabel: string;
+	type?: string;
+	value: string;
+};
+
+type TableRowContentType = {[keys: string]: string};
+
+type StateSortType = {
+	[keys: string]: boolean;
+};
+
 const RecentApplications = () => {
+	const [sortState, setSortState] = useState<StateSortType>({
+		commission: false,
+		externalReferenceCode: false,
+		monthlyPremium: false,
+		policyOwnerName: false,
+		policyPeriod: true,
+		policyStatus: false,
+		productName: false,
+		renewalDue: true,
+	});
+
 	const [applications, setApplications] = useState<TableContent[]>([]);
 	const [visible, setVisible] = useState(false);
 	const [contentModal, setContentModal] = useState(ModalType.insurance);
@@ -108,12 +155,20 @@ const RecentApplications = () => {
 		alert(`Edit ${externalReferenceCode} Action`);
 	};
 
-	const setDisabledAction = (identifier: string) => {
+	const setDisabledEditAction = (identifier: string) => {
 		const application = applications.find(
 			(application) => application.key === identifier
 		) as TableContent;
 
-		return STATUS_DISABLED.includes(application.name);
+		return STATUS_EDIT_DISABLED.includes(application.name);
+	};
+
+	const setDisabledDeleteAction = (externalReferenceCode: string) => {
+		const application = applications.find(
+			(application) => application.key === externalReferenceCode
+		) as TableContent;
+
+		return STATUS_DELETE_DISABLED.includes(application.name);
 	};
 
 	useEffect(() => {
@@ -199,6 +254,38 @@ const RecentApplications = () => {
 		</>
 	);
 
+	const handleRedirectToGmail = (email: string) => {
+		window.location.href = `mailto:${email}`;
+	};
+
+	const handleRedirectToDetailsPages = (
+		externalReferenceCode: string,
+		entity: string
+	) => {
+		redirectTo(`${entity}?externalReferenceCode=${externalReferenceCode}`);
+	};
+
+	const onClickRules = (
+		item: TableItemType,
+		rowContent: TableRowContentType
+	) => {
+		if (item.clickable && item.key === 'email') {
+			handleRedirectToGmail(rowContent[item.key]);
+		}
+
+		if (
+			((item.clickable && rowContent['name'] === 'Incomplete') ||
+				rowContent['name'] === 'Bound') &&
+			(item.key === 'externalReferenceCode' ||
+				item.key === 'applicationCreateDate')
+		) {
+			handleRedirectToDetailsPages(
+				rowContent['externalReferenceCode'],
+				'app-details'
+			);
+		}
+	};
+
 	return (
 		<div className="px-3 ray-dashboard-recent-applications">
 			<Modal
@@ -246,16 +333,20 @@ const RecentApplications = () => {
 				actions={[
 					{
 						action: handleEditApplication,
-						disabled: setDisabledAction,
+						disabled: setDisabledEditAction,
 						value: 'Edit',
 					},
 					{
 						action: handleDeleteApplication,
+						disabled: setDisabledDeleteAction,
 						value: 'Delete',
 					},
 				]}
 				data={applications.slice(0, 6)}
 				headers={HEADERS}
+				onClickRules={onClickRules}
+				setSort={setSortState}
+				sort={sortState}
 			/>
 
 			<div className="align-items-center bottom-container d-flex justify-content-end mt-4 pb-3 px-3">

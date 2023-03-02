@@ -30,11 +30,10 @@ page import="com.liferay.portal.kernel.search.RelatedSearchResult" %><%@
 page import="com.liferay.portal.kernel.servlet.HttpHeaders" %><%@
 page import="com.liferay.portal.kernel.util.HashMapBuilder" %><%@
 page import="com.liferay.portal.kernel.util.TempFileEntryUtil" %><%@
+page import="com.liferay.trash.TrashHelper" %><%@
+page import="com.liferay.trash.util.TrashWebKeys" %><%@
 page import="com.liferay.wiki.configuration.WikiGroupServiceConfiguration" %><%@
 page import="com.liferay.wiki.configuration.WikiGroupServiceOverriddenConfiguration" %><%@
-page import="com.liferay.wiki.display.context.WikiListPagesDisplayContext" %><%@
-page import="com.liferay.wiki.display.context.WikiNodeInfoPanelDisplayContext" %><%@
-page import="com.liferay.wiki.display.context.WikiPageInfoPanelDisplayContext" %><%@
 page import="com.liferay.wiki.engine.WikiEngineRenderer" %><%@
 page import="com.liferay.wiki.exception.DuplicateNodeNameException" %><%@
 page import="com.liferay.wiki.exception.DuplicatePageException" %><%@
@@ -51,7 +50,9 @@ page import="com.liferay.wiki.social.WikiActivityKeys" %><%@
 page import="com.liferay.wiki.util.comparator.PageVersionComparator" %><%@
 page import="com.liferay.wiki.validator.WikiPageTitleValidator" %><%@
 page import="com.liferay.wiki.web.internal.configuration.WikiPortletInstanceConfiguration" %><%@
-page import="com.liferay.wiki.web.internal.display.context.WikiDisplayContextProvider" %><%@
+page import="com.liferay.wiki.web.internal.display.context.WikiListPagesDisplayContext" %><%@
+page import="com.liferay.wiki.web.internal.display.context.WikiNodeInfoPanelDisplayContext" %><%@
+page import="com.liferay.wiki.web.internal.display.context.WikiPageInfoPanelDisplayContext" %><%@
 page import="com.liferay.wiki.web.internal.display.context.helper.MailTemplatesHelper" %><%@
 page import="com.liferay.wiki.web.internal.display.context.helper.WikiPortletInstanceSettingsHelper" %><%@
 page import="com.liferay.wiki.web.internal.display.context.helper.WikiRequestHelper" %><%@
@@ -60,7 +61,7 @@ page import="com.liferay.wiki.web.internal.display.context.helper.WikiURLHelper"
 page import="com.liferay.wiki.web.internal.display.context.helper.WikiVisualizationHelper" %><%@
 page import="com.liferay.wiki.web.internal.frontend.taglib.clay.servlet.taglib.WikiPageAttachmentHorizontalCard" %><%@
 page import="com.liferay.wiki.web.internal.importer.MediaWikiImporter" %><%@
-page import="com.liferay.wiki.web.internal.importer.WikiImporterTracker" %><%@
+page import="com.liferay.wiki.web.internal.importer.WikiImporterRegistry" %><%@
 page import="com.liferay.wiki.web.internal.security.permission.resource.WikiNodePermission" %><%@
 page import="com.liferay.wiki.web.internal.security.permission.resource.WikiPagePermission" %><%@
 page import="com.liferay.wiki.web.internal.util.WikiPageAttachmentsUtil" %><%@
@@ -79,8 +80,6 @@ WikiGroupServiceOverriddenConfiguration wikiGroupServiceOverriddenConfiguration 
 WikiPortletInstanceSettingsHelper wikiPortletInstanceSettingsHelper = new WikiPortletInstanceSettingsHelper(wikiRequestHelper);
 
 WikiWebComponentProvider wikiWebComponentProvider = WikiWebComponentProvider.getWikiWebComponentProvider();
-
-WikiDisplayContextProvider wikiDisplayContextProvider = wikiWebComponentProvider.getWikiDisplayContextProvider();
 
 WikiGroupServiceConfiguration wikiGroupServiceConfiguration = wikiWebComponentProvider.getWikiGroupServiceConfiguration();
 

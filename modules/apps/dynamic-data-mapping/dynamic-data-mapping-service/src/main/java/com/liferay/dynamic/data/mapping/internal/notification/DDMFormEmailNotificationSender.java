@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.internal.notification;
 
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueRenderer;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -54,11 +54,11 @@ import com.liferay.portal.kernel.util.HtmlParser;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PrefsProps;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.util.PrefsPropsUtil;
 
 import java.io.Writer;
 
@@ -82,7 +82,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rafael Praxedes
  */
-@Component(immediate = true, service = DDMFormEmailNotificationSender.class)
+@Component(service = DDMFormEmailNotificationSender.class)
 public class DDMFormEmailNotificationSender {
 
 	public void sendEmailNotification(
@@ -247,7 +247,7 @@ public class DDMFormEmailNotificationSender {
 		DDMFormInstanceSettings formInstancetings =
 			ddmFormInstance.getSettingsModel();
 
-		String defaultEmailFromAddress = PrefsPropsUtil.getString(
+		String defaultEmailFromAddress = _prefsProps.getString(
 			ddmFormInstance.getCompanyId(), PropsKeys.ADMIN_EMAIL_FROM_ADDRESS);
 
 		return GetterUtil.getString(
@@ -260,7 +260,7 @@ public class DDMFormEmailNotificationSender {
 		DDMFormInstanceSettings formInstancetings =
 			ddmFormInstance.getSettingsModel();
 
-		String defaultEmailFromName = PrefsPropsUtil.getString(
+		String defaultEmailFromName = _prefsProps.getString(
 			ddmFormInstance.getCompanyId(), PropsKeys.ADMIN_EMAIL_FROM_NAME);
 
 		return GetterUtil.getString(
@@ -547,7 +547,7 @@ public class DDMFormEmailNotificationSender {
 		}
 
 		DDMFormFieldValueRenderer ddmFormFieldValueRenderer =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldValueRenderer(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueRenderer(
 				ddmFormFieldValue.getType());
 
 		return ddmFormFieldValueRenderer.render(ddmFormFieldValue, locale);
@@ -560,7 +560,7 @@ public class DDMFormEmailNotificationSender {
 		DDMFormEmailNotificationSender.class);
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
@@ -576,6 +576,9 @@ public class DDMFormEmailNotificationSender {
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PrefsProps _prefsProps;
 
 	@Reference
 	private UserLocalService _userLocalService;

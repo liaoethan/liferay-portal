@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
  *
@@ -9,18 +10,20 @@
  * distribution rights of the Software.
  */
 
-import {useCallback} from 'react';
+import {useMemo} from 'react';
 
 import PRMForm from '../../../../../../common/components/PRMForm';
 import PRMFormik from '../../../../../../common/components/PRMFormik';
+import {TypeActivityKey} from '../../../../../../common/enums/TypeActivityKey';
 import {LiferayPicklistName} from '../../../../../../common/enums/liferayPicklistName';
-import {TypeActivityExternalReferenceCode} from '../../../../../../common/enums/typeActivityExternalReferenceCode';
+import {TacticKeys} from '../../../../../../common/enums/mdfRequestTactics';
 import MDFRequestActivity from '../../../../../../common/interfaces/mdfRequestActivity';
-import getBooleanEntries from '../../../../../../common/utils/getBooleanEntries';
+import getNewActivity from '../../utils/getNewActivity';
 import BudgetBreakdownSection from './components/BudgetBreakdownSection';
 import ContentMarketingFields from './components/ContentMarketingFields';
 import DigitalMarketingFields from './components/DigitalMarketingFields';
 import EventFields from './components/EventFields';
+import LeadListSection from './components/LeadListSection';
 import MiscellaneousMarketingFields from './components/MiscellaneousMarketingFields';
 import useDynamicFieldEntries from './hooks/useDynamicFieldEntries';
 import useTacticsOptions from './hooks/useTacticsOptions';
@@ -45,57 +48,81 @@ const Form = ({
 	currentActivityIndex,
 	setFieldValue,
 }: IProps) => {
-	const {fieldEntries, typeActivities} = useDynamicFieldEntries();
+	const {fieldEntries} = useDynamicFieldEntries();
+
+	const handleClearForm = () => {
+		setFieldValue(
+			`activities[${currentActivityIndex}].activityDescription`,
+			getNewActivity().activityDescription
+		);
+
+		const displaySection =
+			currentActivity?.typeActivity?.key === TypeActivityKey.EVENT
+				? 'true'
+				: '';
+
+		setFieldValue(
+			`activities[${currentActivityIndex}].activityDescription.leadGenerated`,
+			displaySection
+		);
+	};
 
 	const {
 		onTypeActivitySelected,
-		selectedTypeActivity,
-		tacticsBySelectedTypeActivity,
 		typeActivitiesOptions,
 	} = useTypeActivityOptions(
-		typeActivities,
-		useCallback(
-			(selectedTypeActivity) => {
-				setFieldValue(
-					`activities[${currentActivityIndex}].typeActivity`,
-					selectedTypeActivity
-				);
+		fieldEntries[LiferayPicklistName.TYPE_OF_ACTIVITY],
+		(selectedTypeActivity) => {
+			setFieldValue(
+				`activities[${currentActivityIndex}].typeActivity`,
+				selectedTypeActivity
+			);
 
-				setFieldValue(`activities[${currentActivityIndex}].tactic`, {});
-			},
-			[currentActivityIndex, setFieldValue]
-		)
+			setFieldValue(`activities[${currentActivityIndex}].tactic`, {});
+		},
+		handleClearForm
 	);
 
 	const {onTacticSelected, tacticsOptions} = useTacticsOptions(
-		tacticsBySelectedTypeActivity,
-		useCallback(
-			(selectedTactic) =>
-				setFieldValue(
-					`activities[${currentActivityIndex}].tactic`,
-					selectedTactic
+		useMemo(
+			() =>
+				fieldEntries[LiferayPicklistName.TACTIC]?.filter((tactic) =>
+					String(tactic.value).includes(
+						String(currentActivity.typeActivity?.key)
+					)
 				),
-			[currentActivityIndex, setFieldValue]
-		)
+			[currentActivity.typeActivity?.key, fieldEntries]
+		),
+		(selectedTactic) =>
+			setFieldValue(
+				`activities[${currentActivityIndex}].tactic`,
+				selectedTactic
+			),
+		handleClearForm
 	);
 
 	const typeActivityComponents: TypeActivityComponent = {
-		[TypeActivityExternalReferenceCode.DIGITAL_MARKETING]: (
+		[TypeActivityKey.DIGITAL_MARKETING]: (
 			<DigitalMarketingFields
 				currentActivityIndex={currentActivityIndex}
+				tactic={currentActivity.tactic?.key as TacticKeys}
 			/>
 		),
-		[TypeActivityExternalReferenceCode.CONTENT_MARKETING]: (
+		[TypeActivityKey.CONTENT_MARKETING]: (
 			<ContentMarketingFields
 				currentActivityIndex={currentActivityIndex}
 			/>
 		),
-		[TypeActivityExternalReferenceCode.EVENT]: (
-			<EventFields currentActivityIndex={currentActivityIndex} />
+		[TypeActivityKey.EVENT]: (
+			<EventFields
+				currentActivityIndex={currentActivityIndex}
+				tactic={currentActivity.tactic?.key as TacticKeys}
+			/>
 		),
-		[TypeActivityExternalReferenceCode.MISCELLANEOUS_MARKETING]: (
+		[TypeActivityKey.MISCELLANEOUS_MARKETING]: (
 			<MiscellaneousMarketingFields
 				currentActivityIndex={currentActivityIndex}
+				tactic={currentActivity.tactic?.key as TacticKeys}
 			/>
 		),
 	};
@@ -133,9 +160,17 @@ const Form = ({
 
 				{
 					typeActivityComponents[
-						selectedTypeActivity?.externalReferenceCode || ''
+						String(currentActivity.typeActivity?.key) || ''
 					]
 				}
+
+				<LeadListSection
+					currentActivityIndex={currentActivityIndex}
+					fieldEntries={fieldEntries}
+					selectedTypeActivity={String(
+						currentActivity.typeActivity?.key
+					)}
+				/>
 
 				<PRMForm.Group>
 					<PRMFormik.Field
@@ -154,7 +189,7 @@ const Form = ({
 				</PRMForm.Group>
 			</PRMForm.Section>
 			<PRMFormik.Array
-				budgets={currentActivity?.budgets}
+				budgets={currentActivity.budgets}
 				component={BudgetBreakdownSection}
 				currentActivityIndex={currentActivityIndex}
 				expenseEntries={
@@ -163,43 +198,9 @@ const Form = ({
 				name={`activities[${currentActivityIndex}].budgets`}
 				setFieldValue={setFieldValue}
 			/>
-			<PRMForm.Section title="Lead List">
-				<PRMFormik.Field
-					component={PRMForm.RadioGroup}
-					items={getBooleanEntries()}
-					label="Is a lead list an outcome of this activity?"
-					name={`activities[${currentActivityIndex}].leadGenerated`}
-					required
-					small
-				/>
-
-				<PRMFormik.Field
-					component={PRMForm.InputText}
-					label="Target # of Leads"
-					name={`activities[${currentActivityIndex}].targetOfLeads`}
-					required
-				/>
-
-				<PRMFormik.Field
-					component={PRMForm.CheckboxGroup}
-					items={
-						fieldEntries[
-							LiferayPicklistName.LEAD_FOLLOW_UP_STRATEGIES
-						]
-					}
-					label="Lead Follow Up strategy (select all that apply)"
-					name={`activities[${currentActivityIndex}].leadFollowUpStrategies`}
-					required
-				/>
-
-				<PRMFormik.Field
-					component={PRMForm.InputText}
-					description="(i) Please describe the follow-up plan in detail:  Do you need any assets from Liferay (i.e.  landing page, collateral, content) Will Liferay participate in the follow up? If so, please provide details"
-					label="Details on Lead Follow Up. What to include (i)"
-					name={`activities[${currentActivityIndex}].detailsLeadFollowUp`}
-					required
-				/>
-			</PRMForm.Section>
+			<div className="d-none total-mdf-request-amount">
+				{`Total MDF Requested Amount: ${currentActivity.mdfRequestAmount}`}
+			</div>
 		</>
 	);
 };

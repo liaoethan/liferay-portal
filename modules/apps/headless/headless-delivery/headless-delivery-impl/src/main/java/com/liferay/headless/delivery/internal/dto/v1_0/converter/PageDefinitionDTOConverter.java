@@ -18,7 +18,7 @@ import com.liferay.headless.delivery.dto.v1_0.MasterPage;
 import com.liferay.headless.delivery.dto.v1_0.PageDefinition;
 import com.liferay.headless.delivery.dto.v1_0.Settings;
 import com.liferay.headless.delivery.dto.v1_0.StyleBook;
-import com.liferay.headless.delivery.internal.dto.v1_0.mapper.LayoutStructureItemMapperTracker;
+import com.liferay.headless.delivery.internal.dto.v1_0.mapper.LayoutStructureItemMapperRegistry;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.PageElementUtil;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
@@ -40,7 +40,6 @@ import com.liferay.style.book.model.StyleBookEntry;
 import com.liferay.style.book.service.StyleBookEntryLocalService;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -67,15 +66,14 @@ public class PageDefinitionDTOConverter
 			LayoutStructure layoutStructure)
 		throws Exception {
 
-		Layout layout = Optional.ofNullable(
-			dtoConverterContext.getAttribute("layout")
-		).map(
-			Layout.class::cast
-		).orElseThrow(
-			() -> new IllegalArgumentException(
+		Layout layout = (Layout)dtoConverterContext.getAttribute("layout");
+
+		if (layout == null) {
+			throw new IllegalArgumentException(
 				"Layout is not defined for layout structure item " +
-					layoutStructure.getMainItemId())
-		);
+					layoutStructure.getMainItemId());
+		}
+
 		LayoutStructureItem mainLayoutStructureItem =
 			layoutStructure.getMainLayoutStructureItem();
 		boolean saveInlineContent = GetterUtil.getBoolean(
@@ -87,7 +85,7 @@ public class PageDefinitionDTOConverter
 			{
 				pageElement = PageElementUtil.toPageElement(
 					layout.getGroupId(), layoutStructure,
-					mainLayoutStructureItem, _layoutStructureItemMapperTracker,
+					mainLayoutStructureItem, _layoutStructureItemMapperRegistry,
 					saveInlineContent, saveMappingConfiguration);
 				settings = _toSettings(layout);
 				version =
@@ -223,7 +221,8 @@ public class PageDefinitionDTOConverter
 		_layoutPageTemplateEntryLocalService;
 
 	@Reference
-	private LayoutStructureItemMapperTracker _layoutStructureItemMapperTracker;
+	private LayoutStructureItemMapperRegistry
+		_layoutStructureItemMapperRegistry;
 
 	@Reference
 	private StyleBookEntryLocalService _styleBookEntryLocalService;

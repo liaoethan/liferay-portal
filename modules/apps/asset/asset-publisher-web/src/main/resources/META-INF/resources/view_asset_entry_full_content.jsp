@@ -96,12 +96,12 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 		<div class="align-items-center d-flex mb-2">
 			<p class="component-title h4">
 				<c:if test="<%= showBackURL && Validator.isNotNull(redirect) %>">
-					<liferay-ui:icon
-						cssClass="header-back-to"
+					<clay:link
+						aria-label='<%= LanguageUtil.get(request, "back") %>'
+						cssClass="header-back-to lfr-portal-tooltip"
+						href="<%= redirect %>"
 						icon="angle-left"
-						markupView="lexicon"
-						message="back"
-						url="<%= redirect %>"
+						title='<%= LanguageUtil.get(request, "back") %>'
 					/>
 				</c:if>
 
@@ -323,14 +323,21 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 				<clay:content-col
 					cssClass="component-subtitle mr-3 print-action"
 				>
+
+					<%
+					String label = LanguageUtil.format(request, "print-x", HtmlUtil.escape(title));
+					%>
+
 					<c:choose>
 						<c:when test="<%= print %>">
-							<liferay-ui:icon
+							<clay:button
+								aria-label="<%= label %>"
+								borderless="<%= true %>"
+								displayType="secondary"
 								icon="print"
-								linkCssClass="btn btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm"
-								markupView="lexicon"
-								message='<%= LanguageUtil.format(request, "print-x-x", new Object[] {"hide-accessible", HtmlUtil.escape(title)}, false) %>'
-								url="javascript:print();"
+								onClick="javascript:print();"
+								small="<%= true %>"
+								type="button"
 							/>
 
 							<aui:script>
@@ -343,12 +350,14 @@ Map<String, Object> fragmentsEditorData = HashMapBuilder.<String, Object>put(
 							String id = assetEntry.getEntryId() + StringUtil.randomId();
 							%>
 
-							<liferay-ui:icon
+							<clay:button
+								aria-label="<%= label %>"
+								borderless="<%= true %>"
+								displayType="secondary"
 								icon="print"
-								linkCssClass="btn btn-monospaced btn-outline-borderless btn-outline-secondary btn-sm"
-								markupView="lexicon"
-								message='<%= LanguageUtil.format(request, "print-x-x", new Object[] {"hide-accessible", HtmlUtil.escape(title)}, false) %>'
-								url='<%= "javascript:" + liferayPortletResponse.getNamespace() + "printPage_" + id + "();" %>'
+								onClick='<%= "javascript:" + liferayPortletResponse.getNamespace() + "printPage_" + id + "();" %>'
+								small="<%= true %>"
+								type="button"
 							/>
 
 							<aui:script>

@@ -565,11 +565,23 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 	}
 
 	public Map<String, Function<${entity.name}, Object>> getAttributeGetterFunctions() {
-		return _attributeGetterFunctions;
+		return
+
+		<#if serviceBuilder.isVersionGTE_7_4_0()>
+			AttributeGetterFunctionsHolder.
+		</#if>
+
+		_attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<${entity.name}, Object>> getAttributeSetterBiConsumers() {
-		return _attributeSetterBiConsumers;
+		return
+
+		<#if serviceBuilder.isVersionGTE_7_4_0()>
+			AttributeSetterBiConsumersHolder.
+		</#if>
+
+		_attributeSetterBiConsumers;
 	}
 
 	<#if serviceBuilder.isVersionLTE_7_1_0()>
@@ -594,52 +606,76 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 		}
 	</#if>
 
+	<#if serviceBuilder.isVersionGTE_7_4_0()>
+		private static class AttributeGetterFunctionsHolder {
+	</#if>
+
 	private static final Map<String, Function<${entity.name}, Object>> _attributeGetterFunctions;
-	private static final Map<String, BiConsumer<${entity.name}, Object>> _attributeSetterBiConsumers;
 
 	static {
 		Map<String, Function<${entity.name}, Object>> attributeGetterFunctions = new LinkedHashMap<String, Function<${entity.name}, Object>>();
-		Map<String, BiConsumer<${entity.name}, ?>> attributeSetterBiConsumers = new LinkedHashMap<String, BiConsumer<${entity.name}, ?>>();
 
-<#list entity.regularEntityColumns as entityColumn>
-	<#if serviceBuilder.isVersionLTE_7_1_0()>
-		attributeGetterFunctions.put(
-			"${entityColumn.name}",
-			new Function<${entity.name}, Object>() {
+		<#list entity.regularEntityColumns as entityColumn>
+			<#if serviceBuilder.isVersionLTE_7_1_0()>
+				attributeGetterFunctions.put(
+					"${entityColumn.name}",
+					new Function<${entity.name}, Object>() {
 
-				@Override
-				public Object apply(${entity.name} ${entity.variableName}) {
-					return ${entity.variableName}.get${entityColumn.methodName}();
-				}
+						@Override
+						public Object apply(${entity.name} ${entity.variableName}) {
+							return ${entity.variableName}.get${entityColumn.methodName}();
+						}
 
-			});
-	<#else>
-		attributeGetterFunctions.put("${entityColumn.name}", ${entity.name}::get${entityColumn.methodName});
-	</#if>
-	<#if entityColumn.isPrimitiveType()>
-		<#assign entityColumnType = serviceBuilder.getPrimitiveObj(entityColumn.type) />
-	<#else>
-		<#assign entityColumnType = entityColumn.genericizedType />
-	</#if>
-	<#if serviceBuilder.isVersionLTE_7_1_0()>
-		attributeSetterBiConsumers.put(
-			"${entityColumn.name}",
-			new BiConsumer<${entity.name}, Object>() {
-
-				@Override
-				public void accept(${entity.name} ${entity.variableName}, Object ${entityColumn.name}Object) {
-					${entity.variableName}.set${entityColumn.methodName}((${entityColumnType})${entityColumn.name}Object);
-				}
-
-			});
-	<#else>
-		attributeSetterBiConsumers.put("${entityColumn.name}", (BiConsumer<${entity.name}, ${entityColumnType}>)${entity.name}::set${entityColumn.methodName});
-	</#if>
-</#list>
+					});
+			<#else>
+				attributeGetterFunctions.put("${entityColumn.name}", ${entity.name}::get${entityColumn.methodName});
+			</#if>
+		</#list>
 
 		_attributeGetterFunctions = Collections.unmodifiableMap(attributeGetterFunctions);
+	}
+
+	<#if serviceBuilder.isVersionGTE_7_4_0()>
+		}
+	</#if>
+
+	<#if serviceBuilder.isVersionGTE_7_4_0()>
+		private static class AttributeSetterBiConsumersHolder {
+	</#if>
+
+	private static final Map<String, BiConsumer<${entity.name}, Object>> _attributeSetterBiConsumers;
+
+	static {
+		Map<String, BiConsumer<${entity.name}, ?>> attributeSetterBiConsumers = new LinkedHashMap<String, BiConsumer<${entity.name}, ?>>();
+
+		<#list entity.regularEntityColumns as entityColumn>
+			<#if entityColumn.isPrimitiveType()>
+				<#assign entityColumnType = serviceBuilder.getPrimitiveObj(entityColumn.type) />
+			<#else>
+				<#assign entityColumnType = entityColumn.genericizedType />
+			</#if>
+			<#if serviceBuilder.isVersionLTE_7_1_0()>
+				attributeSetterBiConsumers.put(
+					"${entityColumn.name}",
+					new BiConsumer<${entity.name}, Object>() {
+
+						@Override
+						public void accept(${entity.name} ${entity.variableName}, Object ${entityColumn.name}Object) {
+							${entity.variableName}.set${entityColumn.methodName}((${entityColumnType})${entityColumn.name}Object);
+						}
+
+					});
+			<#else>
+				attributeSetterBiConsumers.put("${entityColumn.name}", (BiConsumer<${entity.name}, ${entityColumnType}>)${entity.name}::set${entityColumn.methodName});
+			</#if>
+		</#list>
+
 		_attributeSetterBiConsumers = Collections.unmodifiableMap((Map)attributeSetterBiConsumers);
 	}
+
+	<#if serviceBuilder.isVersionGTE_7_4_0()>
+		}
+	</#if>
 
 	<#if entity.localizedEntity??>
 		<#assign localizedEntity = entity.localizedEntity />
@@ -1170,55 +1206,51 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 			}
 		</#if>
 
-		@Override
-		public com.liferay.trash.kernel.model.TrashEntry getTrashEntry() throws PortalException {
-			if (!isInTrash()) {
-				return null;
-			}
-
-			com.liferay.trash.kernel.model.TrashEntry trashEntry = com.liferay.trash.kernel.service.TrashEntryLocalServiceUtil.fetchEntry(getModelClassName(), getTrashEntryClassPK());
-
-			if (trashEntry != null) {
-				return trashEntry;
-			}
-
-			com.liferay.portal.kernel.trash.TrashHandler trashHandler =
-
-			<#if serviceBuilder.isVersionLTE_7_3_0()>
-				getTrashHandler();
-			<#else>
-				com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil.getTrashHandler(getModelClassName());
-			</#if>
-
-			if (Validator.isNotNull(trashHandler.getContainerModelClassName(getPrimaryKey()))) {
-				ContainerModel containerModel = null;
-
-				try {
-					containerModel = trashHandler.getParentContainerModel(this);
-				}
-				catch (NoSuchModelException noSuchModelException) {
+		<#if serviceBuilder.isVersionLTE_7_3_0()>
+			@Override
+			public com.liferay.trash.kernel.model.TrashEntry getTrashEntry() throws PortalException {
+				if (!isInTrash()) {
 					return null;
 				}
 
-				while (containerModel != null) {
-					if (containerModel instanceof TrashedModel) {
-						TrashedModel trashedModel = (TrashedModel)containerModel;
+				com.liferay.trash.kernel.model.TrashEntry trashEntry = com.liferay.trash.kernel.service.TrashEntryLocalServiceUtil.fetchEntry(getModelClassName(), getTrashEntryClassPK());
 
-						return trashedModel.getTrashEntry();
+				if (trashEntry != null) {
+					return trashEntry;
+				}
+
+				com.liferay.portal.kernel.trash.TrashHandler trashHandler = getTrashHandler();
+
+				if (Validator.isNotNull(trashHandler.getContainerModelClassName(getPrimaryKey()))) {
+					ContainerModel containerModel = null;
+
+					try {
+						containerModel = trashHandler.getParentContainerModel(this);
 					}
-
-					trashHandler = com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil.getTrashHandler(trashHandler.getContainerModelClassName(containerModel.getContainerModelId()));
-
-					if (trashHandler == null) {
+					catch (NoSuchModelException noSuchModelException) {
 						return null;
 					}
 
-					containerModel = trashHandler.getContainerModel(containerModel.getParentContainerModelId());
-				}
-			}
+					while (containerModel != null) {
+						if (containerModel instanceof TrashedModel) {
+							TrashedModel trashedModel = (TrashedModel)containerModel;
 
-			return null;
-		}
+							return trashedModel.getTrashEntry();
+						}
+
+						trashHandler = com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil.getTrashHandler(trashHandler.getContainerModelClassName(containerModel.getContainerModelId()));
+
+						if (trashHandler == null) {
+							return null;
+						}
+
+						containerModel = trashHandler.getContainerModel(containerModel.getParentContainerModelId());
+					}
+				}
+
+				return null;
+			}
+		</#if>
 
 		@Override
 		public long getTrashEntryClassPK() {
@@ -1246,66 +1278,62 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 			}
 		}
 
-		@Override
-		public boolean isInTrashContainer() {
-			com.liferay.portal.kernel.trash.TrashHandler trashHandler =
+		<#if serviceBuilder.isVersionLTE_7_3_0()>
+			@Override
+			public boolean isInTrashContainer() {
+				com.liferay.portal.kernel.trash.TrashHandler trashHandler = getTrashHandler();
 
-			<#if serviceBuilder.isVersionLTE_7_3_0()>
-				getTrashHandler();
-			<#else>
-				com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil.getTrashHandler(getModelClassName());
-			</#if>
-
-			if ((trashHandler == null) || Validator.isNull(trashHandler.getContainerModelClassName(getPrimaryKey()))) {
-				return false;
-			}
-
-			try {
-				ContainerModel containerModel = trashHandler.getParentContainerModel(this);
-
-				if (containerModel == null) {
+				if ((trashHandler == null) || Validator.isNull(trashHandler.getContainerModelClassName(getPrimaryKey()))) {
 					return false;
 				}
 
-				if (containerModel instanceof TrashedModel) {
-					return ((TrashedModel)containerModel).isInTrash();
+				try {
+					ContainerModel containerModel = trashHandler.getParentContainerModel(this);
+
+					if (containerModel == null) {
+						return false;
+					}
+
+					if (containerModel instanceof TrashedModel) {
+						return ((TrashedModel)containerModel).isInTrash();
+					}
 				}
-			}
-			catch (Exception exception) {
-			}
+				catch (Exception exception) {
+				}
 
-			return false;
-		}
-
-		@Override
-		public boolean isInTrashExplicitly() {
-			if (!isInTrash()) {
 				return false;
 			}
 
-			com.liferay.trash.kernel.model.TrashEntry trashEntry = com.liferay.trash.kernel.service.TrashEntryLocalServiceUtil.fetchEntry(getModelClassName(), getTrashEntryClassPK());
+			@Override
+			public boolean isInTrashExplicitly() {
+				if (!isInTrash()) {
+					return false;
+				}
 
-			if (trashEntry != null) {
+				com.liferay.trash.kernel.model.TrashEntry trashEntry = com.liferay.trash.kernel.service.TrashEntryLocalServiceUtil.fetchEntry(getModelClassName(), getTrashEntryClassPK());
+
+				if (trashEntry != null) {
+					return true;
+				}
+
+				return false;
+			}
+
+			@Override
+			public boolean isInTrashImplicitly() {
+				if (!isInTrash()) {
+					return false;
+				}
+
+				com.liferay.trash.kernel.model.TrashEntry trashEntry = com.liferay.trash.kernel.service.TrashEntryLocalServiceUtil.fetchEntry(getModelClassName(), getTrashEntryClassPK());
+
+				if (trashEntry != null) {
+					return false;
+				}
+
 				return true;
 			}
-
-			return false;
-		}
-
-		@Override
-		public boolean isInTrashImplicitly() {
-			if (!isInTrash()) {
-				return false;
-			}
-
-			com.liferay.trash.kernel.model.TrashEntry trashEntry = com.liferay.trash.kernel.service.TrashEntryLocalServiceUtil.fetchEntry(getModelClassName(), getTrashEntryClassPK());
-
-			if (trashEntry != null) {
-				return false;
-			}
-
-			return true;
-		}
+		</#if>
 	</#if>
 
 	<#if entity.isWorkflowEnabled()>
@@ -1985,6 +2013,10 @@ public class ${entity.name}ModelImpl extends BaseModelImpl<${entity.name}> imple
 			</#if>
 
 			Function<${entity.name}, Object> function =
+				<#if serviceBuilder.isVersionGTE_7_4_0()>
+					AttributeGetterFunctionsHolder.
+				</#if>
+
 				_attributeGetterFunctions.get(columnName);
 
 			if (function == null) {

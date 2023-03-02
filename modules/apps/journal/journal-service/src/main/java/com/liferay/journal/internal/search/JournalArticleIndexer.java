@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Stream;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
@@ -77,7 +76,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Hugo Huijser
  * @author Tibor Lipusz
  */
-@Component(immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class JournalArticleIndexer extends BaseIndexer<JournalArticle> {
 
 	public static final String CLASS_NAME = JournalArticle.class.getName();
@@ -140,7 +139,7 @@ public class JournalArticleIndexer extends BaseIndexer<JournalArticle> {
 				}
 
 				@Override
-				public Stream<String> getSearchClassNamesStream() {
+				public String[] getSearchClassNames() {
 					return null;
 				}
 
@@ -438,8 +437,7 @@ public class JournalArticleIndexer extends BaseIndexer<JournalArticle> {
 			for (JournalArticle journalArticle : journalArticles) {
 				if (journalArticle.getId() == latestIndexableArticle.getId()) {
 					_indexWriterHelper.updateDocument(
-						article.getCompanyId(), getDocument(journalArticle),
-						isCommitImmediately());
+						article.getCompanyId(), getDocument(journalArticle));
 				}
 				else {
 					_deleteDocument(journalArticle);

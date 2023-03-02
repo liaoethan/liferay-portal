@@ -187,6 +187,8 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 		ObjectDefinition objectDefinition = randomObjectDefinition();
 
+		objectDefinition.setAccountEntryRestrictedObjectFieldName(regex);
+		objectDefinition.setDefaultLanguageId(regex);
 		objectDefinition.setExternalReferenceCode(regex);
 		objectDefinition.setName(regex);
 		objectDefinition.setPanelAppOrder(regex);
@@ -202,6 +204,9 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 		objectDefinition = ObjectDefinitionSerDes.toDTO(json);
 
+		Assert.assertEquals(
+			regex, objectDefinition.getAccountEntryRestrictedObjectFieldName());
+		Assert.assertEquals(regex, objectDefinition.getDefaultLanguageId());
 		Assert.assertEquals(regex, objectDefinition.getExternalReferenceCode());
 		Assert.assertEquals(regex, objectDefinition.getName());
 		Assert.assertEquals(regex, objectDefinition.getPanelAppOrder());
@@ -237,13 +242,22 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			objectDefinition1, (List<ObjectDefinition>)page.getItems());
 		assertContains(
 			objectDefinition2, (List<ObjectDefinition>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetObjectDefinitionsPage_getExpectedActions());
 
 		objectDefinitionResource.deleteObjectDefinition(
 			objectDefinition1.getId());
 
 		objectDefinitionResource.deleteObjectDefinition(
 			objectDefinition2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetObjectDefinitionsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -1100,11 +1114,11 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"accountEntryRestrictedObjectFieldId",
+					"accountEntryRestrictedObjectFieldName",
 					additionalAssertFieldName)) {
 
-				if (objectDefinition.getAccountEntryRestrictedObjectFieldId() ==
-						null) {
+				if (objectDefinition.
+						getAccountEntryRestrictedObjectFieldName() == null) {
 
 					valid = false;
 				}
@@ -1122,6 +1136,16 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 
 			if (Objects.equals("active", additionalAssertFieldName)) {
 				if (objectDefinition.getActive() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"defaultLanguageId", additionalAssertFieldName)) {
+
+				if (objectDefinition.getDefaultLanguageId() == null) {
 					valid = false;
 				}
 
@@ -1325,6 +1349,13 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 	}
 
 	protected void assertValid(Page<ObjectDefinition> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<ObjectDefinition> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<ObjectDefinition> objectDefinitions =
@@ -1340,6 +1371,20 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1425,14 +1470,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"accountEntryRestrictedObjectFieldId",
+					"accountEntryRestrictedObjectFieldName",
 					additionalAssertFieldName)) {
 
 				if (!Objects.deepEquals(
 						objectDefinition1.
-							getAccountEntryRestrictedObjectFieldId(),
+							getAccountEntryRestrictedObjectFieldName(),
 						objectDefinition2.
-							getAccountEntryRestrictedObjectFieldId())) {
+							getAccountEntryRestrictedObjectFieldName())) {
 
 					return false;
 				}
@@ -1477,6 +1522,19 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						objectDefinition1.getDateModified(),
 						objectDefinition2.getDateModified())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"defaultLanguageId", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectDefinition1.getDefaultLanguageId(),
+						objectDefinition2.getDefaultLanguageId())) {
 
 					return false;
 				}
@@ -1809,6 +1867,10 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -1851,9 +1913,15 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("accountEntryRestrictedObjectFieldId")) {
-			throw new IllegalArgumentException(
-				"Invalid entity field " + entityFieldName);
+		if (entityFieldName.equals("accountEntryRestrictedObjectFieldName")) {
+			sb.append("'");
+			sb.append(
+				String.valueOf(
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName()));
+			sb.append("'");
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("actions")) {
@@ -1930,6 +1998,14 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 				sb.append(
 					_dateFormat.format(objectDefinition.getDateModified()));
 			}
+
+			return sb.toString();
+		}
+
+		if (entityFieldName.equals("defaultLanguageId")) {
+			sb.append("'");
+			sb.append(String.valueOf(objectDefinition.getDefaultLanguageId()));
+			sb.append("'");
 
 			return sb.toString();
 		}
@@ -2120,11 +2196,13 @@ public abstract class BaseObjectDefinitionResourceTestCase {
 		return new ObjectDefinition() {
 			{
 				accountEntryRestricted = RandomTestUtil.randomBoolean();
-				accountEntryRestrictedObjectFieldId =
-					RandomTestUtil.randomLong();
+				accountEntryRestrictedObjectFieldName = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				active = RandomTestUtil.randomBoolean();
 				dateCreated = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
+				defaultLanguageId = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				enableCategorization = RandomTestUtil.randomBoolean();
 				enableComments = RandomTestUtil.randomBoolean();
 				enableObjectEntryHistory = RandomTestUtil.randomBoolean();

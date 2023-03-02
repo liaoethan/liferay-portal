@@ -15,18 +15,93 @@
 import {TreeView as ClayTreeView} from '@clayui/core';
 import ClayIcon from '@clayui/icon';
 import classnames from 'classnames';
-import {navigate} from 'frontend-js-web';
+import {fetch, navigate, objectToFormData, openToast} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {useMemo, useState} from 'react';
 
+import normalizeDropdownItems from '../utils/normalizeDropdownItems';
 import ActionsDropdown from './ActionsDropdown';
+import SearchField from './SearchField';
 
 const ITEM_TYPES_SYMBOL = {
 	article: 'document-text',
 	folder: 'folder',
 };
 
-export default function NavigationPanel({items, selectedItemId}) {
+const ITEM_TYPES = {
+	article: 'article',
+	folder: 'folder',
+};
+
+const showSuccessMessage = (portletNamespace) => {
+	const openToastSuccessProps = {
+		message: Liferay.Language.get('your-request-completed-successfully'),
+		type: 'success',
+	};
+
+	const reloadButtonLabel = Liferay.Language.get('reload');
+	const reloadButtonClassName = 'knowledge-base-reload-button';
+
+	openToastSuccessProps.message =
+		openToastSuccessProps.message +
+		`<div class="alert-footer">
+				<div class="btn-group" role="group">
+					<button class="btn btn-sm btn-primary alert-btn ${reloadButtonClassName}">${reloadButtonLabel}</button>
+				</div>
+		</div>`;
+
+	openToastSuccessProps.onClick = ({event, onClose: closeToast}) => {
+		if (event.target.classList.contains(reloadButtonClassName)) {
+			Liferay.Portlet.refresh(`#p_p_id${portletNamespace}`);
+			closeToast();
+		}
+	};
+
+	openToast(openToastSuccessProps);
+};
+
+const normalizeItems = (items) => {
+	if (items) {
+		return items.map((item) => {
+			return {
+				...item,
+				actions: normalizeDropdownItems(item.actions),
+				children: normalizeItems(item.children),
+			};
+		});
+	}
+};
+
+const getSearchItems = (items) => {
+	return items.reduce(function reducer(acc, item) {
+		acc.push({
+			href: item.href,
+			id: item.id,
+			name: item.name,
+			type: item.type,
+		});
+
+		if (item.children) {
+			item.children.reduce(reducer, acc);
+		}
+
+		return acc;
+	}, []);
+};
+export default function NavigationPanel({
+	items: initialItems,
+	moveKBObjectURL,
+	portletNamespace,
+	selectedItemId,
+}) {
+	const items = useMemo(() => normalizeItems(initialItems), [initialItems]);
+
+	const searchItems = useMemo(() => getSearchItems(initialItems), [
+		initialItems,
+	]);
+
+	const [searchActive, setSearchActive] = useState(false);
+
 	const handleClickItem = (event, item) => {
 		if (event.defaultPrevented) {
 			return;
@@ -38,62 +113,143 @@ export default function NavigationPanel({items, selectedItemId}) {
 		navigate(item.href);
 	};
 
+	const handleItemMove = (item, parentItem, index) => {
+		if (
+			item.type === ITEM_TYPES.folder &&
+			parentItem.type === ITEM_TYPES.article
+		) {
+			openToast({
+				message: Liferay.Language.get(
+					'folders-cannot-be-moved-into-articles'
+				),
+				type: 'danger',
+			});
+
+			return false;
+		}
+
+		fetch(moveKBObjectURL, {
+			body: objectToFormData({
+				[`${portletNamespace}dragAndDrop`]: true,
+				[`${portletNamespace}position`]: index?.next ?? -1,
+				[`${portletNamespace}resourceClassNameId`]: item.classNameId,
+				[`${portletNamespace}resourcePrimKey`]: item.id,
+				[`${portletNamespace}parentResourceClassNameId`]: parentItem.classNameId,
+				[`${portletNamespace}parentResourcePrimKey`]: parentItem.id,
+			}),
+			method: 'POST',
+		})
+			.then((response) => {
+				if (!response.ok) {
+					throw new Error();
+				}
+
+				return response.json();
+			})
+			.then((response) => {
+				if (!response.success) {
+					throw new Error(response.errorMessage);
+				}
+
+				showSuccessMessage(portletNamespace);
+			})
+			.catch(
+				({
+					message = Liferay.Language.get(
+						'an-unexpected-error-occurred'
+					),
+				}) => {
+					openToast({
+						message,
+						type: 'danger',
+					});
+				}
+			);
+
+		return true;
+	};
+
+	const handleSearchChange = ({isSearchActive}) => {
+		setSearchActive(isSearchActive);
+	};
+
 	return (
-		<ClayTreeView
-			defaultItems={items}
-			defaultSelectedKeys={new Set([selectedItemId])}
-			nestedKey="children"
-			showExpanderOnHover={false}
-		>
-			{(item) => {
-				return (
-					<ClayTreeView.Item
-						actions={ActionsDropdown({actions: item.actions})}
-						onClick={(event) => {
-							handleClickItem(event, item);
-						}}
-					>
-						<ClayTreeView.ItemStack
-							className={classnames({
-								'knowledge-base-navigation-item-active':
-									item.id === selectedItemId,
-							})}
-						>
-							<ClayIcon symbol={ITEM_TYPES_SYMBOL[item.type]} />
+		<>
+			<SearchField
+				handleSearchChange={handleSearchChange}
+				items={searchItems}
+			/>
 
-							{item.name}
-						</ClayTreeView.ItemStack>
+			{!searchActive && (
+				<ClayTreeView
+					defaultItems={items}
+					defaultSelectedKeys={new Set([selectedItemId])}
+					dragAndDrop
+					nestedKey="children"
+					onItemMove={handleItemMove}
+					showExpanderOnHover={false}
+				>
+					{(item) => {
+						return (
+							<ClayTreeView.Item
+								actions={ActionsDropdown({
+									actions: item.actions,
+								})}
+								onClick={(event) => {
+									handleClickItem(event, item);
+								}}
+							>
+								<ClayTreeView.ItemStack
+									className={classnames({
+										'knowledge-base-navigation-item-active':
+											item.id === selectedItemId,
+									})}
+								>
+									<ClayIcon
+										symbol={ITEM_TYPES_SYMBOL[item.type]}
+									/>
 
-						<ClayTreeView.Group items={item.children}>
-							{(item) => {
-								return (
-									<ClayTreeView.Item
-										actions={ActionsDropdown({
-											actions: item.actions,
-										})}
-										onClick={(event) => {
-											handleClickItem(event, item);
-										}}
-									>
-										<ClayIcon
-											symbol={
-												ITEM_TYPES_SYMBOL[item.type]
-											}
-										/>
+									{item.name}
+								</ClayTreeView.ItemStack>
 
-										{item.name}
-									</ClayTreeView.Item>
-								);
-							}}
-						</ClayTreeView.Group>
-					</ClayTreeView.Item>
-				);
-			}}
-		</ClayTreeView>
+								<ClayTreeView.Group items={item.children}>
+									{(item) => {
+										return (
+											<ClayTreeView.Item
+												actions={ActionsDropdown({
+													actions: item.actions,
+												})}
+												onClick={(event) => {
+													handleClickItem(
+														event,
+														item
+													);
+												}}
+											>
+												<ClayIcon
+													symbol={
+														ITEM_TYPES_SYMBOL[
+															item.type
+														]
+													}
+												/>
+
+												{item.name}
+											</ClayTreeView.Item>
+										);
+									}}
+								</ClayTreeView.Group>
+							</ClayTreeView.Item>
+						);
+					}}
+				</ClayTreeView>
+			)}
+		</>
 	);
 }
 
 const itemShape = {
+	classNameId: PropTypes.string.isRequired,
 	href: PropTypes.string.isRequired,
 	id: PropTypes.string.isRequired,
 	name: PropTypes.string.isRequired,

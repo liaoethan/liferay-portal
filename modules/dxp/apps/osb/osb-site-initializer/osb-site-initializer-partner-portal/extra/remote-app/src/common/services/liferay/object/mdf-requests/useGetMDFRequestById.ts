@@ -20,7 +20,7 @@ export default function useGetMDFRequestById(id: number | undefined) {
 	return useSWR(
 		id
 			? [
-					`/o/${LiferayAPIs.OBJECT}/mdfrequests/${id}?nestedFields=mdfRequestToActivities,activityToBudgets&nestedFieldsDepth=2`,
+					`/o/${LiferayAPIs.OBJECT}/mdfrequests/${id}?nestedFields=accountEntry,mdfReqToActs,actToBgts,actToMDFClmActs,r_mdfClmToMDFClmActs_c_mdfClaimId,mdfReqToMDFClms&nestedFieldsDepth=5`,
 					Liferay.authToken,
 			  ]
 			: null,

@@ -55,6 +55,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -236,7 +237,10 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantTermOrderType),
 				(List<TermOrderType>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetTermByExternalReferenceCodeTermOrderTypesPage_getExpectedActions(
+					irrelevantExternalReferenceCode));
 		}
 
 		TermOrderType termOrderType1 =
@@ -257,7 +261,20 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(termOrderType1, termOrderType2),
 			(List<TermOrderType>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetTermByExternalReferenceCodeTermOrderTypesPage_getExpectedActions(
+				externalReferenceCode));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetTermByExternalReferenceCodeTermOrderTypesPage_getExpectedActions(
+				String externalReferenceCode)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -384,7 +401,10 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantTermOrderType),
 				(List<TermOrderType>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetTermIdTermOrderTypesPage_getExpectedActions(
+					irrelevantId));
 		}
 
 		TermOrderType termOrderType1 =
@@ -403,7 +423,17 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(termOrderType1, termOrderType2),
 			(List<TermOrderType>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetTermIdTermOrderTypesPage_getExpectedActions(id));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetTermIdTermOrderTypesPage_getExpectedActions(Long id)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -639,6 +669,13 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 	}
 
 	protected void assertValid(Page<TermOrderType> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<TermOrderType> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<TermOrderType> termOrderTypes = page.getItems();
@@ -653,6 +690,20 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -865,6 +916,10 @@ public abstract class BaseTermOrderTypeResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

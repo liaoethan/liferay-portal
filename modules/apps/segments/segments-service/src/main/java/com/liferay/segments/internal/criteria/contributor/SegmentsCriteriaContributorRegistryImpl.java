@@ -27,8 +27,6 @@ import com.liferay.segments.criteria.contributor.SegmentsCriteriaContributorRegi
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -39,9 +37,7 @@ import org.osgi.service.component.annotations.Deactivate;
 /**
  * @author Eduardo García
  */
-@Component(
-	immediate = true, service = SegmentsCriteriaContributorRegistry.class
-)
+@Component(service = SegmentsCriteriaContributorRegistry.class)
 public class SegmentsCriteriaContributorRegistryImpl
 	implements SegmentsCriteriaContributorRegistry {
 
@@ -78,18 +74,10 @@ public class SegmentsCriteriaContributorRegistryImpl
 	public List<SegmentsCriteriaContributor> getSegmentsCriteriaContributors(
 		String className, Criteria.Type type) {
 
-		List<SegmentsCriteriaContributor> segmentsCriteriaContributors =
-			getSegmentsCriteriaContributors(className);
-
-		Stream<SegmentsCriteriaContributor> stream =
-			segmentsCriteriaContributors.stream();
-
-		return stream.filter(
+		return ListUtil.filter(
+			getSegmentsCriteriaContributors(className),
 			segmentsCriteriaContributor -> type.equals(
-				segmentsCriteriaContributor.getType())
-		).collect(
-			Collectors.toList()
-		);
+				segmentsCriteriaContributor.getType()));
 	}
 
 	@Activate

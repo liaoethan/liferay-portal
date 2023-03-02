@@ -55,6 +55,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -298,7 +299,10 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantPlacedOrderItem),
 				(List<PlacedOrderItem>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetPlacedOrderPlacedOrderItemsPage_getExpectedActions(
+					irrelevantPlacedOrderId));
 		}
 
 		PlacedOrderItem placedOrderItem1 =
@@ -317,7 +321,20 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(placedOrderItem1, placedOrderItem2),
 			(List<PlacedOrderItem>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetPlacedOrderPlacedOrderItemsPage_getExpectedActions(
+				placedOrderId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetPlacedOrderPlacedOrderItemsPage_getExpectedActions(
+				Long placedOrderId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -634,6 +651,14 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("virtualItemURLs", additionalAssertFieldName)) {
+				if (placedOrderItem.getVirtualItemURLs() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			throw new IllegalArgumentException(
 				"Invalid additional assert field name " +
 					additionalAssertFieldName);
@@ -643,6 +668,13 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 	}
 
 	protected void assertValid(Page<PlacedOrderItem> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<PlacedOrderItem> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<PlacedOrderItem> placedOrderItems =
@@ -658,6 +690,20 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -941,6 +987,17 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("virtualItemURLs", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						placedOrderItem1.getVirtualItemURLs(),
+						placedOrderItem2.getVirtualItemURLs())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			throw new IllegalArgumentException(
 				"Invalid additional assert field name " +
 					additionalAssertFieldName);
@@ -1001,6 +1058,10 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
@@ -1147,6 +1208,11 @@ public abstract class BasePlacedOrderItemResourceTestCase {
 		}
 
 		if (entityFieldName.equals("valid")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("virtualItemURLs")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}

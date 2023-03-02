@@ -3,20 +3,6 @@
 
 @import 'common_main';
 
-html#{$cadmin-selector} {
-	.portlet-blogs {
-		.cadmin {
-			.info-bar-container {
-				min-height: 35px;
-
-				.info-bar-center {
-					margin-top: 5px;
-				}
-			}
-		}
-	}
-}
-
 .portlet-blogs {
 	.taglib-custom-attributes-list {
 		margin-bottom: 1em;
@@ -263,6 +249,12 @@ html#{$cadmin-selector} {
 
 		.has-error .form-control.form-control-edit:not(:focus)::placeholder {
 			border-color: #c67;
+		}
+
+		.has-error .alloy-editor-container .form-feedback-item {
+			font-size: 0.875rem;
+			font-weight: 600;
+			line-height: 4;
 		}
 
 		.form-control.form-control-unstyled {

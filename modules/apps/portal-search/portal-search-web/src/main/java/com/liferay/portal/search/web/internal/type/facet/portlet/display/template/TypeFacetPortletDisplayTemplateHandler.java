@@ -21,8 +21,8 @@ import com.liferay.portal.kernel.template.TemplateVariableGroup;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.search.web.internal.facet.display.context.AssetEntriesSearchFacetDisplayContext;
-import com.liferay.portal.search.web.internal.facet.display.context.AssetEntriesSearchFacetTermDisplayContext;
 import com.liferay.portal.search.web.internal.type.facet.constants.TypeFacetPortletKeys;
+import com.liferay.portal.search.web.internal.type.facet.portlet.TypeFacetPortlet;
 import com.liferay.portlet.display.template.constants.PortletDisplayTemplateConstants;
 
 import java.util.List;
@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -39,7 +38,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.web.internal.type.facet.configuration.TypeFacetTemplateConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = "javax.portlet.name=" + TypeFacetPortletKeys.TYPE_FACET,
 	service = TemplateHandler.class
 )
@@ -48,7 +46,7 @@ public class TypeFacetPortletDisplayTemplateHandler
 
 	@Override
 	public String getClassName() {
-		return AssetEntriesSearchFacetTermDisplayContext.class.getName();
+		return TypeFacetPortlet.class.getName();
 	}
 
 	@Override
@@ -86,11 +84,11 @@ public class TypeFacetPortletDisplayTemplateHandler
 			PortletDisplayTemplateConstants.ENTRY, "getFrequency()");
 		templateVariableGroup.addVariable(
 			"term-name", String.class, PortletDisplayTemplateConstants.ENTRY,
-			"getTypeName()");
+			"getBucketText()");
 		templateVariableGroup.addCollectionVariable(
 			"terms", List.class, PortletDisplayTemplateConstants.ENTRIES,
-			"term", AssetEntriesSearchFacetTermDisplayContext.class,
-			PortletDisplayTemplateConstants.ENTRY, "getTypeName()");
+			"term", AssetEntriesSearchFacetDisplayContext.class,
+			PortletDisplayTemplateConstants.ENTRY, "getBucketText()");
 		templateVariableGroup.addVariable(
 			"type-facet-display-context",
 			AssetEntriesSearchFacetDisplayContext.class,

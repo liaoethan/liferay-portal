@@ -71,12 +71,21 @@ public class ProjectTemplatesRESTBuilderTest
 			temporaryFolder, "gradle", "gradleWS", liferayVersion,
 			mavenExecutor);
 
+		String liferayWorkspaceProduct = getLiferayWorkspaceProduct(
+			liferayVersion);
+
+		if (liferayWorkspaceProduct != null) {
+			writeGradlePropertiesInWorkspace(
+				gradleWorkspaceDir,
+				"liferay.workspace.product=" + liferayWorkspaceProduct);
+		}
+
 		File gradleWorkspaceModulesDir = new File(
 			gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--package-name",
-			packageName, "--liferay-version", liferayVersion);
+			gradleWorkspaceModulesDir, template, name, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		testExists(gradleProjectDir, name + "-api/build.gradle");
 		testExists(gradleProjectDir, name + "-client/build.gradle");
@@ -90,8 +99,8 @@ public class ProjectTemplatesRESTBuilderTest
 
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
-			mavenExecutor, "-Dpackage=" + packageName,
-			"-DliferayVersion=" + liferayVersion, "-DbuildType=maven");
+			mavenExecutor, "-DbuildType=maven",
+			"-DliferayVersion=" + liferayVersion, "-Dpackage=" + packageName);
 
 		testExists(mavenProjectDir, name + "-api/pom.xml");
 		testExists(mavenProjectDir, name + "-client/pom.xml");
@@ -111,12 +120,21 @@ public class ProjectTemplatesRESTBuilderTest
 			temporaryFolder, "gradle", "gradleWS", liferayVersion,
 			mavenExecutor);
 
+		String liferayWorkspaceProduct = getLiferayWorkspaceProduct(
+			liferayVersion);
+
+		if (liferayWorkspaceProduct != null) {
+			writeGradlePropertiesInWorkspace(
+				gradleWorkspaceDir,
+				"liferay.workspace.product=" + liferayWorkspaceProduct);
+		}
+
 		File gradleWorkspaceModulesDir = new File(
 			gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--package-name",
-			packageName, "--liferay-version", liferayVersion);
+			gradleWorkspaceModulesDir, template, name, "--liferay-version",
+			liferayVersion, "--package-name", packageName);
 
 		File gradleBndFile = testExists(
 			gradleProjectDir, name + "-api/bnd.bnd");
@@ -128,8 +146,8 @@ public class ProjectTemplatesRESTBuilderTest
 
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
-			mavenExecutor, "-Dpackage=" + packageName,
-			"-DliferayVersion=" + liferayVersion, "-DbuildType=maven");
+			mavenExecutor, "-DbuildType=maven",
+			"-DliferayVersion=" + liferayVersion, "-Dpackage=" + packageName);
 
 		File mavenBndFile = testExists(mavenProjectDir, name + "-api/bnd.bnd");
 
@@ -152,6 +170,15 @@ public class ProjectTemplatesRESTBuilderTest
 		File gradleWorkspaceDir = buildWorkspace(
 			temporaryFolder, "gradle", "gradleWS", liferayVersion,
 			mavenExecutor);
+
+		String liferayWorkspaceProduct = getLiferayWorkspaceProduct(
+			liferayVersion);
+
+		if (liferayWorkspaceProduct != null) {
+			writeGradlePropertiesInWorkspace(
+				gradleWorkspaceDir,
+				"liferay.workspace.product=" + liferayWorkspaceProduct);
+		}
 
 		File gradlePropertiesFile = new File(
 			gradleWorkspaceDir + "gradle.properties");

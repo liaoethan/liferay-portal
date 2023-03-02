@@ -362,6 +362,11 @@ public class ObjectLayoutTabWrapper
 	}
 
 	@Override
+	public void persist() {
+		model.persist();
+	}
+
+	@Override
 	public void prepareLocalizedFieldsForImport()
 		throws com.liferay.portal.kernel.exception.LocaleException {
 
@@ -574,6 +579,11 @@ public class ObjectLayoutTabWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

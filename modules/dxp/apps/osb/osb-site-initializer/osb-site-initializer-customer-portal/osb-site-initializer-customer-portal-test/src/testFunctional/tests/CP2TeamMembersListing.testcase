@@ -19,13 +19,13 @@ definition {
 		}
 
 		task ("Create a new Customer Portal Site") {
-			CustomerPortal.addCustomerPortalSite(siteName = "${testSiteName}");
+			CustomerPortal.addCustomerPortalSite(siteName = ${testSiteName});
 		}
 
 		task ("Add test user access to all Accounts") {
 			CustomerPortal.assignUserToOrganization();
 
-			CustomerPortal.addUserToOneOrMoreAccounts(accountsList = "${testAccount}");
+			CustomerPortal.addUserToOneOrMoreAccounts(accountsList = ${testAccount});
 		}
 	}
 
@@ -34,33 +34,33 @@ definition {
 
 		CustomerPortal.customerPortalApisTearDown();
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			JSONGroup.deleteGroupByName(groupName = "${testSiteName}");
+			JSONGroup.deleteGroupByName(groupName = ${testSiteName});
 		}
 	}
 
 	@description = "Automation ID: LPS-149746 | Test Summary: Verify if the team member table contains the following data (Name - Email - Support Seat - Role - Status)"
-	@priority = "4"
+	@priority = 4
 	test AssertAllItemsInTheTable {
 		property portal.upstream = "quarantine";
 
 		// "Reason: Not able to reproduce scenario without OKTA workaround."
 
 		task ("Change the user role in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			CustomerPortal.accountTableProject(title = "${testAccount}");
+			CustomerPortal.accountTableProject(title = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			ApplicationsMenu.gotoSite(key_site = ${testSiteName});
 		}
 
 		task ("Login in Okta") {
@@ -72,7 +72,7 @@ definition {
 		}
 
 		task ("Get into the project and go to Team Members page") {
-			CP2TeamMembers.teamMembersFlow();
+			CP2TeamMembers.teamMembersFlow(testAccount = "Test Account DXP");
 		}
 
 		task ("Assert the details of the table and page") {
@@ -84,18 +84,16 @@ definition {
 
 			CP2TeamMembers.viewSupportSeatsAvailable(available = "2 of 3 available");
 
-			AssertElementPresent(locator1 = "CP2TeamMembers#INVITE_BUTTON");
+			AssertElementPresent(
+				key_text = "Invite",
+				locator1 = "CustomerPortalSite#ANY_BUTTON");
 
 			Tooltip.viewHelpInfo(info = "The limit of support seats available counts the total of Administrators & Requesters roles assigned due to both have role permissions to open support tickets.");
-		}
-
-		task ("Delete the entries and objects created") {
-			CustomerPortal.deleteEntryAccountFlag(entry = "ERC-002");
 		}
 	}
 
 	@description = "Automation ID: LPS-149752 | Test Summary: Verify that in the table the guest user is below the current user and its status is displayed as invited"
-	@priority = "5"
+	@priority = 5
 	test AssertTheStatusAndOrderOfTheGuestUser {
 		property portal.upstream = "quarantine";
 
@@ -113,27 +111,27 @@ definition {
 				requireReset = "false",
 				userEmailAddress = "test.user@liferay.com");
 
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			LexiconEntry.gotoEntry(rowEntry = "${testAccount}");
+			LexiconEntry.gotoEntry(rowEntry = ${testAccount});
 
-			Accounts.assignUsers(
-				accountName = "${testAccount}",
+			Account.assignUsers(
+				accountName = ${testAccount},
 				assigneeName = "Test User");
 		}
 
 		task ("Change the user role in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			CustomerPortal.accountTableProject(title = "${testAccount}");
+			CustomerPortal.accountTableProject(title = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			ApplicationsMenu.gotoSite(key_site = ${testSiteName});
 		}
 
 		task ("Login in Okta") {
@@ -145,7 +143,7 @@ definition {
 		}
 
 		task ("Get into the project and go to Team Members page") {
-			CP2TeamMembers.teamMembersFlow();
+			CP2TeamMembers.teamMembersFlow(testAccount = "Test Account DXP");
 		}
 
 		task ("Assert the users and their respective statuses") {

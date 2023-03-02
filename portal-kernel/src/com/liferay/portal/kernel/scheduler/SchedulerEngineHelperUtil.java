@@ -17,14 +17,10 @@ package com.liferay.portal.kernel.scheduler;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.scheduler.messaging.SchedulerResponse;
-import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ServiceProxyFactory;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
-import javax.portlet.PortletRequest;
 
 /**
  * @author Michael C. Han
@@ -33,12 +29,11 @@ public class SchedulerEngineHelperUtil {
 
 	public static void addScriptingJob(
 			Trigger trigger, StorageType storageType, String description,
-			String language, String script, int exceptionsMaxSize)
+			String language, String script)
 		throws SchedulerException {
 
 		_schedulerEngineHelper.addScriptingJob(
-			trigger, storageType, description, language, script,
-			exceptionsMaxSize);
+			trigger, storageType, description, language, script);
 	}
 
 	public static void auditSchedulerJobs(
@@ -46,13 +41,6 @@ public class SchedulerEngineHelperUtil {
 		throws SchedulerException {
 
 		_schedulerEngineHelper.auditSchedulerJobs(message, triggerState);
-	}
-
-	public static void delete(
-			SchedulerEntry schedulerEntry, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.delete(schedulerEntry, storageType);
 	}
 
 	public static void delete(String groupName, StorageType storageType)
@@ -68,96 +56,8 @@ public class SchedulerEngineHelperUtil {
 		_schedulerEngineHelper.delete(jobName, groupName, storageType);
 	}
 
-	public static String getCronText(
-		Calendar calendar, boolean timeZoneSensitive) {
-
-		return _schedulerEngineHelper.getCronText(calendar, timeZoneSensitive);
-	}
-
-	public static String getCronText(
-		PortletRequest portletRequest, Calendar calendar,
-		boolean timeZoneSensitive, int recurrenceType) {
-
-		return _schedulerEngineHelper.getCronText(
-			portletRequest, calendar, timeZoneSensitive, recurrenceType);
-	}
-
 	public static Date getEndTime(SchedulerResponse schedulerResponse) {
 		return _schedulerEngineHelper.getEndTime(schedulerResponse);
-	}
-
-	public static Date getEndTime(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getEndTime(
-			jobName, groupName, storageType);
-	}
-
-	public static Date getFinalFireTime(SchedulerResponse schedulerResponse) {
-		return _schedulerEngineHelper.getFinalFireTime(schedulerResponse);
-	}
-
-	public static Date getFinalFireTime(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getFinalFireTime(
-			jobName, groupName, storageType);
-	}
-
-	public static ObjectValuePair<Exception, Date>[] getJobExceptions(
-		SchedulerResponse schedulerResponse) {
-
-		return _schedulerEngineHelper.getJobExceptions(schedulerResponse);
-	}
-
-	public static ObjectValuePair<Exception, Date>[] getJobExceptions(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getJobExceptions(
-			jobName, groupName, storageType);
-	}
-
-	public static TriggerState getJobState(
-		SchedulerResponse schedulerResponse) {
-
-		return _schedulerEngineHelper.getJobState(schedulerResponse);
-	}
-
-	public static TriggerState getJobState(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getJobState(
-			jobName, groupName, storageType);
-	}
-
-	public static Date getNextFireTime(SchedulerResponse schedulerResponse) {
-		return _schedulerEngineHelper.getNextFireTime(schedulerResponse);
-	}
-
-	public static Date getNextFireTime(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getNextFireTime(
-			jobName, groupName, storageType);
-	}
-
-	public static Date getPreviousFireTime(
-		SchedulerResponse schedulerResponse) {
-
-		return _schedulerEngineHelper.getPreviousFireTime(schedulerResponse);
-	}
-
-	public static Date getPreviousFireTime(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getPreviousFireTime(
-			jobName, groupName, storageType);
 	}
 
 	public static SchedulerResponse getScheduledJob(
@@ -192,20 +92,6 @@ public class SchedulerEngineHelperUtil {
 		return _schedulerEngineHelper.getStartTime(schedulerResponse);
 	}
 
-	public static Date getStartTime(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		return _schedulerEngineHelper.getStartTime(
-			jobName, groupName, storageType);
-	}
-
-	public static void pause(String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.pause(groupName, storageType);
-	}
-
 	public static void pause(
 			String jobName, String groupName, StorageType storageType)
 		throws SchedulerException {
@@ -221,12 +107,6 @@ public class SchedulerEngineHelperUtil {
 			messageListener, schedulerEntry, destinationName);
 	}
 
-	public static void resume(String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.resume(groupName, storageType);
-	}
-
 	public static void resume(
 			String jobName, String groupName, StorageType storageType)
 		throws SchedulerException {
@@ -236,37 +116,20 @@ public class SchedulerEngineHelperUtil {
 
 	public static void schedule(
 			Trigger trigger, StorageType storageType, String description,
-			String destinationName, Message message, int exceptionsMaxSize)
+			String destinationName, Message message)
 		throws SchedulerException {
 
 		_schedulerEngineHelper.schedule(
-			trigger, storageType, description, destinationName, message,
-			exceptionsMaxSize);
+			trigger, storageType, description, destinationName, message);
 	}
 
 	public static void schedule(
 			Trigger trigger, StorageType storageType, String description,
-			String destinationName, Object payload, int exceptionsMaxSize)
+			String destinationName, Object payload)
 		throws SchedulerException {
 
 		_schedulerEngineHelper.schedule(
-			trigger, storageType, description, destinationName, payload,
-			exceptionsMaxSize);
-	}
-
-	public static void shutdown() throws SchedulerException {
-		_schedulerEngineHelper.shutdown();
-	}
-
-	public static void start() throws SchedulerException {
-		_schedulerEngineHelper.start();
-	}
-
-	public static void suppressError(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.suppressError(jobName, groupName, storageType);
+			trigger, storageType, description, destinationName, payload);
 	}
 
 	public static void unregister(MessageListener messageListener) {
@@ -274,40 +137,10 @@ public class SchedulerEngineHelperUtil {
 	}
 
 	public static void unschedule(
-			SchedulerEntry schedulerEntry, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.unschedule(schedulerEntry, storageType);
-	}
-
-	public static void unschedule(String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.unschedule(groupName, storageType);
-	}
-
-	public static void unschedule(
 			String jobName, String groupName, StorageType storageType)
 		throws SchedulerException {
 
 		_schedulerEngineHelper.unschedule(jobName, groupName, storageType);
-	}
-
-	public static void update(
-			String jobName, String groupName, StorageType storageType,
-			String description, String language, String script,
-			int exceptionsMaxSize)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.update(
-			jobName, groupName, storageType, description, language, script,
-			exceptionsMaxSize);
-	}
-
-	public static void update(Trigger trigger, StorageType storageType)
-		throws SchedulerException {
-
-		_schedulerEngineHelper.update(trigger, storageType);
 	}
 
 	private static volatile SchedulerEngineHelper _schedulerEngineHelper =

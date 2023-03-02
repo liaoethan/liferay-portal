@@ -17,14 +17,26 @@ package com.liferay.commerce.service.impl;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.commerce.model.CommerceShippingOptionAccountEntryRel;
 import com.liferay.commerce.service.base.CommerceShippingOptionAccountEntryRelServiceBaseImpl;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
+
+import java.util.List;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CommerceShippingOptionAccountEntryRel"
+	},
+	service = AopService.class
+)
 public class CommerceShippingOptionAccountEntryRelServiceImpl
 	extends CommerceShippingOptionAccountEntryRelServiceBaseImpl {
 
@@ -79,6 +91,47 @@ public class CommerceShippingOptionAccountEntryRelServiceImpl
 
 	@Override
 	public CommerceShippingOptionAccountEntryRel
+			getCommerceShippingOptionAccountEntryRel(
+				long commerceShippingOptionAccountEntryRelId)
+		throws PortalException {
+
+		CommerceShippingOptionAccountEntryRel
+			commerceShippingOptionAccountEntryRel =
+				commerceShippingOptionAccountEntryRelLocalService.
+					getCommerceShippingOptionAccountEntryRel(
+						commerceShippingOptionAccountEntryRelId);
+
+		_checkAccountEntry(
+			commerceShippingOptionAccountEntryRel.getAccountEntryId(),
+			ActionKeys.VIEW);
+
+		return commerceShippingOptionAccountEntryRel;
+	}
+
+	@Override
+	public List<CommerceShippingOptionAccountEntryRel>
+			getCommerceShippingOptionAccountEntryRels(long accountEntryId)
+		throws Exception {
+
+		_checkAccountEntry(accountEntryId, ActionKeys.VIEW);
+
+		return commerceShippingOptionAccountEntryRelLocalService.
+			getCommerceShippingOptionAccountEntryRels(accountEntryId);
+	}
+
+	@Override
+	public int getCommerceShippingOptionAccountEntryRelsCount(
+			long accountEntryId)
+		throws Exception {
+
+		_checkAccountEntry(accountEntryId, ActionKeys.VIEW);
+
+		return commerceShippingOptionAccountEntryRelLocalService.
+			getCommerceShippingOptionAccountEntryRelsCount(accountEntryId);
+	}
+
+	@Override
+	public CommerceShippingOptionAccountEntryRel
 			updateCommerceShippingOptionAccountEntryRel(
 				long commerceShippingOptionAccountEntryRelId,
 				String commerceShippingMethodKey,
@@ -108,10 +161,10 @@ public class CommerceShippingOptionAccountEntryRelServiceImpl
 			getPermissionChecker(), accountEntryId, actionId);
 	}
 
-	private static volatile ModelResourcePermission<AccountEntry>
-		_accountEntryModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CommerceShippingOptionAccountEntryRelServiceImpl.class,
-				"_accountEntryModelResourcePermission", AccountEntry.class);
+	@Reference(
+		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
+	)
+	private ModelResourcePermission<AccountEntry>
+		_accountEntryModelResourcePermission;
 
 }

@@ -157,6 +157,7 @@ function Rule({
 				<div className="panel-body">
 					<ClayForm.Group>
 						<ClaySelectWithOption
+							aria-label={Liferay.Language.get('query-contains')}
 							data-index={index}
 							data-property="queryContains"
 							id={`${namespace}queryContains${index}`}
@@ -170,6 +171,7 @@ function Rule({
 
 					<ClayForm.Group>
 						<ClaySelectWithOption
+							aria-label={Liferay.Language.get('and-operator')}
 							data-index={index}
 							data-property="queryAndOperator"
 							id={`${namespace}queryAndOperator${index}`}
@@ -240,11 +242,13 @@ function Rule({
 
 			<div className="container-trash">
 				<ClayButton
+					aria-label={Liferay.Language.get('delete-condition')}
 					className="condition-card-delete"
 					data-index={index}
 					monospaced
 					onClick={onDeleteRule}
-					small
+					size="sm"
+					title={Liferay.Language.get('delete-condition')}
 				>
 					<ClayIcon symbol="trash" />
 				</ClayButton>
@@ -342,13 +346,14 @@ function AssetFilterBuilder({
 				))}
 			</ul>
 
-			<div className="addbutton-timeline-item">
+			<div className="position-relative">
 				<div className="add-condition timeline-increment-icon">
 					<ClayButton
+						aria-label={Liferay.Language.get('add-condition')}
 						className="form-builder-rule-add-condition form-builder-timeline-add-item"
 						monospaced
 						onClick={handleAddRule}
-						small
+						size="sm"
 					>
 						<ClayIcon symbol="plus" />
 					</ClayButton>

@@ -13,7 +13,7 @@ definition {
 
 		User.firstLoginPG();
 
-		Testray.createTestraySite(siteName = "Testray2");
+		Testray.addTestraySite();
 
 		Refresh();
 	}
@@ -23,16 +23,18 @@ definition {
 
 		Testray.tearDownCP();
 
-		if ("${testPortalInstance}" == "true") {
+		ObjectAdmin.deleteAllCustomObjectsViaAPI();
+
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 	}
 
 	@description = "This is a test for LPS-150436 - Verify when filling the field, the field label is green."
-	@priority = "2"
+	@priority = 2
 	test CanFieldLabelBeGreen {
 		task ("Go to Testray and exit Testray") {
-			ApplicationsMenu.gotoSite(site = "Testray2");
+			ApplicationsMenu.gotoSite(site = "Testray 2");
 
 			var portalURL = PropsUtil.get("portal.url");
 
@@ -40,7 +42,7 @@ definition {
 		}
 
 		task ("Sign in New Account and assert the name field label is Green") {
-			Navigator.openSpecificURL(url = "${portalURL}/web/testray2");
+			Navigator.openSpecificURL(url = "http://localhost:8080/web/testray-2");
 
 			TestraySignIn.addEmailTestray(key_itemvalue = "test@liferay.com");
 
@@ -53,10 +55,10 @@ definition {
 	}
 
 	@description = "This is a test for LPS-150437 - Verify when deleting the field, the field label is red."
-	@priority = "2"
+	@priority = 2
 	test CanFieldLabelBeRed {
 		task ("Go to Testray and exit Testray") {
-			ApplicationsMenu.gotoSite(site = "Testray2");
+			ApplicationsMenu.gotoSite(site = "Testray 2");
 
 			var portalURL = PropsUtil.get("portal.url");
 
@@ -64,7 +66,7 @@ definition {
 		}
 
 		task ("Sign in New Account and assert the name field label is Red") {
-			Navigator.openSpecificURL(url = "${portalURL}/web/testray2");
+			Navigator.openSpecificURL(url = "http://localhost:8080/web/testray-2");
 
 			TestraySignIn.addEmailTestray(key_itemvalue = "test@liferay.com");
 
@@ -79,10 +81,10 @@ definition {
 	}
 
 	@description = "This is a test for LPS-150438 - Verify the user can enter with an valid email."
-	@priority = "5"
+	@priority = 5
 	test CanSignIn {
 		task ("Go to Testray and exit Testray") {
-			ApplicationsMenu.gotoSite(site = "Testray2");
+			ApplicationsMenu.gotoSite(site = "Testray 2");
 
 			var portalURL = PropsUtil.get("portal.url");
 
@@ -90,7 +92,7 @@ definition {
 		}
 
 		task ("Sign in New Account and assert the user can enter with an valid email") {
-			Navigator.openSpecificURL(url = "${portalURL}/web/testray2");
+			Navigator.openSpecificURL(url = "http://localhost:8080/web/testray-2");
 
 			TestraySignIn.addEmailTestray(key_itemvalue = "test@liferay.com");
 
@@ -105,10 +107,10 @@ definition {
 	}
 
 	@description = "This is a test for LPS-150439 - Verify the user can enter with an valid email after getting the password wrong."
-	@priority = "4"
+	@priority = 4
 	test CanSignInAfterPasswordWrong {
 		task ("Go to Testray and exit Testray") {
-			ApplicationsMenu.gotoSite(site = "Testray2");
+			ApplicationsMenu.gotoSite(site = "Testray 2");
 
 			var portalURL = PropsUtil.get("portal.url");
 
@@ -116,7 +118,7 @@ definition {
 		}
 
 		task ("Sign in New Account and assert the user can enter with an valid email after getting the password wrong") {
-			Navigator.openSpecificURL(url = "${portalURL}/web/testray2");
+			Navigator.openSpecificURL(url = "http://localhost:8080/web/testray-2");
 
 			TestraySignIn.addEmailTestray(key_itemvalue = "test@liferay.com");
 

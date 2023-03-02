@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
 import com.liferay.portal.kernel.security.auth.AccessControlContext;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierConfiguration;
 import com.liferay.portal.kernel.security.auth.verifier.AuthVerifierResult;
-import com.liferay.portal.kernel.servlet.ProtectedServletRequest;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
@@ -32,6 +31,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.AuthVerifierPipeline;
+import com.liferay.portal.servlet.AuthVerifierServletRequest;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 import com.liferay.portal.util.PropsUtil;
 
@@ -201,17 +201,17 @@ public class AuthVerifierFilter extends BasePortalFilter {
 				accessControlContext.getSettings(),
 				AuthVerifierPipeline.AUTH_TYPE);
 
-			ProtectedServletRequest protectedServletRequest =
-				new ProtectedServletRequest(
-					httpServletRequest, String.valueOf(userId), authType);
+			AuthVerifierServletRequest authVerifierServletRequest =
+				new AuthVerifierServletRequest(
+					httpServletRequest, userId, authType);
 
-			accessControlContext.setRequest(protectedServletRequest);
+			accessControlContext.setRequest(authVerifierServletRequest);
 
 			Class<?> clazz = getClass();
 
 			processFilter(
-				clazz.getName(), protectedServletRequest, httpServletResponse,
-				filterChain);
+				clazz.getName(), authVerifierServletRequest,
+				httpServletResponse, filterChain);
 		}
 		else {
 			_log.error("Unimplemented state " + state);
@@ -236,10 +236,10 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			String authVerifierPropertyName = propertyName.substring(
 				PropsKeys.AUTH_VERIFIER.length());
 
-			int indexOf = authVerifierPropertyName.indexOf('.');
+			int index = authVerifierPropertyName.indexOf('.');
 
 			String authVerifierClassName = authVerifierPropertyName.substring(
-				0, indexOf);
+				0, index);
 
 			Integer authVerifierConfigurationIndex =
 				authVerifierConfigurationIndexs.get(authVerifierClassName);
@@ -269,7 +269,7 @@ public class AuthVerifierFilter extends BasePortalFilter {
 			Properties properties = authVerifierConfiguration.getProperties();
 
 			properties.put(
-				authVerifierPropertyName.substring(indexOf + 1),
+				authVerifierPropertyName.substring(index + 1),
 				entry.getValue());
 		}
 

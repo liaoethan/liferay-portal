@@ -54,7 +54,7 @@ if (Validator.isNotNull(tempFileName)) {
 					'<liferay-portlet:resourceURL copyCurrentRenderParameters="<%= false %>" id="/admin/update_certificate"><portlet:param name="<%= Constants.CMD %>" value="<%= Constants.DELETE_TEMP %>" /></liferay-portlet:resourceURL>',
 				'fileDescription': '*.p12 *.pfx',
 				'maxFileSize':
-					'<%= UploadServletRequestConfigurationHelperUtil.getMaxSize() %> B',
+					'<%= UploadServletRequestConfigurationProviderUtil.getMaxSize() %> B',
 				'multipleFiles': false,
 				'namespace': '<portlet:namespace />',
 				'tempFileURL':
@@ -106,7 +106,7 @@ if (Validator.isNotNull(tempFileName)) {
 		CertificateTool certificateTool = (CertificateTool)request.getAttribute(SamlWebKeys.SAML_CERTIFICATE_TOOL);
 		int otherEntriesCount = 0;
 
-		Enumeration<String> enu = keyStore.aliases();
+		Enumeration<String> enumeration = keyStore.aliases();
 		%>
 
 		<liferay-util:buffer
@@ -115,8 +115,8 @@ if (Validator.isNotNull(tempFileName)) {
 			<div data-keyStoreEntryAlias=""><liferay-ui:message key="select-a-keystore-entry-to-see-a-preview" /></div>
 
 			<%
-			while (enu.hasMoreElements()) {
-				String alias = enu.nextElement();
+			while (enumeration.hasMoreElements()) {
+				String alias = enumeration.nextElement();
 
 				if (!keyStore.entryInstanceOf(alias, KeyStore.PrivateKeyEntry.class)) {
 					otherEntriesCount++;
@@ -176,11 +176,13 @@ if (Validator.isNotNull(tempFileName)) {
 					</div>
 
 					<div class="certificate-preview col-lg-9 col-sm-12">
-						<aui:fieldset-group markupView="lexicon">
-							<aui:fieldset label="preview">
-								<%= previews %>
-							</aui:fieldset>
-						</aui:fieldset-group>
+						<div class="sheet">
+							<div class="panel-group panel-group-flush">
+								<aui:fieldset label="preview">
+									<%= previews %>
+								</aui:fieldset>
+							</div>
+						</div>
 					</div>
 				</div>
 			</c:if>

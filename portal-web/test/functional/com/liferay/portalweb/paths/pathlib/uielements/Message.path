@@ -57,7 +57,7 @@
 </tr>
 <tr>
 	<td>EMPTY_INFO</td>
-	<td>//div[contains(@class,'sheet')]/div[contains(@class,'sheet-text')] | //div[contains(@class,'taglib-empty-result-message')]/div[contains(@class,'text-secondary')]</td>
+	<td>//div[contains(@class,'taglib-empty-result-message')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -67,7 +67,7 @@
 </tr>
 <tr>
 	<td>ROLE_EMPTY_MUTED_INFO</td>
-	<td>//div[h3[*[*[contains(text(),'${key_roleType}')]]]]//div[*[contains(@class,'text-muted')]or contains(@class,'text-muted')]</td>
+	<td>//div[contains(@class,'sheet-subtitle') and contains(.,'${key_roleType}')]//following-sibling::div[contains(@class,'sheet-text')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -77,7 +77,7 @@
 </tr>
 <tr>
 	<td>SUBTITLE_WITH_LABEL</td>
-	<td>//div[*//label[normalize-space()='${fieldLabel}']]//*[self::div or self::p][contains(@class,'text-secondary')]</td>
+	<td>//div[contains(@class,'form-group')][.//label[normalize-space()='${fieldLabel}']]//following-sibling::*[self::div or self::p][contains(@class,'text-secondary')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -146,6 +146,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>ERROR_DISMISSIBLE_LINK</td>
+	<td>//div[contains(@class,'alert-danger')][contains(@class,'alert-dismissible')]/a</td>
+	<td></td>
+</tr>
+<tr>
 	<td>ERROR_3_LINK</td>
 	<td>xpath=(//div[contains(@class,'alert') and (contains(@class,'alert-warning'))]/a)</td>
 	<td></td>
@@ -197,7 +202,7 @@
 </tr>
 <tr>
 	<td>ERROR_FIELD_REQUIRED</td>
-	<td>//label[contains(.,'${key_fieldFieldLabel}')]/..//div[@role='alert' and contains(.,'This field is required')]</td>
+	<td>//label[contains(.,'${key_fieldFieldLabel}')]/..//div[@role='alert' and contains(.,'The ${key_fieldFieldLabel} field is required')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -267,7 +272,7 @@
 </tr>
 <tr>
 	<td>ERROR_SPECIFIC_FORM_FIELD_REQUIRED</td>
-	<td>//div[contains(@data-field-name,'${key_fieldName}')]//div[contains(@class,'form-feedback-item')]</td>
+	<td>//div[contains(@data-field-name,'${key_fieldName}')]//div[contains(@class,'form-feedback-item')] | //div[@class='ddm-field']//*[text()='${key_fieldName}']/..//div[contains(@class,'form-feedback-item')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -436,6 +441,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SUCCESS_LINK</td>
+	<td>//div[contains(@class,'alert') and contains(@class,'alert-success')]//a</td>
+	<td></td>
+</tr>
+<tr>
 	<td>SUCCESS_RESTORE_LOCATION</td>
 	<td>//div[@class='portlet-body']/div/em[2]/a[contains(.,'${key_assetRestoreLocation}')]</td>
 	<td></td>
@@ -498,6 +508,11 @@
 <tr>
 	<td>EMPTY_STATE_INFO</td>
 	<td>//div[(@class='c-empty-state-title')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>EMPTY_STATE_TEXT</td>
+	<td>//div[contains(@class,'c-empty-state-text')]</td>
 	<td></td>
 </tr>
 </tbody>

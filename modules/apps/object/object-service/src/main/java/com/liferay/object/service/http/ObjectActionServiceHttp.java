@@ -51,10 +51,12 @@ import com.liferay.portal.kernel.util.MethodKey;
 public class ObjectActionServiceHttp {
 
 	public static com.liferay.object.model.ObjectAction addObjectAction(
-			HttpPrincipal httpPrincipal, long objectDefinitionId,
-			boolean active, String conditionExpression, String description,
-			String name, String objectActionExecutorKey,
-			String objectActionTriggerKey,
+			HttpPrincipal httpPrincipal, String externalReferenceCode,
+			long objectDefinitionId, boolean active, String conditionExpression,
+			String description,
+			java.util.Map<java.util.Locale, String> errorMessageMap,
+			java.util.Map<java.util.Locale, String> labelMap, String name,
+			String objectActionExecutorKey, String objectActionTriggerKey,
 			com.liferay.portal.kernel.util.UnicodeProperties
 				parametersUnicodeProperties)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -65,9 +67,10 @@ public class ObjectActionServiceHttp {
 				_addObjectActionParameterTypes0);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, objectDefinitionId, active, conditionExpression,
-				description, name, objectActionExecutorKey,
-				objectActionTriggerKey, parametersUnicodeProperties);
+				methodKey, externalReferenceCode, objectDefinitionId, active,
+				conditionExpression, description, errorMessageMap, labelMap,
+				name, objectActionExecutorKey, objectActionTriggerKey,
+				parametersUnicodeProperties);
 
 			Object returnObj = null;
 
@@ -178,8 +181,11 @@ public class ObjectActionServiceHttp {
 	}
 
 	public static com.liferay.object.model.ObjectAction updateObjectAction(
-			HttpPrincipal httpPrincipal, long objectActionId, boolean active,
-			String conditionExpression, String description, String name,
+			HttpPrincipal httpPrincipal, String externalReferenceCode,
+			long objectActionId, boolean active, String conditionExpression,
+			String description,
+			java.util.Map<java.util.Locale, String> errorMessageMap,
+			java.util.Map<java.util.Locale, String> labelMap, String name,
 			String objectActionExecutorKey, String objectActionTriggerKey,
 			com.liferay.portal.kernel.util.UnicodeProperties
 				parametersUnicodeProperties)
@@ -191,9 +197,10 @@ public class ObjectActionServiceHttp {
 				_updateObjectActionParameterTypes3);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, objectActionId, active, conditionExpression,
-				description, name, objectActionExecutorKey,
-				objectActionTriggerKey, parametersUnicodeProperties);
+				methodKey, externalReferenceCode, objectActionId, active,
+				conditionExpression, description, errorMessageMap, labelMap,
+				name, objectActionExecutorKey, objectActionTriggerKey,
+				parametersUnicodeProperties);
 
 			Object returnObj = null;
 
@@ -228,7 +235,8 @@ public class ObjectActionServiceHttp {
 
 	private static final Class<?>[] _addObjectActionParameterTypes0 =
 		new Class[] {
-			long.class, boolean.class, String.class, String.class, String.class,
+			String.class, long.class, boolean.class, String.class, String.class,
+			java.util.Map.class, java.util.Map.class, String.class,
 			String.class, String.class,
 			com.liferay.portal.kernel.util.UnicodeProperties.class
 		};
@@ -238,7 +246,8 @@ public class ObjectActionServiceHttp {
 		new Class[] {long.class};
 	private static final Class<?>[] _updateObjectActionParameterTypes3 =
 		new Class[] {
-			long.class, boolean.class, String.class, String.class, String.class,
+			String.class, long.class, boolean.class, String.class, String.class,
+			java.util.Map.class, java.util.Map.class, String.class,
 			String.class, String.class,
 			com.liferay.portal.kernel.util.UnicodeProperties.class
 		};

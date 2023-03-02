@@ -11,6 +11,19 @@
 
 <tbody>
 
+<!--SCHEMA-->
+
+<tr>
+	<td>SCHEMA_TITLE</td>
+	<td>//div[@id='model-${schema}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SCHEMA_FIELD</td>
+	<td>//div[@id='model-${schema}']//td[contains(.,'${field}')]</td>
+	<td></td>
+</tr>
+
 <!--SWAGGER-->
 
 <tr>
@@ -51,6 +64,11 @@
 
 <!--GRAPHQL-->
 
+<tr>
+	<td>GRAPHQL_EDITOR</td>
+	<td>//div[contains(@class,'CodeMirror cm-s-graphiql')]</td>
+	<td></td>
+</tr>
 <tr>
 	<td>GRAPHQL_EDITOR_LINE</td>
 	<td>//section[contains(@class,'query-editor')]//span[contains(@class,'cm-comment')][1]</td>

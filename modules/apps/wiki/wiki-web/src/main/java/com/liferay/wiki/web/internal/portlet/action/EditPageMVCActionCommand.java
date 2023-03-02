@@ -73,7 +73,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Roberto Díaz
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + WikiPortletKeys.WIKI,
 		"javax.portlet.name=" + WikiPortletKeys.WIKI_ADMIN,
@@ -344,6 +343,8 @@ public class EditPageMVCActionCommand extends BaseMVCActionCommand {
 
 		WikiPage page = null;
 
+		_wikiAttachmentsHelper.addAttachments(actionRequest);
+
 		if (cmd.equals(Constants.UPDATE)) {
 			double version = ParamUtil.getDouble(actionRequest, "version");
 
@@ -370,8 +371,6 @@ public class EditPageMVCActionCommand extends BaseMVCActionCommand {
 					page.getTitle());
 			}
 		}
-
-		_wikiAttachmentsHelper.addAttachments(actionRequest);
 
 		return page;
 	}

@@ -165,6 +165,8 @@ renderResponse.setTitle((formInstance == null) ? LanguageUtil.get(request, "new-
 					).put(
 						"defaultLanguageId", ddmFormAdminDisplayContext.getDefaultLanguageId()
 					).put(
+						"displayChartAsTable", ddmFormAdminDisplayContext.isDisplayChartAsTable()
+					).put(
 						"elementSets", ddmFormAdminDisplayContext.getFieldSetsJSONArray()
 					).put(
 						"fieldSetDefinitionURL", ddmFormAdminDisplayContext.getFieldSetDefinitionURL()
@@ -207,7 +209,7 @@ renderResponse.setTitle((formInstance == null) ? LanguageUtil.get(request, "new-
 					).put(
 						"showPublishAlert", ddmFormAdminDisplayContext.isShowPublishAlert()
 					).put(
-						"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay)
+						"spritemap", themeDisplay.getPathThemeSpritemap()
 					).put(
 						"view", "formBuilder"
 					).build()

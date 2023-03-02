@@ -24,14 +24,11 @@ import {useFetch} from '../../../../hooks/useFetch';
 import useHeader from '../../../../hooks/useHeader';
 import i18n from '../../../../i18n';
 import {
-	APIResponse,
+	TestrayBuild,
 	TestrayProject,
 	TestrayRoutine,
-	TestrayTask,
 	testrayBuildImpl,
-	testrayTaskImpl,
 } from '../../../../services/rest';
-import BuildAlertBar from './BuildAlertBar';
 import BuildOverview from './BuildOverview';
 import useBuildActions from './useBuildActions';
 
@@ -50,11 +47,12 @@ const BuildOutlet: React.FC<BuildOutletProps> = ({ignorePaths}) => {
 	const {pathname} = useLocation();
 	const {testrayProject, testrayRoutine}: OutletContext = useOutletContext();
 
-	const {
-		data: testrayBuild,
-		mutate: mutateBuild,
-	} = useFetch(testrayBuildImpl.getResource(buildId as string), (response) =>
-		testrayBuildImpl.transformData(response)
+	const {data: testrayBuild, mutate: mutateBuild} = useFetch<TestrayBuild>(
+		testrayBuildImpl.getResource(buildId as string),
+		{
+			transformData: (response) =>
+				testrayBuildImpl.transformData(response),
+		}
 	);
 
 	const hasOtherParams = !!Object.values(otherParams).length;
@@ -63,17 +61,6 @@ const BuildOutlet: React.FC<BuildOutletProps> = ({ignorePaths}) => {
 		shouldUpdate: !hasOtherParams,
 		timeout: 200,
 	});
-
-	const {data: testrayTasksData} = useFetch<APIResponse<TestrayTask>>(
-		testrayTaskImpl.resource,
-		(response) => testrayTaskImpl.transformDataFromList(response)
-	);
-
-	const testrayTasks = testrayTasksData?.items || [];
-
-	const testrayTask = testrayTasks.find(
-		(testrayTask) => testrayTask?.build?.id === Number(buildId)
-	);
 
 	const isCurrentPathIgnored = ignorePaths.some((ignorePath) =>
 		pathname.includes(ignorePath)
@@ -105,7 +92,7 @@ const BuildOutlet: React.FC<BuildOutletProps> = ({ignorePaths}) => {
 				},
 			]);
 		}
-	}, [setHeading, testrayProject, testrayRoutine, testrayBuild]);
+	}, [pathname, setHeading, testrayBuild, testrayProject, testrayRoutine]);
 
 	useEffect(() => {
 		if (!isCurrentPathIgnored) {
@@ -143,19 +130,17 @@ const BuildOutlet: React.FC<BuildOutletProps> = ({ignorePaths}) => {
 		return (
 			<>
 				{!isCurrentPathIgnored && (
-					<>
-						{testrayTask && (
-							<BuildAlertBar testrayTask={testrayTask} />
-						)}
-
-						<BuildOverview
-							testrayBuild={testrayBuild}
-							testrayTask={testrayTask}
-						/>
-					</>
+					<BuildOverview testrayBuild={testrayBuild} />
 				)}
 
-				<Outlet context={{mutateBuild, testrayBuild}} />
+				<Outlet
+					context={{
+						mutateBuild,
+						testrayBuild,
+						testrayProject,
+						testrayRoutine,
+					}}
+				/>
 			</>
 		);
 	}

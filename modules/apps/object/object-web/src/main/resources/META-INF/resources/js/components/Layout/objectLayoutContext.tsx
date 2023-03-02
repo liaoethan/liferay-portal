@@ -28,7 +28,8 @@ import {
 } from './types';
 
 type TState = {
-	enabledCategorization: boolean;
+	creationLanguageId: Liferay.Language.Locale;
+	enableCategorization: boolean;
 	isViewOnly: boolean;
 	objectFieldTypes: ObjectFieldType[];
 	objectFields: TObjectField[];
@@ -40,7 +41,8 @@ type TState = {
 type TAction =
 	| {
 			payload: {
-				enabledCategorization: boolean;
+				creationLanguageId: Liferay.Language.Locale;
+				enableCategorization: boolean;
 				objectLayout: TObjectLayout;
 				objectRelationships: TObjectRelationship[];
 			};
@@ -103,6 +105,13 @@ type TAction =
 	| {
 			payload: {
 				boxIndex: number;
+				tabIndex: number;
+			};
+			type: TYPES.DELETE_OBJECT_LAYOUT_BOX_CATEGORIZATION;
+	  }
+	| {
+			payload: {
+				boxIndex: number;
 				columnIndex: number;
 				objectFieldName: string;
 				rowIndex: number;
@@ -133,6 +142,7 @@ export enum TYPES {
 	CHANGE_OBJECT_LAYOUT_BOX_ATTRIBUTE = 'CHANGE_OBJECT_LAYOUT_BOX_ATTRIBUTE',
 	CHANGE_OBJECT_LAYOUT_NAME = 'CHANGE_OBJECT_LAYOUT_NAME',
 	DELETE_OBJECT_LAYOUT_BOX = 'DELETE_OBJECT_LAYOUT_BOX',
+	DELETE_OBJECT_LAYOUT_BOX_CATEGORIZATION = 'DELETE_OBJECT_LAYOUT_BOX_CATEGORIZATION',
 	DELETE_OBJECT_LAYOUT_FIELD = 'DELETE_OBJECT_LAYOUT_FIELD',
 	DELETE_OBJECT_LAYOUT_TAB = 'DELETE_OBJECT_LAYOUT_TAB',
 	SET_OBJECT_LAYOUT_AS_DEFAULT = 'SET_OBJECT_LAYOUT_AS_DEFAULT',
@@ -148,14 +158,16 @@ const layoutReducer = (state: TState, action: TAction) => {
 	switch (action.type) {
 		case TYPES.ADD_OBJECT_LAYOUT: {
 			const {
-				enabledCategorization,
+				creationLanguageId,
+				enableCategorization,
 				objectLayout,
 				objectRelationships,
 			} = action.payload;
 
 			return {
 				...state,
-				enabledCategorization,
+				creationLanguageId,
+				enableCategorization,
 				objectLayout,
 				objectRelationships,
 			};
@@ -343,7 +355,7 @@ const layoutReducer = (state: TState, action: TAction) => {
 			const visitor = new RowsVisitor(
 				newState.objectLayout.objectLayoutTabs[
 					tabIndex
-				].objectLayoutBoxes[tabIndex]
+				].objectLayoutBoxes[boxIndex]
 			);
 
 			visitor.mapFields((field) => {
@@ -354,6 +366,17 @@ const layoutReducer = (state: TState, action: TAction) => {
 			});
 
 			// Delete object layout box
+
+			newState.objectLayout.objectLayoutTabs[
+				tabIndex
+			].objectLayoutBoxes.splice(boxIndex, 1);
+
+			return newState;
+		}
+		case TYPES.DELETE_OBJECT_LAYOUT_BOX_CATEGORIZATION: {
+			const {boxIndex, tabIndex} = action.payload;
+
+			const newState = {...state};
 
 			newState.objectLayout.objectLayoutTabs[
 				tabIndex

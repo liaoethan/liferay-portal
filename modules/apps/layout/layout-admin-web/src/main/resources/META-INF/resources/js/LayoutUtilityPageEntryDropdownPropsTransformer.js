@@ -15,12 +15,17 @@
 import {
 	openConfirmModal,
 	openModal,
+	openSelectionModal,
 	openSimpleInputModal,
 } from 'frontend-js-web';
 
 import openDeleteLayoutModal from './openDeleteLayoutModal';
 
 const ACTIONS = {
+	copyLayoutUtilityPageEntry({copyLayoutUtilityPageEntryURL}) {
+		send(copyLayoutUtilityPageEntryURL);
+	},
+
 	deleteLayoutUtilityPageEntry({
 		deleteLayoutUtilityPageEntryMessage,
 		deleteLayoutUtilityPageEntryURL,
@@ -32,6 +37,12 @@ const ACTIONS = {
 			},
 			title: Liferay.Language.get('utility-pages'),
 		});
+	},
+
+	deleteLayoutUtilityPageEntryPreview({
+		deleteLayoutUtilityPageEntryPreviewURL,
+	}) {
+		send(deleteLayoutUtilityPageEntryPreviewURL);
 	},
 
 	markAsDefaultLayoutUtilityPageEntry({
@@ -93,6 +104,35 @@ const ACTIONS = {
 					send(unmarkAsDefaultLayoutUtilityPageEntryURL);
 				}
 			},
+		});
+	},
+
+	updateLayoutUtilityPageEntryPreview(
+		{itemSelectorURL, layoutUtilityPageEntryId},
+		namespace
+	) {
+		openSelectionModal({
+			onSelect: (selectedItem) => {
+				if (selectedItem) {
+					const itemValue = JSON.parse(selectedItem.value);
+
+					document.getElementById(
+						`${namespace}layoutUtilityPageEntryId`
+					).value = layoutUtilityPageEntryId;
+
+					document.getElementById(`${namespace}fileEntryId`).value =
+						itemValue.fileEntryId;
+
+					submitForm(
+						document.getElementById(
+							`${namespace}layoutUtilityPageEntryPreviewFm`
+						)
+					);
+				}
+			},
+			selectEventName: Liferay.Util.ns(namespace, 'changePreview'),
+			title: Liferay.Language.get('utility-page-thumbnail'),
+			url: itemSelectorURL,
 		});
 	},
 };

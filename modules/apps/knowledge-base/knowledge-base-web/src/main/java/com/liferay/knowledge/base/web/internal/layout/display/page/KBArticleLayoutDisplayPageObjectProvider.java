@@ -17,8 +17,7 @@ package com.liferay.knowledge.base.web.internal.layout.display.page;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
-import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
-import com.liferay.asset.kernel.service.AssetTagLocalServiceUtil;
+import com.liferay.asset.util.AssetHelper;
 import com.liferay.knowledge.base.constants.KBFolderConstants;
 import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.knowledge.base.model.KBFolder;
@@ -26,9 +25,6 @@ import com.liferay.knowledge.base.service.KBFolderLocalServiceUtil;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.Locale;
 
@@ -38,12 +34,19 @@ import java.util.Locale;
 public class KBArticleLayoutDisplayPageObjectProvider
 	implements LayoutDisplayPageObjectProvider<KBArticle> {
 
-	public KBArticleLayoutDisplayPageObjectProvider(KBArticle kbArticle)
+	public KBArticleLayoutDisplayPageObjectProvider(
+			KBArticle kbArticle, AssetHelper assetHelper)
 		throws PortalException {
 
 		_kbArticle = kbArticle;
+		_assetHelper = assetHelper;
 
 		_assetEntry = _getAssetEntry(kbArticle);
+	}
+
+	@Override
+	public String getClassName() {
+		return KBArticle.class.getName();
 	}
 
 	@Override
@@ -78,18 +81,8 @@ public class KBArticleLayoutDisplayPageObjectProvider
 
 	@Override
 	public String getKeywords(Locale locale) {
-		String[] assetTagNames = AssetTagLocalServiceUtil.getTagNames(
-			_assetEntry.getClassName(), _assetEntry.getClassPK());
-		String[] assetCategoryNames =
-			AssetCategoryLocalServiceUtil.getCategoryNames(
-				_assetEntry.getClassName(), _assetEntry.getClassPK());
-
-		String[] keywords =
-			new String[assetTagNames.length + assetCategoryNames.length];
-
-		ArrayUtil.combine(assetTagNames, assetCategoryNames, keywords);
-
-		return StringUtil.merge(keywords);
+		return _assetHelper.getAssetKeywords(
+			_assetEntry.getClassName(), _assetEntry.getClassPK(), locale);
 	}
 
 	@Override
@@ -121,15 +114,15 @@ public class KBArticleLayoutDisplayPageObjectProvider
 		throws PortalException {
 
 		AssetRendererFactory<?> assetRendererFactory =
-			AssetRendererFactoryRegistryUtil.
-				getAssetRendererFactoryByClassNameId(
-					PortalUtil.getClassNameId(KBArticle.class));
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				KBArticle.class);
 
 		return assetRendererFactory.getAssetEntry(
 			KBArticle.class.getName(), kbArticle.getClassPK());
 	}
 
 	private final AssetEntry _assetEntry;
+	private final AssetHelper _assetHelper;
 	private final KBArticle _kbArticle;
 
 }

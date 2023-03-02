@@ -30,6 +30,7 @@ import com.liferay.commerce.internal.upgrade.v7_2_0.util.CommerceOrderTypeRelTab
 import com.liferay.commerce.internal.upgrade.v7_2_0.util.CommerceOrderTypeTable;
 import com.liferay.commerce.internal.upgrade.v8_4_0.util.CommerceShippingOptionAccountEntryRelTable;
 import com.liferay.commerce.internal.upgrade.v8_5_0.CommerceAddressTypeUpgradeProcess;
+import com.liferay.commerce.internal.upgrade.v8_9_1.CommerceChannelAccountEntryRelUpgradeProcess;
 import com.liferay.commerce.model.impl.CPDAvailabilityEstimateModelImpl;
 import com.liferay.commerce.model.impl.CommerceAvailabilityEstimateModelImpl;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
@@ -65,9 +66,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alec Sloan
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true, service = UpgradeStepRegistrator.class
-)
+@Component(service = UpgradeStepRegistrator.class)
 public class CommerceServiceUpgradeStepRegistrator
 	implements UpgradeStepRegistrator {
 
@@ -300,7 +299,7 @@ public class CommerceServiceUpgradeStepRegistrator
 			new MVCCVersionUpgradeProcess() {
 
 				@Override
-				protected String[] getModuleTableNames() {
+				protected String[] getTableNames() {
 					return new String[] {
 						"CPDAvailabilityEstimate", "CPDefinitionInventory",
 						"CommerceAddressRestriction",
@@ -411,6 +410,17 @@ public class CommerceServiceUpgradeStepRegistrator
 			UpgradeProcessFactory.addColumns(
 				"CommerceOrderItem", "discountManuallyAdjusted BOOLEAN",
 				"priceManuallyAdjusted BOOLEAN"));
+
+		registry.register(
+			"8.9.0", "8.9.1",
+			new CommerceChannelAccountEntryRelUpgradeProcess());
+
+		registry.register(
+			"8.9.1", "8.9.2",
+			new com.liferay.commerce.internal.upgrade.v8_9_2.
+				CommercePermissionUpgradeProcess(
+					_resourceActionLocalService,
+					_resourcePermissionLocalService, _roleLocalService));
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce upgrade step registrator finished");

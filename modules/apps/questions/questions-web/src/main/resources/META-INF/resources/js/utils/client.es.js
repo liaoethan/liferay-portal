@@ -77,6 +77,7 @@ export const createCommentQuery = `
 			friendlyUrlPath
 			hasCompanyMx
 			id
+			status
 		}
 	}
 `;
@@ -220,12 +221,14 @@ export const deleteMessageBoardThreadQuery = `
 export const getTagsOrderByDateCreatedQuery = `
 	query keywords(
 		$page: Int!
+		$filter: String
 		$pageSize: Int!
 		$search: String
 		$siteKey: String!
 	) {
 		keywords(
 			page: $page
+			filter: $filter
 			pageSize: $pageSize
 			search: $search
 			siteKey: $siteKey
@@ -339,6 +342,15 @@ export const getThreadQuery = `
 			status
 			subscribed
 			viewCount
+			withValidAnswers: messageBoardMessages(filter: "showAsAnswer eq true") {
+				totalCount
+				items {
+				  id
+				  headline
+				  articleBody
+				  showAsAnswer
+				}
+			  }
 		}
 	}
 `;
@@ -424,13 +436,15 @@ export const getMessagesQuery = `
 						dateCreated
 						dateModified
 						encodingFormat
+						friendlyUrlPath
 						hasCompanyMx
 						id
-						friendlyUrlPath
+						modified
 						showAsAnswer
 						status
 					}
 				}
+				modified
 				myRating {
 					ratingValue
 				}
@@ -507,12 +521,12 @@ export const getSectionThreadsQuery = `
 
 export const getThreadsQuery = `
 	query messageBoardThreads(
-		$filter: String!
+		$filter: String
 		$page: Int!
 		$pageSize: Int!
-		$search: String!
+		$search: String
 		$siteKey: String!
-		$sort: String!
+		$sort: String
 	) {
 		messageBoardThreads(
 			filter: $filter
@@ -535,6 +549,7 @@ export const getThreadsQuery = `
 					image
 					name
 				}
+				dateCreated
 				dateModified
 				friendlyUrlPath
 				hasValidAnswer
@@ -748,14 +763,19 @@ export function getThread(friendlyUrlPath, siteKey) {
 	});
 }
 
-export function getMessages(messageBoardThreadId, page, pageSize) {
+export function getMessages(
+	messageBoardThreadId,
+	page,
+	pageSize,
+	sortBy = 'dateCreated:asc'
+) {
 	return clientNestedFields.request({
 		query: getMessagesQuery,
 		variables: {
 			messageBoardThreadId,
 			page,
 			pageSize,
-			sort: 'dateCreated:asc',
+			sort: sortBy,
 		},
 	});
 }
@@ -791,6 +811,7 @@ export const getUserActivityQuery = `
 					postsNumber
 					rank
 				}
+				dateCreated
 				dateModified
 				friendlyUrlPath
 				headline
@@ -803,6 +824,11 @@ export const getUserActivityQuery = `
 					}
 				}
 				numberOfMessageBoardMessages
+				parentMessageBoardMessage {
+					articleBody
+					headline
+				}
+				showAsAnswer
 			}
 			page
 			pageSize

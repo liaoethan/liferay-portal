@@ -16,17 +16,17 @@ package com.liferay.layout.content.page.editor.web.internal.util;
 
 import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentComposition;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.renderer.FragmentRenderer;
-import com.liferay.fragment.renderer.FragmentRendererTracker;
+import com.liferay.fragment.renderer.FragmentRendererRegistry;
 import com.liferay.fragment.service.FragmentCollectionService;
 import com.liferay.fragment.service.FragmentCompositionService;
 import com.liferay.fragment.service.FragmentEntryService;
 import com.liferay.fragment.util.comparator.FragmentCollectionContributorNameComparator;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.content.page.editor.web.internal.constants.ContentPageEditorConstants;
 import com.liferay.layout.util.PortalPreferencesUtil;
@@ -64,7 +64,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Lourdes Fernández Besada
  */
-@Component(immediate = true, service = FragmentCollectionManager.class)
+@Component(service = FragmentCollectionManager.class)
 public class FragmentCollectionManager {
 
 	public List<Map<String, Object>> getFragmentCollectionMapsList(
@@ -77,7 +77,7 @@ public class FragmentCollectionManager {
 			new ArrayList<>();
 
 		boolean hideInputFragments = ObjectUtil.hideInputFragments(
-			themeDisplay.getCompanyId(), _infoItemServiceTracker,
+			themeDisplay.getCompanyId(), _infoItemServiceRegistry,
 			themeDisplay.getPermissionChecker());
 
 		PortalPreferences portalPreferences =
@@ -231,16 +231,14 @@ public class FragmentCollectionManager {
 	}
 
 	private Map<String, Map<String, Object>> _getDynamicFragmentCollectionMaps(
+		Map<String, Map<String, Object>> fragmentCollectionMaps,
 		boolean hideInputFragments, Set<String> highlightedFragmentEntryKeys,
 		HttpServletRequest httpServletRequest,
 		DropZoneLayoutStructureItem masterDropZoneLayoutStructureItem,
 		ThemeDisplay themeDisplay) {
 
-		Map<String, Map<String, Object>> dynamicFragmentCollectionMaps =
-			new LinkedHashMap<>();
-
 		for (FragmentRenderer fragmentRenderer :
-				_fragmentRendererTracker.getFragmentRenderers()) {
+				_fragmentRendererRegistry.getFragmentRenderers()) {
 
 			if (!fragmentRenderer.isSelectable(httpServletRequest) ||
 				!_isAllowedFragmentEntryKey(
@@ -257,7 +255,7 @@ public class FragmentCollectionManager {
 			}
 
 			Map<String, Object> dynamicFragmentCollectionMap =
-				dynamicFragmentCollectionMaps.computeIfAbsent(
+				fragmentCollectionMaps.computeIfAbsent(
 					fragmentRenderer.getCollectionKey(),
 					key -> HashMapBuilder.<String, Object>put(
 						"fragmentCollectionId",
@@ -289,10 +287,13 @@ public class FragmentCollectionManager {
 					fragmentRenderer.getImagePreviewURL(httpServletRequest)
 				).put(
 					"name", fragmentRenderer.getLabel(themeDisplay.getLocale())
+				).put(
+					"type",
+					FragmentConstants.getTypeLabel(fragmentRenderer.getType())
 				).build());
 		}
 
-		return dynamicFragmentCollectionMaps;
+		return fragmentCollectionMaps;
 	}
 
 	private Map<String, Map<String, Object>>
@@ -306,7 +307,7 @@ public class FragmentCollectionManager {
 			new LinkedHashMap<>();
 
 		List<FragmentCollectionContributor> fragmentCollectionContributors =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributors();
 
 		Collections.sort(
@@ -515,15 +516,14 @@ public class FragmentCollectionManager {
 				hideInputFragments, highlightedFragmentEntryKeys,
 				masterDropZoneLayoutStructureItem, themeDisplay);
 
-		fragmentCollectionMaps.putAll(
-			_getDynamicFragmentCollectionMaps(
-				hideInputFragments, highlightedFragmentEntryKeys,
-				httpServletRequest, masterDropZoneLayoutStructureItem,
-				themeDisplay));
+		fragmentCollectionMaps = _getDynamicFragmentCollectionMaps(
+			fragmentCollectionMaps, hideInputFragments,
+			highlightedFragmentEntryKeys, httpServletRequest,
+			masterDropZoneLayoutStructureItem, themeDisplay);
 
 		Map<String, List<Map<String, Object>>> layoutElementMapsListMap =
 			ObjectUtil.getLayoutElementMapsListMap(
-				themeDisplay.getCompanyId(), _infoItemServiceTracker,
+				themeDisplay.getCompanyId(), _infoItemServiceRegistry,
 				themeDisplay.getPermissionChecker());
 
 		for (Map.Entry<String, List<Map<String, Object>>> entry :
@@ -626,8 +626,8 @@ public class FragmentCollectionManager {
 	};
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private FragmentCollectionService _fragmentCollectionService;
@@ -639,13 +639,13 @@ public class FragmentCollectionManager {
 	private FragmentEntryService _fragmentEntryService;
 
 	@Reference
-	private FragmentRendererTracker _fragmentRendererTracker;
+	private FragmentRendererRegistry _fragmentRendererRegistry;
 
 	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;

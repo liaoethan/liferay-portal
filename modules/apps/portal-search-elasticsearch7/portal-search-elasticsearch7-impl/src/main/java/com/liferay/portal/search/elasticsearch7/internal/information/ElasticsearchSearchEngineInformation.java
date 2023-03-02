@@ -16,7 +16,7 @@ package com.liferay.portal.search.elasticsearch7.internal.information;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -45,8 +45,6 @@ import java.util.Dictionary;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.http.util.EntityUtils;
 
@@ -64,7 +62,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Adam Brandizzi
  */
-@Component(immediate = true, service = SearchEngineInformation.class)
+@Component(service = SearchEngineInformation.class)
 public class ElasticsearchSearchEngineInformation
 	implements SearchEngineInformation {
 
@@ -316,20 +314,29 @@ public class ElasticsearchSearchEngineInformation
 			List<NodeInformation> nodeInformations =
 				connectionInformation.getNodeInformationList();
 
-			Stream<NodeInformation> stream = nodeInformations.stream();
+			StringBundler sb = new StringBundler(
+				(nodeInformations.size() * 6) + 4);
 
-			return StringBundler.concat(
-				clusterName, StringPool.COLON, StringPool.SPACE,
-				StringPool.OPEN_BRACKET,
-				stream.map(
-					nodeInfo -> StringBundler.concat(
-						nodeInfo.getName(), StringPool.SPACE,
-						StringPool.OPEN_PARENTHESIS, nodeInfo.getVersion(),
-						StringPool.CLOSE_PARENTHESIS)
-				).collect(
-					Collectors.joining(StringPool.COMMA_AND_SPACE)
-				),
-				StringPool.CLOSE_BRACKET);
+			sb.append(clusterName);
+			sb.append(StringPool.COLON);
+			sb.append(StringPool.SPACE);
+			sb.append(StringPool.OPEN_BRACKET);
+
+			for (NodeInformation nodeInformation : nodeInformations) {
+				sb.append(nodeInformation.getName());
+				sb.append(StringPool.SPACE);
+				sb.append(StringPool.OPEN_PARENTHESIS);
+				sb.append(nodeInformation.getVersion());
+				sb.append(StringPool.CLOSE_PARENTHESIS);
+
+				sb.append(StringPool.COMMA_AND_SPACE);
+			}
+
+			sb.setIndex(sb.index() - 1);
+
+			sb.append(StringPool.CLOSE_BRACKET);
+
+			return sb.toString();
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
@@ -357,7 +364,7 @@ public class ElasticsearchSearchEngineInformation
 
 		String responseBody = EntityUtils.toString(response.getEntity());
 
-		JSONObject responseJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject responseJSONObject = _jsonFactory.createJSONObject(
 			responseBody);
 
 		String clusterName = GetterUtil.getString(
@@ -406,5 +413,8 @@ public class ElasticsearchSearchEngineInformation
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ElasticsearchSearchEngineInformation.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

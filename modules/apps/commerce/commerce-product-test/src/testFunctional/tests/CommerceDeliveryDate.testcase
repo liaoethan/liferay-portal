@@ -3,7 +3,7 @@ definition {
 
 	property custom.properties = "jsonws.web.service.paths.excludes=${line.separator}company.security.strangers.verify=false";
 	property osgi.module.configuration.file.names = "com.liferay.commerce.configuration.CommerceOrderImporterTypeConfiguration.config";
-	property osgi.module.configurations = "enabled=&quot;true&quot;";
+	property osgi.module.configurations = "enabled=\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
@@ -33,8 +33,10 @@ definition {
 	}
 
 	@description = "COMMERCE-9323. The 'Checkout Requested Delivery Date' toggle is present and disabled"
-	@priority = "3"
+	@priority = 3
 	test AssertCheckoutRequestDeliveryDateToggleIsPresentAndDisabled {
+		property portal.acceptance = "false";
+
 		task ("When a channel's configuration page is reached") {
 			CommerceChannels.openChannelsAdmin();
 
@@ -55,8 +57,10 @@ definition {
 	}
 
 	@description = "COMMERCE-9324. A buyer user can set the requested delivery date during the checkout process"
-	@priority = "3"
+	@priority = 5
 	test CanSetDeliveryDate {
+		property portal.acceptance = "true";
+
 		task ("Given Minium channel's configuration page is reached") {
 			CommerceChannels.openChannelsAdmin();
 
@@ -85,7 +89,7 @@ definition {
 		task ("And when an item is added to cart from Minium site") {
 			FrontStore.addInitializerProductToCart(
 				productName = "U-Joint",
-				productQuantity = "1");
+				productQuantity = 1);
 		}
 
 		task ("And when the checkout process is started") {

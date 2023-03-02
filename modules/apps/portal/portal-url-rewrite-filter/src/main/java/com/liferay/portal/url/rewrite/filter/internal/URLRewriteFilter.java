@@ -16,7 +16,6 @@ package com.liferay.portal.url.rewrite.filter.internal;
 
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.AggregateClassLoader;
 import com.liferay.portal.kernel.util.DelegateProxyFactory;
 import com.liferay.portal.servlet.filters.BasePortalFilter;
 
@@ -37,7 +36,6 @@ import org.tuckey.web.filters.urlrewrite.UrlRewriteFilter;
  * @author László Csontos
  */
 @Component(
-	immediate = true,
 	property = {
 		"before-filter=Session Id Filter", "dispatcher=ERROR",
 		"dispatcher=FORWARD", "dispatcher=INCLUDE", "dispatcher=REQUEST",
@@ -67,9 +65,7 @@ public class URLRewriteFilter extends BasePortalFilter {
 
 		ServletContext servletContext = filterConfig.getServletContext();
 
-		ClassLoader classLoader = AggregateClassLoader.getAggregateClassLoader(
-			URLRewriteFilter.class.getClassLoader(),
-			servletContext.getClassLoader());
+		ClassLoader classLoader = URLRewriteFilter.class.getClassLoader();
 
 		try {
 			_urlRewriteFilter.init(

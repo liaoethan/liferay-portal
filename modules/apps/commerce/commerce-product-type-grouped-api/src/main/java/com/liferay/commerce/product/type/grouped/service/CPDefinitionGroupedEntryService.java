@@ -58,6 +58,11 @@ public interface CPDefinitionGroupedEntryService extends BaseService {
 			ServiceContext serviceContext)
 		throws PortalException;
 
+	public CPDefinitionGroupedEntry addCPDefinitionGroupedEntry(
+			long cpDefinitionId, long entryCProductId, double priority,
+			int quantity, ServiceContext serviceContext)
+		throws PortalException;
+
 	public CPDefinitionGroupedEntry deleteCPDefinitionGroupedEntry(
 			long cpDefinitionGroupedEntryId)
 		throws PortalException;
@@ -75,6 +80,18 @@ public interface CPDefinitionGroupedEntryService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public CPDefinitionGroupedEntry getCPDefinitionGroupedEntry(
 			long cpDefinitionGroupedEntryId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<CPDefinitionGroupedEntry>
+			getEntryCProductCPDefinitionGroupedEntries(
+				long entryCProductId, int start, int end,
+				OrderByComparator<CPDefinitionGroupedEntry> orderByComparator)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getEntryCProductCPDefinitionGroupedEntriesCount(
+			long entryCProductId)
 		throws PortalException;
 
 	/**

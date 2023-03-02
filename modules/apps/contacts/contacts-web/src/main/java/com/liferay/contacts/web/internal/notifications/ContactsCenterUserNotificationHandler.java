@@ -17,7 +17,7 @@ package com.liferay.contacts.web.internal.notifications;
 import com.liferay.contacts.web.internal.constants.ContactsPortletKeys;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -49,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jonathan Lee
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + ContactsPortletKeys.CONTACTS_CENTER,
 	service = UserNotificationHandler.class
 )
@@ -67,7 +66,7 @@ public class ContactsCenterUserNotificationHandler
 			ServiceContext serviceContext)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long socialRequestId = jsonObject.getLong("classPK");
@@ -82,28 +81,7 @@ public class ContactsCenterUserNotificationHandler
 			return null;
 		}
 
-		String creatorUserName = _getUserNameLink(
-			socialRequest.getUserId(), serviceContext);
-
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			serviceContext.getLocale(),
-			ContactsCenterUserNotificationHandler.class);
-
-		String title = StringPool.BLANK;
-
-		if (socialRequest.getType() ==
-				SocialRelationConstants.TYPE_BI_CONNECTION) {
-
-			title = ResourceBundleUtil.getString(
-				resourceBundle,
-				"request-social-networking-summary-add-connection",
-				new Object[] {creatorUserName});
-		}
-		else {
-			title = ResourceBundleUtil.getString(
-				resourceBundle, "x-sends-you-a-social-relationship-request",
-				new Object[] {creatorUserName});
-		}
+		String title = getTitle(userNotificationEvent, serviceContext);
 
 		if ((socialRequest.getStatus() !=
 				SocialRequestConstants.STATUS_PENDING) ||
@@ -172,6 +150,48 @@ public class ContactsCenterUserNotificationHandler
 		return StringPool.BLANK;
 	}
 
+	@Override
+	protected String getTitle(
+			UserNotificationEvent userNotificationEvent,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			userNotificationEvent.getPayload());
+
+		long socialRequestId = jsonObject.getLong("classPK");
+
+		SocialRequest socialRequest =
+			_socialRequestLocalService.fetchSocialRequest(socialRequestId);
+
+		if (socialRequest == null) {
+			_userNotificationEventLocalService.deleteUserNotificationEvent(
+				userNotificationEvent.getUserNotificationEventId());
+
+			return null;
+		}
+
+		String creatorUserName = _getUserNameLink(
+			socialRequest.getUserId(), serviceContext);
+
+		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+			serviceContext.getLocale(),
+			ContactsCenterUserNotificationHandler.class);
+
+		if (socialRequest.getType() ==
+				SocialRelationConstants.TYPE_BI_CONNECTION) {
+
+			return ResourceBundleUtil.getString(
+				resourceBundle,
+				"request-social-networking-summary-add-connection",
+				new Object[] {creatorUserName});
+		}
+
+		return ResourceBundleUtil.getString(
+			resourceBundle, "x-sends-you-a-social-relationship-request",
+			new Object[] {creatorUserName});
+	}
+
 	private String _getUserNameLink(
 		long userId, ServiceContext serviceContext) {
 
@@ -206,6 +226,9 @@ public class ContactsCenterUserNotificationHandler
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ContactsCenterUserNotificationHandler.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private SocialRequestLocalService _socialRequestLocalService;

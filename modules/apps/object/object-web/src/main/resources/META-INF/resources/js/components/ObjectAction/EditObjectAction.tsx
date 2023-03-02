@@ -17,21 +17,44 @@ import React from 'react';
 
 import ObjectAction from './index';
 
+interface EditObjectActionProps {
+	isApproved: boolean;
+	objectAction: ObjectAction;
+	objectActionCodeEditorElements: SidebarCategory[];
+	objectActionExecutors: CustomItem[];
+	objectActionTriggers: CustomItem[];
+	objectDefinitionExternalReferenceCode: string;
+	objectDefinitionId: number;
+	objectDefinitionsRelationshipsURL: string;
+	readOnly?: boolean;
+	systemObject: boolean;
+	validateExpressionURL: string;
+}
+
 export default function EditObjectAction({
+	isApproved,
 	objectAction: {id, ...values},
 	objectActionCodeEditorElements,
 	objectActionExecutors,
 	objectActionTriggers,
+	objectDefinitionExternalReferenceCode,
+	objectDefinitionId,
 	objectDefinitionsRelationshipsURL,
 	readOnly,
+	systemObject,
 	validateExpressionURL,
-}: IProps) {
+}: EditObjectActionProps) {
 	return (
 		<ObjectAction
+			isApproved={isApproved}
 			objectAction={values}
 			objectActionCodeEditorElements={objectActionCodeEditorElements}
 			objectActionExecutors={objectActionExecutors}
 			objectActionTriggers={objectActionTriggers}
+			objectDefinitionExternalReferenceCode={
+				objectDefinitionExternalReferenceCode
+			}
+			objectDefinitionId={objectDefinitionId}
 			objectDefinitionsRelationshipsURL={
 				objectDefinitionsRelationshipsURL
 			}
@@ -43,18 +66,9 @@ export default function EditObjectAction({
 			successMessage={Liferay.Language.get(
 				'the-object-action-was-updated-successfully'
 			)}
+			systemObject={systemObject}
 			title={Liferay.Language.get('action')}
 			validateExpressionURL={validateExpressionURL}
 		/>
 	);
-}
-
-interface IProps {
-	objectAction: ObjectAction;
-	objectActionCodeEditorElements: SidebarCategory[];
-	objectActionExecutors: CustomItem[];
-	objectActionTriggers: CustomItem[];
-	objectDefinitionsRelationshipsURL: string;
-	readOnly?: boolean;
-	validateExpressionURL: string;
 }

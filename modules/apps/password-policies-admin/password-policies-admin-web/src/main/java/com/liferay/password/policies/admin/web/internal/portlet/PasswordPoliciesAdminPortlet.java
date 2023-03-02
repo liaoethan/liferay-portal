@@ -33,6 +33,7 @@ import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -60,7 +61,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.password.policies.admin.web.internal.configuration.PasswordPoliciesConfiguration",
-	immediate = true,
 	property = {
 		"com.liferay.portlet.css-class-wrapper=portlet-users-admin",
 		"com.liferay.portlet.display-category=category.hidden",
@@ -182,7 +182,8 @@ public class PasswordPoliciesAdminPortlet extends MVCPortlet {
 				resetFailureCount, resetTicketMaxAge, serviceContext);
 		}
 
-		String redirect = ParamUtil.getString(actionRequest, "redirect");
+		String redirect = _portal.escapeRedirect(
+			ParamUtil.getString(actionRequest, "redirect"));
 
 		if (Validator.isNotNull(redirect)) {
 			redirect = HttpComponentsUtil.setParameter(
@@ -288,6 +289,9 @@ public class PasswordPoliciesAdminPortlet extends MVCPortlet {
 
 	@Reference
 	private PasswordPolicyService _passwordPolicyService;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private UserService _userService;

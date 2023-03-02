@@ -14,9 +14,11 @@
 
 package com.liferay.segments.web.internal.portlet.action;
 
+import com.liferay.item.selector.ItemSelector;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
+import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
 import com.liferay.segments.constants.SegmentsPortletKeys;
 import com.liferay.segments.criteria.contributor.SegmentsCriteriaContributorRegistry;
@@ -37,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eduardo García
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SegmentsPortletKeys.SEGMENTS,
 		"mvc.command.name=/segments/edit_segments_entry"
@@ -58,9 +59,9 @@ public class EditSegmentsEntryMVCRenderCommand implements MVCRenderCommand {
 
 		EditSegmentsEntryDisplayContext editSegmentsEntryDisplayContext =
 			new EditSegmentsEntryDisplayContext(
-				_filterParserProvider,
-				_portal.getHttpServletRequest(renderRequest), renderRequest,
-				renderResponse, _segmentsConfigurationProvider,
+				_companyLocalService, _groupLocalService,
+				_portal.getHttpServletRequest(renderRequest), _itemSelector,
+				renderRequest, renderResponse, _segmentsConfigurationProvider,
 				_segmentsCriteriaContributorRegistry,
 				_segmentsEntryProviderRegistry, _segmentsEntryService);
 
@@ -72,7 +73,13 @@ public class EditSegmentsEntryMVCRenderCommand implements MVCRenderCommand {
 	}
 
 	@Reference
-	private FilterParserProvider _filterParserProvider;
+	private CompanyLocalService _companyLocalService;
+
+	@Reference
+	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private ItemSelector _itemSelector;
 
 	@Reference
 	private Portal _portal;

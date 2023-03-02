@@ -83,6 +83,18 @@ public class DDLRecordLocalServiceWrapper
 			serviceContext);
 	}
 
+	@Override
+	public DDLRecord addRecord(
+			long userId, long groupId, long recordSetId, int displayIndex,
+			java.util.Map<String, java.io.Serializable> fieldsMap,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddlRecordLocalService.addRecord(
+			userId, groupId, recordSetId, displayIndex, fieldsMap,
+			serviceContext);
+	}
+
 	/**
 	 * @deprecated As of Athanasius (7.3.x)
 	 */
@@ -812,6 +824,19 @@ public class DDLRecordLocalServiceWrapper
 
 		return _ddlRecordLocalService.updateRecord(
 			userId, recordId, majorVersion, displayIndex, ddmFormValues,
+			serviceContext);
+	}
+
+	@Override
+	public DDLRecord updateRecord(
+			long userId, long recordId, int displayIndex,
+			java.util.Map<String, java.io.Serializable> fieldsMap,
+			boolean mergeFields,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _ddlRecordLocalService.updateRecord(
+			userId, recordId, displayIndex, fieldsMap, mergeFields,
 			serviceContext);
 	}
 

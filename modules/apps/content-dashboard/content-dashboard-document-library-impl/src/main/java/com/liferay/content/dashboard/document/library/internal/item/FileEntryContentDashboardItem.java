@@ -19,14 +19,17 @@ import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.content.dashboard.item.ContentDashboardItemVersion;
 import com.liferay.content.dashboard.item.VersionableContentDashboardItem;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemAction;
-import com.liferay.content.dashboard.item.action.ContentDashboardItemActionProviderTracker;
+import com.liferay.content.dashboard.item.action.ContentDashboardItemActionProviderRegistry;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemVersionAction;
-import com.liferay.content.dashboard.item.action.ContentDashboardItemVersionActionProviderTracker;
+import com.liferay.content.dashboard.item.action.ContentDashboardItemVersionActionProviderRegistry;
 import com.liferay.content.dashboard.item.action.exception.ContentDashboardItemActionException;
 import com.liferay.content.dashboard.item.action.exception.ContentDashboardItemVersionActionException;
 import com.liferay.content.dashboard.item.action.provider.ContentDashboardItemActionProvider;
 import com.liferay.content.dashboard.item.action.provider.ContentDashboardItemVersionActionProvider;
 import com.liferay.content.dashboard.item.type.ContentDashboardItemSubtype;
+import com.liferay.document.library.constants.DLPortletKeys;
+import com.liferay.document.library.display.context.DLDisplayContextProvider;
+import com.liferay.document.library.display.context.DLEditFileEntryDisplayContext;
 import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.item.InfoItemClassDetails;
@@ -41,6 +44,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
@@ -48,7 +55,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -59,16 +66,18 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.portlet.PortletResponse;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -80,11 +89,12 @@ public class FileEntryContentDashboardItem
 
 	public FileEntryContentDashboardItem(
 		List<AssetCategory> assetCategories, List<AssetTag> assetTags,
-		ContentDashboardItemActionProviderTracker
-			contentDashboardItemActionProviderTracker,
-		ContentDashboardItemVersionActionProviderTracker
-			contentDashboardItemVersionActionProviderTracker,
+		ContentDashboardItemActionProviderRegistry
+			contentDashboardItemActionProviderRegistry,
+		ContentDashboardItemVersionActionProviderRegistry
+			contentDashboardItemVersionActionProviderRegistry,
 		ContentDashboardItemSubtype contentDashboardItemSubtype,
+		DLDisplayContextProvider dlDisplayContextProvider,
 		DLURLHelper dlURLHelper, FileEntry fileEntry, Group group,
 		InfoItemFieldValuesProvider<FileEntry> infoItemFieldValuesProvider,
 		Language language, Portal portal) {
@@ -103,11 +113,12 @@ public class FileEntryContentDashboardItem
 			_assetTags = Collections.unmodifiableList(assetTags);
 		}
 
-		_contentDashboardItemActionProviderTracker =
-			contentDashboardItemActionProviderTracker;
-		_contentDashboardItemVersionActionProviderTracker =
-			contentDashboardItemVersionActionProviderTracker;
+		_contentDashboardItemActionProviderRegistry =
+			contentDashboardItemActionProviderRegistry;
+		_contentDashboardItemVersionActionProviderRegistry =
+			contentDashboardItemVersionActionProviderRegistry;
 		_contentDashboardItemSubtype = contentDashboardItemSubtype;
+		_dlDisplayContextProvider = dlDisplayContextProvider;
 		_dlURLHelper = dlURLHelper;
 		_fileEntry = fileEntry;
 		_group = group;
@@ -194,7 +205,7 @@ public class FileEntryContentDashboardItem
 
 		List<ContentDashboardItemActionProvider>
 			contentDashboardItemActionProviders =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviders(
 						FileEntry.class.getName(), types);
 
@@ -257,7 +268,7 @@ public class FileEntryContentDashboardItem
 
 			Optional<ContentDashboardItemActionProvider>
 				contentDashboardItemActionProviderOptional =
-					_contentDashboardItemActionProviderTracker.
+					_contentDashboardItemActionProviderRegistry.
 						getContentDashboardItemActionProviderOptional(
 							FileEntry.class.getName(),
 							ContentDashboardItemAction.Type.EDIT);
@@ -273,7 +284,7 @@ public class FileEntryContentDashboardItem
 
 		Optional<ContentDashboardItemActionProvider>
 			viewContentDashboardItemActionProviderOptional =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviderOptional(
 						FileEntry.class.getName(),
 						ContentDashboardItemAction.Type.VIEW);
@@ -285,7 +296,7 @@ public class FileEntryContentDashboardItem
 			() -> {
 				Optional<ContentDashboardItemActionProvider>
 					editContentDashboardItemActionProviderOptional =
-						_contentDashboardItemActionProviderTracker.
+						_contentDashboardItemActionProviderRegistry.
 							getContentDashboardItemActionProviderOptional(
 								FileEntry.class.getName(),
 								ContentDashboardItemAction.Type.EDIT);
@@ -393,18 +404,22 @@ public class FileEntryContentDashboardItem
 	}
 
 	@Override
-	public Map<String, Object> getSpecificInformation(Locale locale) {
-		return HashMapBuilder.<String, Object>put(
-			"extension", _getExtension()
-		).put(
-			"file-name", _getFileName()
-		).put(
-			"latest-version-url", _getLatestVersionURL()
-		).put(
-			"size", _getSize(locale)
-		).put(
-			"web-dav-url", _getWebDAVURL()
-		).build();
+	public List<SpecificInformation<?>> getSpecificInformationList(
+		Locale locale) {
+
+		return Arrays.asList(
+			new SpecificInformation<>(
+				"extension", SpecificInformation.Type.STRING, _getExtension()),
+			new SpecificInformation<>(
+				"file-name", SpecificInformation.Type.STRING, _getFileName()),
+			new SpecificInformation<>(
+				"latest-version-url", SpecificInformation.Type.URL,
+				_getLatestVersionURL()),
+			new SpecificInformation<>(
+				"size", SpecificInformation.Type.STRING, _getSize(locale)),
+			new SpecificInformation<>(
+				"webdav-help", "web-dav-url", SpecificInformation.Type.URL,
+				_getWebDAVURL()));
 	}
 
 	@Override
@@ -432,7 +447,48 @@ public class FileEntryContentDashboardItem
 
 	@Override
 	public String getViewVersionsURL(HttpServletRequest httpServletRequest) {
-		return null;
+		RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+			RequestBackedPortletURLFactoryUtil.create(httpServletRequest);
+
+		return PortletURLBuilder.create(
+			requestBackedPortletURLFactory.createControlPanelRenderURL(
+				DLPortletKeys.DOCUMENT_LIBRARY_ADMIN, _group, 0, 0)
+		).setMVCRenderCommandName(
+			"/document_library/view_file_entry_history"
+		).setBackURL(
+			() -> {
+				LiferayPortletResponse liferayPortletResponse =
+					_portal.getLiferayPortletResponse(
+						(PortletResponse)httpServletRequest.getAttribute(
+							JavaConstants.JAVAX_PORTLET_RESPONSE));
+
+				return liferayPortletResponse.createRenderURL();
+			}
+		).setParameter(
+			"fileEntryId", _fileEntry.getFileEntryId()
+		).buildString();
+	}
+
+	@Override
+	public boolean isShowContentDashboardItemVersions(
+		HttpServletRequest httpServletRequest) {
+
+		DLEditFileEntryDisplayContext dlEditFileEntryDisplayContext =
+			_dlDisplayContextProvider.getDLEditFileEntryDisplayContext(
+				httpServletRequest, null, _fileEntry);
+
+		try {
+			if (!dlEditFileEntryDisplayContext.isVersionInfoVisible()) {
+				return false;
+			}
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override
@@ -446,7 +502,7 @@ public class FileEntryContentDashboardItem
 
 		Optional<ContentDashboardItemActionProvider>
 			contentDashboardItemActionProviderOptional =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviderOptional(
 						FileEntry.class.getName(),
 						ContentDashboardItemAction.Type.VIEW);
@@ -469,7 +525,7 @@ public class FileEntryContentDashboardItem
 
 		List<ContentDashboardItemVersionActionProvider>
 			contentDashboardItemVersionActionProviders =
-				_contentDashboardItemVersionActionProviderTracker.
+				_contentDashboardItemVersionActionProviderRegistry.
 					getContentDashboardItemVersionActionProviders(
 						FileVersion.class.getName());
 
@@ -639,11 +695,12 @@ public class FileEntryContentDashboardItem
 
 	private final List<AssetCategory> _assetCategories;
 	private final List<AssetTag> _assetTags;
-	private final ContentDashboardItemActionProviderTracker
-		_contentDashboardItemActionProviderTracker;
+	private final ContentDashboardItemActionProviderRegistry
+		_contentDashboardItemActionProviderRegistry;
 	private final ContentDashboardItemSubtype _contentDashboardItemSubtype;
-	private final ContentDashboardItemVersionActionProviderTracker
-		_contentDashboardItemVersionActionProviderTracker;
+	private final ContentDashboardItemVersionActionProviderRegistry
+		_contentDashboardItemVersionActionProviderRegistry;
+	private final DLDisplayContextProvider _dlDisplayContextProvider;
 	private final DLURLHelper _dlURLHelper;
 	private final FileEntry _fileEntry;
 	private final Group _group;

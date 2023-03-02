@@ -14,12 +14,13 @@
 
 package com.liferay.analytics.dxp.entity.rest.internal.dto.v1_0.converter;
 
+import com.liferay.account.model.AccountEntry;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.DXPEntity;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.ExpandoField;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.Field;
 import com.liferay.analytics.dxp.entity.rest.dto.v1_0.converter.DXPEntityDTOConverter;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
-import com.liferay.analytics.settings.configuration.AnalyticsConfigurationTracker;
+import com.liferay.analytics.settings.configuration.AnalyticsConfigurationRegistry;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
@@ -27,6 +28,9 @@ import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.model.ExpandoTableConstants;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -35,6 +39,7 @@ import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.ShardedModel;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -100,12 +105,16 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 				{
 					name = entry.getKey();
 
-					value = entry.getValue();
+					if (entry.getValue() instanceof Date) {
+						Date date = (Date)entry.getValue();
 
-					if (value instanceof Date) {
-						Date date = (Date)value;
-
-						value = date.getTime();
+						value = String.valueOf(date.getTime());
+					}
+					else if (Validator.isNotNull(entry.getValue())) {
+						value = String.valueOf(entry.getValue());
+					}
+					else {
+						value = StringPool.BLANK;
 					}
 				}
 			};
@@ -175,7 +184,8 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 					new Field() {
 						{
 							name = "columnId";
-							value = expandoColumn.getColumnId();
+							value = GetterUtil.getString(
+								expandoColumn.getColumnId());
 						}
 					});
 				add(
@@ -192,7 +202,8 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 
 							Date modifiedDate = expandoColumn.getModifiedDate();
 
-							value = modifiedDate.getTime();
+							value = GetterUtil.getString(
+								modifiedDate.getTime());
 						}
 					});
 				add(
@@ -227,7 +238,7 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 				baseModel.getModelClassName(), User.class.getName())) {
 
 			AnalyticsConfiguration analyticsConfiguration =
-				_analyticsConfigurationTracker.getAnalyticsConfiguration(
+				_analyticsConfigurationRegistry.getAnalyticsConfiguration(
 					shardedModel.getCompanyId());
 
 			includeAttributeNames = ListUtil.fromArray(
@@ -292,12 +303,25 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 		List<String> includeAttributeNames = new ArrayList<>();
 
 		if (StringUtil.equals(
+				baseModel.getModelClassName(), AccountEntry.class.getName())) {
+
+			AccountEntry accountEntry = (AccountEntry)baseModel;
+
+			AnalyticsConfiguration analyticsConfiguration =
+				_analyticsConfigurationRegistry.getAnalyticsConfiguration(
+					accountEntry.getCompanyId());
+
+			includeAttributeNames = ListUtil.fromArray(
+				analyticsConfiguration.syncedAccountFieldNames());
+		}
+
+		if (StringUtil.equals(
 				baseModel.getModelClassName(), User.class.getName())) {
 
 			User user = (User)baseModel;
 
 			AnalyticsConfiguration analyticsConfiguration =
-				_analyticsConfigurationTracker.getAnalyticsConfiguration(
+				_analyticsConfigurationRegistry.getAnalyticsConfiguration(
 					user.getCompanyId());
 
 			includeAttributeNames = ListUtil.fromArray(
@@ -314,20 +338,6 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 		_addFieldAttributes(baseModel, fields, includeAttributeNames);
 
 		if (StringUtil.equals(
-				baseModel.getModelClassName(), Organization.class.getName())) {
-
-			Field field = new Field();
-
-			field.setName("parentOrganizationName");
-
-			Organization organization = (Organization)baseModel;
-
-			field.setValue(organization.getParentOrganizationName());
-
-			fields.add(field);
-		}
-
-		if (StringUtil.equals(
 				baseModel.getModelClassName(), Group.class.getName())) {
 
 			for (Field field : fields) {
@@ -339,6 +349,20 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 					break;
 				}
 			}
+		}
+
+		if (StringUtil.equals(
+				baseModel.getModelClassName(), Organization.class.getName())) {
+
+			Field field = new Field();
+
+			field.setName("parentOrganizationName");
+
+			Organization organization = (Organization)baseModel;
+
+			field.setValue(organization.getParentOrganizationName());
+
+			fields.add(field);
 		}
 
 		return fields.toArray(new Field[0]);
@@ -376,13 +400,13 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 				return String.valueOf(value);
 			}
 
-			List<Object> objects = new ArrayList<>();
+			JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 			for (int i = 0; i < Array.getLength(value); i++) {
-				objects.add(Array.get(value, i));
+				jsonArray.put(Array.get(value, i));
 			}
 
-			return "[" + StringUtil.merge(objects.toArray(), ",") + "]";
+			return jsonArray.toString();
 		}
 
 		return null;
@@ -416,7 +440,7 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 		DXPEntityDTOConverterImpl.class);
 
 	@Reference
-	private AnalyticsConfigurationTracker _analyticsConfigurationTracker;
+	private AnalyticsConfigurationRegistry _analyticsConfigurationRegistry;
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
@@ -426,5 +450,8 @@ public class DXPEntityDTOConverterImpl implements DXPEntityDTOConverter {
 
 	@Reference
 	private ExpandoTableLocalService _expandoTableLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

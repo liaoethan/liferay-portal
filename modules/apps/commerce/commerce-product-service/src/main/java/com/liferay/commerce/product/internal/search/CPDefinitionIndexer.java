@@ -44,6 +44,7 @@ import com.liferay.commerce.product.service.CommerceChannelRelLocalService;
 import com.liferay.commerce.util.CommerceBigDecimalUtil;
 import com.liferay.friendly.url.model.FriendlyURLEntry;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -104,7 +105,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 
 	public static final String CLASS_NAME = CPDefinition.class.getName();
@@ -290,8 +291,14 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 				CPField.ACCOUNT_GROUP_FILTER_ENABLED, Boolean.FALSE.toString(),
 				BooleanClauseOccur.SHOULD);
 
-			contextBooleanFilter.add(
-				commerceAccountGroupsBooleanFilter, BooleanClauseOccur.MUST);
+			boolean ignoreCommerceAccountGroup = GetterUtil.getBoolean(
+				attributes.get("ignoreCommerceAccountGroup"));
+
+			if (!ignoreCommerceAccountGroup) {
+				contextBooleanFilter.add(
+					commerceAccountGroupsBooleanFilter,
+					BooleanClauseOccur.MUST);
+			}
 		}
 		else {
 			long[] commerceCatalogIds = _getUserCommerceCatalogIds(
@@ -884,8 +891,7 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 	@Override
 	protected void doReindex(CPDefinition cpDefinition) throws Exception {
 		_indexWriterHelper.updateDocument(
-			cpDefinition.getCompanyId(), getDocument(cpDefinition),
-			isCommitImmediately());
+			cpDefinition.getCompanyId(), getDocument(cpDefinition));
 	}
 
 	@Override
@@ -929,20 +935,11 @@ public class CPDefinitionIndexer extends BaseIndexer<CPDefinition> {
 	}
 
 	private long[] _getUserCommerceCatalogIds(SearchContext searchContext) {
-		List<CommerceCatalog> commerceCatalogs =
+		return TransformUtil.transformToLongArray(
 			_commerceCatalogService.getCommerceCatalogs(
 				searchContext.getCompanyId(), QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS);
-
-		if (commerceCatalogs.isEmpty()) {
-			return new long[0];
-		}
-
-		Stream<CommerceCatalog> stream = commerceCatalogs.stream();
-
-		return stream.mapToLong(
-			commerceCatalog -> commerceCatalog.getCommerceCatalogId()
-		).toArray();
+				QueryUtil.ALL_POS),
+			CommerceCatalog::getCommerceCatalogId);
 	}
 
 	private void _reindexCPDefinitions(long companyId) throws Exception {

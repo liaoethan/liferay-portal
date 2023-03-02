@@ -14,6 +14,7 @@
 
 package com.liferay.commerce.discount.service.impl;
 
+import com.liferay.commerce.discount.exception.DuplicateCommerceDiscountCommerceAccountGroupRelException;
 import com.liferay.commerce.discount.model.CommerceDiscount;
 import com.liferay.commerce.discount.model.CommerceDiscountCommerceAccountGroupRel;
 import com.liferay.commerce.discount.service.base.CommerceDiscountCommerceAccountGroupRelLocalServiceBaseImpl;
@@ -38,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.discount.model.CommerceDiscountCommerceAccountGroupRel",
 	service = AopService.class
 )
@@ -52,20 +52,26 @@ public class CommerceDiscountCommerceAccountGroupRelLocalServiceImpl
 				long commerceAccountGroupId, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = _userLocalService.getUser(userId);
-
-		long commerceDiscountCommerceAccountGroupRelId =
-			counterLocalService.increment();
-
 		CommerceDiscountCommerceAccountGroupRel
 			commerceDiscountCommerceAccountGroupRel =
-				commerceDiscountCommerceAccountGroupRelPersistence.create(
-					commerceDiscountCommerceAccountGroupRelId);
+				commerceDiscountCommerceAccountGroupRelPersistence.
+					fetchByCDI_CAGI(commerceDiscountId, commerceAccountGroupId);
+
+		if (commerceDiscountCommerceAccountGroupRel != null) {
+			throw new DuplicateCommerceDiscountCommerceAccountGroupRelException();
+		}
+
+		commerceDiscountCommerceAccountGroupRel =
+			commerceDiscountCommerceAccountGroupRelPersistence.create(
+				counterLocalService.increment());
+
+		User user = _userLocalService.getUser(userId);
 
 		commerceDiscountCommerceAccountGroupRel.setCompanyId(
 			user.getCompanyId());
 		commerceDiscountCommerceAccountGroupRel.setUserId(user.getUserId());
 		commerceDiscountCommerceAccountGroupRel.setUserName(user.getFullName());
+
 		commerceDiscountCommerceAccountGroupRel.setCommerceDiscountId(
 			commerceDiscountId);
 		commerceDiscountCommerceAccountGroupRel.setCommerceAccountGroupId(

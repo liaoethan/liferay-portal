@@ -23,7 +23,12 @@ import java.util.List;
 /**
  * @author Lino Alves
  */
-public class FolderSearchFacetDisplayContext implements Serializable {
+public class FolderSearchFacetDisplayContext
+	implements FacetDisplayContext, Serializable {
+
+	public List<BucketDisplayContext> getBucketDisplayContexts() {
+		return _bucketDisplayContexts;
+	}
 
 	public long getDisplayStyleGroupId() {
 		return _displayStyleGroupId;
@@ -33,12 +38,6 @@ public class FolderSearchFacetDisplayContext implements Serializable {
 		getFolderFacetPortletInstanceConfiguration() {
 
 		return _folderFacetPortletInstanceConfiguration;
-	}
-
-	public List<FolderSearchFacetTermDisplayContext>
-		getFolderSearchFacetTermDisplayContexts() {
-
-		return _folderSearchFacetTermDisplayContexts;
 	}
 
 	public String getPaginationStartParameterName() {
@@ -65,6 +64,12 @@ public class FolderSearchFacetDisplayContext implements Serializable {
 		return _renderNothing;
 	}
 
+	public void setBucketDisplayContexts(
+		List<BucketDisplayContext> bucketDisplayContexts) {
+
+		_bucketDisplayContexts = bucketDisplayContexts;
+	}
+
 	public void setDisplayStyleGroupId(long displayStyleGroupId) {
 		_displayStyleGroupId = displayStyleGroupId;
 	}
@@ -75,14 +80,6 @@ public class FolderSearchFacetDisplayContext implements Serializable {
 
 		_folderFacetPortletInstanceConfiguration =
 			folderFacetPortletInstanceConfiguration;
-	}
-
-	public void setFolderSearchFacetTermDisplayContexts(
-		List<FolderSearchFacetTermDisplayContext>
-			folderSearchFacetTermDisplayContexts) {
-
-		_folderSearchFacetTermDisplayContexts =
-			folderSearchFacetTermDisplayContexts;
 	}
 
 	public void setNothingSelected(boolean nothingSelected) {
@@ -111,11 +108,10 @@ public class FolderSearchFacetDisplayContext implements Serializable {
 		_renderNothing = renderNothing;
 	}
 
+	private List<BucketDisplayContext> _bucketDisplayContexts;
 	private long _displayStyleGroupId;
 	private FolderFacetPortletInstanceConfiguration
 		_folderFacetPortletInstanceConfiguration;
-	private List<FolderSearchFacetTermDisplayContext>
-		_folderSearchFacetTermDisplayContexts;
 	private boolean _nothingSelected;
 	private String _paginationStartParameterName;
 	private String _parameterName;

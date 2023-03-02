@@ -17,7 +17,7 @@ package com.liferay.style.book.web.internal.display.context;
 import com.liferay.fragment.collection.item.selector.FragmentCollectionItemSelectorReturnType;
 import com.liferay.fragment.collection.item.selector.criterion.FragmentCollectionItemSelectorCriterion;
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.service.FragmentCollectionServiceUtil;
 import com.liferay.fragment.util.comparator.FragmentCollectionContributorNameComparator;
@@ -25,7 +25,6 @@ import com.liferay.fragment.util.comparator.FragmentCollectionCreateDateComparat
 import com.liferay.frontend.token.definition.FrontendTokenDefinition;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.item.selector.ItemSelector;
-import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.item.selector.LayoutItemSelectorReturnType;
 import com.liferay.layout.item.selector.criterion.LayoutItemSelectorCriterion;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
@@ -35,6 +34,7 @@ import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryServiceUtil;
 import com.liferay.layout.page.template.util.comparator.LayoutPageTemplateEntryModifiedDateComparator;
 import com.liferay.layout.util.comparator.LayoutModifiedDateComparator;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -46,7 +46,6 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.Theme;
-import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.portlet.url.builder.ResourceURLBuilder;
@@ -74,13 +73,10 @@ import com.liferay.style.book.web.internal.constants.StyleBookWebKeys;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
-import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
-import javax.portlet.ResourceURL;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -97,8 +93,8 @@ public class EditStyleBookEntryDisplayContext {
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 
-		_fragmentCollectionContributorTracker =
-			(FragmentCollectionContributorTracker)renderRequest.getAttribute(
+		_fragmentCollectionContributorRegistry =
+			(FragmentCollectionContributorRegistry)renderRequest.getAttribute(
 				StyleBookWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER);
 		_frontendTokenDefinitionRegistry =
 			(FrontendTokenDefinitionRegistry)_renderRequest.getAttribute(
@@ -233,7 +229,7 @@ public class EditStyleBookEntryDisplayContext {
 				if (fragmentCollections.size() < 4) {
 					List<FragmentCollectionContributor>
 						fragmentCollectionContributors =
-							_fragmentCollectionContributorTracker.
+							_fragmentCollectionContributorRegistry.
 								getFragmentCollectionContributors();
 
 					Collections.sort(
@@ -247,12 +243,9 @@ public class EditStyleBookEntryDisplayContext {
 								fragmentCollectionContributors, 0,
 								4 - fragmentCollections.size());
 
-					Stream<FragmentCollectionContributor>
-						fragmentCollectionContributorsStream =
-							filteredFragmentCollectionContributors.stream();
-
 					fragmentCollectionContributorJSONObjects =
-						fragmentCollectionContributorsStream.map(
+						TransformUtil.transformToArray(
+							filteredFragmentCollectionContributors,
 							fragmentCollectionContributor -> JSONUtil.put(
 								"name", fragmentCollectionContributor.getName()
 							).put(
@@ -261,18 +254,14 @@ public class EditStyleBookEntryDisplayContext {
 									fragmentCollectionContributor.
 										getFragmentCollectionKey(),
 									CompanyConstants.SYSTEM)
-							)
-						).toArray(
-							JSONObject[]::new
-						);
+							),
+							JSONObject.class);
 				}
-
-				Stream<FragmentCollection> fragmentCollectionsStream =
-					fragmentCollections.stream();
 
 				return JSONUtil.putAll(
 					ArrayUtil.append(
-						fragmentCollectionsStream.map(
+						(JSONObject[])TransformUtil.transformToArray(
+							fragmentCollections,
 							fragmentCollection -> JSONUtil.put(
 								"name", fragmentCollection.getName()
 							).put(
@@ -281,10 +270,8 @@ public class EditStyleBookEntryDisplayContext {
 									fragmentCollection.
 										getFragmentCollectionKey(),
 									fragmentCollection.getGroupId())
-							)
-						).toArray(
-							JSONObject[]::new
-						),
+							),
+							JSONObject.class),
 						fragmentCollectionContributorJSONObjects));
 			}
 		).put(
@@ -300,12 +287,12 @@ public class EditStyleBookEntryDisplayContext {
 					_themeDisplay.getCompanyGroupId()
 				});
 
-		if (_fragmentCollectionContributorTracker == null) {
+		if (_fragmentCollectionContributorRegistry == null) {
 			return fragmentCollectionsCount;
 		}
 
 		List<FragmentCollectionContributor> fragmentCollectionContributors =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributors();
 
 		return fragmentCollectionsCount + fragmentCollectionContributors.size();
@@ -365,33 +352,23 @@ public class EditStyleBookEntryDisplayContext {
 			}
 		).put(
 			"recentLayouts",
-			() -> {
-				List<LayoutPageTemplateEntry> layoutPageTemplateEntries =
+			() -> JSONUtil.putAll(
+				(JSONObject[])TransformUtil.transformToArray(
 					LayoutPageTemplateEntryServiceUtil.
 						getLayoutPageTemplateEntries(
 							_getPreviewItemsGroupId(), layoutTypes,
 							WorkflowConstants.STATUS_APPROVED, 0,
 							Math.min(total, 4),
 							new LayoutPageTemplateEntryModifiedDateComparator(
-								false));
-
-				Stream<LayoutPageTemplateEntry>
-					layoutPageTemplateEntriesStream =
-						layoutPageTemplateEntries.stream();
-
-				return JSONUtil.putAll(
-					layoutPageTemplateEntriesStream.map(
-						layoutPageTemplateEntry -> JSONUtil.put(
-							"name", layoutPageTemplateEntry.getName()
-						).put(
-							"private", false
-						).put(
-							"url", _getPreviewURL(layoutPageTemplateEntry)
-						)
-					).toArray(
-						JSONObject[]::new
-					));
-			}
+								false)),
+					layoutPageTemplateEntry -> JSONUtil.put(
+						"name", layoutPageTemplateEntry.getName()
+					).put(
+						"private", false
+					).put(
+						"url", _getPreviewURL(layoutPageTemplateEntry)
+					),
+					JSONObject.class))
 		).put(
 			"totalLayouts", total
 		);
@@ -431,20 +408,17 @@ public class EditStyleBookEntryDisplayContext {
 						_getPreviewItemsGroupId(), 0, Math.min(total, 4),
 						new LayoutModifiedDateComparator(false));
 
-				Stream<Layout> layoutsStream = layouts.stream();
-
 				return JSONUtil.putAll(
-					layoutsStream.map(
+					(JSONObject[])TransformUtil.transformToArray(
+						layouts,
 						layout -> JSONUtil.put(
 							"name", layout.getName(_themeDisplay.getLocale())
 						).put(
 							"private", layout.isPrivateLayout()
 						).put(
 							"url", _getPreviewURL(layout)
-						)
-					).toArray(
-						JSONObject[]::new
-					));
+						),
+						JSONObject.class));
 			}
 		).put(
 			"totalLayouts", total
@@ -507,35 +481,23 @@ public class EditStyleBookEntryDisplayContext {
 		LayoutPageTemplateEntry layoutPageTemplateEntry) {
 
 		try {
-			Layout layout = LayoutLocalServiceUtil.getLayout(
-				layoutPageTemplateEntry.getPlid());
-
 			if (layoutPageTemplateEntry.getType() ==
 					LayoutPageTemplateEntryTypeConstants.TYPE_DISPLAY_PAGE) {
 
-				ResourceURL getPagePreviewURL = PortletURLFactoryUtil.create(
-					_httpServletRequest,
-					ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
-					layout, PortletRequest.RESOURCE_PHASE);
-
-				getPagePreviewURL.setParameter(
-					"segmentsExperienceId",
-					String.valueOf(
-						SegmentsExperienceLocalServiceUtil.
-							fetchDefaultSegmentsExperienceId(
-								layoutPageTemplateEntry.getPlid())));
-				getPagePreviewURL.setResourceID(
-					"/layout_content_page_editor/get_page_preview");
-
-				String url = HttpComponentsUtil.addParameter(
-					getPagePreviewURL.toString(), "p_l_mode",
-					Constants.PREVIEW);
-
-				return HttpComponentsUtil.addParameter(
-					url, "styleBookEntryPreview", true);
+				return HttpComponentsUtil.addParameters(
+					_themeDisplay.getPortalURL() + _themeDisplay.getPathMain() +
+						"/portal/get_page_preview",
+					"p_l_mode", Constants.PREVIEW, "segmentsExperienceId",
+					SegmentsExperienceLocalServiceUtil.
+						fetchDefaultSegmentsExperienceId(
+							layoutPageTemplateEntry.getPlid()),
+					"selPlid", layoutPageTemplateEntry.getPlid(),
+					"styleBookEntryPreview", true);
 			}
 
-			return _getPreviewURL(layout);
+			return _getPreviewURL(
+				LayoutLocalServiceUtil.getLayout(
+					layoutPageTemplateEntry.getPlid()));
 		}
 		catch (PortalException portalException) {
 			_log.error(portalException);
@@ -594,8 +556,10 @@ public class EditStyleBookEntryDisplayContext {
 	}
 
 	private String _getThemeName() {
+		Group group = _themeDisplay.getScopeGroup();
+
 		LayoutSet layoutSet = LayoutSetLocalServiceUtil.fetchLayoutSet(
-			_themeDisplay.getSiteGroupId(), false);
+			_themeDisplay.getSiteGroupId(), group.isLayoutSetPrototype());
 
 		Theme theme = layoutSet.getTheme();
 
@@ -614,8 +578,8 @@ public class EditStyleBookEntryDisplayContext {
 	private static final Log _log = LogFactoryUtil.getLog(
 		EditStyleBookEntryDisplayContext.class.getName());
 
-	private final FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private final FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 	private final FrontendTokenDefinitionRegistry
 		_frontendTokenDefinitionRegistry;
 	private final HttpServletRequest _httpServletRequest;

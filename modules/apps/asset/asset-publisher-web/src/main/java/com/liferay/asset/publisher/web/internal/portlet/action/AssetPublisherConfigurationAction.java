@@ -20,6 +20,7 @@ import com.liferay.asset.kernel.exception.DuplicateQueryRuleException;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
 import com.liferay.asset.list.asset.entry.provider.AssetListAssetEntryProvider;
+import com.liferay.asset.list.service.AssetListEntrySegmentsEntryRelLocalService;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
 import com.liferay.asset.publisher.constants.AssetPublisherWebKeys;
 import com.liferay.asset.publisher.util.AssetPublisherHelper;
@@ -36,7 +37,7 @@ import com.liferay.asset.publisher.web.internal.util.AssetPublisherCustomizerReg
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
 import com.liferay.exportimport.kernel.staging.Staging;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
@@ -106,7 +107,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.asset.publisher.web.internal.configuration.AssetPublisherWebConfiguration",
-	immediate = true,
 	property = "javax.portlet.name=" + AssetPublisherPortletKeys.ASSET_PUBLISHER,
 	service = ConfigurationAction.class
 )
@@ -150,10 +150,12 @@ public class AssetPublisherConfigurationAction
 		AssetPublisherDisplayContext assetPublisherDisplayContext =
 			new AssetPublisherDisplayContext(
 				assetEntryActionRegistry, assetHelper,
-				assetListAssetEntryProvider, assetPublisherCustomizer,
-				assetPublisherHelper, assetPublisherWebConfiguration,
-				assetPublisherWebHelper, infoItemServiceTracker, itemSelector,
-				renderRequest, renderResponse, renderRequest.getPreferences(),
+				assetListAssetEntryProvider,
+				assetListEntrySegmentsEntryRelLocalService,
+				assetPublisherCustomizer, assetPublisherHelper,
+				assetPublisherWebConfiguration, assetPublisherWebHelper,
+				infoItemServiceRegistry, itemSelector, portal, renderRequest,
+				renderResponse, renderRequest.getPreferences(),
 				requestContextMapper, segmentsEntryRetriever);
 
 		httpServletRequest.setAttribute(
@@ -351,6 +353,10 @@ public class AssetPublisherConfigurationAction
 	protected AssetListAssetEntryProvider assetListAssetEntryProvider;
 
 	@Reference
+	protected AssetListEntrySegmentsEntryRelLocalService
+		assetListEntrySegmentsEntryRelLocalService;
+
+	@Reference
 	protected AssetPublisherCustomizerRegistry assetPublisherCustomizerRegistry;
 
 	@Reference
@@ -369,7 +375,7 @@ public class AssetPublisherConfigurationAction
 	protected GroupLocalService groupLocalService;
 
 	@Reference
-	protected InfoItemServiceTracker infoItemServiceTracker;
+	protected InfoItemServiceRegistry infoItemServiceRegistry;
 
 	@Reference
 	protected ItemSelector itemSelector;

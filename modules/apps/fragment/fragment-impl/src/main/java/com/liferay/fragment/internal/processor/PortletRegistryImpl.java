@@ -19,7 +19,7 @@ import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -35,11 +35,11 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,6 +51,7 @@ import org.jsoup.nodes.Element;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
@@ -59,7 +60,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = PortletRegistry.class)
+@Component(service = PortletRegistry.class)
 public class PortletRegistryImpl implements PortletRegistry {
 
 	@Override
@@ -70,7 +71,7 @@ public class PortletRegistryImpl implements PortletRegistry {
 
 		if (fragmentEntryLink.isTypePortlet()) {
 			try {
-				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+				JSONObject jsonObject = _jsonFactory.createJSONObject(
 					fragmentEntryLink.getEditableValues());
 
 				String portletId = jsonObject.getString("portletId");
@@ -148,25 +149,20 @@ public class PortletRegistryImpl implements PortletRegistry {
 			return;
 		}
 
-		Stream<String> stream = fragmentEntryLinkPortletIds.stream();
+		Set<Portlet> portlets = new HashSet<>();
 
-		List<Portlet> portlets = stream.map(
-			fragmentEntryLinkPortletId -> _portletLocalService.getPortletById(
-				fragmentEntryLinkPortletId)
-		).filter(
-			portlet -> {
-				if ((portlet == null) || !portlet.isActive() ||
-					portlet.isUndeployedPortlet()) {
+		for (String fragmentEntryLinkPortletId : fragmentEntryLinkPortletIds) {
+			Portlet portlet = _portletLocalService.getPortletById(
+				fragmentEntryLinkPortletId);
 
-					return false;
-				}
+			if ((portlet == null) || !portlet.isActive() ||
+				portlet.isUndeployedPortlet()) {
 
-				return true;
+				continue;
 			}
-		).distinct(
-		).collect(
-			Collectors.toList()
-		);
+
+			portlets.add(portlet);
+		}
 
 		for (Portlet portlet : portlets) {
 			try {
@@ -207,13 +203,15 @@ public class PortletRegistryImpl implements PortletRegistry {
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		bundleContext.registerService(
-			PortletAliasRegistration.class,
-			new PortletAliasRegistration() {
-			},
-			HashMapDictionaryBuilder.<String, Object>put(
-				"com.liferay.fragment.entry.processor.portlet.alias", alias
-			).build());
+		_serviceRegistrations.put(
+			alias,
+			bundleContext.registerService(
+				PortletAliasRegistration.class,
+				new PortletAliasRegistration() {
+				},
+				HashMapDictionaryBuilder.<String, Object>put(
+					"com.liferay.fragment.entry.processor.portlet.alias", alias
+				).build()));
 	}
 
 	protected void unsetPortlet(
@@ -225,14 +223,24 @@ public class PortletRegistryImpl implements PortletRegistry {
 			properties, "javax.portlet.name");
 
 		_portletNames.remove(alias, portletName);
+
+		ServiceRegistration<PortletAliasRegistration> serviceRegistration =
+			_serviceRegistrations.remove(alias);
+
+		serviceRegistration.unregister();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletRegistryImpl.class);
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private PortletLocalService _portletLocalService;
 
 	private final Map<String, String> _portletNames = new ConcurrentHashMap<>();
+	private final Map<String, ServiceRegistration<PortletAliasRegistration>>
+		_serviceRegistrations = new ConcurrentHashMap<>();
 
 }

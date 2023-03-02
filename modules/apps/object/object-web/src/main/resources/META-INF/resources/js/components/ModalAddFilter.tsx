@@ -23,6 +23,7 @@ import {
 	MultipleSelect,
 	SingleSelect,
 	filterArrayByQuery,
+	getLocalizableLabel,
 } from '@liferay/object-js-components-web';
 import React, {
 	FormEvent,
@@ -41,7 +42,10 @@ import {
 
 import './ModalAddFilter.scss';
 interface IProps {
+	aggregationFilter?: boolean;
+	creationLanguageId?: Liferay.Language.Locale;
 	currentFilters: CurrentFilter[];
+	disableAutoClose?: boolean;
 	disableDateValues?: boolean;
 	editingFilter: boolean;
 	editingObjectFieldName: string;
@@ -109,10 +113,20 @@ type CurrentFilter = {
 	valueList?: LabelValueObject[];
 };
 
-const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
+type AttachmentEntry = {
+	id: number;
+	link: {
+		href: string;
+		label: string;
+	};
+	name: string;
+};
 
 export function ModalAddFilter({
+	aggregationFilter,
+	creationLanguageId,
 	currentFilters,
+	disableAutoClose = false,
 	disableDateValues,
 	editingFilter,
 	editingObjectFieldName,
@@ -144,8 +158,13 @@ export function ModalAddFilter({
 	const [filterEndDate, setFilterEndDate] = useState('');
 
 	const filteredAvailableFields = useMemo(() => {
-		return filterArrayByQuery(objectFields, 'label', query);
-	}, [objectFields, query]);
+		return filterArrayByQuery({
+			array: objectFields,
+			creationLanguageId: creationLanguageId as Liferay.Language.Locale,
+			query,
+			str: 'label',
+		});
+	}, [creationLanguageId, objectFields, query]);
 
 	const setEditingFilterType = () => {
 		const currentFilterColumn = currentFilters.find((filterColumn) => {
@@ -176,26 +195,34 @@ export function ModalAddFilter({
 
 	const setFieldValues = useCallback(
 		(objectField: ObjectField) => {
-			if (objectField?.businessType === 'Picklist') {
+			if (
+				objectField.businessType === 'MultiselectPicklist' ||
+				objectField?.businessType === 'Picklist'
+			) {
 				const makeFetch = async () => {
-					const items = await API.getPickListItems(
-						objectField.listTypeDefinitionId
-					);
+					if (objectField.listTypeDefinitionId) {
+						const items = await API.getPickListItems(
+							objectField.listTypeDefinitionId
+						);
 
-					if (editingFilter) {
-						setItems(
-							getCheckedPickListItems(items, setEditingFilterType)
-						);
-					}
-					else {
-						setItems(
-							items.map((item) => {
-								return {
-									label: item.name,
-									value: item.key,
-								};
-							})
-						);
+						if (editingFilter) {
+							setItems(
+								getCheckedPickListItems(
+									items,
+									setEditingFilterType
+								)
+							);
+						}
+						else {
+							setItems(
+								items.map((item) => {
+									return {
+										label: item.name,
+										value: item.key,
+									};
+								})
+							);
+						}
 					}
 				};
 
@@ -247,6 +274,12 @@ export function ModalAddFilter({
 						`${restContextPath}`
 					);
 
+					if (!relatedEntries) {
+						setItems([]);
+
+						return;
+					}
+
 					if (editingFilter) {
 						setItems(
 							getCheckedRelationshipItems(
@@ -274,9 +307,17 @@ export function ModalAddFilter({
 								) as LabelValueObject;
 							}
 
+							let label = entry[titleField?.name] as string;
+
+							if (titleField.businessType === 'Attachment') {
+								label = (entry as {
+									[key: string]: AttachmentEntry;
+								})[titleField.name].name;
+							}
+
 							return {
 								...newItemsObject,
-								label: entry[titleField?.name] as string,
+								label,
 							};
 						});
 
@@ -355,6 +396,7 @@ export function ModalAddFilter({
 				selectedFilterBy?.businessType,
 				selectedFilterType?.value,
 				selectedFilterBy?.name === 'status' ||
+					selectedFilterBy?.businessType === 'MultiselectPicklist' ||
 					selectedFilterBy?.businessType === 'Picklist' ||
 					selectedFilterBy?.businessType === 'Relationship'
 					? checkedItems
@@ -370,6 +412,7 @@ export function ModalAddFilter({
 				selectedFilterBy?.businessType,
 				selectedFilterType?.value,
 				selectedFilterBy?.name === 'status' ||
+					selectedFilterBy?.businessType === 'MultiselectPicklist' ||
 					selectedFilterBy?.businessType === 'Picklist' ||
 					selectedFilterBy?.businessType === 'Relationship'
 					? checkedItems
@@ -383,13 +426,40 @@ export function ModalAddFilter({
 		onClose();
 	};
 
+	const isMultiSelectValue = () => {
+		if (
+			aggregationFilter &&
+			selectedFilterBy?.businessType === 'Relationship'
+		) {
+			return false;
+		}
+
+		if (
+			selectedFilterType &&
+			(selectedFilterBy?.name === 'status' ||
+				selectedFilterBy?.businessType === 'MultiselectPicklist' ||
+				selectedFilterBy?.businessType === 'Picklist' ||
+				selectedFilterBy?.businessType === 'Relationship')
+		) {
+			return true;
+		}
+	};
+
+	const aggregationRelationshipOrDateFieldType =
+		selectedFilterBy?.businessType === 'Date' ||
+		(aggregationFilter &&
+			selectedFilterBy?.businessType === 'Relationship');
+
 	return (
-		<ClayModal observer={observer}>
+		<ClayModal disableAutoClose={disableAutoClose} observer={observer}>
 			<ClayModal.Header>{header}</ClayModal.Header>
 
 			<ClayModal.Body>
 				{!editingFilter && (
-					<AutoComplete
+					<AutoComplete<ObjectField>
+						creationLanguageId={
+							creationLanguageId as Liferay.Language.Locale
+						}
 						emptyStateMessage={Liferay.Language.get(
 							'there-are-no-columns-available'
 						)}
@@ -398,24 +468,51 @@ export function ModalAddFilter({
 						label={Liferay.Language.get('filter-by')}
 						onChangeQuery={setQuery}
 						onSelectItem={(item) => {
+							const userRelationship = !!item.objectFieldSettings?.find(
+								({name, value}) =>
+									name === 'objectDefinition1ShortName' &&
+									value === 'User'
+							);
+
 							setSelectedFilterBy(item);
-							setSelectedFilterType(null);
 							setValue('');
+
+							if (
+								item.businessType === 'Relationship' &&
+								userRelationship &&
+								aggregationFilter
+							) {
+								return setSelectedFilterType({
+									label: 'currentUser',
+									value: 'currentUser',
+								});
+							}
+
+							setSelectedFilterType(null);
 						}}
 						query={query}
 						required
-						value={selectedFilterBy?.label[defaultLanguageId]}
+						value={getLocalizableLabel(
+							creationLanguageId as Liferay.Language.Locale,
+							selectedFilterBy?.label
+						)}
 					>
-						{({label}) => (
+						{({label, name}) => (
 							<div className="d-flex justify-content-between">
-								<div>{label[defaultLanguageId]}</div>
+								<div>
+									{getLocalizableLabel(
+										creationLanguageId as Liferay.Language.Locale,
+										label,
+										name
+									)}
+								</div>
 							</div>
 						)}
 					</AutoComplete>
 				)}
 
 				{selectedFilterBy &&
-					selectedFilterBy?.businessType !== 'Date' && (
+					!aggregationRelationshipOrDateFieldType && (
 						<SingleSelect
 							error={errors.selectedFilterType}
 							label={Liferay.Language.get('filter-type')}
@@ -464,18 +561,15 @@ export function ModalAddFilter({
 						/>
 					)}
 
-				{selectedFilterType &&
-					(selectedFilterBy?.name === 'status' ||
-						selectedFilterBy?.businessType === 'Picklist' ||
-						selectedFilterBy?.businessType === 'Relationship') && (
-						<MultipleSelect
-							error={errors.items}
-							label={Liferay.Language.get('value')}
-							options={items}
-							required
-							setOptions={setItems}
-						/>
-					)}
+				{isMultiSelectValue() && (
+					<MultipleSelect
+						error={errors.items}
+						label={Liferay.Language.get('value')}
+						options={items}
+						required
+						setOptions={setItems}
+					/>
+				)}
 
 				{selectedFilterType &&
 					selectedFilterBy?.businessType === 'Date' &&

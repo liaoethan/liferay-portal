@@ -15,19 +15,20 @@
 package com.liferay.gradle.plugins.workspace.internal.client.extension;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Gregory Amerson
@@ -37,53 +38,79 @@ public class ClientExtension {
 
 	@JsonAnySetter
 	public void ignored(String name, Object value) {
-		if (value instanceof List) {
-			List<?> listValue = (List<?>)value;
-
-			value = StringUtil.merge(listValue, StringPool.NEW_LINE);
-		}
-
-		_typeSettings.add(StringBundler.concat(name, "=", value));
+		typeSettings.put(name, value);
 	}
 
-	public String toJSON() throws Exception {
-		Map<String, Object> config = new HashMap<>();
-
-		config.put("baseURL", _BASE_URL_PREFIX + projectName);
-		config.put("description", description);
-		config.put("dxp.lxc.liferay.com.virtualInstanceId", "default");
-		config.put("name", name);
-		config.put("sourceCodeURL", sourceCodeURL);
-		config.put("type", type);
-		config.put("typeSettings", _typeSettings);
-
+	public Map<String, Object> toJSONMap(String pid) {
 		Map<String, Object> jsonMap = new HashMap<>();
 
-		jsonMap.put(_CLIENT_EXTENSION_FACTORY_PREFIX + id, config);
+		Map<String, Object> configMap = new HashMap<>();
 
-		ObjectMapper objectMapper = new ObjectMapper();
+		configMap.put("baseURL", "${portalURL}/o/" + projectName);
+		configMap.put("description", description);
+		configMap.put("dxp.lxc.liferay.com.virtualInstanceId", "default");
+		configMap.put("name", name);
+		configMap.put("properties", _encode(properties));
+		configMap.put("sourceCodeURL", sourceCodeURL);
+		configMap.put("type", type);
 
-		objectMapper.configure(
-			SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+		Set<Map.Entry<String, Object>> set = typeSettings.entrySet();
 
-		ObjectWriter objectWriter =
-			objectMapper.writerWithDefaultPrettyPrinter();
+		set.forEach(
+			entry -> {
+				if (!pid.contains("CETConfiguration")) {
+					configMap.put(entry.getKey(), entry.getValue());
+				}
+			});
 
-		return objectWriter.writeValueAsString(jsonMap);
+		if (type.equals("oAuthApplicationHeadlessServer") ||
+			type.equals("oAuthApplicationUserAgent")) {
+
+			configMap.put(
+				"homePageURL",
+				typeSettings.getOrDefault(
+					"homePageURL",
+					"https://$[conf:ext.lxc.liferay.com.mainDomain]"));
+		}
+
+		configMap.put("typeSettings", _encode(typeSettings));
+
+		jsonMap.put(pid + "~" + id, configMap);
+
+		return jsonMap;
 	}
 
+	public String classification = "static";
 	public String description = "";
 	public String id;
 	public String name = "";
 	public String projectName;
+	public Map<String, Object> properties = Collections.emptyMap();
 	public String sourceCodeURL = "";
 	public String type;
 
-	private static final String _BASE_URL_PREFIX = "${portalURL}/o/";
+	@JsonIgnore
+	public Map<String, Object> typeSettings = new HashMap<>();
 
-	private static final String _CLIENT_EXTENSION_FACTORY_PREFIX =
-		"com.liferay.client.extension.type.configuration.CETConfiguration~";
+	private List<String> _encode(Map<String, Object> map) {
+		Set<Map.Entry<String, Object>> set = map.entrySet();
 
-	private final List<String> _typeSettings = new ArrayList<>();
+		Stream<Map.Entry<String, Object>> stream = set.stream();
+
+		return stream.map(
+			entry -> {
+				Object value = entry.getValue();
+
+				if (value instanceof List) {
+					value = StringUtil.merge(
+						(List<?>)value, StringPool.NEW_LINE);
+				}
+
+				return StringBundler.concat(entry.getKey(), "=", value);
+			}
+		).collect(
+			Collectors.toList()
+		);
+	}
 
 }

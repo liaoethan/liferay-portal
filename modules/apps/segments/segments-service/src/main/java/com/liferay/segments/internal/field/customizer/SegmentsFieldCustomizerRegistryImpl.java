@@ -19,14 +19,13 @@ import com.liferay.osgi.service.tracker.collections.map.ServiceReferenceMapper;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.osgi.util.StringPlus;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.segments.field.customizer.SegmentsFieldCustomizer;
 import com.liferay.segments.field.customizer.SegmentsFieldCustomizerRegistry;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -37,28 +36,32 @@ import org.osgi.service.component.annotations.Deactivate;
 /**
  * @author Eduardo García
  */
-@Component(immediate = true, service = SegmentsFieldCustomizerRegistry.class)
+@Component(service = SegmentsFieldCustomizerRegistry.class)
 public class SegmentsFieldCustomizerRegistryImpl
 	implements SegmentsFieldCustomizerRegistry {
 
 	@Override
-	public Optional<SegmentsFieldCustomizer> getSegmentsFieldCustomizerOptional(
+	public SegmentsFieldCustomizer getSegmentsFieldCustomizer(
 		String entityName, String fieldName) {
 
 		List<SegmentsFieldCustomizer> segmentsFieldCustomizers =
 			_getSegmentsFieldCustomizers(entityName);
 
-		Stream<SegmentsFieldCustomizer> stream =
-			segmentsFieldCustomizers.stream();
+		if (ListUtil.isEmpty(segmentsFieldCustomizers)) {
+			return null;
+		}
 
-		return stream.filter(
-			segmentsFieldCustomizer -> {
-				List<String> fieldNames =
-					segmentsFieldCustomizer.getFieldNames();
+		for (SegmentsFieldCustomizer segmentsFieldCustomizer :
+				segmentsFieldCustomizers) {
 
-				return fieldNames.contains(fieldName);
+			List<String> fieldNames = segmentsFieldCustomizer.getFieldNames();
+
+			if (fieldNames.contains(fieldName)) {
+				return segmentsFieldCustomizer;
 			}
-		).findFirst();
+		}
+
+		return null;
 	}
 
 	@Activate

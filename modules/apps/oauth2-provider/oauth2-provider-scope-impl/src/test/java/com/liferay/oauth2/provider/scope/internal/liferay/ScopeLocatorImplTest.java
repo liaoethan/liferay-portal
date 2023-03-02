@@ -18,13 +18,13 @@ import com.liferay.oauth2.provider.scope.internal.configuration.ScopeLocatorConf
 import com.liferay.oauth2.provider.scope.internal.liferay.ScopeLocatorImpl.ScopeLocatorConfigurationProvider;
 import com.liferay.oauth2.provider.scope.internal.spi.scope.matcher.StrictScopeMatcherFactory;
 import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
-import com.liferay.oauth2.provider.scope.liferay.ScopedServiceTrackerMap;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandler;
 import com.liferay.oauth2.provider.scope.spi.prefix.handler.PrefixHandlerFactory;
 import com.liferay.oauth2.provider.scope.spi.scope.finder.ScopeFinder;
 import com.liferay.oauth2.provider.scope.spi.scope.mapper.ScopeMapper;
 import com.liferay.oauth2.provider.scope.spi.scope.matcher.ScopeMatcherFactory;
 import com.liferay.osgi.service.tracker.collections.ServiceReferenceServiceTuple;
+import com.liferay.osgi.service.tracker.collections.map.ScopedServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -38,8 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.hamcrest.CoreMatchers;
 
@@ -360,18 +358,13 @@ public class ScopeLocatorImplTest {
 	private Set<String> _getScopes(
 		Collection<LiferayOAuth2Scope> liferayOAuth2Scopes) {
 
-		Stream<LiferayOAuth2Scope> stream = liferayOAuth2Scopes.stream();
+		Set<String> scopes = new HashSet<>();
 
-		return stream.flatMap(
-			liferayOAuth2Scope -> {
-				Set<String> singletonSet = Collections.singleton(
-					liferayOAuth2Scope.getScope());
+		for (LiferayOAuth2Scope liferayOAuth2Scope : liferayOAuth2Scopes) {
+			scopes.add(liferayOAuth2Scope.getScope());
+		}
 
-				return singletonSet.stream();
-			}
-		).collect(
-			Collectors.toSet()
-		);
+		return scopes;
 	}
 
 	private void _set(Object object, String fieldName, Object value) {

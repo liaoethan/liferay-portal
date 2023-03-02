@@ -14,11 +14,13 @@
 
 package com.liferay.object.admin.rest.internal.resource.v1_0;
 
+import com.liferay.notification.service.NotificationTemplateLocalService;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectAction;
 import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.dto.v1_0.util.ObjectActionUtil;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectActionResource;
 import com.liferay.object.service.ObjectActionService;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -27,6 +29,7 @@ import com.liferay.portal.vulcan.fields.NestedField;
 import com.liferay.portal.vulcan.fields.NestedFieldSupport;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
 import org.osgi.service.component.annotations.Component;
@@ -53,6 +56,22 @@ public class ObjectActionResourceImpl
 	public ObjectAction getObjectAction(Long objectActionId) throws Exception {
 		return _toObjectAction(
 			_objectActionService.getObjectAction(objectActionId));
+	}
+
+	@Override
+	public Page<ObjectAction>
+			getObjectDefinitionByExternalReferenceCodeObjectActionsPage(
+				String externalReferenceCode, String search,
+				Pagination pagination)
+		throws Exception {
+
+		com.liferay.object.model.ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					externalReferenceCode, contextCompany.getCompanyId());
+
+		return getObjectDefinitionObjectActionsPage(
+			objectDefinition.getObjectDefinitionId(), search, pagination);
 	}
 
 	@NestedField(parentClass = ObjectDefinition.class, value = "objectActions")
@@ -101,6 +120,7 @@ public class ObjectActionResourceImpl
 				Field.ENTRY_CLASS_PK),
 			searchContext -> {
 				searchContext.setAttribute(Field.NAME, search);
+				searchContext.setAttribute("label", search);
 				searchContext.setAttribute(
 					"objectDefinitionId", objectDefinitionId);
 				searchContext.setCompanyId(contextCompany.getCompanyId());
@@ -112,15 +132,33 @@ public class ObjectActionResourceImpl
 	}
 
 	@Override
+	public ObjectAction postObjectDefinitionByExternalReferenceCodeObjectAction(
+			String externalReferenceCode, ObjectAction objectAction)
+		throws Exception {
+
+		com.liferay.object.model.ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					externalReferenceCode, contextCompany.getCompanyId());
+
+		return postObjectDefinitionObjectAction(
+			objectDefinition.getObjectDefinitionId(), objectAction);
+	}
+
+	@Override
 	public ObjectAction postObjectDefinitionObjectAction(
 			Long objectDefinitionId, ObjectAction objectAction)
 		throws Exception {
 
 		return _toObjectAction(
 			_objectActionService.addObjectAction(
-				objectDefinitionId, objectAction.getActive(),
-				objectAction.getConditionExpression(),
-				objectAction.getDescription(), objectAction.getName(),
+				objectAction.getExternalReferenceCode(), objectDefinitionId,
+				objectAction.getActive(), objectAction.getConditionExpression(),
+				objectAction.getDescription(),
+				LocalizedMapUtil.getLocalizedMap(
+					objectAction.getErrorMessage()),
+				LocalizedMapUtil.getLocalizedMap(objectAction.getLabel()),
+				objectAction.getName(),
 				objectAction.getObjectActionExecutorKey(),
 				objectAction.getObjectActionTriggerKey(),
 				ObjectActionUtil.toParametersUnicodeProperties(
@@ -134,9 +172,13 @@ public class ObjectActionResourceImpl
 
 		return _toObjectAction(
 			_objectActionService.updateObjectAction(
-				objectActionId, objectAction.getActive(),
-				objectAction.getConditionExpression(),
-				objectAction.getDescription(), objectAction.getName(),
+				objectAction.getExternalReferenceCode(), objectActionId,
+				objectAction.getActive(), objectAction.getConditionExpression(),
+				objectAction.getDescription(),
+				LocalizedMapUtil.getLocalizedMap(
+					objectAction.getErrorMessage()),
+				LocalizedMapUtil.getLocalizedMap(objectAction.getLabel()),
+				objectAction.getName(),
 				objectAction.getObjectActionExecutorKey(),
 				objectAction.getObjectActionTriggerKey(),
 				ObjectActionUtil.toParametersUnicodeProperties(
@@ -145,6 +187,10 @@ public class ObjectActionResourceImpl
 
 	private ObjectAction _toObjectAction(
 		com.liferay.object.model.ObjectAction objectAction) {
+
+		if (objectAction == null) {
+			return null;
+		}
 
 		String permissionName =
 			com.liferay.object.model.ObjectDefinition.class.getName();
@@ -166,10 +212,18 @@ public class ObjectActionResourceImpl
 					ActionKeys.UPDATE, "putObjectAction", permissionName,
 					objectAction.getObjectDefinitionId())
 			).build(),
-			contextAcceptLanguage.getPreferredLocale(), objectAction);
+			contextAcceptLanguage.getPreferredLocale(),
+			_notificationTemplateLocalService, _objectDefinitionLocalService,
+			objectAction);
 	}
 
 	@Reference
+	private NotificationTemplateLocalService _notificationTemplateLocalService;
+
+	@Reference
 	private ObjectActionService _objectActionService;
+
+	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 }

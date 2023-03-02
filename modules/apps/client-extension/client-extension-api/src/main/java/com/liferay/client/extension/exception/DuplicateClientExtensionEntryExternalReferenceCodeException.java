@@ -14,13 +14,13 @@
 
 package com.liferay.client.extension.exception;
 
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.exception.DuplicateExternalReferenceCodeException;
 
 /**
  * @author Brian Wing Shun Chan
  */
 public class DuplicateClientExtensionEntryExternalReferenceCodeException
-	extends PortalException {
+	extends DuplicateExternalReferenceCodeException {
 
 	public DuplicateClientExtensionEntryExternalReferenceCodeException() {
 	}

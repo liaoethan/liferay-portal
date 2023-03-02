@@ -17,17 +17,20 @@ import {ChangeEventHandler, ReactNode} from 'react';
 import './ObjectFieldFormBase.scss';
 interface IProps {
 	children?: ReactNode;
+	creationLanguageId2?: Liferay.Language.Locale;
 	disabled?: boolean;
 	editingField?: boolean;
 	errors: ObjectFieldErrors;
 	handleChange: ChangeEventHandler<HTMLInputElement>;
-	objectDefinitionId: number;
+	objectDefinitionExternalReferenceCode: string;
 	objectField: Partial<ObjectField>;
 	objectFieldTypes: ObjectFieldType[];
 	objectName: string;
 	objectRelationshipId?: number;
 	onAggregationFilterChange?: (aggregationFilterArray: []) => void;
-	onRelationshipChange?: (objectDefinitionId2: number) => void;
+	onRelationshipChange?: (
+		objectDefinitionExternalReferenceCode2: string
+	) => void;
 	setValues: (values: Partial<ObjectField>) => void;
 }
 export declare type ObjectFieldErrors = FormError<
@@ -38,11 +41,12 @@ export declare type ObjectFieldErrors = FormError<
 >;
 export default function ObjectFieldFormBase({
 	children,
+	creationLanguageId2,
 	disabled,
 	editingField,
 	errors,
 	handleChange,
-	objectDefinitionId,
+	objectDefinitionExternalReferenceCode,
 	objectField: values,
 	objectFieldTypes,
 	objectName,

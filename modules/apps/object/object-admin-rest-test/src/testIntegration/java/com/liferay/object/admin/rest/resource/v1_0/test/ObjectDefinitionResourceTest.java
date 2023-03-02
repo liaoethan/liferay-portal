@@ -25,18 +25,16 @@ import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.exception.NoSuchObjectDefinitionException;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
-import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.portal.util.PropsUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,11 +78,6 @@ public class ObjectDefinitionResourceTest
 	public void testGetObjectDefinition() throws Exception {
 		super.testGetObjectDefinition();
 
-		PropsUtil.addProperties(
-			UnicodePropertiesBuilder.setProperty(
-				"feature.flag.LPS-152650", "true"
-			).build());
-
 		ObjectDefinition objectDefinition =
 			testGetObjectDefinitionsPage_addObjectDefinition(
 				randomObjectDefinition());
@@ -95,11 +88,6 @@ public class ObjectDefinitionResourceTest
 		Assert.assertEquals(
 			"/o/c/" + objectDefinitionPluralName,
 			objectDefinition.getRestContextPath());
-
-		PropsUtil.addProperties(
-			UnicodePropertiesBuilder.setProperty(
-				"feature.flag.LPS-152650", "false"
-			).build());
 	}
 
 	@Override
@@ -250,8 +238,7 @@ public class ObjectDefinitionResourceTest
 		ObjectDefinition objectDefinition = super.randomObjectDefinition();
 
 		objectDefinition.setAccountEntryRestricted(false);
-		objectDefinition.setAccountEntryRestrictedObjectFieldId(
-			Long.valueOf(0));
+		objectDefinition.setAccountEntryRestrictedObjectFieldName("");
 		objectDefinition.setActive(false);
 		objectDefinition.setLabel(
 			Collections.singletonMap(
@@ -269,7 +256,7 @@ public class ObjectDefinitionResourceTest
 						indexed = false;
 						indexedAsKeyword = false;
 						label = Collections.singletonMap("en_US", "Column");
-						name = "column";
+						name = StringUtil.randomId();
 						required = false;
 						system = false;
 					}
@@ -277,7 +264,7 @@ public class ObjectDefinitionResourceTest
 			});
 		objectDefinition.setScope(ObjectDefinitionConstants.SCOPE_COMPANY);
 
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-135430"))) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-135430")) {
 			objectDefinition.setStorageType(StringPool.BLANK);
 		}
 

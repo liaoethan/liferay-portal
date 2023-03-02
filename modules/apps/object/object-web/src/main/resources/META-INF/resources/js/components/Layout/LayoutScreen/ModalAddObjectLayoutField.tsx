@@ -14,11 +14,13 @@
 
 import ClayButton from '@clayui/button';
 import ClayForm from '@clayui/form';
+import ClayLabel from '@clayui/label';
 import ClayModal from '@clayui/modal';
 import {Observer} from '@clayui/modal/lib/types';
 import {
 	AutoComplete,
 	FormError,
+	REQUIRED_MSG,
 	stringIncludesQuery,
 	useForm,
 } from '@liferay/object-js-components-web';
@@ -27,7 +29,8 @@ import React, {useMemo, useState} from 'react';
 
 import {TYPES, useLayoutContext} from '../objectLayoutContext';
 import {TObjectField} from '../types';
-import {RequiredLabel} from './RequiredLabel';
+
+import './ModalAddObjectLayoutField.scss';
 
 const objectFieldSizes = [1, 2, 3];
 
@@ -97,6 +100,11 @@ export default function ModalAddObjectLayoutField({
 		TObjectField
 	>();
 
+	const [readOnlyField, setReadOnlyField] = useState<ObjectFieldSetting>({
+		name: 'readOnly',
+		value: 'false',
+	});
+
 	const filteredObjectFields = useMemo(() => {
 		return objectFields.filter(
 			({inLayout, label}) =>
@@ -125,7 +133,7 @@ export default function ModalAddObjectLayoutField({
 		const errors: FormError<TInitialValues> = {};
 
 		if (!values.objectFieldName) {
-			errors.objectFieldName = Liferay.Language.get('required');
+			errors.objectFieldName = REQUIRED_MSG;
 		}
 
 		return errors;
@@ -150,12 +158,35 @@ export default function ModalAddObjectLayoutField({
 				</ClayModal.Header>
 
 				<ClayModal.Body>
-					<AutoComplete
+					<AutoComplete<TObjectField>
 						contentRight={
-							<RequiredLabel
-								className="label-inside-custom-select"
-								required={selectedObjectField?.required}
-							/>
+							<>
+								<ClayLabel
+									className="label-inside-custom-select"
+									displayType={
+										selectedObjectField?.required
+											? 'warning'
+											: 'success'
+									}
+								>
+									{selectedObjectField?.required
+										? Liferay.Language.get('mandatory')
+										: Liferay.Language.get('optional')}
+								</ClayLabel>
+
+								{(readOnlyField.value === 'true' ||
+									readOnlyField.value === 'conditional') && (
+									<ClayLabel
+										className="label-inside-custom-select"
+										displayType="secondary"
+									>
+										{Liferay.Language.get('read-only')}
+									</ClayLabel>
+								)}
+							</>
+						}
+						creationLanguageId={
+							selectedObjectField?.indexedLanguageId as Liferay.Language.Locale
 						}
 						emptyStateMessage={Liferay.Language.get(
 							'there-are-no-fields-for-this-object'
@@ -164,7 +195,14 @@ export default function ModalAddObjectLayoutField({
 						items={filteredObjectFields}
 						label={Liferay.Language.get('field')}
 						onChangeQuery={setQuery}
-						onSelectItem={(item) => {
+						onSelectItem={(item: ObjectField) => {
+							const readOnlySetting = item.objectFieldSettings?.find(
+								(fieldSetting) =>
+									fieldSetting.name === 'readOnly'
+							);
+							if (readOnlySetting) {
+								setReadOnlyField(readOnlySetting);
+							}
 							setSelectedObjectField(item);
 							setValues({objectFieldName: item.name});
 						}}
@@ -172,12 +210,36 @@ export default function ModalAddObjectLayoutField({
 						required
 						value={selectedObjectField?.label[defaultLanguageId]}
 					>
-						{({label, required}) => (
+						{({label, objectFieldSettings, required}) => (
 							<div className="d-flex justify-content-between">
-								<div>{label[defaultLanguageId]}</div>
+								<div className="lfr__object-web-layout-modal-add-field-label">
+									{label[defaultLanguageId]}
+								</div>
 
 								<div>
-									<RequiredLabel required={required} />
+									<ClayLabel
+										className="label-inside-custom-select"
+										displayType={
+											required ? 'warning' : 'success'
+										}
+									>
+										{required
+											? Liferay.Language.get('mandatory')
+											: Liferay.Language.get('optional')}
+									</ClayLabel>
+
+									{objectFieldSettings?.find(
+										(fieldSetting: ObjectFieldSetting) =>
+											fieldSetting.value === 'true' ||
+											fieldSetting.value === 'conditional'
+									) && (
+										<ClayLabel
+											className="label-inside-custom-select"
+											displayType="secondary"
+										>
+											{Liferay.Language.get('read-only')}
+										</ClayLabel>
+									)}
 								</div>
 							</div>
 						)}

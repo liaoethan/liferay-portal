@@ -14,6 +14,8 @@
 
 package com.liferay.portal.search.tuning.rankings.web.internal.searcher;
 
+import com.liferay.portal.kernel.search.SearchEngine;
+import com.liferay.portal.kernel.search.SearchEngineHelper;
 import com.liferay.portal.search.searcher.SearchRequest;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
 import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
@@ -24,8 +26,6 @@ import com.liferay.portal.search.tuning.rankings.web.internal.index.name.Ranking
 import com.liferay.portal.search.tuning.rankings.web.internal.index.name.RankingIndexNameBuilder;
 import com.liferay.portal.search.tuning.rankings.web.internal.searcher.helper.RankingSearchRequestHelper;
 
-import java.util.Optional;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -33,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author André de Oliveira
  */
 @Component(
-	immediate = true,
 	property = "search.request.contributor.id=com.liferay.portal.search.ranking",
 	service = SearchRequestContributor.class
 )
@@ -42,21 +41,31 @@ public class RankingSearchRequestContributor
 
 	@Override
 	public SearchRequest contribute(SearchRequest searchRequest) {
+		if (isSearchEngine("Solr")) {
+			return searchRequest;
+		}
+
 		RankingIndexName rankingIndexName = _getRankingIndexName(searchRequest);
 
 		if (!rankingIndexReader.isExists(rankingIndexName)) {
 			return searchRequest;
 		}
 
-		Optional<Ranking> optional =
-			rankingIndexReader.fetchByQueryStringOptional(
-				rankingIndexName, searchRequest.getQueryString());
+		Ranking ranking = rankingIndexReader.fetchByQueryString(
+			rankingIndexName, searchRequest.getQueryString());
 
-		return optional.map(
-			ranking -> contribute(searchRequest, ranking)
-		).orElse(
-			searchRequest
-		);
+		if (ranking == null) {
+			return searchRequest;
+		}
+
+		SearchRequest contributeSearchRequest = contribute(
+			searchRequest, ranking);
+
+		if (contributeSearchRequest == null) {
+			return searchRequest;
+		}
+
+		return contributeSearchRequest;
 	}
 
 	protected SearchRequest contribute(
@@ -70,6 +79,14 @@ public class RankingSearchRequestContributor
 		return searchRequestBuilder.build();
 	}
 
+	protected boolean isSearchEngine(String engine) {
+		SearchEngine searchEngine = searchEngineHelper.getSearchEngine();
+
+		String vendor = searchEngine.getVendor();
+
+		return vendor.equals(engine);
+	}
+
 	@Reference
 	protected RankingIndexNameBuilder rankingIndexNameBuilder;
 
@@ -78,6 +95,9 @@ public class RankingSearchRequestContributor
 
 	@Reference
 	protected RankingSearchRequestHelper rankingSearchRequestHelper;
+
+	@Reference
+	protected SearchEngineHelper searchEngineHelper;
 
 	@Reference
 	protected SearchRequestBuilderFactory searchRequestBuilderFactory;

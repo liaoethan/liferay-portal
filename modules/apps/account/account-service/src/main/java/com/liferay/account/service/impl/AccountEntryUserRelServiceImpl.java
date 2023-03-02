@@ -19,9 +19,9 @@ import com.liferay.account.model.AccountEntryUserRel;
 import com.liferay.account.service.base.AccountEntryUserRelServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 
@@ -29,6 +29,8 @@ import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 
 /**
  * @author Brian Wing Shun Chan
@@ -48,8 +50,9 @@ public class AccountEntryUserRelServiceImpl
 	public AccountEntryUserRel addAccountEntryUserRel(
 			long accountEntryId, long creatorUserId, String screenName,
 			String emailAddress, Locale locale, String firstName,
-			String middleName, String lastName, long prefixId, long suffixId,
-			String jobTitle, ServiceContext serviceContext)
+			String middleName, String lastName, long prefixListTypeId,
+			long suffixListTypeId, String jobTitle,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_modelResourcePermission.check(
@@ -57,8 +60,8 @@ public class AccountEntryUserRelServiceImpl
 
 		return accountEntryUserRelLocalService.addAccountEntryUserRel(
 			accountEntryId, creatorUserId, screenName, emailAddress, locale,
-			firstName, middleName, lastName, prefixId, suffixId, jobTitle,
-			serviceContext);
+			firstName, middleName, lastName, prefixListTypeId, suffixListTypeId,
+			jobTitle, serviceContext);
 	}
 
 	@Override
@@ -92,8 +95,9 @@ public class AccountEntryUserRelServiceImpl
 	public AccountEntryUserRel addPersonTypeAccountEntryUserRel(
 			long accountEntryId, long creatorUserId, String screenName,
 			String emailAddress, Locale locale, String firstName,
-			String middleName, String lastName, long prefixId, long suffixId,
-			String jobTitle, ServiceContext serviceContext)
+			String middleName, String lastName, long prefixListTypeId,
+			long suffixListTypeId, String jobTitle,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_modelResourcePermission.check(
@@ -101,8 +105,8 @@ public class AccountEntryUserRelServiceImpl
 
 		return accountEntryUserRelLocalService.addPersonTypeAccountEntryUserRel(
 			accountEntryId, creatorUserId, screenName, emailAddress, locale,
-			firstName, middleName, lastName, prefixId, suffixId, jobTitle,
-			serviceContext);
+			firstName, middleName, lastName, prefixListTypeId, suffixListTypeId,
+			jobTitle, serviceContext);
 	}
 
 	@Override
@@ -130,6 +134,20 @@ public class AccountEntryUserRelServiceImpl
 	}
 
 	@Override
+	public void inviteUser(
+			long accountEntryId, long[] accountRoleIds, String emailAddress,
+			User inviter, ServiceContext serviceContext)
+		throws PortalException {
+
+		_modelResourcePermission.check(
+			getPermissionChecker(), accountEntryId, ActionKeys.MANAGE_USERS);
+
+		accountEntryUserRelLocalService.inviteUser(
+			accountEntryId, accountRoleIds, emailAddress, inviter,
+			serviceContext);
+	}
+
+	@Override
 	public void setPersonTypeAccountEntryUser(long accountEntryId, long userId)
 		throws PortalException {
 
@@ -140,10 +158,13 @@ public class AccountEntryUserRelServiceImpl
 			accountEntryId, userId);
 	}
 
-	private static volatile ModelResourcePermission<AccountEntry>
-		_modelResourcePermission = ModelResourcePermissionFactory.getInstance(
-			AccountEntryUserRelServiceImpl.class, "_modelResourcePermission",
-			AccountEntry.class);
+	@Reference(
+		policy = ReferencePolicy.DYNAMIC,
+		policyOption = ReferencePolicyOption.GREEDY,
+		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
+	)
+	private volatile ModelResourcePermission<AccountEntry>
+		_modelResourcePermission;
 
 	@Reference
 	private UserLocalService _userLocalService;

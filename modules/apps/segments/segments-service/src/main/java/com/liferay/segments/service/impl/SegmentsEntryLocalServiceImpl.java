@@ -15,7 +15,6 @@
 package com.liferay.segments.service.impl;
 
 import com.liferay.portal.aop.AopService;
-import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageBus;
@@ -368,6 +367,18 @@ public class SegmentsEntryLocalServiceImpl
 
 	@Override
 	public BaseModelSearchResult<SegmentsEntry> searchSegmentsEntries(
+			long companyId, String keywords,
+			LinkedHashMap<String, Object> params, int start, int end, Sort sort)
+		throws PortalException {
+
+		SearchContext searchContext = _buildSearchContext(
+			companyId, keywords, params, start, end, sort);
+
+		return segmentsEntryLocalService.searchSegmentsEntries(searchContext);
+	}
+
+	@Override
+	public BaseModelSearchResult<SegmentsEntry> searchSegmentsEntries(
 			SearchContext searchContext)
 		throws PortalException {
 
@@ -433,6 +444,25 @@ public class SegmentsEntryLocalServiceImpl
 		boolean includeAncestorSegmentsEntries,
 		LinkedHashMap<String, Object> params, int start, int end, Sort sort) {
 
+		SearchContext searchContext = _buildSearchContext(
+			companyId, keywords, params, start, end, sort);
+
+		long[] groupIds = {groupId};
+
+		if (includeAncestorSegmentsEntries) {
+			groupIds = ArrayUtil.append(
+				groupIds, _portal.getAncestorSiteGroupIds(groupId));
+		}
+
+		searchContext.setGroupIds(groupIds);
+
+		return searchContext;
+	}
+
+	private SearchContext _buildSearchContext(
+		long companyId, String keywords, LinkedHashMap<String, Object> params,
+		int start, int end, Sort sort) {
+
 		SearchContext searchContext = new SearchContext();
 
 		QueryConfig queryConfig = searchContext.getQueryConfig();
@@ -453,15 +483,6 @@ public class SegmentsEntryLocalServiceImpl
 
 		searchContext.setCompanyId(companyId);
 		searchContext.setEnd(end);
-
-		long[] groupIds = {groupId};
-
-		if (includeAncestorSegmentsEntries) {
-			groupIds = ArrayUtil.append(
-				groupIds, _portal.getAncestorSiteGroupIds(groupId));
-		}
-
-		searchContext.setGroupIds(groupIds);
 
 		if (Validator.isNotNull(keywords)) {
 			searchContext.setKeywords(keywords);
@@ -510,9 +531,10 @@ public class SegmentsEntryLocalServiceImpl
 
 	private String _getSource(String criteria, String source) {
 		if (Validator.isNotNull(criteria)) {
-			Criteria criteriaObj = CriteriaSerializer.deserialize(criteria);
+			Criteria deserializedCriteria = CriteriaSerializer.deserialize(
+				criteria);
 
-			String referredFilterString = criteriaObj.getFilterString(
+			String referredFilterString = deserializedCriteria.getFilterString(
 				Criteria.Type.REFERRED);
 
 			if (Validator.isNotNull(referredFilterString)) {
@@ -607,9 +629,6 @@ public class SegmentsEntryLocalServiceImpl
 				"Name is null for locale " + defaultLocale.getDisplayName());
 		}
 	}
-
-	@Reference
-	private BackgroundTaskManager _backgroundTaskManager;
 
 	@Reference
 	private MessageBus _messageBus;

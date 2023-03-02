@@ -14,21 +14,26 @@
 
 import {ClayButtonWithIcon} from '@clayui/button';
 import {VerticalBar} from '@clayui/core';
+import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {navigate} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useState} from 'react';
+import React, {Suspense, useEffect, useState} from 'react';
 
-import NavigationPanel from './NavigationPanel';
-import SuggestionsPanel from './SuggestionsPanel';
-import TemplatesPanel from './TemplatesPanel';
+const NavigationPanel = React.lazy(() => import('./NavigationPanel'));
+const SuggestionsPanel = React.lazy(() => import('./SuggestionsPanel'));
+const TemplatesPanel = React.lazy(() => import('./TemplatesPanel'));
 
 const CSS_EXPANDED = 'expanded';
+
+const DELAY_ANIMATION = 300;
 
 const SUGGESTION_KEY = 'suggestion';
 
 const VerticalNavigationBar = ({
 	items,
+	moveKBObjectURL,
 	parentContainerId,
+	portletNamespace,
 	productMenuOpen: initialProductMenuOpen,
 }) => {
 	const parentContainer = document.getElementById(parentContainerId);
@@ -50,28 +55,42 @@ const VerticalNavigationBar = ({
 	);
 
 	useEffect(() => {
-		if (productMenu && activePanel !== SUGGESTION_KEY) {
-			const productMenuOpenListener = productMenu.on(
-				'openStart.lexicon.sidenav',
-				() => {
-					setProductMenuOpen(true);
-					setVerticalBarOpen(false);
-				}
-			);
+		const onProductMenuChange = ({open}) => {
+			setProductMenuOpen(open);
 
-			const productMenuCloseListener = productMenu.on(
-				'closedStart.lexicon.sidenav',
-				() => {
-					setProductMenuOpen(false);
-				}
-			);
+			if (open) {
+				setVerticalBarOpen(false);
+			}
+			else {
+				setTimeout(() => {
+					setVerticalBarOpen(true);
+				}, DELAY_ANIMATION);
+			}
+		};
 
-			return () => {
-				productMenuOpenListener.removeListener();
-				productMenuCloseListener.removeListener();
-			};
+		const closedProductMenuListener = productMenu?.on(
+			'closed.lexicon.sidenav',
+			() => onProductMenuChange({open: false})
+		);
+
+		const openProductMenuListener = productMenu?.on(
+			'openStart.lexicon.sidenav',
+			() => onProductMenuChange({open: true})
+		);
+
+		if (initialProductMenuOpen) {
+			setTimeout(() => {
+				productMenu.hide();
+			}, DELAY_ANIMATION);
 		}
-	}, [activePanel, productMenu]);
+
+		return () => {
+			closedProductMenuListener?.removeListener();
+			openProductMenuListener?.removeListener();
+
+			productMenu.destroy();
+		};
+	}, [initialProductMenuOpen, productMenu]);
 
 	useEffect(() => {
 		parentContainer.classList.toggle(
@@ -149,6 +168,7 @@ const VerticalNavigationBar = ({
 				{(item) => (
 					<VerticalBar.Item key={item.key}>
 						<ClayButtonWithIcon
+							aria-label={Liferay.Language.get(item.title)}
 							data-tooltip-align="right"
 							displayType="unstyled"
 							symbol={item.icon}
@@ -171,10 +191,14 @@ const VerticalNavigationBar = ({
 							</div>
 
 							<div className="sidebar-body">
-								<PanelComponent
-									items={item.navigationItems}
-									selectedItemId={item.selectedItemId}
-								/>
+								<Suspense fallback={<ClayLoadingIndicator />}>
+									<PanelComponent
+										items={item.navigationItems}
+										moveKBObjectURL={moveKBObjectURL}
+										portletNamespace={portletNamespace}
+										selectedItemId={item.selectedItemId}
+									/>
+								</Suspense>
 							</div>
 						</VerticalBar.Panel>
 					);
@@ -194,7 +218,9 @@ const itemShape = {
 
 VerticalNavigationBar.propTypes = {
 	items: PropTypes.arrayOf(PropTypes.shape(itemShape)),
+	moveKBObjectURL: PropTypes.string,
 	parentContainerId: PropTypes.string.isRequired,
+	portletNamespace: PropTypes.string.isRequired,
 	productMenuOpen: PropTypes.bool,
 };
 

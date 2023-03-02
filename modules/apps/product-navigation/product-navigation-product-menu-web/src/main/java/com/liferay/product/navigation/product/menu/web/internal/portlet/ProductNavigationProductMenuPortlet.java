@@ -19,12 +19,15 @@ import com.liferay.application.list.PanelAppRegistry;
 import com.liferay.application.list.PanelCategoryRegistry;
 import com.liferay.application.list.constants.ApplicationListWebKeys;
 import com.liferay.application.list.display.context.logic.PanelCategoryHelper;
+import com.liferay.layout.util.LayoutsTree;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.product.navigation.product.menu.constants.ProductNavigationProductMenuPortletKeys;
-import com.liferay.product.navigation.product.menu.web.internal.constants.ProductNavigationProductMenuWebKeys;
 import com.liferay.product.navigation.product.menu.web.internal.display.context.LayoutsTreeDisplayContext;
 import com.liferay.site.navigation.service.SiteNavigationMenuItemLocalService;
 import com.liferay.site.navigation.service.SiteNavigationMenuLocalService;
@@ -46,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.display-category=category.hidden",
 		"com.liferay.portlet.header-portlet-css=/css/main.css",
@@ -73,12 +75,12 @@ public class ProductNavigationProductMenuPortlet extends MVCPortlet {
 			RenderRequest renderRequest, RenderResponse renderResponse)
 		throws IOException, PortletException {
 
-		HttpServletRequest originalHttpServletRequest =
-			_portal.getOriginalServletRequest(
-				_portal.getHttpServletRequest(renderRequest));
+		HttpServletRequest httpServletRequest = _portal.getHttpServletRequest(
+			renderRequest);
 
 		String layoutMode = ParamUtil.getString(
-			originalHttpServletRequest, "p_l_mode", Constants.VIEW);
+			_portal.getOriginalServletRequest(httpServletRequest), "p_l_mode",
+			Constants.VIEW);
 
 		if (layoutMode.equals(Constants.PREVIEW)) {
 			return;
@@ -100,28 +102,43 @@ public class ProductNavigationProductMenuPortlet extends MVCPortlet {
 			ApplicationListWebKeys.PANEL_CATEGORY_REGISTRY,
 			_panelCategoryRegistry);
 
-		_setLayoutsTreeDisplayContextRequestAttribute(renderRequest);
+		_setLayoutsTreeDisplayContextRequestAttribute(
+			httpServletRequest, renderRequest, renderResponse);
 
 		super.doDispatch(renderRequest, renderResponse);
 	}
 
 	private void _setLayoutsTreeDisplayContextRequestAttribute(
-		RenderRequest renderRequest) {
+		HttpServletRequest httpServletRequest, RenderRequest renderRequest,
+		RenderResponse renderResponse) {
 
 		LayoutsTreeDisplayContext layoutsTreeDisplayContext =
 			new LayoutsTreeDisplayContext(
-				_groupProvider, renderRequest,
+				httpServletRequest, _language, _layoutLocalService,
+				_layoutService, _layoutsTree, renderRequest, renderResponse,
 				_siteNavigationMenuItemLocalService,
 				_siteNavigationMenuItemTypeRegistry,
 				_siteNavigationMenuLocalService);
 
 		renderRequest.setAttribute(
-			ProductNavigationProductMenuWebKeys.LAYOUTS_TREE_DISPLAY_CONTEXT,
+			LayoutsTreeDisplayContext.class.getName(),
 			layoutsTreeDisplayContext);
 	}
 
 	@Reference
 	private GroupProvider _groupProvider;
+
+	@Reference
+	private Language _language;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private LayoutService _layoutService;
+
+	@Reference
+	private LayoutsTree _layoutsTree;
 
 	@Reference
 	private PanelAppRegistry _panelAppRegistry;

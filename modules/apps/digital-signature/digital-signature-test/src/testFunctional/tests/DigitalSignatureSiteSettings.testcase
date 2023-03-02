@@ -1,6 +1,14 @@
 @component-name = "portal-solutions"
 definition {
 
+	var digitalSignatureAccountBaseUri = PropsUtil.get("digital.signature.account.base.uri");
+	var digitalSignatureApiAccountId = PropsUtil.get("digital.signature.api.accountId");
+	var digitalSignatureApiUsername = PropsUtil.get("digital.signature.api.username");
+	var digitalSignatureIntegrationKey = PropsUtil.get("digital.signature.integration.key");
+	var digitalSignatureRsaPrivateKey = PropsUtil.get("digital.signature.rsa.private.key");
+
+	property osgi.module.configuration.file.names = "com.liferay.digital.signature.configuration.DigitalSignatureConfiguration.config";
+	property osgi.module.configurations = "enabled=\"TRUE\"${line.separator}apiUsername=\"${digitalSignatureApiUsername}\"${line.separator}apiAccountId=\"${digitalSignatureApiAccountId}\"${line.separator}accountBaseURI=\"digitalSignatureAccountBaseUri\"${line.separator}integrationKey=\"${digitalSignatureIntegrationKey}\"${line.separator}rsaPrivateKey=\"digitalSignatureRsaPrivateKey\"${line.separator}siteSettingsStrategy=\"always-inherit\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Digital Signature";
@@ -9,7 +17,22 @@ definition {
 		TestCase.setUpPortalInstance();
 
 		User.firstLoginUI();
+	}
 
+	tearDown {
+		var testPortalInstance = PropsUtil.get("test.portal.instance");
+
+		if (${testPortalInstance} == "true") {
+			PortalInstances.tearDownCP();
+		}
+		else {
+			User.logoutPG();
+		}
+	}
+
+	@description = "This is a test for LPS-131427. Verify if Digital Signature can be enable in Site Settings, using the Always Override Strategy"
+	@priority = 5
+	test CanEnableDigitalSignatureBySiteSettings {
 		ApplicationsMenu.gotoPortlet(
 			category = "Configuration",
 			panel = "Control Panel",
@@ -20,28 +43,7 @@ definition {
 			configurationName = "Digital Signature Configuration",
 			configurationScope = "Virtual Instance Scope");
 
-		FormFields.enableCheckbox(fieldName = "enabled");
-	}
-
-	tearDown {
-		var testPortalInstance = PropsUtil.get("test.portal.instance");
-
-		if ("${testPortalInstance}" == "true") {
-			PortalInstances.tearDownCP();
-		}
-		else {
-			User.logoutPG();
-		}
-	}
-
-	@description = "This is a test for LPS-131427. Verify if Digital Signature can be enable in Site Settings, using the Always Override Strategy"
-	@priority = "5"
-	test CanEnableDigitalSignatureBySiteSettings {
-		var siteStrategy = "Always Override";
-
-		Select(
-			locator1 = "ClickToChatConfiguration#SITE_SETTINGS_STRATEGY",
-			value1 = "${siteStrategy}");
+		DigitalSignature.enableDigitalSignature(siteStrategy = "Always Override");
 
 		SystemSettings.saveConfiguration();
 
@@ -55,31 +57,25 @@ definition {
 			key_itemName = "Digital Signature",
 			locator1 = "ListGroupItem#ITEM_TEXT");
 
-		var digitalSignatureApiUsername = PropsUtil.get("digital.signature.api.username");
-		var digitalSignatureApiAccountId = PropsUtil.get("digital.signature.api.accountId");
-		var digitalSignatureAccountBaseUri = PropsUtil.get("digital.signature.account.base.uri");
-		var digitalSignatureIntegrationKey = PropsUtil.get("digital.signature.integration.key");
-		var digitalSignatureRsaPrivateKey = PropsUtil.get("digital.signature.rsa.private.key");
-
 		Type(
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_USER_ID",
-			value1 = "${digitalSignatureApiUsername}");
+			value1 = ${digitalSignatureApiUsername});
 
 		Type(
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_ACCOUNT_ID",
-			value1 = "${digitalSignatureApiAccountId}");
+			value1 = ${digitalSignatureApiAccountId});
 
 		Type(
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_BASE_URI",
-			value1 = "${digitalSignatureAccountBaseUri}");
+			value1 = ${digitalSignatureAccountBaseUri});
 
 		Type(
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_INTEGRATION_KEY",
-			value1 = "${digitalSignatureIntegrationKey}");
+			value1 = ${digitalSignatureIntegrationKey});
 
 		Type(
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_RSA_PRIVATE_KEY",
-			value1 = "${digitalSignatureRsaPrivateKey}");
+			value1 = ${digitalSignatureRsaPrivateKey});
 
 		SystemSettings.saveConfiguration();
 
@@ -90,12 +86,12 @@ definition {
 		var dsStatus = "Sent";
 
 		AssertElementPresent(
-			dsStatus = "${dsStatus}",
+			dsStatus = ${dsStatus},
 			locator1 = "DigitalSignatureListView#DIGITAL_SIGNATURE_STATUS");
 	}
 
 	@description = "This is a test for LPS-131427. Verify if Digital Signature data persists in site settings after enabled with Always Inherit strategy"
-	@priority = "5"
+	@priority = 5
 	test DataPersistsAfterEnabledAlwaysInheritStrategy {
 		DigitalSignature.enableDigitalSignature(siteStrategy = "Always Inherit");
 
@@ -110,41 +106,36 @@ definition {
 			locator1 = "ListGroupItem#ITEM_TEXT");
 
 		var siteSettingsStrategy = "Always Inherit";
-		var digitalSignatureApiUsername = "${digitalSignatureApiUsername}";
-		var digitalSignatureApiAccountId = "${digitalSignatureApiAccountId}";
-		var digitalSignatureAccountBaseUri = "${digitalSignatureAccountBaseUri}";
-		var digitalSignatureIntegrationKey = "${digitalSignatureIntegrationKey}";
-		var digitalSignatureRsaPrivateKey = "${digitalSignatureRsaPrivateKey}";
 
 		AssertElementPresent(
 			locator1 = "ClickToChatConfiguration#SITE_SETTINGS_STRATEGY_CHOOSEN",
-			siteSettingsStrategy = "${siteSettingsStrategy}");
+			siteSettingsStrategy = ${siteSettingsStrategy});
 
 		AssertElementPresent(locator1 = "ClickToChatConfiguration#CHECK_INPUT_ENABLED");
 
 		AssertElementPresent(
-			digitalSignatureApiUsername = "${digitalSignatureApiUsername}",
+			digitalSignatureApiUsername = ${digitalSignatureApiUsername},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_USER_ID");
 
 		AssertElementPresent(
-			digitalSignatureApiAccountId = "${digitalSignatureApiAccountId}",
+			digitalSignatureApiAccountId = ${digitalSignatureApiAccountId},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_ACCOUNT_ID");
 
 		AssertElementPresent(
-			digitalSignatureAccountBaseUri = "${digitalSignatureAccountBaseUri}",
+			digitalSignatureAccountBaseUri = ${digitalSignatureAccountBaseUri},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_BASE_URI");
 
 		AssertElementPresent(
-			digitalSignatureIntegrationKey = "${digitalSignatureIntegrationKey}",
+			digitalSignatureIntegrationKey = ${digitalSignatureIntegrationKey},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_INTEGRATION_KEY");
 
 		AssertElementPresent(
-			digitalSignatureRsaPrivateKey = "${digitalSignatureRsaPrivateKey}",
+			digitalSignatureRsaPrivateKey = ${digitalSignatureRsaPrivateKey},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_RSA_PRIVATE_KEY");
 	}
 
 	@description = "This is a test for LPS-131427. Verify if Digital Signature data persists in site settings after enabled with Inherit or Override strategy"
-	@priority = "5"
+	@priority = 5
 	test DataPersistsAfterEnabledInheritOrOverrideStrategy {
 		DigitalSignature.enableDigitalSignature(siteStrategy = "Inherit or Override");
 
@@ -159,36 +150,31 @@ definition {
 			locator1 = "ListGroupItem#ITEM_TEXT");
 
 		var siteSettingsStrategy = "Inherit or Override";
-		var digitalSignatureApiUsername = "${digitalSignatureApiUsername}";
-		var digitalSignatureApiAccountId = "${digitalSignatureApiAccountId}";
-		var digitalSignatureAccountBaseUri = "${digitalSignatureAccountBaseUri}";
-		var digitalSignatureIntegrationKey = "${digitalSignatureIntegrationKey}";
-		var digitalSignatureRsaPrivateKey = "${digitalSignatureRsaPrivateKey}";
 
 		AssertElementPresent(
 			locator1 = "ClickToChatConfiguration#SITE_SETTINGS_STRATEGY_CHOOSEN",
-			siteSettingsStrategy = "${siteSettingsStrategy}");
+			siteSettingsStrategy = ${siteSettingsStrategy});
 
 		AssertElementPresent(locator1 = "ClickToChatConfiguration#CHECK_INPUT_ENABLED");
 
 		AssertElementPresent(
-			digitalSignatureApiUsername = "${digitalSignatureApiUsername}",
+			digitalSignatureApiUsername = ${digitalSignatureApiUsername},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_USER_ID");
 
 		AssertElementPresent(
-			digitalSignatureApiAccountId = "${digitalSignatureApiAccountId}",
+			digitalSignatureApiAccountId = ${digitalSignatureApiAccountId},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_ACCOUNT_ID");
 
 		AssertElementPresent(
-			digitalSignatureAccountBaseUri = "${digitalSignatureAccountBaseUri}",
+			digitalSignatureAccountBaseUri = ${digitalSignatureAccountBaseUri},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_BASE_URI");
 
 		AssertElementPresent(
-			digitalSignatureIntegrationKey = "${digitalSignatureIntegrationKey}",
+			digitalSignatureIntegrationKey = ${digitalSignatureIntegrationKey},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_INTEGRATION_KEY");
 
 		AssertElementPresent(
-			digitalSignatureRsaPrivateKey = "${digitalSignatureRsaPrivateKey}",
+			digitalSignatureRsaPrivateKey = ${digitalSignatureRsaPrivateKey},
 			locator1 = "DigitalSignatureConfiguration#DIGITAL_SIGNATURE_RSA_PRIVATE_KEY");
 	}
 

@@ -15,14 +15,14 @@
 /// <reference types="react" />
 
 import './EditObjectField.scss';
-interface IProps {
+interface EditObjectFieldProps {
 	filterOperators: TFilterOperators;
 	forbiddenChars: string[];
 	forbiddenLastChars: string[];
 	forbiddenNames: string[];
 	isApproved: boolean;
 	isDefaultStorageType: boolean;
-	objectDefinitionId: number;
+	objectDefinitionExternalReferenceCode: string;
 	objectField: ObjectField;
 	objectFieldTypes: ObjectFieldType[];
 	objectName: string;
@@ -37,12 +37,12 @@ export default function EditObjectField({
 	forbiddenNames,
 	isApproved,
 	isDefaultStorageType,
-	objectDefinitionId,
-	objectField: initialValues,
+	objectDefinitionExternalReferenceCode,
+	objectField,
 	objectFieldTypes,
 	objectName,
 	objectRelationshipId,
 	readOnly,
 	workflowStatusJSONArray,
-}: IProps): JSX.Element;
+}: EditObjectFieldProps): JSX.Element;
 export {};

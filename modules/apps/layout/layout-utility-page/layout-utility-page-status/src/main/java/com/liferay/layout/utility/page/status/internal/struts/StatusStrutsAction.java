@@ -18,7 +18,10 @@ import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
+import com.liferay.portal.kernel.servlet.PortalMessages;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.theme.ThemeUtil;
@@ -39,10 +42,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Lourdes Fernández Besada
  */
-@Component(
-	immediate = true, property = "path=/portal/status",
-	service = StrutsAction.class
-)
+@Component(property = "path=/portal/status", service = StrutsAction.class)
 public class StatusStrutsAction implements StrutsAction {
 
 	@Override
@@ -74,11 +74,16 @@ public class StatusStrutsAction implements StrutsAction {
 
 		requestDispatcher.include(httpServletRequest, pipingServletResponse);
 
+		SessionErrors.clear(httpServletRequest);
+
 		Document document = Jsoup.parse(
 			ThemeUtil.include(
 				httpServletRequest.getServletContext(), httpServletRequest,
 				httpServletResponse, "portal_normal.ftl", layoutSet.getTheme(),
 				false));
+
+		PortalMessages.clear(httpServletRequest);
+		SessionMessages.clear(httpServletRequest);
 
 		Element contentElement = document.getElementById("content");
 

@@ -18,6 +18,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.language.Language;
@@ -25,8 +26,8 @@ import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
-import com.liferay.portal.search.hits.SearchHits;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.sort.Sorts;
 import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexName;
@@ -37,8 +38,7 @@ import com.liferay.portal.search.tuning.synonyms.web.internal.request.SearchSyno
 import com.liferay.portal.search.tuning.synonyms.web.internal.request.SearchSynonymSetResponse;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Objects;
 
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
@@ -57,7 +57,8 @@ public class SynonymsDisplayBuilder {
 		HttpServletRequest httpServletRequest, Language language, Portal portal,
 		Queries queries, RenderRequest renderRequest,
 		RenderResponse renderResponse, SearchEngineAdapter searchEngineAdapter,
-		Sorts sorts, SynonymSetIndexNameBuilder synonymSetIndexNameBuilder) {
+		SearchEngineInformation searchEngineInformation, Sorts sorts,
+		SynonymSetIndexNameBuilder synonymSetIndexNameBuilder) {
 
 		_documentToSynonymSetTranslator = documentToSynonymSetTranslator;
 		_httpServletRequest = httpServletRequest;
@@ -67,6 +68,7 @@ public class SynonymsDisplayBuilder {
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 		_searchEngineAdapter = searchEngineAdapter;
+		_searchEngineInformation = searchEngineInformation;
 		_sorts = sorts;
 		_synonymSetIndexNameBuilder = synonymSetIndexNameBuilder;
 	}
@@ -74,6 +76,12 @@ public class SynonymsDisplayBuilder {
 	public SynonymsDisplayContext build() {
 		SynonymsDisplayContext synonymsDisplayContext =
 			new SynonymsDisplayContext();
+
+		if (Objects.equals(
+				_searchEngineInformation.getVendorString(), "Solr")) {
+
+			return synonymsDisplayContext;
+		}
 
 		synonymsDisplayContext.setCreationMenu(getCreationMenu());
 
@@ -160,8 +168,10 @@ public class SynonymsDisplayBuilder {
 			searchSynonymSetRequest.search();
 
 		searchContainer.setResultsAndTotal(
-			() -> _buildSynonymSetDisplayContexts(
-				searchSynonymSetResponse.getSearchHits()),
+			() -> TransformUtil.transform(
+				_documentToSynonymSetTranslator.translateAll(
+					searchSynonymSetResponse.getSearchHits()),
+				this::_buildSynonymSetDisplayContext),
 			searchSynonymSetResponse.getTotalHits());
 
 		searchContainer.setRowChecker(
@@ -192,21 +202,6 @@ public class SynonymsDisplayBuilder {
 		synonymSetDisplayContext.setSynonyms(synonyms);
 
 		return synonymSetDisplayContext;
-	}
-
-	private List<SynonymSetDisplayContext> _buildSynonymSetDisplayContexts(
-		SearchHits searchHits) {
-
-		List<SynonymSet> synonymSets =
-			_documentToSynonymSetTranslator.translateAll(searchHits);
-
-		Stream<SynonymSet> stream = synonymSets.stream();
-
-		return stream.map(
-			this::_buildSynonymSetDisplayContext
-		).collect(
-			Collectors.toList()
-		);
 	}
 
 	private List<DropdownItem> _buildSynonymSetDropdownItemList(
@@ -266,6 +261,7 @@ public class SynonymsDisplayBuilder {
 	private final RenderRequest _renderRequest;
 	private final RenderResponse _renderResponse;
 	private final SearchEngineAdapter _searchEngineAdapter;
+	private final SearchEngineInformation _searchEngineInformation;
 	private final Sorts _sorts;
 	private final SynonymSetIndexNameBuilder _synonymSetIndexNameBuilder;
 

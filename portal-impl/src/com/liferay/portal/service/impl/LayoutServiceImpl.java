@@ -747,6 +747,18 @@ public class LayoutServiceImpl extends LayoutServiceBaseImpl {
 
 	@Override
 	public List<Layout> getLayouts(
+			long groupId, boolean privateLayout, long parentLayoutId, int start,
+			int end)
+		throws PortalException {
+
+		return filterLayouts(
+			layoutLocalService.getLayouts(
+				groupId, privateLayout, parentLayoutId),
+			start, end);
+	}
+
+	@Override
+	public List<Layout> getLayouts(
 			long groupId, boolean privateLayout, String type)
 		throws PortalException {
 
@@ -954,7 +966,7 @@ public class LayoutServiceImpl extends LayoutServiceBaseImpl {
 	 *         DestinationNames#LAYOUTS_LOCAL_PUBLISHER}). See {@link
 	 *         DestinationNames}.
 	 * @param  cronText the cron text. See {@link
-	 *         com.liferay.portal.kernel.cal.RecurrenceSerializer #toCronText}
+	 *        com.liferay.portal.kernel.scheduler.CronTextUtil#getCronText}
 	 * @param  schedulerStartDate the scheduler start date
 	 * @param  schedulerEndDate the scheduler end date
 	 * @param  description the scheduler description
@@ -996,7 +1008,7 @@ public class LayoutServiceImpl extends LayoutServiceBaseImpl {
 		SchedulerEngineHelperUtil.schedule(
 			trigger, StorageType.PERSISTED, description,
 			DestinationNames.LAYOUTS_LOCAL_PUBLISHER,
-			exportImportConfiguration.getExportImportConfigurationId(), 0);
+			exportImportConfiguration.getExportImportConfigurationId());
 	}
 
 	/**
@@ -1021,7 +1033,7 @@ public class LayoutServiceImpl extends LayoutServiceBaseImpl {
 	 *         DestinationNames#LAYOUTS_LOCAL_PUBLISHER}). See {@link
 	 *         DestinationNames}.
 	 * @param  cronText the cron text. See {@link
-	 *         com.liferay.portal.kernel.cal.RecurrenceSerializer #toCronText}
+	 *         com.liferay.portal.kernel.scheduler.CronTextUtil#getCronText}
 	 * @param  schedulerStartDate the scheduler start date
 	 * @param  schedulerEndDate the scheduler end date
 	 * @param  description the scheduler description
@@ -1068,7 +1080,7 @@ public class LayoutServiceImpl extends LayoutServiceBaseImpl {
 		SchedulerEngineHelperUtil.schedule(
 			trigger, StorageType.PERSISTED, description,
 			DestinationNames.LAYOUTS_REMOTE_PUBLISHER,
-			exportImportConfiguration.getExportImportConfigurationId(), 0);
+			exportImportConfiguration.getExportImportConfigurationId());
 	}
 
 	/**
@@ -1503,6 +1515,23 @@ public class LayoutServiceImpl extends LayoutServiceBaseImpl {
 		}
 
 		return filteredLayouts;
+	}
+
+	protected List<Layout> filterLayouts(
+			List<Layout> layouts, int start, int end)
+		throws PortalException {
+
+		List<Layout> filteredLayouts = filterLayouts(layouts);
+
+		if (filteredLayouts.size() < end) {
+			end = filteredLayouts.size();
+		}
+
+		if (end <= start) {
+			return Collections.emptyList();
+		}
+
+		return filteredLayouts.subList(start, end);
 	}
 
 	protected List<String> getPortletIds(Layout layout, String typeSettings) {

@@ -28,7 +28,7 @@ definition {
 
 		Navigator.openURL();
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -37,7 +37,7 @@ definition {
 	}
 
 	@description = "LPS-94874 Bug: Can't edit segment if the segment has a select input"
-	@priority = "5"
+	@priority = 5
 	@uitest
 	test CanEditSegmentIfHaveASelectInput {
 		property portal.acceptance = "true";
@@ -53,7 +53,7 @@ definition {
 				checkboxName = "",
 				locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.addProperties(propertyOption = "Regular Role");
 
@@ -69,9 +69,9 @@ definition {
 		task ("Assert segment edited") {
 			Segmentation.editSegment(entry = "EditSegmentIfHaveASelectInput Test");
 
-			Segmentation.viewSegment(
-				criterion = "select-input",
-				value = "Administrator");
+			AssertValue(
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
+				value1 = "Administrator");
 
 			Segmentation.fillProperty(selectCheckbox = "Power User");
 
@@ -84,8 +84,7 @@ definition {
 				locator1 = "Checkbox#ANY_CHECKBOX_CHECKED");
 
 			AssertValue(
-				key_criterion = "select-input",
-				locator1 = "Segmentation#CRITERION_INPUT_FORM_CONTROL",
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
 				value1 = "Power User");
 		}
 
@@ -103,7 +102,7 @@ definition {
 	}
 
 	@description = "LPS-102740 Validate if the user can edit a segment with Properties Country"
-	@priority = "5"
+	@priority = 5
 	@uitest
 	test EditSegmentUserByOrganizationCountry {
 		property portal.acceptance = "true";
@@ -117,7 +116,7 @@ definition {
 
 			Segmentation.fillTitle(titleField = "EditSegmentUserByCountry Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.gotoSidebar(fieldType = "Organization");
 
@@ -134,14 +133,13 @@ definition {
 			Segmentation.editSegment(entry = "EditSegmentUserByCountry Test");
 
 			AssertValue(
-				key_criterion = "options",
-				locator1 = "Segmentation#CRITERION_INPUT_FORM_CONTROL",
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
 				value1 = "china");
 		}
 	}
 
 	@description = "LPS-102740 Validate if the user can edit a segment with Properties Region"
-	@priority = "5"
+	@priority = 5
 	@uitest
 	test EditSegmentUserByOrganizationRegion {
 		property portal.acceptance = "true";
@@ -153,7 +151,7 @@ definition {
 		task ("Edit the segment") {
 			Segmentation.editSegment(entry = "EditSegment Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.gotoSidebar(fieldType = "Organization");
 
@@ -172,14 +170,13 @@ definition {
 			Segmentation.editSegment(entry = "EditSegmentUserByRegion Test");
 
 			AssertValue(
-				key_criterion = "options",
-				locator1 = "Segmentation#CRITERION_INPUT_FORM_CONTROL",
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
 				value1 = "madrid");
 		}
 	}
 
 	@description = "LPS-102743 Validate if the user can edit a segment with Properties Session URL"
-	@priority = "5"
+	@priority = 5
 	@uitest
 	test EditSegmentUserBySessionURL {
 		property portal.acceptance = "true";
@@ -193,13 +190,13 @@ definition {
 
 			Segmentation.fillTitle(titleField = "EditSegmentUserBySessionURL Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.gotoSidebar(fieldType = "Session");
 
 			Segmentation.addProperties(propertyOption = "URL");
 
-			Segmentation.fillProperty(propertyField = "http://localhost:8080");
+			Segmentation.fillProperty(criterionValue = "http://localhost:8080");
 
 			Button.clickSave();
 		}
@@ -208,13 +205,13 @@ definition {
 			Segmentation.editSegment(entry = "EditSegmentUserBySessionURL Test");
 
 			AssertValue(
-				locator1 = "Segmentation#PROPERTY_FIELD",
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
 				value1 = "http://localhost:8080");
 		}
 	}
 
 	@description = "Validate if the user can edit a segment with User Tag"
-	@priority = "5"
+	@priority = 5
 	@uitest
 	test EditSegmentUserByUserTag {
 		property portal.acceptance = "true";
@@ -235,7 +232,7 @@ definition {
 		task ("Edit the segment") {
 			Segmentation.editSegment(entry = "EditSegment Test");
 
-			Segmentation.deleteProperties();
+			Segmentation.deleteProperty();
 
 			Segmentation.addProperties(propertyOption = "Tag");
 
@@ -252,14 +249,13 @@ definition {
 			Segmentation.editSegment(entry = "EditSegmentUserByUserTag Test");
 
 			AssertValue(
-				key_criterion = "select-input",
-				locator1 = "Segmentation#CRITERION_INPUT_FORM_CONTROL",
+				locator1 = "Segmentation#CRITERION_INPUT_ANY",
 				value1 = "tagname");
 		}
 	}
 
 	@description = "Validate if the user can edit a segment with Properties User and Email Segment with Contains to Equals Option"
-	@priority = "5"
+	@priority = 5
 	@uitest
 	test EditSegmentUserEmailAddressContainsToEquals {
 		property portal.acceptance = "true";
@@ -282,7 +278,7 @@ definition {
 			Segmentation.editSegment(entry = "EditSegmentUserEmailAddressContainsToEquals Test");
 
 			AssertValue(
-				locator1 = "Segmentation#CRITERION_INPUT",
+				locator1 = "Segmentation#CRITERION_OPERATOR",
 				value1 = "eq");
 		}
 	}

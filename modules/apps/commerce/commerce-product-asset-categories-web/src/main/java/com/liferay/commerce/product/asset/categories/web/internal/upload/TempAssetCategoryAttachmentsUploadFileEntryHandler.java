@@ -26,7 +26,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
-import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.upload.UniqueFileNameProvider;
@@ -39,7 +39,6 @@ import java.util.Map;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -47,7 +46,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.product.configuration.AttachmentsConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, enabled = false,
 	service = TempAssetCategoryAttachmentsUploadFileEntryHandler.class
 )
 public class TempAssetCategoryAttachmentsUploadFileEntryHandler
@@ -128,7 +126,7 @@ public class TempAssetCategoryAttachmentsUploadFileEntryHandler
 			throw new CPAttachmentFileEntrySizeException();
 		}
 
-		String extension = FileUtil.getExtension(fileName);
+		String extension = _file.getExtension(fileName);
 
 		String[] imageExtensions = _attachmentsConfiguration.imageExtensions();
 
@@ -153,6 +151,9 @@ public class TempAssetCategoryAttachmentsUploadFileEntryHandler
 		TempAssetCategoryAttachmentsUploadFileEntryHandler.class);
 
 	private volatile AttachmentsConfiguration _attachmentsConfiguration;
+
+	@Reference
+	private File _file;
 
 	@Reference
 	private UniqueFileNameProvider _uniqueFileNameProvider;

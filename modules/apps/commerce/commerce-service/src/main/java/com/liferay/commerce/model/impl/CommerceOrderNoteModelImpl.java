@@ -120,24 +120,6 @@ public class CommerceOrderNoteModelImpl
 	public static final String TX_MANAGER = "liferayTransactionManager";
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
-
-	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
@@ -180,9 +162,19 @@ public class CommerceOrderNoteModelImpl
 	@Deprecated
 	public static final long CREATEDATE_COLUMN_BITMASK = 64L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.model.CommerceOrderNote"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CommerceOrderNoteModelImpl() {
 	}
@@ -260,106 +252,128 @@ public class CommerceOrderNoteModelImpl
 	public Map<String, Function<CommerceOrderNote, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<CommerceOrderNote, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<CommerceOrderNote, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<CommerceOrderNote, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<CommerceOrderNote, Object>>
-			attributeGetterFunctions =
-				new LinkedHashMap
-					<String, Function<CommerceOrderNote, Object>>();
-		Map<String, BiConsumer<CommerceOrderNote, ?>>
-			attributeSetterBiConsumers =
-				new LinkedHashMap<String, BiConsumer<CommerceOrderNote, ?>>();
+		private static final Map<String, Function<CommerceOrderNote, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", CommerceOrderNote::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<CommerceOrderNote, Long>)
-				CommerceOrderNote::setMvccVersion);
-		attributeGetterFunctions.put("uuid", CommerceOrderNote::getUuid);
-		attributeSetterBiConsumers.put(
-			"uuid",
-			(BiConsumer<CommerceOrderNote, String>)CommerceOrderNote::setUuid);
-		attributeGetterFunctions.put(
-			"externalReferenceCode",
-			CommerceOrderNote::getExternalReferenceCode);
-		attributeSetterBiConsumers.put(
-			"externalReferenceCode",
-			(BiConsumer<CommerceOrderNote, String>)
-				CommerceOrderNote::setExternalReferenceCode);
-		attributeGetterFunctions.put(
-			"commerceOrderNoteId", CommerceOrderNote::getCommerceOrderNoteId);
-		attributeSetterBiConsumers.put(
-			"commerceOrderNoteId",
-			(BiConsumer<CommerceOrderNote, Long>)
-				CommerceOrderNote::setCommerceOrderNoteId);
-		attributeGetterFunctions.put("groupId", CommerceOrderNote::getGroupId);
-		attributeSetterBiConsumers.put(
-			"groupId",
-			(BiConsumer<CommerceOrderNote, Long>)CommerceOrderNote::setGroupId);
-		attributeGetterFunctions.put(
-			"companyId", CommerceOrderNote::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<CommerceOrderNote, Long>)
-				CommerceOrderNote::setCompanyId);
-		attributeGetterFunctions.put("userId", CommerceOrderNote::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId",
-			(BiConsumer<CommerceOrderNote, Long>)CommerceOrderNote::setUserId);
-		attributeGetterFunctions.put(
-			"userName", CommerceOrderNote::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<CommerceOrderNote, String>)
-				CommerceOrderNote::setUserName);
-		attributeGetterFunctions.put(
-			"createDate", CommerceOrderNote::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<CommerceOrderNote, Date>)
-				CommerceOrderNote::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", CommerceOrderNote::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<CommerceOrderNote, Date>)
-				CommerceOrderNote::setModifiedDate);
-		attributeGetterFunctions.put(
-			"commerceOrderId", CommerceOrderNote::getCommerceOrderId);
-		attributeSetterBiConsumers.put(
-			"commerceOrderId",
-			(BiConsumer<CommerceOrderNote, Long>)
-				CommerceOrderNote::setCommerceOrderId);
-		attributeGetterFunctions.put("content", CommerceOrderNote::getContent);
-		attributeSetterBiConsumers.put(
-			"content",
-			(BiConsumer<CommerceOrderNote, String>)
-				CommerceOrderNote::setContent);
-		attributeGetterFunctions.put(
-			"restricted", CommerceOrderNote::getRestricted);
-		attributeSetterBiConsumers.put(
-			"restricted",
-			(BiConsumer<CommerceOrderNote, Boolean>)
-				CommerceOrderNote::setRestricted);
+		static {
+			Map<String, Function<CommerceOrderNote, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap
+						<String, Function<CommerceOrderNote, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", CommerceOrderNote::getMvccVersion);
+			attributeGetterFunctions.put("uuid", CommerceOrderNote::getUuid);
+			attributeGetterFunctions.put(
+				"externalReferenceCode",
+				CommerceOrderNote::getExternalReferenceCode);
+			attributeGetterFunctions.put(
+				"commerceOrderNoteId",
+				CommerceOrderNote::getCommerceOrderNoteId);
+			attributeGetterFunctions.put(
+				"groupId", CommerceOrderNote::getGroupId);
+			attributeGetterFunctions.put(
+				"companyId", CommerceOrderNote::getCompanyId);
+			attributeGetterFunctions.put(
+				"userId", CommerceOrderNote::getUserId);
+			attributeGetterFunctions.put(
+				"userName", CommerceOrderNote::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", CommerceOrderNote::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", CommerceOrderNote::getModifiedDate);
+			attributeGetterFunctions.put(
+				"commerceOrderId", CommerceOrderNote::getCommerceOrderId);
+			attributeGetterFunctions.put(
+				"content", CommerceOrderNote::getContent);
+			attributeGetterFunctions.put(
+				"restricted", CommerceOrderNote::getRestricted);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<CommerceOrderNote, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<CommerceOrderNote, ?>>
+				attributeSetterBiConsumers =
+					new LinkedHashMap
+						<String, BiConsumer<CommerceOrderNote, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<CommerceOrderNote, Long>)
+					CommerceOrderNote::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"uuid",
+				(BiConsumer<CommerceOrderNote, String>)
+					CommerceOrderNote::setUuid);
+			attributeSetterBiConsumers.put(
+				"externalReferenceCode",
+				(BiConsumer<CommerceOrderNote, String>)
+					CommerceOrderNote::setExternalReferenceCode);
+			attributeSetterBiConsumers.put(
+				"commerceOrderNoteId",
+				(BiConsumer<CommerceOrderNote, Long>)
+					CommerceOrderNote::setCommerceOrderNoteId);
+			attributeSetterBiConsumers.put(
+				"groupId",
+				(BiConsumer<CommerceOrderNote, Long>)
+					CommerceOrderNote::setGroupId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<CommerceOrderNote, Long>)
+					CommerceOrderNote::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<CommerceOrderNote, Long>)
+					CommerceOrderNote::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<CommerceOrderNote, String>)
+					CommerceOrderNote::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<CommerceOrderNote, Date>)
+					CommerceOrderNote::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<CommerceOrderNote, Date>)
+					CommerceOrderNote::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"commerceOrderId",
+				(BiConsumer<CommerceOrderNote, Long>)
+					CommerceOrderNote::setCommerceOrderId);
+			attributeSetterBiConsumers.put(
+				"content",
+				(BiConsumer<CommerceOrderNote, String>)
+					CommerceOrderNote::setContent);
+			attributeSetterBiConsumers.put(
+				"restricted",
+				(BiConsumer<CommerceOrderNote, Boolean>)
+					CommerceOrderNote::setRestricted);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -829,7 +843,7 @@ public class CommerceOrderNoteModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -838,7 +852,7 @@ public class CommerceOrderNoteModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -1005,7 +1019,8 @@ public class CommerceOrderNoteModelImpl
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
 
 		Function<CommerceOrderNote, Object> function =
-			_attributeGetterFunctions.get(columnName);
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(

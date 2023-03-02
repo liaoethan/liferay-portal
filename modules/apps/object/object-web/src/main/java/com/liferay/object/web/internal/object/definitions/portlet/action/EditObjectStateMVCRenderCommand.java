@@ -14,12 +14,13 @@
 
 package com.liferay.object.web.internal.object.definitions.portlet.action;
 
+import com.liferay.list.type.service.ListTypeDefinitionService;
 import com.liferay.object.constants.ObjectPortletKeys;
+import com.liferay.object.constants.ObjectWebKeys;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.object.web.internal.constants.ObjectWebKeys;
 import com.liferay.object.web.internal.object.definitions.display.context.ObjectDefinitionsStateManagerDisplayContext;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCRenderCommand;
@@ -67,6 +68,7 @@ public class EditObjectStateMVCRenderCommand implements MVCRenderCommand {
 				WebKeys.PORTLET_DISPLAY_CONTEXT,
 				new ObjectDefinitionsStateManagerDisplayContext(
 					_portal.getHttpServletRequest(renderRequest),
+					_listTypeDefinitionService,
 					_objectDefinitionModelResourcePermission));
 		}
 		catch (PortalException portalException) {
@@ -75,6 +77,9 @@ public class EditObjectStateMVCRenderCommand implements MVCRenderCommand {
 
 		return "/object_definitions/edit_object_state.jsp";
 	}
+
+	@Reference
+	private ListTypeDefinitionService _listTypeDefinitionService;
 
 	@Reference
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;

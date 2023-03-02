@@ -32,7 +32,8 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * @author Lino Alves
  */
-public class AssetCategoriesSearchFacetDisplayContext implements Serializable {
+public class AssetCategoriesSearchFacetDisplayContext
+	implements FacetDisplayContext, Serializable {
 
 	public AssetCategoriesSearchFacetDisplayContext(
 			HttpServletRequest httpServletRequest)
@@ -56,6 +57,16 @@ public class AssetCategoriesSearchFacetDisplayContext implements Serializable {
 
 		_legacyFieldSelected = _isLegacyFieldSelected(
 			categoryFacetFieldConfiguration.categoryFacetField());
+	}
+
+	public List<BucketDisplayContext> getBucketDisplayContexts() {
+		return _bucketDisplayContexts;
+	}
+
+	public List<BucketDisplayContext> getBucketDisplayContexts(
+		String vocabularyName) {
+
+		return _bucketDisplayContextsMap.get(vocabularyName);
 	}
 
 	public CategoryFacetPortletInstanceConfiguration
@@ -99,19 +110,6 @@ public class AssetCategoriesSearchFacetDisplayContext implements Serializable {
 		return _parameterValues;
 	}
 
-	public List<AssetCategoriesSearchFacetTermDisplayContext>
-		getTermDisplayContexts() {
-
-		return _assetCategoriesSearchFacetTermDisplayContexts;
-	}
-
-	public List<AssetCategoriesSearchFacetTermDisplayContext>
-		getTermDisplayContexts(String vocabularyName) {
-
-		return _assetCategoriesSearchFacetTermDisplayContextMap.get(
-			vocabularyName);
-	}
-
 	public List<String> getVocabularyNames() {
 		return _vocabularyNames;
 	}
@@ -130,6 +128,18 @@ public class AssetCategoriesSearchFacetDisplayContext implements Serializable {
 
 	public boolean isRenderNothing() {
 		return _renderNothing;
+	}
+
+	public void setBucketDisplayContexts(
+		List<BucketDisplayContext> bucketDisplayContexts) {
+
+		_bucketDisplayContexts = bucketDisplayContexts;
+	}
+
+	public void setBucketDisplayContextsMap(
+		Map<String, List<BucketDisplayContext>> bucketDisplayContextsMap) {
+
+		_bucketDisplayContextsMap = bucketDisplayContextsMap;
 	}
 
 	public void setCloud(boolean cloud) {
@@ -162,22 +172,6 @@ public class AssetCategoriesSearchFacetDisplayContext implements Serializable {
 		_renderNothing = renderNothing;
 	}
 
-	public void setTermDisplayContexts(
-		List<AssetCategoriesSearchFacetTermDisplayContext>
-			assetCategoriesSearchFacetTermDisplayContexts) {
-
-		_assetCategoriesSearchFacetTermDisplayContexts =
-			assetCategoriesSearchFacetTermDisplayContexts;
-	}
-
-	public void setTermDisplayContextsMap(
-		Map<String, List<AssetCategoriesSearchFacetTermDisplayContext>>
-			assetCategoriesSearchFacetTermDisplayContextMap) {
-
-		_assetCategoriesSearchFacetTermDisplayContextMap =
-			assetCategoriesSearchFacetTermDisplayContextMap;
-	}
-
 	public void setVocabularyNames(List<String> vocabularyNames) {
 		_vocabularyNames = vocabularyNames;
 	}
@@ -190,10 +184,8 @@ public class AssetCategoriesSearchFacetDisplayContext implements Serializable {
 		return false;
 	}
 
-	private Map<String, List<AssetCategoriesSearchFacetTermDisplayContext>>
-		_assetCategoriesSearchFacetTermDisplayContextMap;
-	private List<AssetCategoriesSearchFacetTermDisplayContext>
-		_assetCategoriesSearchFacetTermDisplayContexts;
+	private List<BucketDisplayContext> _bucketDisplayContexts;
+	private Map<String, List<BucketDisplayContext>> _bucketDisplayContextsMap;
 	private final CategoryFacetPortletInstanceConfiguration
 		_categoryFacetPortletInstanceConfiguration;
 	private boolean _cloud;

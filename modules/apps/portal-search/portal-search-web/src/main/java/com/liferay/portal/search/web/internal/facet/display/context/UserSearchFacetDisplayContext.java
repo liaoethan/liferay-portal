@@ -23,7 +23,12 @@ import java.util.List;
 /**
  * @author Lino Alves
  */
-public class UserSearchFacetDisplayContext implements Serializable {
+public class UserSearchFacetDisplayContext
+	implements FacetDisplayContext, Serializable {
+
+	public List<BucketDisplayContext> getBucketDisplayContexts() {
+		return _bucketDisplayContexts;
+	}
 
 	public long getDisplayStyleGroupId() {
 		return _displayStyleGroupId;
@@ -33,20 +38,16 @@ public class UserSearchFacetDisplayContext implements Serializable {
 		return _paginationStartParameterName;
 	}
 
-	public String getParamName() {
-		return _paramName;
+	public String getParameterName() {
+		return _parameterName;
 	}
 
-	public String getParamValue() {
-		return _paramValue;
+	public String getParameterValue() {
+		return _parameterValue;
 	}
 
-	public List<String> getParamValues() {
-		return _paramValues;
-	}
-
-	public List<UserSearchFacetTermDisplayContext> getTermDisplayContexts() {
-		return _userSearchFacetTermDisplayContexts;
+	public List<String> getParameterValues() {
+		return _parameterValues;
 	}
 
 	public UserFacetPortletInstanceConfiguration
@@ -63,6 +64,12 @@ public class UserSearchFacetDisplayContext implements Serializable {
 		return _renderNothing;
 	}
 
+	public void setBucketDisplayContexts(
+		List<BucketDisplayContext> bucketDisplayContexts) {
+
+		_bucketDisplayContexts = bucketDisplayContexts;
+	}
+
 	public void setDisplayStyleGroupId(long displayStyleGroupId) {
 		_displayStyleGroupId = displayStyleGroupId;
 	}
@@ -77,28 +84,20 @@ public class UserSearchFacetDisplayContext implements Serializable {
 		_paginationStartParameterName = paginationStartParameterName;
 	}
 
-	public void setParamName(String paramName) {
-		_paramName = paramName;
+	public void setParameterName(String parameterName) {
+		_parameterName = parameterName;
 	}
 
-	public void setParamValue(String paramValue) {
-		_paramValue = paramValue;
+	public void setParameterValue(String parameterValue) {
+		_parameterValue = parameterValue;
 	}
 
-	public void setParamValues(List<String> paramValues) {
-		_paramValues = paramValues;
+	public void setParameterValues(List<String> parameterValues) {
+		_parameterValues = parameterValues;
 	}
 
 	public void setRenderNothing(boolean renderNothing) {
 		_renderNothing = renderNothing;
-	}
-
-	public void setTermDisplayContexts(
-		List<UserSearchFacetTermDisplayContext>
-			userSearchFacetTermDisplayContexts) {
-
-		_userSearchFacetTermDisplayContexts =
-			userSearchFacetTermDisplayContexts;
 	}
 
 	public void setUserFacetPortletInstanceConfiguration(
@@ -109,16 +108,15 @@ public class UserSearchFacetDisplayContext implements Serializable {
 			userFacetPortletInstanceConfiguration;
 	}
 
+	private List<BucketDisplayContext> _bucketDisplayContexts;
 	private long _displayStyleGroupId;
 	private boolean _nothingSelected;
 	private String _paginationStartParameterName;
-	private String _paramName;
-	private String _paramValue;
-	private List<String> _paramValues;
+	private String _parameterName;
+	private String _parameterValue;
+	private List<String> _parameterValues;
 	private boolean _renderNothing;
 	private UserFacetPortletInstanceConfiguration
 		_userFacetPortletInstanceConfiguration;
-	private List<UserSearchFacetTermDisplayContext>
-		_userSearchFacetTermDisplayContexts;
 
 }

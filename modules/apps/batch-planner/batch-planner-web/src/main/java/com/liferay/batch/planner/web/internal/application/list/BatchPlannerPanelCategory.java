@@ -18,11 +18,10 @@ import com.liferay.application.list.BasePanelCategory;
 import com.liferay.application.list.PanelCategory;
 import com.liferay.application.list.constants.PanelCategoryKeys;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Locale;
@@ -35,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Matija Petanjek
  */
 @Component(
-	immediate = true,
 	property = {
 		"panel.category.key=" + PanelCategoryKeys.APPLICATIONS_MENU_APPLICATIONS,
 		"panel.category.order:Integer=900"
@@ -61,9 +59,7 @@ public class BatchPlannerPanelCategory extends BasePanelCategory {
 	public boolean isShow(PermissionChecker permissionChecker, Group group)
 		throws PortalException {
 
-		if (!GetterUtil.getBoolean(
-				PropsUtil.get("feature.flag.COMMERCE-8087"))) {
-
+		if (!FeatureFlagManagerUtil.isEnabled("COMMERCE-8087")) {
 			return false;
 		}
 

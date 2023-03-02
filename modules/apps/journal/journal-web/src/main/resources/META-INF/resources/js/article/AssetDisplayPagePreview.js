@@ -14,17 +14,11 @@
 
 import ClayButton from '@clayui/button';
 import ClayDropDown from '@clayui/drop-down';
-import ClayForm, {ClayInput} from '@clayui/form';
-import ClayIcon from '@clayui/icon';
-import {
-	createPortletURL,
-	getPortletNamespace,
-	openModal,
-	openSelectionModal,
-	openToast,
-	sub,
-} from 'frontend-js-web';
+import {createPortletURL, openSelectionModal, sub} from 'frontend-js-web';
 import React, {useMemo, useState} from 'react';
+
+import AssetDisplayPageSelector from './AssetDisplayPageSelector';
+import PreviewButton from './PreviewButton';
 
 export default function AssetDisplayPagePreview({
 	newArticle,
@@ -53,9 +47,13 @@ export default function AssetDisplayPagePreview({
 			onClick: () => {
 				setActive(false);
 				setSelectedSite({groupId: site.groupId, name: site.name});
+
+				if (site.groupId !== selectedSite?.groupId) {
+					setAssetDisplayPageSelected(null);
+				}
 			},
 		}));
-	}, [sites]);
+	}, [sites, selectedSite?.groupId]);
 
 	return (
 		<>
@@ -118,7 +116,7 @@ export default function AssetDisplayPagePreview({
 										url: siteItemSelectorURL,
 									});
 								}}
-								small
+								size="sm"
 								type="button"
 							>
 								{Liferay.Language.get('more')}
@@ -130,10 +128,8 @@ export default function AssetDisplayPagePreview({
 
 			<AssetDisplayPageSelector
 				assetDisplayPageSelected={assetDisplayPageSelected}
+				disabled={!selectedSite}
 				namespace={namespace}
-				newArticle={newArticle}
-				previewURL={previewURL}
-				saveAsDraftURL={saveAsDraftURL}
 				selectAssetDisplayPageEventName={
 					selectAssetDisplayPageEventName
 				}
@@ -141,165 +137,21 @@ export default function AssetDisplayPagePreview({
 				selectedSite={selectedSite}
 				setAssetDisplayPageSelected={setAssetDisplayPageSelected}
 			/>
-		</>
-	);
-}
 
-function AssetDisplayPageSelector({
-	assetDisplayPageSelected,
-	namespace,
-	newArticle,
-	previewURL,
-	saveAsDraftURL,
-	selectAssetDisplayPageEventName,
-	selectAssetDisplayPageURL,
-	selectedSite,
-	setAssetDisplayPageSelected,
-}) {
-	const assetDisplayPageId = `${namespace}assetDisplayPageId`;
-
-	const openAssetDisplayPageSelector = () => {
-		const url = new URL(selectAssetDisplayPageURL);
-
-		url.searchParams.set(
-			`${getPortletNamespace(Liferay.PortletKeys.ITEM_SELECTOR)}groupId`,
-			selectedSite.groupId
-		);
-
-		openSelectionModal({
-			containerProps: {
-				className: 'cadmin',
-			},
-			onSelect(selectedItem) {
-				setAssetDisplayPageSelected({
-					name: selectedItem.name,
-					plid: selectedItem.plid,
-				});
-			},
-			selectEventName: selectAssetDisplayPageEventName,
-			title: sub(
-				Liferay.Language.get('select-x'),
-				Liferay.Language.get('display-page')
-			),
-			url,
-		});
-	};
-
-	return (
-		<div className="mb-3 mt-2">
-			<ClayForm.Group className="mb-2">
-				<label className="sr-only" htmlFor={assetDisplayPageId}>
-					{Liferay.Language.get('display-page')}
-				</label>
-
-				<ClayInput.Group small>
-					<ClayInput.GroupItem>
-						<ClayInput
-							disabled={!selectedSite?.groupId}
-							onClick={() => openAssetDisplayPageSelector()}
-							placeholder={sub(
-								Liferay.Language.get('select-x'),
-								Liferay.Language.get('display-page')
-							)}
-							readOnly
-							sizing="sm"
-							value={assetDisplayPageSelected?.name ?? ''}
-						/>
-					</ClayInput.GroupItem>
-
-					<ClayInput.GroupItem shrink>
-						<ClayButton
-							disabled={!selectedSite?.groupId}
-							displayType="secondary"
-							monospaced
-							onClick={() => openAssetDisplayPageSelector()}
-							small
-							title={sub(
-								assetDisplayPageSelected
-									? Liferay.Language.get('change-x')
-									: Liferay.Language.get('select-x'),
-								Liferay.Language.get('display-page')
-							)}
-						>
-							<ClayIcon
-								className="mt-0"
-								symbol={
-									assetDisplayPageSelected ? 'change' : 'plus'
-								}
-							/>
-						</ClayButton>
-					</ClayInput.GroupItem>
-				</ClayInput.Group>
-			</ClayForm.Group>
-
-			<ClayButton
+			<PreviewButton
 				disabled={!assetDisplayPageSelected}
-				displayType="secondary"
-				onClick={() => {
-					const formDateInput = document.getElementById(
-						`${namespace}formDate`
-					);
+				getPreviewURL={({classPK, version}) =>
+					createPortletURL(previewURL, {
+						classPK,
 
-					formDateInput.value = Date.now().toString();
-
-					const form = document.getElementById(`${namespace}fm1`);
-
-					const formData = new FormData(form);
-
-					formData.append(
-						`${namespace}cmd`,
-						newArticle ? 'add' : 'update'
-					);
-
-					return Liferay.Util.fetch(saveAsDraftURL, {
-						body: formData,
-						method: form.method,
-					})
-						.then((response) => response.json())
-						.then(({classPK, error, version}) => {
-							if (error) {
-								openToast({
-									message: Liferay.Language.get(
-										'web-content-could-not-be-previewed-due-to-an-unexpected-error-while-generating-the-draft'
-									),
-									title: Liferay.Language.get('error'),
-									type: 'danger',
-								});
-							}
-							else {
-								const formDateInput = document.getElementById(
-									`${namespace}formDate`
-								);
-
-								formDateInput.value = Date.now().toString();
-
-								openModal({
-									title: Liferay.Language.get('preview'),
-									url: createPortletURL(previewURL, {
-										classPK,
-
-										selPlid: assetDisplayPageSelected?.plid,
-										version,
-									}).toString(),
-								});
-							}
-						})
-						.catch(() => {
-							openToast({
-								message: Liferay.Language.get(
-									'web-content-could-not-be-previewed-due-to-an-unexpected-error-while-generating-the-draft'
-								),
-								title: Liferay.Language.get('error'),
-								type: 'danger',
-							});
-						});
-				}}
-				title={Liferay.Language.get(
-					'a-draft-will-be-saved-before-displaying-the-preview'
-				)}
-			>
-				{Liferay.Language.get('preview')}
-			</ClayButton>
-		</div>
+						selPlid: assetDisplayPageSelected?.plid,
+						version,
+					}).toString()
+				}
+				namespace={namespace}
+				newArticle={newArticle}
+				saveAsDraftURL={saveAsDraftURL}
+			/>
+		</>
 	);
 }

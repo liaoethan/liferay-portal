@@ -75,12 +75,11 @@ public class ObjectEntryModelImpl
 
 	public static final Object[][] TABLE_COLUMNS = {
 		{"mvccVersion", Types.BIGINT}, {"uuid_", Types.VARCHAR},
+		{"externalReferenceCode", Types.VARCHAR},
 		{"objectEntryId", Types.BIGINT}, {"groupId", Types.BIGINT},
 		{"companyId", Types.BIGINT}, {"userId", Types.BIGINT},
 		{"userName", Types.VARCHAR}, {"createDate", Types.TIMESTAMP},
-		{"modifiedDate", Types.TIMESTAMP},
-		{"externalReferenceCode", Types.VARCHAR},
-		{"objectDefinitionId", Types.BIGINT},
+		{"modifiedDate", Types.TIMESTAMP}, {"objectDefinitionId", Types.BIGINT},
 		{"lastPublishDate", Types.TIMESTAMP}, {"status", Types.INTEGER},
 		{"statusByUserId", Types.BIGINT}, {"statusByUserName", Types.VARCHAR},
 		{"statusDate", Types.TIMESTAMP}
@@ -92,6 +91,7 @@ public class ObjectEntryModelImpl
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("uuid_", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("objectEntryId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("groupId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
@@ -99,7 +99,6 @@ public class ObjectEntryModelImpl
 		TABLE_COLUMNS_MAP.put("userName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
-		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("objectDefinitionId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("lastPublishDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("status", Types.INTEGER);
@@ -109,7 +108,7 @@ public class ObjectEntryModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ObjectEntry (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectEntryId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,externalReferenceCode VARCHAR(75) null,objectDefinitionId LONG,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
+		"create table ObjectEntry (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(75) null,objectEntryId LONG not null primary key,groupId LONG,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,objectDefinitionId LONG,lastPublishDate DATE null,status INTEGER,statusByUserId LONG,statusByUserName VARCHAR(75) null,statusDate DATE null)";
 
 	public static final String TABLE_SQL_DROP = "drop table ObjectEntry";
 
@@ -264,100 +263,123 @@ public class ObjectEntryModelImpl
 	public Map<String, Function<ObjectEntry, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<ObjectEntry, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<ObjectEntry, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<ObjectEntry, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<ObjectEntry, Object>> attributeGetterFunctions =
-			new LinkedHashMap<String, Function<ObjectEntry, Object>>();
-		Map<String, BiConsumer<ObjectEntry, ?>> attributeSetterBiConsumers =
-			new LinkedHashMap<String, BiConsumer<ObjectEntry, ?>>();
+		private static final Map<String, Function<ObjectEntry, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", ObjectEntry::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<ObjectEntry, Long>)ObjectEntry::setMvccVersion);
-		attributeGetterFunctions.put("uuid", ObjectEntry::getUuid);
-		attributeSetterBiConsumers.put(
-			"uuid", (BiConsumer<ObjectEntry, String>)ObjectEntry::setUuid);
-		attributeGetterFunctions.put(
-			"objectEntryId", ObjectEntry::getObjectEntryId);
-		attributeSetterBiConsumers.put(
-			"objectEntryId",
-			(BiConsumer<ObjectEntry, Long>)ObjectEntry::setObjectEntryId);
-		attributeGetterFunctions.put("groupId", ObjectEntry::getGroupId);
-		attributeSetterBiConsumers.put(
-			"groupId", (BiConsumer<ObjectEntry, Long>)ObjectEntry::setGroupId);
-		attributeGetterFunctions.put("companyId", ObjectEntry::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<ObjectEntry, Long>)ObjectEntry::setCompanyId);
-		attributeGetterFunctions.put("userId", ObjectEntry::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId", (BiConsumer<ObjectEntry, Long>)ObjectEntry::setUserId);
-		attributeGetterFunctions.put("userName", ObjectEntry::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<ObjectEntry, String>)ObjectEntry::setUserName);
-		attributeGetterFunctions.put("createDate", ObjectEntry::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<ObjectEntry, Date>)ObjectEntry::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", ObjectEntry::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<ObjectEntry, Date>)ObjectEntry::setModifiedDate);
-		attributeGetterFunctions.put(
-			"externalReferenceCode", ObjectEntry::getExternalReferenceCode);
-		attributeSetterBiConsumers.put(
-			"externalReferenceCode",
-			(BiConsumer<ObjectEntry, String>)
-				ObjectEntry::setExternalReferenceCode);
-		attributeGetterFunctions.put(
-			"objectDefinitionId", ObjectEntry::getObjectDefinitionId);
-		attributeSetterBiConsumers.put(
-			"objectDefinitionId",
-			(BiConsumer<ObjectEntry, Long>)ObjectEntry::setObjectDefinitionId);
-		attributeGetterFunctions.put(
-			"lastPublishDate", ObjectEntry::getLastPublishDate);
-		attributeSetterBiConsumers.put(
-			"lastPublishDate",
-			(BiConsumer<ObjectEntry, Date>)ObjectEntry::setLastPublishDate);
-		attributeGetterFunctions.put("status", ObjectEntry::getStatus);
-		attributeSetterBiConsumers.put(
-			"status", (BiConsumer<ObjectEntry, Integer>)ObjectEntry::setStatus);
-		attributeGetterFunctions.put(
-			"statusByUserId", ObjectEntry::getStatusByUserId);
-		attributeSetterBiConsumers.put(
-			"statusByUserId",
-			(BiConsumer<ObjectEntry, Long>)ObjectEntry::setStatusByUserId);
-		attributeGetterFunctions.put(
-			"statusByUserName", ObjectEntry::getStatusByUserName);
-		attributeSetterBiConsumers.put(
-			"statusByUserName",
-			(BiConsumer<ObjectEntry, String>)ObjectEntry::setStatusByUserName);
-		attributeGetterFunctions.put("statusDate", ObjectEntry::getStatusDate);
-		attributeSetterBiConsumers.put(
-			"statusDate",
-			(BiConsumer<ObjectEntry, Date>)ObjectEntry::setStatusDate);
+		static {
+			Map<String, Function<ObjectEntry, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap<String, Function<ObjectEntry, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", ObjectEntry::getMvccVersion);
+			attributeGetterFunctions.put("uuid", ObjectEntry::getUuid);
+			attributeGetterFunctions.put(
+				"externalReferenceCode", ObjectEntry::getExternalReferenceCode);
+			attributeGetterFunctions.put(
+				"objectEntryId", ObjectEntry::getObjectEntryId);
+			attributeGetterFunctions.put("groupId", ObjectEntry::getGroupId);
+			attributeGetterFunctions.put(
+				"companyId", ObjectEntry::getCompanyId);
+			attributeGetterFunctions.put("userId", ObjectEntry::getUserId);
+			attributeGetterFunctions.put("userName", ObjectEntry::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", ObjectEntry::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", ObjectEntry::getModifiedDate);
+			attributeGetterFunctions.put(
+				"objectDefinitionId", ObjectEntry::getObjectDefinitionId);
+			attributeGetterFunctions.put(
+				"lastPublishDate", ObjectEntry::getLastPublishDate);
+			attributeGetterFunctions.put("status", ObjectEntry::getStatus);
+			attributeGetterFunctions.put(
+				"statusByUserId", ObjectEntry::getStatusByUserId);
+			attributeGetterFunctions.put(
+				"statusByUserName", ObjectEntry::getStatusByUserName);
+			attributeGetterFunctions.put(
+				"statusDate", ObjectEntry::getStatusDate);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<ObjectEntry, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<ObjectEntry, ?>> attributeSetterBiConsumers =
+				new LinkedHashMap<String, BiConsumer<ObjectEntry, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<ObjectEntry, Long>)ObjectEntry::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"uuid", (BiConsumer<ObjectEntry, String>)ObjectEntry::setUuid);
+			attributeSetterBiConsumers.put(
+				"externalReferenceCode",
+				(BiConsumer<ObjectEntry, String>)
+					ObjectEntry::setExternalReferenceCode);
+			attributeSetterBiConsumers.put(
+				"objectEntryId",
+				(BiConsumer<ObjectEntry, Long>)ObjectEntry::setObjectEntryId);
+			attributeSetterBiConsumers.put(
+				"groupId",
+				(BiConsumer<ObjectEntry, Long>)ObjectEntry::setGroupId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<ObjectEntry, Long>)ObjectEntry::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<ObjectEntry, Long>)ObjectEntry::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<ObjectEntry, String>)ObjectEntry::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<ObjectEntry, Date>)ObjectEntry::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<ObjectEntry, Date>)ObjectEntry::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"objectDefinitionId",
+				(BiConsumer<ObjectEntry, Long>)
+					ObjectEntry::setObjectDefinitionId);
+			attributeSetterBiConsumers.put(
+				"lastPublishDate",
+				(BiConsumer<ObjectEntry, Date>)ObjectEntry::setLastPublishDate);
+			attributeSetterBiConsumers.put(
+				"status",
+				(BiConsumer<ObjectEntry, Integer>)ObjectEntry::setStatus);
+			attributeSetterBiConsumers.put(
+				"statusByUserId",
+				(BiConsumer<ObjectEntry, Long>)ObjectEntry::setStatusByUserId);
+			attributeSetterBiConsumers.put(
+				"statusByUserName",
+				(BiConsumer<ObjectEntry, String>)
+					ObjectEntry::setStatusByUserName);
+			attributeSetterBiConsumers.put(
+				"statusDate",
+				(BiConsumer<ObjectEntry, Date>)ObjectEntry::setStatusDate);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -402,6 +424,35 @@ public class ObjectEntryModelImpl
 	@Deprecated
 	public String getOriginalUuid() {
 		return getColumnOriginalValue("uuid_");
+	}
+
+	@JSON
+	@Override
+	public String getExternalReferenceCode() {
+		if (_externalReferenceCode == null) {
+			return "";
+		}
+		else {
+			return _externalReferenceCode;
+		}
+	}
+
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_externalReferenceCode = externalReferenceCode;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalExternalReferenceCode() {
+		return getColumnOriginalValue("externalReferenceCode");
 	}
 
 	@JSON
@@ -562,35 +613,6 @@ public class ObjectEntryModelImpl
 		}
 
 		_modifiedDate = modifiedDate;
-	}
-
-	@JSON
-	@Override
-	public String getExternalReferenceCode() {
-		if (_externalReferenceCode == null) {
-			return "";
-		}
-		else {
-			return _externalReferenceCode;
-		}
-	}
-
-	@Override
-	public void setExternalReferenceCode(String externalReferenceCode) {
-		if (_columnOriginalValues == Collections.EMPTY_MAP) {
-			_setColumnOriginalValues();
-		}
-
-		_externalReferenceCode = externalReferenceCode;
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public String getOriginalExternalReferenceCode() {
-		return getColumnOriginalValue("externalReferenceCode");
 	}
 
 	@JSON
@@ -868,6 +890,7 @@ public class ObjectEntryModelImpl
 
 		objectEntryImpl.setMvccVersion(getMvccVersion());
 		objectEntryImpl.setUuid(getUuid());
+		objectEntryImpl.setExternalReferenceCode(getExternalReferenceCode());
 		objectEntryImpl.setObjectEntryId(getObjectEntryId());
 		objectEntryImpl.setGroupId(getGroupId());
 		objectEntryImpl.setCompanyId(getCompanyId());
@@ -875,7 +898,6 @@ public class ObjectEntryModelImpl
 		objectEntryImpl.setUserName(getUserName());
 		objectEntryImpl.setCreateDate(getCreateDate());
 		objectEntryImpl.setModifiedDate(getModifiedDate());
-		objectEntryImpl.setExternalReferenceCode(getExternalReferenceCode());
 		objectEntryImpl.setObjectDefinitionId(getObjectDefinitionId());
 		objectEntryImpl.setLastPublishDate(getLastPublishDate());
 		objectEntryImpl.setStatus(getStatus());
@@ -895,6 +917,8 @@ public class ObjectEntryModelImpl
 		objectEntryImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
 		objectEntryImpl.setUuid(this.<String>getColumnOriginalValue("uuid_"));
+		objectEntryImpl.setExternalReferenceCode(
+			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		objectEntryImpl.setObjectEntryId(
 			this.<Long>getColumnOriginalValue("objectEntryId"));
 		objectEntryImpl.setGroupId(
@@ -908,8 +932,6 @@ public class ObjectEntryModelImpl
 			this.<Date>getColumnOriginalValue("createDate"));
 		objectEntryImpl.setModifiedDate(
 			this.<Date>getColumnOriginalValue("modifiedDate"));
-		objectEntryImpl.setExternalReferenceCode(
-			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		objectEntryImpl.setObjectDefinitionId(
 			this.<Long>getColumnOriginalValue("objectDefinitionId"));
 		objectEntryImpl.setLastPublishDate(
@@ -1016,6 +1038,18 @@ public class ObjectEntryModelImpl
 			objectEntryCacheModel.uuid = null;
 		}
 
+		objectEntryCacheModel.externalReferenceCode =
+			getExternalReferenceCode();
+
+		String externalReferenceCode =
+			objectEntryCacheModel.externalReferenceCode;
+
+		if ((externalReferenceCode != null) &&
+			(externalReferenceCode.length() == 0)) {
+
+			objectEntryCacheModel.externalReferenceCode = null;
+		}
+
 		objectEntryCacheModel.objectEntryId = getObjectEntryId();
 
 		objectEntryCacheModel.groupId = getGroupId();
@@ -1048,18 +1082,6 @@ public class ObjectEntryModelImpl
 		}
 		else {
 			objectEntryCacheModel.modifiedDate = Long.MIN_VALUE;
-		}
-
-		objectEntryCacheModel.externalReferenceCode =
-			getExternalReferenceCode();
-
-		String externalReferenceCode =
-			objectEntryCacheModel.externalReferenceCode;
-
-		if ((externalReferenceCode != null) &&
-			(externalReferenceCode.length() == 0)) {
-
-			objectEntryCacheModel.externalReferenceCode = null;
 		}
 
 		objectEntryCacheModel.objectDefinitionId = getObjectDefinitionId();
@@ -1157,6 +1179,7 @@ public class ObjectEntryModelImpl
 
 	private long _mvccVersion;
 	private String _uuid;
+	private String _externalReferenceCode;
 	private long _objectEntryId;
 	private long _groupId;
 	private long _companyId;
@@ -1165,7 +1188,6 @@ public class ObjectEntryModelImpl
 	private Date _createDate;
 	private Date _modifiedDate;
 	private boolean _setModifiedDate;
-	private String _externalReferenceCode;
 	private long _objectDefinitionId;
 	private Date _lastPublishDate;
 	private int _status;
@@ -1176,8 +1198,9 @@ public class ObjectEntryModelImpl
 	public <T> T getColumnValue(String columnName) {
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
 
-		Function<ObjectEntry, Object> function = _attributeGetterFunctions.get(
-			columnName);
+		Function<ObjectEntry, Object> function =
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(
@@ -1204,6 +1227,8 @@ public class ObjectEntryModelImpl
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
 		_columnOriginalValues.put("uuid_", _uuid);
+		_columnOriginalValues.put(
+			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put("objectEntryId", _objectEntryId);
 		_columnOriginalValues.put("groupId", _groupId);
 		_columnOriginalValues.put("companyId", _companyId);
@@ -1211,8 +1236,6 @@ public class ObjectEntryModelImpl
 		_columnOriginalValues.put("userName", _userName);
 		_columnOriginalValues.put("createDate", _createDate);
 		_columnOriginalValues.put("modifiedDate", _modifiedDate);
-		_columnOriginalValues.put(
-			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put("objectDefinitionId", _objectDefinitionId);
 		_columnOriginalValues.put("lastPublishDate", _lastPublishDate);
 		_columnOriginalValues.put("status", _status);
@@ -1246,21 +1269,21 @@ public class ObjectEntryModelImpl
 
 		columnBitmasks.put("uuid_", 2L);
 
-		columnBitmasks.put("objectEntryId", 4L);
+		columnBitmasks.put("externalReferenceCode", 4L);
 
-		columnBitmasks.put("groupId", 8L);
+		columnBitmasks.put("objectEntryId", 8L);
 
-		columnBitmasks.put("companyId", 16L);
+		columnBitmasks.put("groupId", 16L);
 
-		columnBitmasks.put("userId", 32L);
+		columnBitmasks.put("companyId", 32L);
 
-		columnBitmasks.put("userName", 64L);
+		columnBitmasks.put("userId", 64L);
 
-		columnBitmasks.put("createDate", 128L);
+		columnBitmasks.put("userName", 128L);
 
-		columnBitmasks.put("modifiedDate", 256L);
+		columnBitmasks.put("createDate", 256L);
 
-		columnBitmasks.put("externalReferenceCode", 512L);
+		columnBitmasks.put("modifiedDate", 512L);
 
 		columnBitmasks.put("objectDefinitionId", 1024L);
 

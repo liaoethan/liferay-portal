@@ -21,14 +21,15 @@ import com.liferay.object.admin.rest.client.pagination.Pagination;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
-import com.liferay.object.util.LocalizedMapUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class ObjectFieldResourceTest extends BaseObjectFieldResourceTestCase {
 
 		_objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(),
+				TestPropsValues.getUserId(), false,
 				LocalizedMapUtil.getLocalizedMap(value), value, null, null,
 				LocalizedMapUtil.getLocalizedMap(value),
 				ObjectDefinitionConstants.SCOPE_COMPANY,
@@ -71,6 +72,129 @@ public class ObjectFieldResourceTest extends BaseObjectFieldResourceTestCase {
 			_objectDefinitionLocalService.deleteObjectDefinition(
 				_objectDefinition.getObjectDefinitionId());
 		}
+	}
+
+	@Override
+	@Test
+	public void testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage()
+		throws Exception {
+
+		String objectDefinitionExternalReferenceCode =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_getExternalReferenceCode();
+		String irrelevantObjectDefinitionExternalReferenceCode =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_getIrrelevantExternalReferenceCode();
+
+		Page<ObjectField> page =
+			objectFieldResource.
+				getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+					objectDefinitionExternalReferenceCode, null, null,
+					Pagination.of(1, 10), null);
+
+		Assert.assertEquals(6, page.getTotalCount());
+
+		if (irrelevantObjectDefinitionExternalReferenceCode != null) {
+			ObjectField irrelevantObjectField =
+				testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+					irrelevantObjectDefinitionExternalReferenceCode,
+					randomIrrelevantObjectField());
+
+			page =
+				objectFieldResource.
+					getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+						irrelevantObjectDefinitionExternalReferenceCode, null,
+						null, Pagination.of(1, 10), null);
+
+			Assert.assertEquals(1, page.getTotalCount());
+
+			assertEquals(
+				Arrays.asList(irrelevantObjectField),
+				(List<ObjectField>)page.getItems());
+			assertValid(page);
+		}
+
+		ObjectField objectField1 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+				objectDefinitionExternalReferenceCode, randomObjectField());
+		ObjectField objectField2 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+				objectDefinitionExternalReferenceCode, randomObjectField());
+
+		page =
+			objectFieldResource.
+				getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+					objectDefinitionExternalReferenceCode, null, null,
+					Pagination.of(1, 10), null);
+
+		Assert.assertEquals(8, page.getTotalCount());
+
+		assertContains(objectField1, (List<ObjectField>)page.getItems());
+		assertContains(objectField2, (List<ObjectField>)page.getItems());
+		assertValid(page);
+
+		objectFieldResource.deleteObjectField(objectField1.getId());
+		objectFieldResource.deleteObjectField(objectField2.getId());
+	}
+
+	@Override
+	@Test
+	public void testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPageWithPagination()
+		throws Exception {
+
+		String objectDefinitionExternalReferenceCode =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_getExternalReferenceCode();
+
+		Page<ObjectField> totalPage =
+			objectFieldResource.
+				getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+					objectDefinitionExternalReferenceCode, null, null, null,
+					null);
+
+		int totalCount = GetterUtil.getInteger(totalPage.getTotalCount());
+
+		ObjectField objectField1 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+				objectDefinitionExternalReferenceCode, randomObjectField());
+
+		ObjectField objectField2 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+				objectDefinitionExternalReferenceCode, randomObjectField());
+
+		ObjectField objectField3 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+				objectDefinitionExternalReferenceCode, randomObjectField());
+
+		Page<ObjectField> page1 =
+			objectFieldResource.
+				getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+					objectDefinitionExternalReferenceCode, null, null,
+					Pagination.of(1, totalCount + 2), null);
+
+		List<ObjectField> objectFields1 = (List<ObjectField>)page1.getItems();
+
+		Assert.assertEquals(
+			objectFields1.toString(), totalCount + 2, objectFields1.size());
+
+		Page<ObjectField> page2 =
+			objectFieldResource.
+				getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+					objectDefinitionExternalReferenceCode, null, null,
+					Pagination.of(2, totalCount + 2), null);
+
+		Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+		List<ObjectField> objectFields2 = (List<ObjectField>)page2.getItems();
+
+		Assert.assertEquals(objectFields2.toString(), 1, objectFields2.size());
+
+		Page<ObjectField> page3 =
+			objectFieldResource.
+				getObjectDefinitionByExternalReferenceCodeObjectFieldsPage(
+					objectDefinitionExternalReferenceCode, null, null,
+					Pagination.of(1, totalCount + 3), null);
+
+		assertContains(objectField1, (List<ObjectField>)page3.getItems());
+		assertContains(objectField2, (List<ObjectField>)page3.getItems());
+		assertContains(objectField3, (List<ObjectField>)page3.getItems());
 	}
 
 	@Override
@@ -225,6 +349,26 @@ public class ObjectFieldResourceTest extends BaseObjectFieldResourceTestCase {
 	}
 
 	@Override
+	protected ObjectField
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_addObjectField(
+				String objectDefinitionExternalReferenceCode,
+				ObjectField objectField)
+		throws Exception {
+
+		return objectFieldResource.
+			postObjectDefinitionByExternalReferenceCodeObjectField(
+				objectDefinitionExternalReferenceCode, objectField);
+	}
+
+	@Override
+	protected String
+			testGetObjectDefinitionByExternalReferenceCodeObjectFieldsPage_getExternalReferenceCode()
+		throws Exception {
+
+		return _objectDefinition.getExternalReferenceCode();
+	}
+
+	@Override
 	protected Long
 		testGetObjectDefinitionObjectFieldsPage_getObjectDefinitionId() {
 
@@ -248,6 +392,17 @@ public class ObjectFieldResourceTest extends BaseObjectFieldResourceTestCase {
 		throws Exception {
 
 		return _addObjectField();
+	}
+
+	@Override
+	protected ObjectField
+			testPostObjectDefinitionByExternalReferenceCodeObjectField_addObjectField(
+				ObjectField objectField)
+		throws Exception {
+
+		return objectFieldResource.
+			postObjectDefinitionByExternalReferenceCodeObjectField(
+				_objectDefinition.getExternalReferenceCode(), objectField);
 	}
 
 	@Override

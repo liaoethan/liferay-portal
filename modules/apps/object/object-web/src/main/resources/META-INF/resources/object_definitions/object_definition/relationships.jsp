@@ -39,7 +39,7 @@ renderResponse.setTitle(objectDefinition.getLabel(locale, true));
 	namespace="<%= liferayPortletResponse.getNamespace() %>"
 	pageNumber="<%= 1 %>"
 	portletURL="<%= liferayPortletResponse.createRenderURL() %>"
-	propsTransformer="js/components/ObjectRelationship/propsTransformer"
+	propsTransformer="js/components/FDSPropsTransformer/ObjectRelationshipsFDSPropsTransformer"
 	style="fluid"
 />
 
@@ -48,11 +48,9 @@ renderResponse.setTitle(objectDefinition.getLabel(locale, true));
 		module="js/components/ObjectRelationship/AddRelationship"
 		props='<%=
 			HashMapBuilder.<String, Object>put(
-				"apiURL", objectDefinitionsRelationshipsDisplayContext.getAPIURL()
-			).put(
 				"ffOneToOneRelationshipConfigurationEnabled", objectDefinitionsRelationshipsDisplayContext.isFFOneToOneRelationshipConfigurationEnabled()
 			).put(
-				"objectDefinitionId", objectDefinition.getObjectDefinitionId()
+				"objectDefinitionExternalReferenceCode", objectDefinition.getExternalReferenceCode()
 			).put(
 				"parameterRequired", objectDefinitionsRelationshipsDisplayContext.isParameterRequired(objectDefinition)
 			).build()

@@ -45,7 +45,6 @@ import {
 	UPDATE_DATASET_DISPLAY,
 } from './utils/eventsDefinitions';
 import {
-	delay,
 	formatItemChanges,
 	getCurrentItemUpdates,
 	getRandomId,
@@ -96,6 +95,7 @@ const FrontendDataSet = ({
 	sidePanelId,
 	sorting: sortingProp,
 	style,
+	uniformActionsDisplay,
 	views,
 }) => {
 	const wrapperRef = useRef(null);
@@ -132,9 +132,13 @@ const FrontendDataSet = ({
 			);
 
 			if (activeViewName) {
-				initialActiveView = views.find(
+				const activeView = views.find(
 					({name}) => name === activeViewName
 				);
+
+				if (activeView) {
+					initialActiveView = activeView;
+				}
 			}
 
 			if (visibleFieldNames) {
@@ -522,7 +526,13 @@ const FrontendDataSet = ({
 			</div>
 		) : null;
 
-	function executeAsyncItemAction(url, method = 'GET') {
+	function executeAsyncItemAction({
+		errorMessage,
+		method = 'GET',
+		setActionItemLoading,
+		successMessage,
+		url,
+	}) {
 		return fetch(url, {
 			headers: {
 				'Accept': 'application/json',
@@ -531,23 +541,45 @@ const FrontendDataSet = ({
 			},
 			method,
 		})
-			.then((_) => {
-				return delay(500).then(() => {
-					if (isMounted()) {
-						Liferay.fire(DATASET_ACTION_PERFORMED, {
-							id,
-						});
+			.then((response) => {
+				if (response.ok) {
+					Liferay.fire(DATASET_ACTION_PERFORMED, {
+						id,
+					});
 
-						return refreshData();
-					}
-				});
+					openToast({
+						message:
+							successMessage ||
+							Liferay.Language.get(
+								'your-request-completed-successfully'
+							),
+						type: 'success',
+					});
+
+					refreshData();
+				}
+				else {
+					openToast({
+						message:
+							errorMessage ||
+							Liferay.Language.get(
+								'an-unexpected-error-occurred'
+							),
+						type: 'danger',
+					});
+
+					setActionItemLoading?.(false);
+				}
 			})
-			.catch((error) => {
-				logError(error);
+			.catch(() => {
 				openToast({
-					message: Liferay.Language.get('unexpected-error'),
+					message:
+						errorMessage ||
+						Liferay.Language.get('an-unexpected-error-occurred'),
 					type: 'danger',
 				});
+
+				setActionItemLoading?.(false);
 			});
 	}
 
@@ -737,6 +769,7 @@ const FrontendDataSet = ({
 				sorting,
 				style,
 				toggleItemInlineEdit,
+				uniformActionsDisplay,
 				updateDataSetItems,
 				updateItem,
 				updateSearchParam: setSearchParam,

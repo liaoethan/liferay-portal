@@ -249,7 +249,10 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantPriceModifierCategory),
 				(List<PriceModifierCategory>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetPriceModifierByExternalReferenceCodePriceModifierCategoriesPage_getExpectedActions(
+					irrelevantExternalReferenceCode));
 		}
 
 		PriceModifierCategory priceModifierCategory1 =
@@ -270,7 +273,20 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(priceModifierCategory1, priceModifierCategory2),
 			(List<PriceModifierCategory>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetPriceModifierByExternalReferenceCodePriceModifierCategoriesPage_getExpectedActions(
+				externalReferenceCode));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetPriceModifierByExternalReferenceCodePriceModifierCategoriesPage_getExpectedActions(
+				String externalReferenceCode)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -409,7 +425,10 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantPriceModifierCategory),
 				(List<PriceModifierCategory>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetPriceModifierIdPriceModifierCategoriesPage_getExpectedActions(
+					irrelevantId));
 		}
 
 		PriceModifierCategory priceModifierCategory1 =
@@ -430,7 +449,20 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(priceModifierCategory1, priceModifierCategory2),
 			(List<PriceModifierCategory>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetPriceModifierIdPriceModifierCategoriesPage_getExpectedActions(
+				id));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetPriceModifierIdPriceModifierCategoriesPage_getExpectedActions(
+				Long id)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -969,6 +1001,13 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 	}
 
 	protected void assertValid(Page<PriceModifierCategory> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<PriceModifierCategory> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<PriceModifierCategory> priceModifierCategories =
@@ -984,6 +1023,20 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1204,6 +1257,10 @@ public abstract class BasePriceModifierCategoryResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

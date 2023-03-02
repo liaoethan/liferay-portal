@@ -28,7 +28,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Bryan Engler
  */
-@Component(immediate = true, service = SearchableAssetClassNamesProvider.class)
+@Component(service = SearchableAssetClassNamesProvider.class)
 public class SearchableAssetClassNamesProviderImpl
 	implements SearchableAssetClassNamesProvider {
 
@@ -51,16 +51,6 @@ public class SearchableAssetClassNamesProviderImpl
 
 					classNames.add(className);
 				}
-			}
-		}
-
-		for (String searchEngineHelperEntryClassName :
-				searchEngineHelper.getEntryClassNames()) {
-
-			if (searchEngineHelperEntryClassName.startsWith(
-					"com.liferay.object.model.ObjectDefinition#")) {
-
-				classNames.add(searchEngineHelperEntryClassName);
 			}
 		}
 

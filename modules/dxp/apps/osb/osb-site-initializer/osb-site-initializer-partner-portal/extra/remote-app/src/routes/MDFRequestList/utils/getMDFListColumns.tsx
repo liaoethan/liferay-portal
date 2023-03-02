@@ -9,52 +9,109 @@
  * distribution rights of the Software.
  */
 
+import Dropdown from '../../../common/components/Dropdown';
+import StatusBadge from '../../../common/components/StatusBadge';
 import {MDFColumnKey} from '../../../common/enums/mdfColumnKey';
-import {RequestStatus} from '../../../common/enums/requestStatus';
+import {PRMPageRoute} from '../../../common/enums/prmPageRoute';
 import {MDFRequestListItem} from '../../../common/interfaces/mdfRequestListItem';
 import TableColumn from '../../../common/interfaces/tableColumn';
 import {Liferay} from '../../../common/services/liferay';
-import Dropdown from '../components/Dropdown';
-import RequestStatusBadge from '../components/RequestStatusBadge';
+import {Status} from '../../../common/utils/constants/status';
 
 export default function getMDFListColumns(
 	columns?: TableColumn<MDFRequestListItem>[],
-	siteURL?: string
+	siteURL?: string,
+	userAccountRoles?: React.OptionHTMLAttributes<HTMLOptionElement>[]
 ): TableColumn<MDFRequestListItem>[] | undefined {
+	const getDropdownOptions = (row: MDFRequestListItem) => {
+		const canEditRoles = [
+			'Channel General Manager',
+			'Channel Account Manager',
+			'Channel Regional Marketing Manager',
+			'Channel Global Marketing Manager',
+			'Channel Finance Manager',
+		];
+
+		const userAccountRolesCanEdit = userAccountRoles?.filter(
+			(userAccountRole) =>
+				canEditRoles.includes(userAccountRole.label as string)
+		).length;
+
+		if (
+			!userAccountRolesCanEdit &&
+			row[MDFColumnKey.STATUS] !== Status.DRAFT.name &&
+			row[MDFColumnKey.STATUS] !== Status.REQUEST_MORE_INFO.name
+		) {
+			return (
+				<Dropdown
+					closeOnClick={true}
+					options={[
+						{
+							icon: 'view',
+							key: 'approve',
+							label: ' View',
+							onClick: () =>
+								Liferay.Util.navigate(
+									`${siteURL}/l/${row[MDFColumnKey.ID]}`
+								),
+						},
+					]}
+				></Dropdown>
+			);
+		}
+
+		const options = [
+			{
+				icon: 'view',
+				key: 'approve',
+				label: ' View',
+				onClick: () =>
+					Liferay.Util.navigate(
+						`${siteURL}/l/${row[MDFColumnKey.ID]}`
+					),
+			},
+			{
+				icon: 'pencil',
+				key: 'edit',
+				label: ' Edit',
+				onClick: () =>
+					Liferay.Util.navigate(
+						`${siteURL}/${PRMPageRoute.CREATE_MDF_REQUEST}/#/${
+							row[MDFColumnKey.ID]
+						}`
+					),
+			},
+		];
+
+		return <Dropdown closeOnClick={true} options={options}></Dropdown>;
+	};
+
 	return (
 		columns && [
 			{
 				columnKey: MDFColumnKey.ID,
 				label: 'Request ID',
-				render: (data) => <>{`Request-${data}`}</>,
-			},
-			{
-				columnKey: MDFColumnKey.STATUS,
-				label: 'Status',
-				render: (data) => (
-					<RequestStatusBadge status={data as RequestStatus} />
-				),
-			},
-			...columns,
-			{
-				columnKey: MDFColumnKey.ACTION,
-				label: '',
-				render: (_, row) => (
-					<Dropdown
+				render: (data, row) => (
+					<a
+						className="link"
 						onClick={() =>
 							Liferay.Util.navigate(
 								`${siteURL}/l/${row[MDFColumnKey.ID]}`
 							)
 						}
-						options={[
-							{
-								icon: 'view',
-								key: 'approve',
-								label: ' View',
-							},
-						]}
-					></Dropdown>
+					>{`Request-${data}`}</a>
 				),
+			},
+			{
+				columnKey: MDFColumnKey.STATUS,
+				label: 'Status',
+				render: (data) => <StatusBadge status={data as string} />,
+			},
+			...columns,
+			{
+				columnKey: MDFColumnKey.ACTION,
+				label: '',
+				render: (_, row) => getDropdownOptions(row),
 			},
 		]
 	);

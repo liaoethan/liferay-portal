@@ -69,20 +69,6 @@
 
 					</aui:select>
 				</c:if>
-
-				<liferay-frontend:edit-form-footer>
-					<clay:button
-						cssClass="d-flex"
-						label="add"
-						type="submit"
-					/>
-
-					<clay:button
-						cssClass="btn-cancel"
-						displayType="secondary"
-						label="cancel"
-					/>
-				</liferay-frontend:edit-form-footer>
 			</div>
 		</div>
 
@@ -91,6 +77,8 @@
 
 			<p class="text-3 text-center text-secondary"><liferay-ui:message key="the-creation-of-the-site-may-take-some-time-.closing-the-window-will-not-cancel-the-process" /></p>
 		</div>
+
+		<input type="submit" hidden />
 	</liferay-frontend:edit-form>
 </clay:container-fluid>
 

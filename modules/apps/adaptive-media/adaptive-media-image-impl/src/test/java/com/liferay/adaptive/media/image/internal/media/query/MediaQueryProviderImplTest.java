@@ -40,12 +40,12 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import java.net.URI;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -68,9 +68,9 @@ public class MediaQueryProviderImplTest {
 	@Before
 	public void setUp() throws PortalException {
 		Mockito.when(
-			_amImageFinder.getAdaptiveMediaStream(Mockito.any(Function.class))
+			_amImageFinder.getAdaptiveMedias(Mockito.any(Function.class))
 		).thenAnswer(
-			invocation -> Stream.empty()
+			invocation -> Collections.emptyList()
 		);
 
 		Mockito.when(
@@ -646,7 +646,7 @@ public class MediaQueryProviderImplTest {
 		throws Exception {
 
 		Mockito.when(
-			_amImageFinder.getAdaptiveMediaStream(Mockito.any(Function.class))
+			_amImageFinder.getAdaptiveMedias(Mockito.any(Function.class))
 		).thenAnswer(
 			invocation -> {
 				Function<AMImageQueryBuilder, AMQuery<?, ?>>
@@ -660,7 +660,7 @@ public class MediaQueryProviderImplTest {
 					amImageQueryBuilderImpl);
 
 				if (!AMImageQueryBuilderImpl.AM_QUERY.equals(amQuery)) {
-					return Stream.empty();
+					return Collections.emptyList();
 				}
 
 				for (AdaptiveMedia<AMImageProcessor> adaptiveMedia :
@@ -677,11 +677,11 @@ public class MediaQueryProviderImplTest {
 						configurationUuid.equals(
 							amImageQueryBuilderImpl.getConfigurationUuid())) {
 
-						return Stream.of(adaptiveMedia);
+						return Collections.singletonList(adaptiveMedia);
 					}
 				}
 
-				return Stream.empty();
+				return Collections.emptyList();
 			}
 		);
 	}

@@ -46,7 +46,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 
 	public static final String CLASS_NAME = CommerceChannel.class.getName();
@@ -149,8 +149,7 @@ public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 	@Override
 	protected void doReindex(CommerceChannel commerceChannel) throws Exception {
 		_indexWriterHelper.updateDocument(
-			commerceChannel.getCompanyId(), getDocument(commerceChannel),
-			isCommitImmediately());
+			commerceChannel.getCompanyId(), getDocument(commerceChannel));
 	}
 
 	@Override
@@ -163,6 +162,21 @@ public class CommerceChannelIndexer extends BaseIndexer<CommerceChannel> {
 		long companyId = GetterUtil.getLong(ids[0]);
 
 		_reindexCommerceChannels(companyId);
+	}
+
+	@Override
+	protected boolean isUseSearchResultPermissionFilter(
+		SearchContext searchContext) {
+
+		Boolean useSearchResultPermissionFilter =
+			(Boolean)searchContext.getAttribute(
+				"useSearchResultPermissionFilter");
+
+		if (useSearchResultPermissionFilter != null) {
+			return useSearchResultPermissionFilter;
+		}
+
+		return super.isUseSearchResultPermissionFilter(searchContext);
 	}
 
 	private void _reindexCommerceChannels(long companyId) throws Exception {

@@ -19,13 +19,13 @@ definition {
 		}
 
 		task ("Create a new Customer Portal Site") {
-			CustomerPortal.addCustomerPortalSite(siteName = "${testSiteName}");
+			CustomerPortal.addCustomerPortalSite(siteName = ${testSiteName});
 		}
 
 		task ("Add test user access to all Accounts") {
 			CustomerPortal.assignUserToOrganization();
 
-			CustomerPortal.addUserToOneOrMoreAccounts(accountsList = "${testAccount}");
+			CustomerPortal.addUserToOneOrMoreAccounts(accountsList = ${testAccount});
 		}
 	}
 
@@ -34,33 +34,33 @@ definition {
 
 		CustomerPortal.customerPortalApisTearDown();
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			JSONGroup.deleteGroupByName(groupName = "${testSiteName}");
+			JSONGroup.deleteGroupByName(groupName = ${testSiteName});
 		}
 	}
 
 	@description = "Automation ID: LPS-150004 | Test Summary: Verify if the user clicks the Cancel button he stays on the Team Members page"
-	@priority = "4"
+	@priority = 4
 	test AfterCancellingTheActionHeStaysOnTheSamePage {
 		property portal.upstream = "quarantine";
 
 		// "Reason: Not able to reproduce scenario without OKTA workaround."
 
 		task ("Change the user role in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			CustomerPortal.accountTableProject(title = "${testAccount}");
+			CustomerPortal.accountTableProject(title = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0 and login to okta") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			ApplicationsMenu.gotoSite(key_site = ${testSiteName});
 
 			CustomerPortal.loginOktaToUpdateCP();
 
@@ -70,7 +70,7 @@ definition {
 		}
 
 		task ("Get into the project and go to Team Members page") {
-			CP2TeamMembers.teamMembersFlow();
+			CP2TeamMembers.teamMembersFlow(testAccount = "Test Account DXP");
 		}
 
 		task ("Open the action menu and click the Remove option") {
@@ -84,14 +84,10 @@ definition {
 		task ("Assert that the user remained on the Team Members page") {
 			CP2TeamMembers.viewTeamMembersPage();
 		}
-
-		task ("Delete the entries and objects created") {
-			CustomerPortal.deleteEntryAccountFlag(entry = "ERC-002");
-		}
 	}
 
 	@description = "Automation ID: LPS-150013 | Test Summary: Verify that after the user clicks Edit a Cancel button is available"
-	@priority = "5"
+	@priority = 5
 	test CanViewCancelButton {
 		property portal.upstream = "quarantine";
 
@@ -109,27 +105,27 @@ definition {
 				requireReset = "false",
 				userEmailAddress = "test.user@liferay.com");
 
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			LexiconEntry.gotoEntry(rowEntry = "${testAccount}");
+			LexiconEntry.gotoEntry(rowEntry = ${testAccount});
 
-			Accounts.assignUsers(
-				accountName = "${testAccount}",
+			Account.assignUsers(
+				accountName = ${testAccount},
 				assigneeName = "Test User");
 		}
 
 		task ("Change the user role in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			CustomerPortal.accountTableProject(title = "${testAccount}");
+			CustomerPortal.accountTableProject(title = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0 and login to okta") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			ApplicationsMenu.gotoSite(key_site = ${testSiteName});
 
 			CustomerPortal.loginOktaToUpdateCP();
 
@@ -139,7 +135,7 @@ definition {
 		}
 
 		task ("Get into the project and go to Team Members page") {
-			CP2TeamMembers.teamMembersFlow();
+			CP2TeamMembers.teamMembersFlow(testAccount = "Test Account DXP");
 		}
 
 		task ("Open the action menu and click the Edit option") {
@@ -156,17 +152,13 @@ definition {
 			CP2Utils.assertNotChangeRole(role = "Administrator");
 		}
 
-		task ("Delete the entries and objects created") {
-			CustomerPortal.deleteEntryAccountFlag(entry = "ERC-002");
-		}
-
 		task ("Delete user created") {
 			JSONUser.deleteUserByEmailAddress(userEmailAddress = "test.user@liferay.com");
 		}
 	}
 
 	@description = "Automation ID: LPS-150005 | Test Summary: Verify that if the user clicks the Remove confirmation button the staff member is indeed removed"
-	@priority = "5"
+	@priority = 5
 	test CanViewIfTheUserIsRemoved {
 		property portal.upstream = "quarantine";
 
@@ -184,27 +176,27 @@ definition {
 				requireReset = "false",
 				userEmailAddress = "test.user@liferay.com");
 
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			LexiconEntry.gotoEntry(rowEntry = "${testAccount}");
+			LexiconEntry.gotoEntry(rowEntry = ${testAccount});
 
-			Accounts.assignUsers(
-				accountName = "${testAccount}",
+			Account.assignUsers(
+				accountName = ${testAccount},
 				assigneeName = "Test User");
 		}
 
 		task ("Change the role of the current user in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			LexiconEntry.gotoEntry(rowEntry = "${testAccount}");
+			LexiconEntry.gotoEntry(rowEntry = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0 and login to okta") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			ApplicationsMenu.gotoSite(key_site = ${testSiteName});
 
 			CustomerPortal.loginOktaToUpdateCP();
 
@@ -214,7 +206,7 @@ definition {
 		}
 
 		task ("Get into the project and go to Team Members page") {
-			CP2TeamMembers.teamMembersFlow();
+			CP2TeamMembers.teamMembersFlow(testAccount = "Test Account DXP");
 		}
 
 		task ("Close the confirmation modal") {
@@ -231,10 +223,6 @@ definition {
 
 		task ("Assert the success message when submitting the form") {
 			Alert.viewSuccessMessage();
-		}
-
-		task ("Delete the entries and objects created") {
-			CustomerPortal.deleteEntryAccountFlag(entry = "ERC-002");
 		}
 
 		task ("Delete user created") {
@@ -261,27 +249,27 @@ definition {
 				requireReset = "false",
 				userEmailAddress = "test.user@liferay.com");
 
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			LexiconEntry.gotoEntry(rowEntry = "${testAccount}");
+			LexiconEntry.gotoEntry(rowEntry = ${testAccount});
 
-			Accounts.assignUsers(
-				accountName = "${testAccount}",
+			Account.assignUsers(
+				accountName = ${testAccount},
 				assigneeName = "Test User");
 		}
 
 		task ("Change the user role in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			CustomerPortal.accountTableProject(title = "${testAccount}");
+			CustomerPortal.accountTableProject(title = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0 and login to okta") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			ApplicationsMenu.gotoSite(key_site = ${testSiteName});
 
 			CustomerPortal.loginOktaToUpdateCP();
 
@@ -291,7 +279,7 @@ definition {
 		}
 
 		task ("Get into the project and go to Team Members page") {
-			CP2TeamMembers.teamMembersFlow();
+			CP2TeamMembers.teamMembersFlow(testAccount = "Test Account DXP");
 		}
 
 		task ("Open the action menu and click the Edit option") {
@@ -307,11 +295,9 @@ definition {
 		}
 
 		task ("Assert that the role really has changed") {
-			CP2Utils.assertChangeRole(role = "User");
-		}
-
-		task ("Delete the entries and objects created") {
-			CustomerPortal.deleteEntryAccountFlag(entry = "ERC-002");
+			CP2Utils.assertChangeRole(
+				email = "test.user@liferay.com",
+				role = "User");
 		}
 
 		task ("Delete user created") {

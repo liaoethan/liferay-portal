@@ -23,7 +23,12 @@ import java.util.List;
 /**
  * @author Lino Alves
  */
-public class AssetEntriesSearchFacetDisplayContext implements Serializable {
+public class AssetEntriesSearchFacetDisplayContext
+	implements FacetDisplayContext, Serializable {
+
+	public List<BucketDisplayContext> getBucketDisplayContexts() {
+		return _bucketDisplayContexts;
+	}
 
 	public long getDisplayStyleGroupId() {
 		return _displayStyleGroupId;
@@ -45,12 +50,6 @@ public class AssetEntriesSearchFacetDisplayContext implements Serializable {
 		return _parameterValues;
 	}
 
-	public List<AssetEntriesSearchFacetTermDisplayContext>
-		getTermDisplayContexts() {
-
-		return _assetEntriesSearchFacetTermDisplayContext;
-	}
-
 	public TypeFacetPortletInstanceConfiguration
 		getTypeFacetPortletInstanceConfiguration() {
 
@@ -63,6 +62,12 @@ public class AssetEntriesSearchFacetDisplayContext implements Serializable {
 
 	public boolean isRenderNothing() {
 		return _renderNothing;
+	}
+
+	public void setBucketDisplayContexts(
+		List<BucketDisplayContext> bucketDisplayContexts) {
+
+		_bucketDisplayContexts = bucketDisplayContexts;
 	}
 
 	public void setDisplayStyleGroupId(long displayStyleGroupId) {
@@ -95,14 +100,6 @@ public class AssetEntriesSearchFacetDisplayContext implements Serializable {
 		_renderNothing = renderNothing;
 	}
 
-	public void setTermDisplayContexts(
-		List<AssetEntriesSearchFacetTermDisplayContext>
-			assetEntriesSearchFacetFieldDisplayContext) {
-
-		_assetEntriesSearchFacetTermDisplayContext =
-			assetEntriesSearchFacetFieldDisplayContext;
-	}
-
 	public void setTypeFacetPortletInstanceConfiguration(
 		TypeFacetPortletInstanceConfiguration
 			typeFacetPortletInstanceConfiguration) {
@@ -111,8 +108,7 @@ public class AssetEntriesSearchFacetDisplayContext implements Serializable {
 			typeFacetPortletInstanceConfiguration;
 	}
 
-	private List<AssetEntriesSearchFacetTermDisplayContext>
-		_assetEntriesSearchFacetTermDisplayContext;
+	private List<BucketDisplayContext> _bucketDisplayContexts;
 	private long _displayStyleGroupId;
 	private boolean _nothingSelected;
 	private String _paginationStartParameterName;

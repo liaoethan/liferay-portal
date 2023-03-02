@@ -19,14 +19,14 @@ import com.liferay.friendly.url.info.item.updater.InfoItemFriendlyURLUpdater;
 import com.liferay.friendly.url.model.FriendlyURLEntryLocalization;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.item.provider.InfoItemPermissionProvider;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONSerializable;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -50,7 +50,6 @@ import java.io.IOException;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 import javax.servlet.Servlet;
@@ -67,7 +66,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = {
 		"osgi.http.whiteboard.servlet.name=com.liferay.friendly.url.web.internal.servlet.FriendlyURLServlet",
 		"osgi.http.whiteboard.servlet.pattern=/friendly-url/*",
@@ -87,7 +85,7 @@ public class FriendlyURLServlet extends HttpServlet {
 			String className = _getClassName(httpServletRequest);
 
 			InfoItemPermissionProvider infoItemPermissionProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemPermissionProvider.class, className);
 
 			if (!infoItemPermissionProvider.hasPermission(
@@ -132,7 +130,7 @@ public class FriendlyURLServlet extends HttpServlet {
 				long classPK = _getClassPK(httpServletRequest);
 
 				InfoItemPermissionProvider<Object> infoItemPermissionProvider =
-					_infoItemServiceTracker.getFirstInfoItemService(
+					_infoItemServiceRegistry.getFirstInfoItemService(
 						InfoItemPermissionProvider.class, className);
 
 				if (!infoItemPermissionProvider.hasPermission(
@@ -170,7 +168,7 @@ public class FriendlyURLServlet extends HttpServlet {
 			long classPK = _getClassPK(httpServletRequest);
 
 			InfoItemPermissionProvider<Object> infoItemPermissionProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemPermissionProvider.class, className);
 
 			if (!infoItemPermissionProvider.hasPermission(
@@ -183,7 +181,7 @@ public class FriendlyURLServlet extends HttpServlet {
 			}
 			else {
 				InfoItemFriendlyURLUpdater<Object> infoItemFriendlyURLUpdater =
-					_infoItemServiceTracker.getFirstInfoItemService(
+					_infoItemServiceRegistry.getFirstInfoItemService(
 						InfoItemFriendlyURLUpdater.class, className);
 
 				infoItemFriendlyURLUpdater.restoreFriendlyURL(
@@ -247,25 +245,25 @@ public class FriendlyURLServlet extends HttpServlet {
 		throws Exception {
 
 		JSONObject friendlyURLEntryLocalizationsJSONObject =
-			JSONFactoryUtil.createJSONObject();
+			_jsonFactory.createJSONObject();
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		Object object = infoItemObjectProvider.getInfoItem(classPK);
 
 		InfoItemFriendlyURLProvider<Object> infoItemFriendlyURLProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFriendlyURLProvider.class, className);
 
 		InfoItemLanguagesProvider<Object> infoItemLanguagesProvider =
-			Optional.ofNullable(
-				_infoItemServiceTracker.getFirstInfoItemService(
-					InfoItemLanguagesProvider.class, className)
-			).orElse(
-				_defaultInfoItemLanguagesProvider
-			);
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemLanguagesProvider.class, className);
+
+		if (infoItemLanguagesProvider == null) {
+			infoItemLanguagesProvider = _defaultInfoItemLanguagesProvider;
+		}
 
 		for (String languageId :
 				infoItemLanguagesProvider.getAvailableLanguageIds(object)) {
@@ -301,7 +299,7 @@ public class FriendlyURLServlet extends HttpServlet {
 	private <T> JSONArray _getJSONArray(
 		List<T> list, Function<T, JSONSerializable> serialize) {
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		list.forEach(t -> jsonArray.put(serialize.apply(t)));
 
@@ -396,7 +394,10 @@ public class FriendlyURLServlet extends HttpServlet {
 	private FriendlyURLEntryLocalService _friendlyURLEntryLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private PermissionCheckerFactory _permissionCheckerFactory;

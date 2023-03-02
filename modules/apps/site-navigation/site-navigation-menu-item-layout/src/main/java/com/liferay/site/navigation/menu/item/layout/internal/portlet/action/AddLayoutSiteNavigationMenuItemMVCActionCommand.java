@@ -15,7 +15,7 @@
 package com.liferay.site.navigation.menu.item.layout.internal.portlet.action;
 
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -38,6 +39,7 @@ import com.liferay.site.navigation.exception.SiteNavigationMenuItemNameException
 import com.liferay.site.navigation.model.SiteNavigationMenuItem;
 import com.liferay.site.navigation.service.SiteNavigationMenuItemService;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -52,7 +54,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SiteNavigationAdminPortletKeys.SITE_NAVIGATION_ADMIN,
 		"mvc.command.name=/navigation_menu/add_layout_site_navigation_menu_item"
@@ -81,10 +82,10 @@ public class AddLayoutSiteNavigationMenuItemMVCActionCommand
 		Map<Long, SiteNavigationMenuItem> layoutSiteNavigationMenuItemMap =
 			new HashMap<>();
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
-			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(
+			JSONArray jsonArray = _jsonFactory.createJSONArray(
 				ParamUtil.getString(actionRequest, "items"));
 
 			Iterator<JSONObject> iterator = jsonArray.iterator();
@@ -161,6 +162,19 @@ public class AddLayoutSiteNavigationMenuItemMVCActionCommand
 				jsonObject.put(
 					"siteNavigationMenuItemId",
 					layoutSiteNavigationMenuItemMap);
+
+				String message = _language.format(
+					themeDisplay.getLocale(), "x-x-was-added-to-this-menu",
+					Arrays.asList(jsonArray.length(), "page"));
+
+				if (jsonArray.length() > 1) {
+					message = _language.format(
+						themeDisplay.getLocale(), "x-x-were-added-to-this-menu",
+						Arrays.asList(jsonArray.length(), "pages"));
+				}
+
+				SessionMessages.add(
+					actionRequest, "siteNavigationMenuItemsAdded", message);
 			}
 		}
 		catch (SiteNavigationMenuItemNameException
@@ -183,6 +197,9 @@ public class AddLayoutSiteNavigationMenuItemMVCActionCommand
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		AddLayoutSiteNavigationMenuItemMVCActionCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

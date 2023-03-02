@@ -18,22 +18,25 @@ import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldSet;
 import com.liferay.info.field.InfoFieldSetEntry;
 import com.liferay.info.field.type.BooleanInfoFieldType;
+import com.liferay.info.field.type.CategoriesInfoFieldType;
 import com.liferay.info.field.type.InfoFieldType;
 import com.liferay.info.field.type.NumberInfoFieldType;
 import com.liferay.info.field.type.SelectInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.form.InfoForm;
+import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.KeyValuePair;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 /**
  * @author Jürgen Kappler
@@ -43,15 +46,17 @@ public class InfoFormUtil {
 	public static JSONObject getConfigurationJSONObject(
 		InfoForm infoForm, Locale locale) {
 
+		if (infoForm == null) {
+			return JSONUtil.put(
+				"fieldSets",
+				JSONUtil.put(
+					JSONUtil.put("fields", JSONFactoryUtil.createJSONArray())));
+		}
+
 		JSONArray defaultFieldSetFieldsJSONArray =
 			JSONFactoryUtil.createJSONArray();
 
-		JSONArray fieldSetsJSONArray = JSONUtil.put(
-			JSONUtil.put("fields", defaultFieldSetFieldsJSONArray));
-
-		if (infoForm == null) {
-			return JSONUtil.put("fieldSets", fieldSetsJSONArray);
-		}
+		JSONArray fieldSetsJSONArray = JSONFactoryUtil.createJSONArray();
 
 		for (InfoFieldSetEntry infoFieldSetEntry :
 				infoForm.getInfoFieldSetEntries()) {
@@ -72,6 +77,9 @@ public class InfoFormUtil {
 			else if (infoFieldSetEntry instanceof InfoFieldSet) {
 				InfoFieldSet infoFieldSet = (InfoFieldSet)infoFieldSetEntry;
 
+				JSONArray fieldSetFieldsJSONArray =
+					JSONFactoryUtil.createJSONArray();
+
 				for (InfoField<?> infoField : infoFieldSet.getAllInfoFields()) {
 					InfoFieldType infoFieldType = infoField.getInfoFieldType();
 
@@ -79,11 +87,54 @@ public class InfoFormUtil {
 						continue;
 					}
 
-					defaultFieldSetFieldsJSONArray.put(
+					fieldSetFieldsJSONArray.put(
 						_getFieldSetFieldJSONObject(
 							infoField, infoFieldType, locale));
 				}
+
+				if (!JSONUtil.isEmpty(fieldSetFieldsJSONArray)) {
+					fieldSetsJSONArray.put(
+						JSONUtil.put(
+							"description",
+							() -> {
+								InfoLocalizedValue<String>
+									descriptionInfoLocalizedValue =
+										infoFieldSet.
+											getDescriptionInfoLocalizedValue();
+
+								if (descriptionInfoLocalizedValue == null) {
+									return null;
+								}
+
+								return descriptionInfoLocalizedValue.getValue(
+									locale);
+							}
+						).put(
+							"fields", fieldSetFieldsJSONArray
+						).put(
+							"label",
+							() -> {
+								InfoLocalizedValue<String>
+									labelInfoLocalizedValue =
+										infoFieldSet.
+											getLabelInfoLocalizedValue();
+
+								if (labelInfoLocalizedValue == null) {
+									return null;
+								}
+
+								return labelInfoLocalizedValue.getValue(locale);
+							}
+						).put(
+							"name", infoFieldSet.getName()
+						));
+				}
 			}
+		}
+
+		if (!JSONUtil.isEmpty(defaultFieldSetFieldsJSONArray)) {
+			fieldSetsJSONArray.put(
+				JSONUtil.put("fields", defaultFieldSetFieldsJSONArray));
 		}
 
 		return JSONUtil.put("fieldSets", fieldSetsJSONArray);
@@ -114,24 +165,54 @@ public class InfoFormUtil {
 		);
 
 		if (infoFieldType instanceof SelectInfoFieldType) {
-			Optional<List<SelectInfoFieldType.Option>> optionsOptional =
-				infoField.getAttributeOptional(SelectInfoFieldType.OPTIONS);
+			List<SelectInfoFieldType.Option> options = new ArrayList<>();
 
-			List<SelectInfoFieldType.Option> options = optionsOptional.orElse(
-				Collections.emptyList());
+			if (infoField.getAttribute(SelectInfoFieldType.OPTIONS) != null) {
+				options.addAll(
+					(List<SelectInfoFieldType.Option>)infoField.getAttribute(
+						SelectInfoFieldType.OPTIONS));
+			}
 
 			try {
 				jsonObject.put(
+					"defaultValue",
+					() -> {
+						if (GetterUtil.getBoolean(
+								infoField.getAttribute(
+									SelectInfoFieldType.MULTIPLE))) {
+
+							JSONArray jsonArray =
+								JSONFactoryUtil.createJSONArray();
+
+							for (SelectInfoFieldType.Option option : options) {
+								if (option.isActive()) {
+									jsonArray.put(
+										String.valueOf(option.getValue()));
+								}
+							}
+
+							return jsonArray;
+						}
+
+						for (SelectInfoFieldType.Option option : options) {
+							if (option.isActive()) {
+								return String.valueOf(option.getValue());
+							}
+						}
+
+						return null;
+					}
+				).put(
 					"typeOptions",
 					JSONUtil.put(
+						"inline",
+						() -> GetterUtil.getBoolean(
+							infoField.getAttribute(SelectInfoFieldType.INLINE))
+					).put(
 						"multiSelect",
-						() -> {
-							Optional<Boolean> multipleOptional =
-								infoField.getAttributeOptional(
-									SelectInfoFieldType.MULTIPLE);
-
-							return multipleOptional.orElse(false);
-						}
+						() -> GetterUtil.getBoolean(
+							infoField.getAttribute(
+								SelectInfoFieldType.MULTIPLE))
 					).put(
 						"validValues",
 						JSONUtil.toJSONArray(
@@ -141,7 +222,8 @@ public class InfoFormUtil {
 							).put(
 								"value", String.valueOf(option.getValue())
 							))
-					));
+					)
+				);
 			}
 			catch (Exception exception) {
 				if (_log.isDebugEnabled()) {
@@ -149,12 +231,41 @@ public class InfoFormUtil {
 				}
 			}
 		}
+		else if (infoFieldType instanceof CategoriesInfoFieldType) {
+			jsonObject.put(
+				"typeOptions",
+				JSONUtil.put(
+					"dependency",
+					() -> {
+						KeyValuePair dependencyKeyValuePair =
+							(KeyValuePair)infoField.getAttribute(
+								CategoriesInfoFieldType.DEPENDENCY);
+
+						if (dependencyKeyValuePair == null) {
+							return null;
+						}
+
+						return JSONUtil.put(
+							dependencyKeyValuePair.getKey(),
+							dependencyKeyValuePair.getValue());
+					}
+				).put(
+					"infoItemSelectorURL",
+					(String)infoField.getAttribute(
+						CategoriesInfoFieldType.INFO_ITEM_SELECTOR_URL)
+				).put(
+					"modalSize", "md"
+				));
+		}
 
 		return jsonObject;
 	}
 
 	private static String _getType(InfoFieldType infoFieldType) {
-		if (infoFieldType instanceof BooleanInfoFieldType) {
+		if (infoFieldType instanceof CategoriesInfoFieldType) {
+			return "itemSelector";
+		}
+		else if (infoFieldType instanceof BooleanInfoFieldType) {
 			return "checkbox";
 		}
 		else if (infoFieldType instanceof SelectInfoFieldType) {
@@ -165,7 +276,8 @@ public class InfoFormUtil {
 	}
 
 	private static boolean _isValidInfoFieldType(InfoFieldType infoFieldType) {
-		if (infoFieldType instanceof SelectInfoFieldType ||
+		if (infoFieldType instanceof CategoriesInfoFieldType ||
+			infoFieldType instanceof SelectInfoFieldType ||
 			infoFieldType instanceof TextInfoFieldType) {
 
 			return true;

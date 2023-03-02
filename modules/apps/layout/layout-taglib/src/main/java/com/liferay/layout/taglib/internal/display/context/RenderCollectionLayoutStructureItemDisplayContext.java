@@ -20,29 +20,39 @@ import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.exception.NoSuchInfoItemException;
 import com.liferay.info.filter.InfoFilter;
 import com.liferay.info.filter.InfoFilterProvider;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.list.renderer.InfoListRenderer;
-import com.liferay.info.list.renderer.InfoListRendererTracker;
+import com.liferay.info.list.renderer.InfoListRendererRegistry;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.helper.CollectionPaginationHelper;
+import com.liferay.layout.list.permission.provider.LayoutListPermissionProvider;
+import com.liferay.layout.list.permission.provider.LayoutListPermissionProviderRegistry;
 import com.liferay.layout.list.retriever.DefaultLayoutListRetrieverContext;
 import com.liferay.layout.list.retriever.LayoutListRetriever;
-import com.liferay.layout.list.retriever.LayoutListRetrieverTracker;
+import com.liferay.layout.list.retriever.LayoutListRetrieverRegistry;
 import com.liferay.layout.list.retriever.ListObjectReference;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactory;
-import com.liferay.layout.list.retriever.ListObjectReferenceFactoryTracker;
-import com.liferay.layout.taglib.internal.info.search.InfoSearchClassMapperTrackerUtil;
+import com.liferay.layout.list.retriever.ListObjectReferenceFactoryRegistry;
+import com.liferay.layout.taglib.internal.info.search.InfoSearchClassMapperRegistryUtil;
 import com.liferay.layout.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.layout.util.structure.CollectionStyledLayoutStructureItem;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -60,7 +70,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -106,7 +115,9 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			_getLayoutListRetriever();
 		ListObjectReference listObjectReference = _getListObjectReference();
 
-		if ((layoutListRetriever == null) || (listObjectReference == null)) {
+		if ((layoutListRetriever == null) || (listObjectReference == null) ||
+			!_hasViewPermission(listObjectReference)) {
+
 			return Collections.emptyList();
 		}
 
@@ -140,7 +151,9 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			_getLayoutListRetriever();
 		ListObjectReference listObjectReference = _getListObjectReference();
 
-		if ((layoutListRetriever == null) || (listObjectReference == null)) {
+		if ((layoutListRetriever == null) || (listObjectReference == null) ||
+			!_hasViewPermission(listObjectReference)) {
+
 			return 0;
 		}
 
@@ -191,12 +204,12 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		LayoutDisplayPageProviderTracker layoutDisplayPageProviderTracker =
-			ServletContextUtil.getLayoutDisplayPageProviderTracker();
+		LayoutDisplayPageProviderRegistry layoutDisplayPageProviderRegistry =
+			ServletContextUtil.getLayoutDisplayPageProviderRegistry();
 
-		return layoutDisplayPageProviderTracker.
+		return layoutDisplayPageProviderRegistry.
 			getLayoutDisplayPageProviderByClassName(
-				InfoSearchClassMapperTrackerUtil.getClassName(
+				InfoSearchClassMapperRegistryUtil.getClassName(
 					listObjectReference.getItemType()));
 	}
 
@@ -207,10 +220,10 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		InfoListRendererTracker infoListRendererTracker =
-			ServletContextUtil.getInfoListRendererTracker();
+		InfoListRendererRegistry infoListRendererRegistry =
+			ServletContextUtil.getInfoListRendererRegistry();
 
-		return infoListRendererTracker.getInfoListRenderer(
+		return infoListRendererRegistry.getInfoListRenderer(
 			_collectionStyledLayoutStructureItem.getListStyle());
 	}
 
@@ -313,6 +326,16 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			_collectionStyledLayoutStructureItem.getPaginationType());
 	}
 
+	public boolean hasViewPermission() {
+		ListObjectReference listObjectReference = _getListObjectReference();
+
+		if (listObjectReference == null) {
+			return true;
+		}
+
+		return _hasViewPermission(listObjectReference);
+	}
+
 	private Map<String, String[]> _getConfiguration() {
 		JSONObject collectionJSONObject =
 			_collectionStyledLayoutStructureItem.getCollectionJSONObject();
@@ -348,6 +371,46 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 		return configuration;
 	}
 
+	private Object _getContextObject() {
+		Object infoItem = _httpServletRequest.getAttribute(
+			InfoDisplayWebKeys.INFO_ITEM);
+
+		InfoItemReference infoItemReference =
+			(InfoItemReference)_httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_REFERENCE);
+
+		if (infoItemReference == null) {
+			return infoItem;
+		}
+
+		InfoItemIdentifier infoItemIdentifier =
+			infoItemReference.getInfoItemIdentifier();
+
+		InfoItemServiceRegistry infoItemServiceRegistry =
+			ServletContextUtil.getInfoItemServiceRegistry();
+
+		InfoItemObjectProvider<Object> infoItemObjectProvider =
+			infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemObjectProvider.class, infoItemReference.getClassName(),
+				infoItemIdentifier.getInfoItemServiceFilter());
+
+		try {
+			Object object = infoItemObjectProvider.getInfoItem(
+				infoItemIdentifier);
+
+			if (object != null) {
+				return object;
+			}
+		}
+		catch (NoSuchInfoItemException noSuchInfoItemException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchInfoItemException);
+			}
+		}
+
+		return infoItem;
+	}
+
 	private DefaultLayoutListRetrieverContext
 		_getDefaultLayoutListRetrieverContext(
 			LayoutListRetriever<?, ListObjectReference> layoutListRetriever,
@@ -357,13 +420,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			new DefaultLayoutListRetrieverContext();
 
 		defaultLayoutListRetrieverContext.setConfiguration(_getConfiguration());
-		defaultLayoutListRetrieverContext.setContextObject(
-			Optional.ofNullable(
-				_httpServletRequest.getAttribute(
-					InfoDisplayWebKeys.INFO_LIST_DISPLAY_OBJECT)
-			).orElse(
-				_httpServletRequest.getAttribute(InfoDisplayWebKeys.INFO_ITEM)
-			));
+		defaultLayoutListRetrieverContext.setContextObject(_getContextObject());
 		defaultLayoutListRetrieverContext.setInfoFilters(
 			_getInfoFilters(layoutListRetriever, listObjectReference));
 		defaultLayoutListRetrieverContext.setSegmentsEntryIds(
@@ -438,8 +495,8 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		Map<String, InfoFilter> infoFilters = new HashMap<>();
 
-		InfoItemServiceTracker infoItemServiceTracker =
-			ServletContextUtil.getInfoItemServiceTracker();
+		InfoItemServiceRegistry infoItemServiceRegistry =
+			ServletContextUtil.getInfoItemServiceRegistry();
 
 		Map<String, String[]> filterValues = _getFilterValues();
 
@@ -450,7 +507,7 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			Class<?> clazz = infoFilter.getClass();
 
 			InfoFilterProvider<?> infoFilterProvider =
-				infoItemServiceTracker.getFirstInfoItemService(
+				infoItemServiceRegistry.getFirstInfoItemService(
 					InfoFilterProvider.class, clazz.getName());
 
 			infoFilters.put(
@@ -472,19 +529,12 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		LayoutListRetrieverTracker layoutListRetrieverTracker =
-			ServletContextUtil.getLayoutListRetrieverTracker();
+		LayoutListRetrieverRegistry layoutListRetrieverRegistry =
+			ServletContextUtil.getLayoutListRetrieverRegistry();
 
-		LayoutListRetriever<?, ListObjectReference> layoutListRetriever =
-			(LayoutListRetriever<?, ListObjectReference>)
-				layoutListRetrieverTracker.getLayoutListRetriever(
-					collectionJSONObject.getString("type"));
-
-		if (layoutListRetriever == null) {
-			return null;
-		}
-
-		return layoutListRetriever;
+		return (LayoutListRetriever<?, ListObjectReference>)
+			layoutListRetrieverRegistry.getLayoutListRetriever(
+				collectionJSONObject.getString("type"));
 	}
 
 	private ListObjectReference _getListObjectReference() {
@@ -497,23 +547,23 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 			return null;
 		}
 
-		LayoutListRetrieverTracker layoutListRetrieverTracker =
-			ServletContextUtil.getLayoutListRetrieverTracker();
+		LayoutListRetrieverRegistry layoutListRetrieverRegistry =
+			ServletContextUtil.getLayoutListRetrieverRegistry();
 
 		String type = collectionJSONObject.getString("type");
 
 		LayoutListRetriever<?, ?> layoutListRetriever =
-			layoutListRetrieverTracker.getLayoutListRetriever(type);
+			layoutListRetrieverRegistry.getLayoutListRetriever(type);
 
 		if (layoutListRetriever == null) {
 			return null;
 		}
 
-		ListObjectReferenceFactoryTracker listObjectReferenceFactoryTracker =
-			ServletContextUtil.getListObjectReferenceFactoryTracker();
+		ListObjectReferenceFactoryRegistry listObjectReferenceFactoryRegistry =
+			ServletContextUtil.getListObjectReferenceFactoryRegistry();
 
 		ListObjectReferenceFactory<?> listObjectReferenceFactory =
-			listObjectReferenceFactoryTracker.getListObjectReference(type);
+			listObjectReferenceFactoryRegistry.getListObjectReference(type);
 
 		if (listObjectReferenceFactory == null) {
 			return null;
@@ -573,6 +623,39 @@ public class RenderCollectionLayoutStructureItemDisplayContext {
 
 		return _segmentsEntryIds;
 	}
+
+	private boolean _hasViewPermission(
+		ListObjectReference listObjectReference) {
+
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-169923")) {
+			return true;
+		}
+
+		LayoutListPermissionProviderRegistry
+			layoutListPermissionProviderRegistry =
+				ServletContextUtil.getLayoutListPermissionProviderRegistry();
+
+		Class<? extends ListObjectReference> listObjectReferenceClass =
+			listObjectReference.getClass();
+
+		LayoutListPermissionProvider<ListObjectReference>
+			layoutListPermissionProvider =
+				(LayoutListPermissionProvider<ListObjectReference>)
+					layoutListPermissionProviderRegistry.
+						getLayoutListPermissionProvider(
+							listObjectReferenceClass.getName());
+
+		if (layoutListPermissionProvider == null) {
+			return true;
+		}
+
+		return layoutListPermissionProvider.hasPermission(
+			_themeDisplay.getPermissionChecker(), listObjectReference,
+			ActionKeys.VIEW);
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		RenderCollectionLayoutStructureItemDisplayContext.class);
 
 	private Integer _activePage;
 	private Integer _collectionCount;

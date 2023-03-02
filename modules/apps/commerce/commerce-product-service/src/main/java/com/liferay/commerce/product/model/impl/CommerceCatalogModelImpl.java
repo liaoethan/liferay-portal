@@ -121,24 +121,6 @@ public class CommerceCatalogModelImpl
 	public static final String TX_MANAGER = "liferayTransactionManager";
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
-
-	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
@@ -169,9 +151,19 @@ public class CommerceCatalogModelImpl
 	@Deprecated
 	public static final long CREATEDATE_COLUMN_BITMASK = 16L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.product.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.product.model.CommerceCatalog"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CommerceCatalogModelImpl() {
 	}
@@ -249,104 +241,128 @@ public class CommerceCatalogModelImpl
 	public Map<String, Function<CommerceCatalog, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<CommerceCatalog, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<CommerceCatalog, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<CommerceCatalog, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<CommerceCatalog, Object>>
-			attributeGetterFunctions =
-				new LinkedHashMap<String, Function<CommerceCatalog, Object>>();
-		Map<String, BiConsumer<CommerceCatalog, ?>> attributeSetterBiConsumers =
-			new LinkedHashMap<String, BiConsumer<CommerceCatalog, ?>>();
+		private static final Map<String, Function<CommerceCatalog, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", CommerceCatalog::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<CommerceCatalog, Long>)CommerceCatalog::setMvccVersion);
-		attributeGetterFunctions.put(
-			"ctCollectionId", CommerceCatalog::getCtCollectionId);
-		attributeSetterBiConsumers.put(
-			"ctCollectionId",
-			(BiConsumer<CommerceCatalog, Long>)
-				CommerceCatalog::setCtCollectionId);
-		attributeGetterFunctions.put("uuid", CommerceCatalog::getUuid);
-		attributeSetterBiConsumers.put(
-			"uuid",
-			(BiConsumer<CommerceCatalog, String>)CommerceCatalog::setUuid);
-		attributeGetterFunctions.put(
-			"externalReferenceCode", CommerceCatalog::getExternalReferenceCode);
-		attributeSetterBiConsumers.put(
-			"externalReferenceCode",
-			(BiConsumer<CommerceCatalog, String>)
-				CommerceCatalog::setExternalReferenceCode);
-		attributeGetterFunctions.put(
-			"commerceCatalogId", CommerceCatalog::getCommerceCatalogId);
-		attributeSetterBiConsumers.put(
-			"commerceCatalogId",
-			(BiConsumer<CommerceCatalog, Long>)
-				CommerceCatalog::setCommerceCatalogId);
-		attributeGetterFunctions.put(
-			"companyId", CommerceCatalog::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<CommerceCatalog, Long>)CommerceCatalog::setCompanyId);
-		attributeGetterFunctions.put("userId", CommerceCatalog::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId",
-			(BiConsumer<CommerceCatalog, Long>)CommerceCatalog::setUserId);
-		attributeGetterFunctions.put("userName", CommerceCatalog::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<CommerceCatalog, String>)CommerceCatalog::setUserName);
-		attributeGetterFunctions.put(
-			"createDate", CommerceCatalog::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<CommerceCatalog, Date>)CommerceCatalog::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", CommerceCatalog::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<CommerceCatalog, Date>)
-				CommerceCatalog::setModifiedDate);
-		attributeGetterFunctions.put("name", CommerceCatalog::getName);
-		attributeSetterBiConsumers.put(
-			"name",
-			(BiConsumer<CommerceCatalog, String>)CommerceCatalog::setName);
-		attributeGetterFunctions.put(
-			"commerceCurrencyCode", CommerceCatalog::getCommerceCurrencyCode);
-		attributeSetterBiConsumers.put(
-			"commerceCurrencyCode",
-			(BiConsumer<CommerceCatalog, String>)
-				CommerceCatalog::setCommerceCurrencyCode);
-		attributeGetterFunctions.put(
-			"catalogDefaultLanguageId",
-			CommerceCatalog::getCatalogDefaultLanguageId);
-		attributeSetterBiConsumers.put(
-			"catalogDefaultLanguageId",
-			(BiConsumer<CommerceCatalog, String>)
-				CommerceCatalog::setCatalogDefaultLanguageId);
-		attributeGetterFunctions.put("system", CommerceCatalog::getSystem);
-		attributeSetterBiConsumers.put(
-			"system",
-			(BiConsumer<CommerceCatalog, Boolean>)CommerceCatalog::setSystem);
+		static {
+			Map<String, Function<CommerceCatalog, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap
+						<String, Function<CommerceCatalog, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", CommerceCatalog::getMvccVersion);
+			attributeGetterFunctions.put(
+				"ctCollectionId", CommerceCatalog::getCtCollectionId);
+			attributeGetterFunctions.put("uuid", CommerceCatalog::getUuid);
+			attributeGetterFunctions.put(
+				"externalReferenceCode",
+				CommerceCatalog::getExternalReferenceCode);
+			attributeGetterFunctions.put(
+				"commerceCatalogId", CommerceCatalog::getCommerceCatalogId);
+			attributeGetterFunctions.put(
+				"companyId", CommerceCatalog::getCompanyId);
+			attributeGetterFunctions.put("userId", CommerceCatalog::getUserId);
+			attributeGetterFunctions.put(
+				"userName", CommerceCatalog::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", CommerceCatalog::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", CommerceCatalog::getModifiedDate);
+			attributeGetterFunctions.put("name", CommerceCatalog::getName);
+			attributeGetterFunctions.put(
+				"commerceCurrencyCode",
+				CommerceCatalog::getCommerceCurrencyCode);
+			attributeGetterFunctions.put(
+				"catalogDefaultLanguageId",
+				CommerceCatalog::getCatalogDefaultLanguageId);
+			attributeGetterFunctions.put("system", CommerceCatalog::getSystem);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<CommerceCatalog, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<CommerceCatalog, ?>>
+				attributeSetterBiConsumers =
+					new LinkedHashMap<String, BiConsumer<CommerceCatalog, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<CommerceCatalog, Long>)
+					CommerceCatalog::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"ctCollectionId",
+				(BiConsumer<CommerceCatalog, Long>)
+					CommerceCatalog::setCtCollectionId);
+			attributeSetterBiConsumers.put(
+				"uuid",
+				(BiConsumer<CommerceCatalog, String>)CommerceCatalog::setUuid);
+			attributeSetterBiConsumers.put(
+				"externalReferenceCode",
+				(BiConsumer<CommerceCatalog, String>)
+					CommerceCatalog::setExternalReferenceCode);
+			attributeSetterBiConsumers.put(
+				"commerceCatalogId",
+				(BiConsumer<CommerceCatalog, Long>)
+					CommerceCatalog::setCommerceCatalogId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<CommerceCatalog, Long>)
+					CommerceCatalog::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<CommerceCatalog, Long>)CommerceCatalog::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<CommerceCatalog, String>)
+					CommerceCatalog::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<CommerceCatalog, Date>)
+					CommerceCatalog::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<CommerceCatalog, Date>)
+					CommerceCatalog::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"name",
+				(BiConsumer<CommerceCatalog, String>)CommerceCatalog::setName);
+			attributeSetterBiConsumers.put(
+				"commerceCurrencyCode",
+				(BiConsumer<CommerceCatalog, String>)
+					CommerceCatalog::setCommerceCurrencyCode);
+			attributeSetterBiConsumers.put(
+				"catalogDefaultLanguageId",
+				(BiConsumer<CommerceCatalog, String>)
+					CommerceCatalog::setCatalogDefaultLanguageId);
+			attributeSetterBiConsumers.put(
+				"system",
+				(BiConsumer<CommerceCatalog, Boolean>)
+					CommerceCatalog::setSystem);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -824,7 +840,7 @@ public class CommerceCatalogModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -833,7 +849,7 @@ public class CommerceCatalogModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -1021,7 +1037,8 @@ public class CommerceCatalogModelImpl
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
 
 		Function<CommerceCatalog, Object> function =
-			_attributeGetterFunctions.get(columnName);
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(

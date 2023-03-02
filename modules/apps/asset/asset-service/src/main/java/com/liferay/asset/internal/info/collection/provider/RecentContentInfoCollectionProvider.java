@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = InfoCollectionProvider.class)
+@Component(service = InfoCollectionProvider.class)
 public class RecentContentInfoCollectionProvider
 	extends BaseAssetsInfoCollectionProvider
 	implements InfoCollectionProvider<AssetEntry> {
@@ -58,7 +58,7 @@ public class RecentContentInfoCollectionProvider
 		AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
 			serviceContext.getCompanyId(), serviceContext.getScopeGroupId(),
 			collectionQuery.getPagination(),
-			new com.liferay.info.sort.Sort(Field.MODIFIED_DATE, true));
+			new com.liferay.info.sort.Sort(Field.MODIFIED_DATE, true), null);
 
 		try {
 			SearchContext searchContext = _getSearchContext();

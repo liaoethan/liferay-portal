@@ -4,11 +4,11 @@ Below are the list of properties that are available in the
 [poshi-runner.properties](poshi-runner/src/main/resources/poshi-runner.properties)
 file that can be overridden in a `poshi-runner-ext.properties` file.
 
-### accessibility.standards.json
+### accessibility.standards.tags
 
-Sets a JSON string that determines accessibility rule evaluation while using
-the `assertAccessible` Selenium method. See more information for rule formation
-at [https://axe-core.org/docs/](https://axe-core.org/docs/).
+Sets a comma delimited list that determines accessibility rules for the
+the `assertAccessible` Selenium method. See more information for available tags
+at [Axe-core Tags](https://www.deque.com/axe/core-documentation/api-documentation/).
 
 ### browser.chrome.bin.args
 
@@ -109,6 +109,10 @@ Sets the name of a Java process to print JStack output for when tests fail.
 
 Sets a boolean that determines whether BrowserMob Proxy is enabled. The proxy can be configured with `com.liferay.poshi.runner.util.ProxyUtil`.
 
+### proxy.server.port
+
+Sets the port number assigned to the BrowserMob Proxy server.
+
 ### save.screenshot
 
 Sets a boolean for whether a screenshot is saved when tests fail.
@@ -169,9 +173,7 @@ JavaScript errors.
 ### test.base.dir.name
 
 Sets the path of the main directory containing Poshi files used for the test
-project. Additional directory paths may be set using
-[`test.include.dir.names`](#testincludedirnames) or
-[`test.subrepo.dirs`](#testsubrepodirs). Will be replaced by [`test.dirs`](#testdirs)
+project. Additional directory paths may be set using [`test.dirs`](#testdirs)
 
 ### test.batch.group.ignore.regex
 
@@ -219,17 +221,12 @@ individual test within a generated CSV report file.
 ### test.dirs
 
 Sets a comma-delimited list of directory paths of Poshi project
-files to be included. This property will replace `test.base.dir.name` and `test.subrepo.dirs`. To include directories for support files (only `*.macro`, `*.function`, `*.path` files), use the [`test.support.dirs`](#testsupportdirs) property.
+files to be included. To include directories for support files (only `*.macro`, `*.function`, `*.path` files), use the [`test.support.dirs`](#testsupportdirs) property.
 
 ### test.dependencies.dir.name
 
 Sets the path to a directory that contains dependency files used for Poshi
 tests.
-
-### test.include.dir.names
-
-Sets a comma-delimited list of directory paths to include in the Poshi project
-files. This does not include `*.testcase` files. Will be replaced by [`test.support.dirs`](#testsupportdirs)
 
 ### test.jvm.max.retries
 
@@ -271,15 +268,10 @@ remotely.
 
 Sets a boolean for whether the tear down is skipped.
 
-### test.subrepo.dirs
-
-Sets a comma-delimited list of subrepository directory paths to include in the
-Poshi project files. This includes all Poshi file types. Will be replaced by [`test.dirs`](#testdirs)
-
 ### test.support.dirs
 
 Sets a comma-delimited list of directory paths of Poshi project support
-files (only `*.macro`, `*.function`, `*.path` files, excludes `*.testcase` files) to be included. This property will replace `test.include.dir.names`. To include all Poshi files, use the [`test.dirs`](#testdirs) property.
+files (only `*.macro`, `*.function`, `*.path` files, excludes `*.testcase` files) to be included. To include all Poshi files, use the [`test.dirs`](#testdirs) property.
 
 ### test.testcase.max.retries
 

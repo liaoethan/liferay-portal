@@ -16,7 +16,6 @@ package com.liferay.list.type.service.impl;
 
 import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.model.ListTypeEntry;
-import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.list.type.service.base.ListTypeEntryServiceBaseImpl;
 import com.liferay.list.type.service.persistence.ListTypeDefinitionPersistence;
 import com.liferay.portal.aop.AopService;
@@ -45,7 +44,8 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 
 	@Override
 	public ListTypeEntry addListTypeEntry(
-			long listTypeDefinitionId, String key, Map<Locale, String> nameMap)
+			String externalReferenceCode, long listTypeDefinitionId, String key,
+			Map<Locale, String> nameMap)
 		throws PortalException {
 
 		ListTypeDefinition listTypeDefinition =
@@ -56,8 +56,9 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 			getPermissionChecker(),
 			listTypeDefinition.getListTypeDefinitionId(), ActionKeys.UPDATE);
 
-		return _listTypeEntryLocalService.addListTypeEntry(
-			getUserId(), listTypeDefinitionId, key, nameMap);
+		return listTypeEntryLocalService.addListTypeEntry(
+			externalReferenceCode, getUserId(), listTypeDefinitionId, key,
+			nameMap);
 	}
 
 	@Override
@@ -71,7 +72,7 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 			getPermissionChecker(), listTypeEntry.getListTypeDefinitionId(),
 			ActionKeys.UPDATE);
 
-		return _listTypeEntryLocalService.deleteListTypeEntry(listTypeEntryId);
+		return listTypeEntryLocalService.deleteListTypeEntry(listTypeEntryId);
 	}
 
 	@Override
@@ -82,7 +83,7 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 		_listTypeDefinitionModelResourcePermission.check(
 			getPermissionChecker(), listTypeDefinitionId, ActionKeys.VIEW);
 
-		return _listTypeEntryLocalService.getListTypeEntries(
+		return listTypeEntryLocalService.getListTypeEntries(
 			listTypeDefinitionId, start, end);
 	}
 
@@ -93,7 +94,7 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 		_listTypeDefinitionModelResourcePermission.check(
 			getPermissionChecker(), listTypeDefinitionId, ActionKeys.VIEW);
 
-		return _listTypeEntryLocalService.getListTypeEntriesCount(
+		return listTypeEntryLocalService.getListTypeEntriesCount(
 			listTypeDefinitionId);
 	}
 
@@ -108,12 +109,30 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 			getPermissionChecker(), listTypeEntry.getListTypeDefinitionId(),
 			ActionKeys.VIEW);
 
-		return _listTypeEntryLocalService.getListTypeEntry(listTypeEntryId);
+		return listTypeEntryLocalService.getListTypeEntry(listTypeEntryId);
+	}
+
+	@Override
+	public ListTypeEntry getListTypeEntryByExternalReferenceCode(
+			String externalReferenceCode, long companyId,
+			long listTypeDefinitionId)
+		throws PortalException {
+
+		ListTypeEntry listTypeEntry =
+			listTypeEntryLocalService.getListTypeEntryByExternalReferenceCode(
+				externalReferenceCode, companyId, listTypeDefinitionId);
+
+		_listTypeDefinitionModelResourcePermission.check(
+			getPermissionChecker(), listTypeEntry.getListTypeDefinitionId(),
+			ActionKeys.VIEW);
+
+		return listTypeEntry;
 	}
 
 	@Override
 	public ListTypeEntry updateListTypeEntry(
-			long listTypeEntryId, Map<Locale, String> nameMap)
+			String externalReferenceCode, long listTypeEntryId,
+			Map<Locale, String> nameMap)
 		throws PortalException {
 
 		ListTypeEntry listTypeEntry = listTypeEntryPersistence.findByPrimaryKey(
@@ -123,8 +142,8 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 			getPermissionChecker(), listTypeEntry.getListTypeDefinitionId(),
 			ActionKeys.UPDATE);
 
-		return _listTypeEntryLocalService.updateListTypeEntry(
-			listTypeEntryId, nameMap);
+		return listTypeEntryLocalService.updateListTypeEntry(
+			externalReferenceCode, listTypeEntryId, nameMap);
 	}
 
 	@Reference(
@@ -135,8 +154,5 @@ public class ListTypeEntryServiceImpl extends ListTypeEntryServiceBaseImpl {
 
 	@Reference
 	private ListTypeDefinitionPersistence _listTypeDefinitionPersistence;
-
-	@Reference
-	private ListTypeEntryLocalService _listTypeEntryLocalService;
 
 }

@@ -236,7 +236,10 @@ public abstract class BaseStructuredContentResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantStructuredContent),
 				(List<StructuredContent>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetSiteStructuredContentsPage_getExpectedActions(
+					irrelevantSiteId));
 		}
 
 		StructuredContent structuredContent1 =
@@ -255,7 +258,17 @@ public abstract class BaseStructuredContentResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(structuredContent1, structuredContent2),
 			(List<StructuredContent>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetSiteStructuredContentsPage_getExpectedActions(siteId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSiteStructuredContentsPage_getExpectedActions(Long siteId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -812,7 +825,10 @@ public abstract class BaseStructuredContentResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantStructuredContent),
 				(List<StructuredContent>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetStructuredContentsVersionsPage_getExpectedActions(
+					irrelevantStructuredContentId));
 		}
 
 		StructuredContent structuredContent1 =
@@ -831,7 +847,20 @@ public abstract class BaseStructuredContentResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(structuredContent1, structuredContent2),
 			(List<StructuredContent>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetStructuredContentsVersionsPage_getExpectedActions(
+				structuredContentId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetStructuredContentsVersionsPage_getExpectedActions(
+				Long structuredContentId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	protected StructuredContent
@@ -1217,6 +1246,13 @@ public abstract class BaseStructuredContentResourceTestCase {
 	}
 
 	protected void assertValid(Page<StructuredContent> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<StructuredContent> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<StructuredContent> structuredContents =
@@ -1232,6 +1268,20 @@ public abstract class BaseStructuredContentResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1709,6 +1759,10 @@ public abstract class BaseStructuredContentResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

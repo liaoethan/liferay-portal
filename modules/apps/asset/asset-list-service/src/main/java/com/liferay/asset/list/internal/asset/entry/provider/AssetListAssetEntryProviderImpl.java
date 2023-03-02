@@ -41,6 +41,7 @@ import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
 import com.liferay.dynamic.data.mapping.kernel.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -72,16 +73,12 @@ import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.segments.constants.SegmentsEntryConstants;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -93,7 +90,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.asset.list.internal.configuration.AssetListConfiguration",
-	immediate = true, service = AssetListAssetEntryProvider.class
+	service = AssetListAssetEntryProvider.class
 )
 public class AssetListAssetEntryProviderImpl
 	implements AssetListAssetEntryProvider {
@@ -150,18 +147,29 @@ public class AssetListAssetEntryProviderImpl
 		long[][] assetCategoryIds, String keywords, String userId, int start,
 		int end) {
 
+		return getAssetEntries(
+			assetListEntry, segmentsEntryIds, assetCategoryIds, null, keywords,
+			userId, start, end);
+	}
+
+	@Override
+	public List<AssetEntry> getAssetEntries(
+		AssetListEntry assetListEntry, long[] segmentsEntryIds,
+		long[][] assetCategoryIds, String[][] assetTagNames, String keywords,
+		String userId, int start, int end) {
+
 		if (Objects.equals(
 				assetListEntry.getType(),
 				AssetListEntryTypeConstants.TYPE_MANUAL)) {
 
 			return _getManualAssetEntries(
-				assetListEntry, segmentsEntryIds, assetCategoryIds, keywords,
-				start, end);
+				assetListEntry, segmentsEntryIds, assetCategoryIds,
+				assetTagNames, keywords, start, end);
 		}
 
 		return _getDynamicAssetEntries(
-			assetListEntry, segmentsEntryIds, assetCategoryIds, keywords,
-			userId, start, end);
+			assetListEntry, segmentsEntryIds, assetCategoryIds, assetTagNames,
+			keywords, userId, start, end);
 	}
 
 	@Override
@@ -214,17 +222,29 @@ public class AssetListAssetEntryProviderImpl
 		AssetListEntry assetListEntry, long[] segmentsEntryIds,
 		long[][] assetCategoryIds, String keywords, String userId) {
 
+		return getAssetEntriesCount(
+			assetListEntry, segmentsEntryIds, assetCategoryIds, null, keywords,
+			userId);
+	}
+
+	@Override
+	public int getAssetEntriesCount(
+		AssetListEntry assetListEntry, long[] segmentsEntryIds,
+		long[][] assetCategoryIds, String[][] assetTagNames, String keywords,
+		String userId) {
+
 		if (Objects.equals(
 				assetListEntry.getType(),
 				AssetListEntryTypeConstants.TYPE_MANUAL)) {
 
 			return _getManualAssetEntriesCount(
-				assetListEntry, segmentsEntryIds, assetCategoryIds, keywords);
+				assetListEntry, segmentsEntryIds, assetCategoryIds,
+				assetTagNames, keywords);
 		}
 
 		return _getDynamicAssetEntriesCount(
-			assetListEntry, segmentsEntryIds, assetCategoryIds, keywords,
-			userId);
+			assetListEntry, segmentsEntryIds, assetCategoryIds, assetTagNames,
+			keywords, userId);
 	}
 
 	@Override
@@ -286,13 +306,9 @@ public class AssetListAssetEntryProviderImpl
 		AssetListEntry assetListEntry, long[] segmentsEntryIds, String userId,
 		int end, int start) {
 
-		LongStream longStream = Arrays.stream(segmentsEntryIds);
-
-		List<String> typeSettings = longStream.mapToObj(
-			assetListEntry::getTypeSettings
-		).collect(
-			Collectors.toList()
-		);
+		List<String> typeSettings = TransformUtil.transformToList(
+			segmentsEntryIds,
+			segmentsEntryId -> assetListEntry.getTypeSettings(segmentsEntryId));
 
 		AssetEntryQuery assetEntryQuery = _createAssetEntryQuery(
 			assetListEntry, userId,
@@ -429,7 +445,8 @@ public class AssetListAssetEntryProviderImpl
 
 	private List<AssetEntry> _dynamicSearch(
 		long companyId, long[][] assetCategoryIds,
-		List<AssetEntryQuery> assetEntryQueries, String keywords) {
+		List<AssetEntryQuery> assetEntryQueries, String[][] assetTagNames,
+		String keywords) {
 
 		try {
 			if (ListUtil.isEmpty(assetEntryQueries)) {
@@ -441,7 +458,8 @@ public class AssetListAssetEntryProviderImpl
 			if (assetEntryQueries.size() == 1) {
 				Hits hits = _assetHelper.search(
 					_getDynamicSearchContext(
-						companyId, assetCategoryIds, assetEntryQuery, keywords),
+						companyId, assetCategoryIds, assetEntryQuery,
+						assetTagNames, keywords),
 					assetEntryQuery, assetEntryQuery.getStart(),
 					assetEntryQuery.getEnd());
 
@@ -451,7 +469,7 @@ public class AssetListAssetEntryProviderImpl
 			SearchHits searchHits = _assetHelper.search(
 				_getDynamicSearchContext(
 					companyId, assetCategoryIds, assetEntryQueries.get(0),
-					keywords),
+					assetTagNames, keywords),
 				assetEntryQueries, assetEntryQuery.getStart(),
 				assetEntryQuery.getEnd());
 
@@ -466,7 +484,8 @@ public class AssetListAssetEntryProviderImpl
 
 	private int _dynamicSearchCount(
 		long companyId, long[][] assetCategoryIds,
-		List<AssetEntryQuery> assetEntryQueries, String keywords) {
+		List<AssetEntryQuery> assetEntryQueries, String[][] assetTagNames,
+		String keywords) {
 
 		try {
 			if (ListUtil.isEmpty(assetEntryQueries)) {
@@ -478,7 +497,8 @@ public class AssetListAssetEntryProviderImpl
 			if (assetEntryQueries.size() == 1) {
 				Long count = _assetHelper.searchCount(
 					_getDynamicSearchContext(
-						companyId, assetCategoryIds, assetEntryQuery, keywords),
+						companyId, assetCategoryIds, assetEntryQuery,
+						assetTagNames, keywords),
 					assetEntryQuery);
 
 				return count.intValue();
@@ -486,7 +506,8 @@ public class AssetListAssetEntryProviderImpl
 
 			Long count = _assetHelper.searchCount(
 				_getDynamicSearchContext(
-					companyId, assetCategoryIds, assetEntryQuery, keywords),
+					companyId, assetCategoryIds, assetEntryQuery, assetTagNames,
+					keywords),
 				assetEntryQueries, assetEntryQuery.getStart(),
 				assetEntryQuery.getEnd());
 
@@ -643,6 +664,36 @@ public class AssetListAssetEntryProviderImpl
 		return allAssetTagNames.toArray(new String[0]);
 	}
 
+	private BooleanClause[] _getAssetTagNamesBooleanClauses(
+		String[][] assetTagNames) {
+
+		if (ArrayUtil.isEmpty(assetTagNames)) {
+			return new BooleanClause[0];
+		}
+
+		BooleanQueryImpl booleanQueryImpl = new BooleanQueryImpl();
+
+		BooleanFilter assetTagNamesBooleanFilter = new BooleanFilter();
+
+		for (String[] assetTagArrayNames : assetTagNames) {
+			TermsFilter assetTagIdTermsFilter = new TermsFilter(
+				Field.ASSET_TAG_NAMES);
+
+			assetTagIdTermsFilter.addValues(
+				ArrayUtil.toStringArray(assetTagArrayNames));
+
+			assetTagNamesBooleanFilter.add(
+				assetTagIdTermsFilter, BooleanClauseOccur.MUST);
+		}
+
+		booleanQueryImpl.setPreBooleanFilter(assetTagNamesBooleanFilter);
+
+		return new BooleanClause[] {
+			BooleanClauseFactoryUtil.create(
+				booleanQueryImpl, BooleanClauseOccur.MUST.getName())
+		};
+	}
+
 	private long[] _getClassNameIds(
 		UnicodeProperties unicodeProperties, long[] availableClassNameIds) {
 
@@ -690,17 +741,14 @@ public class AssetListAssetEntryProviderImpl
 			assetRendererFactory.getClassTypeReader();
 
 		try {
-			List<ClassType> classTypes = classTypeReader.getAvailableClassTypes(
-				_portal.getSharedContentSiteGroupIds(
-					assetListEntry.getCompanyId(), assetListEntry.getGroupId(),
-					assetListEntry.getUserId()),
-				LocaleUtil.getDefault());
-
-			Stream<ClassType> stream = classTypes.stream();
-
-			availableClassTypeIds = stream.mapToLong(
-				ClassType::getClassTypeId
-			).toArray();
+			availableClassTypeIds = TransformUtil.transformToLongArray(
+				classTypeReader.getAvailableClassTypes(
+					_portal.getSharedContentSiteGroupIds(
+						assetListEntry.getCompanyId(),
+						assetListEntry.getGroupId(),
+						assetListEntry.getUserId()),
+					LocaleUtil.getDefault()),
+				ClassType::getClassTypeId);
 		}
 		catch (PortalException portalException) {
 			_log.error(
@@ -744,31 +792,26 @@ public class AssetListAssetEntryProviderImpl
 	private long[] _getCombinedSegmentsEntryIds(
 		AssetListEntry assetListEntry, long[] segmentEntryIds) {
 
-		LongStream longStream = Arrays.stream(segmentEntryIds);
-
 		if ((segmentEntryIds.length > 1) &&
 			ArrayUtil.contains(
 				segmentEntryIds, SegmentsEntryConstants.ID_DEFAULT)) {
 
-			longStream = Arrays.stream(
-				ArrayUtil.remove(
-					segmentEntryIds, SegmentsEntryConstants.ID_DEFAULT));
+			segmentEntryIds = ArrayUtil.remove(
+				segmentEntryIds, SegmentsEntryConstants.ID_DEFAULT);
 		}
 
-		long[] combinedSegmentsEntryIds = longStream.mapToObj(
-			segmentsEntryId ->
-				_assetListEntrySegmentsEntryRelLocalService.
-					fetchAssetListEntrySegmentsEntryRel(
-						assetListEntry.getAssetListEntryId(), segmentsEntryId)
-		).filter(
-			Objects::nonNull
-		).sorted(
-			Comparator.comparing(AssetListEntrySegmentsEntryRel::getPriority)
-		).map(
-			AssetListEntrySegmentsEntryRelModel::getSegmentsEntryId
-		).mapToLong(
-			segmentsEntryId -> segmentsEntryId
-		).toArray();
+		long[] combinedSegmentsEntryIds = TransformUtil.transformToLongArray(
+			ListUtil.sort(
+				TransformUtil.transformToList(
+					segmentEntryIds,
+					segmentsEntryId ->
+						_assetListEntrySegmentsEntryRelLocalService.
+							fetchAssetListEntrySegmentsEntryRel(
+								assetListEntry.getAssetListEntryId(),
+								segmentsEntryId)),
+				Comparator.comparing(
+					AssetListEntrySegmentsEntryRel::getPriority)),
+			AssetListEntrySegmentsEntryRelModel::getSegmentsEntryId);
 
 		if (combinedSegmentsEntryIds.length == 0) {
 			combinedSegmentsEntryIds = new long[] {
@@ -781,8 +824,8 @@ public class AssetListAssetEntryProviderImpl
 
 	private List<AssetEntry> _getDynamicAssetEntries(
 		AssetListEntry assetListEntry, long[] segmentsEntryIds,
-		long[][] assetCategoryIds, String keywords, String userId, int start,
-		int end) {
+		long[][] assetCategoryIds, String[][] assetTagNames, String keywords,
+		String userId, int start, int end) {
 
 		if (!_assetListConfiguration.combineAssetsFromAllSegmentsDynamic()) {
 			AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
@@ -795,26 +838,23 @@ public class AssetListAssetEntryProviderImpl
 
 			return _dynamicSearch(
 				assetListEntry.getCompanyId(), assetCategoryIds,
-				Collections.singletonList(assetEntryQuery), keywords);
+				Collections.singletonList(assetEntryQuery), assetTagNames,
+				keywords);
 		}
-
-		LongStream longStream = Arrays.stream(
-			_getCombinedSegmentsEntryIds(assetListEntry, segmentsEntryIds));
 
 		return _dynamicSearch(
 			assetListEntry.getCompanyId(), assetCategoryIds,
-			longStream.mapToObj(
+			TransformUtil.transformToList(
+				_getCombinedSegmentsEntryIds(assetListEntry, segmentsEntryIds),
 				segmentsEntryId -> getAssetEntryQuery(
-					assetListEntry, segmentsEntryId, userId)
-			).collect(
-				Collectors.toList()
-			),
-			keywords);
+					assetListEntry, segmentsEntryId, userId)),
+			assetTagNames, keywords);
 	}
 
 	private int _getDynamicAssetEntriesCount(
 		AssetListEntry assetListEntry, long[] segmentsEntryIds,
-		long[][] assetCategoryIds, String keywords, String userId) {
+		long[][] assetCategoryIds, String[][] assetTagNames, String keywords,
+		String userId) {
 
 		if (!_assetListConfiguration.combineAssetsFromAllSegmentsDynamic()) {
 			AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
@@ -824,31 +864,30 @@ public class AssetListAssetEntryProviderImpl
 
 			return _dynamicSearchCount(
 				assetListEntry.getCompanyId(), assetCategoryIds,
-				Collections.singletonList(assetEntryQuery), keywords);
+				Collections.singletonList(assetEntryQuery), assetTagNames,
+				keywords);
 		}
-
-		LongStream longStream = Arrays.stream(
-			_getCombinedSegmentsEntryIds(assetListEntry, segmentsEntryIds));
 
 		return _dynamicSearchCount(
 			assetListEntry.getCompanyId(), assetCategoryIds,
-			longStream.mapToObj(
+			TransformUtil.transformToList(
+				_getCombinedSegmentsEntryIds(assetListEntry, segmentsEntryIds),
 				segmentsEntryId -> getAssetEntryQuery(
-					assetListEntry, segmentsEntryId, userId)
-			).collect(
-				Collectors.toList()
-			),
-			keywords);
+					assetListEntry, segmentsEntryId, userId)),
+			assetTagNames, keywords);
 	}
 
 	private SearchContext _getDynamicSearchContext(
 		long companyId, long[][] assetCategoryIds,
-		AssetEntryQuery assetEntryQuery, String keywords) {
+		AssetEntryQuery assetEntryQuery, String[][] assetTagNames,
+		String keywords) {
 
 		SearchContext searchContext = new SearchContext();
 
 		searchContext.setBooleanClauses(
-			_getAssetCategoryIdsBooleanClauses(assetCategoryIds));
+			ArrayUtil.append(
+				_getAssetCategoryIdsBooleanClauses(assetCategoryIds),
+				_getAssetTagNamesBooleanClauses(assetTagNames)));
 		searchContext.setCompanyId(companyId);
 		searchContext.setEnd(assetEntryQuery.getEnd());
 		searchContext.setKeywords(keywords);
@@ -895,22 +934,22 @@ public class AssetListAssetEntryProviderImpl
 			return SegmentsEntryConstants.ID_DEFAULT;
 		}
 
-		LongStream longStream = Arrays.stream(segmentsEntryIds);
+		List<AssetListEntrySegmentsEntryRel>
+			sortedAssetListEntrySegmentsEntryRels = ListUtil.sort(
+				TransformUtil.transformToList(
+					segmentsEntryIds,
+					segmentsEntryId ->
+						_assetListEntrySegmentsEntryRelLocalService.
+							fetchAssetListEntrySegmentsEntryRel(
+								assetListEntry.getAssetListEntryId(),
+								segmentsEntryId)),
+				Comparator.comparing(
+					AssetListEntrySegmentsEntryRel::getPriority));
 
-		Stream<AssetListEntrySegmentsEntryRel>
-			assetListEntrySegmentsEntryRelStream = longStream.mapToObj(
-				segmentsEntryId ->
-					_assetListEntrySegmentsEntryRelLocalService.
-						fetchAssetListEntrySegmentsEntryRel(
-							assetListEntry.getAssetListEntryId(),
-							segmentsEntryId));
+		AssetListEntrySegmentsEntryRel assetListEntrySegmentsEntryRel =
+			sortedAssetListEntrySegmentsEntryRels.get(0);
 
-		return assetListEntrySegmentsEntryRelStream.filter(
-			Objects::nonNull
-		).min(
-			Comparator.comparing(AssetListEntrySegmentsEntryRel::getPriority)
-		).get(
-		).getSegmentsEntryId();
+		return assetListEntrySegmentsEntryRel.getSegmentsEntryId();
 	}
 
 	private String[] _getKeywords(UnicodeProperties unicodeProperties) {
@@ -945,7 +984,8 @@ public class AssetListAssetEntryProviderImpl
 
 	private List<AssetEntry> _getManualAssetEntries(
 		AssetListEntry assetListEntry, long[] segmentsEntryIds,
-		long[][] assetCategoryIds, String keywords, int start, int end) {
+		long[][] assetCategoryIds, String[][] assetTagNames, String keywords,
+		int start, int end) {
 
 		List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels =
 			_getAssetListEntryAssetEntryRels(
@@ -963,7 +1003,7 @@ public class AssetListAssetEntryProviderImpl
 		try {
 			Hits hits = _assetHelper.search(
 				_getManualSearchContext(
-					assetCategoryIds, assetEntryIds,
+					assetCategoryIds, assetEntryIds, assetTagNames,
 					assetListEntry.getCompanyId(), keywords),
 				_getManualAssetEntryQuery(assetListEntry), QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS);
@@ -987,7 +1027,7 @@ public class AssetListAssetEntryProviderImpl
 
 	private int _getManualAssetEntriesCount(
 		AssetListEntry assetListEntry, long[] segmentsEntryIds,
-		long[][] assetCategoryIds, String keywords) {
+		long[][] assetCategoryIds, String[][] assetTagNames, String keywords) {
 
 		List<AssetListEntryAssetEntryRel> assetListEntryAssetEntryRels =
 			_getAssetListEntryAssetEntryRels(
@@ -1005,7 +1045,7 @@ public class AssetListAssetEntryProviderImpl
 		try {
 			Long count = _assetHelper.searchCount(
 				_getManualSearchContext(
-					assetCategoryIds, assetEntryIds,
+					assetCategoryIds, assetEntryIds, assetTagNames,
 					assetListEntry.getCompanyId(), keywords),
 				_getManualAssetEntryQuery(assetListEntry));
 
@@ -1047,15 +1087,17 @@ public class AssetListAssetEntryProviderImpl
 	}
 
 	private SearchContext _getManualSearchContext(
-		long[][] assetCategoryIds, List<Long> assetEntryIds, long companyId,
-		String keywords) {
+		long[][] assetCategoryIds, List<Long> assetEntryIds,
+		String[][] assetTagNames, long companyId, String keywords) {
 
 		SearchContext searchContext = new SearchContext();
 
 		searchContext.setAttribute(
 			Field.ASSET_ENTRY_IDS, ArrayUtil.toLongArray(assetEntryIds));
 		searchContext.setBooleanClauses(
-			_getAssetCategoryIdsBooleanClauses(assetCategoryIds));
+			ArrayUtil.append(
+				_getAssetTagNamesBooleanClauses(assetTagNames),
+				_getAssetCategoryIdsBooleanClauses(assetCategoryIds)));
 		searchContext.setCompanyId(companyId);
 		searchContext.setKeywords(keywords);
 
@@ -1219,23 +1261,18 @@ public class AssetListAssetEntryProviderImpl
 	private long[] _sortSegmentsByPriority(
 		AssetListEntry assetListEntry, long[] segmentsEntryIds) {
 
-		LongStream longStream = Arrays.stream(segmentsEntryIds);
-
-		Stream<AssetListEntrySegmentsEntryRel>
-			assetListEntrySegmentsEntryRelStream = longStream.mapToObj(
-				segmentsEntryId ->
-					_assetListEntrySegmentsEntryRelLocalService.
-						fetchAssetListEntrySegmentsEntryRel(
-							assetListEntry.getAssetListEntryId(),
-							segmentsEntryId));
-
-		return assetListEntrySegmentsEntryRelStream.filter(
-			Objects::nonNull
-		).sorted(
-			Comparator.comparing(AssetListEntrySegmentsEntryRel::getPriority)
-		).mapToLong(
-			AssetListEntrySegmentsEntryRelModel::getSegmentsEntryId
-		).toArray();
+		return TransformUtil.transformToLongArray(
+			ListUtil.sort(
+				TransformUtil.transformToList(
+					segmentsEntryIds,
+					segmentsEntryId ->
+						_assetListEntrySegmentsEntryRelLocalService.
+							fetchAssetListEntrySegmentsEntryRel(
+								assetListEntry.getAssetListEntryId(),
+								segmentsEntryId)),
+				Comparator.comparing(
+					AssetListEntrySegmentsEntryRel::getPriority)),
+			AssetListEntrySegmentsEntryRel::getSegmentsEntryId);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

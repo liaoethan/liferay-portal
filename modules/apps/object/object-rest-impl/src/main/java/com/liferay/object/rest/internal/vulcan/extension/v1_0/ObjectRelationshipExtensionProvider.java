@@ -19,14 +19,13 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
-import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerTracker;
+import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
@@ -56,7 +55,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Carlos Correa
  */
-@Component(immediate = true, service = ExtensionProvider.class)
+@Component(service = ExtensionProvider.class)
 public class ObjectRelationshipExtensionProvider
 	extends BaseObjectExtensionProvider {
 
@@ -85,7 +84,7 @@ public class ObjectRelationshipExtensionProvider
 		Map<String, Serializable> extendedProperties = new HashMap<>();
 
 		ObjectEntryManager objectEntryManager =
-			_objectEntryManagerTracker.getObjectEntryManager(
+			_objectEntryManagerRegistry.getObjectEntryManager(
 				objectDefinition.getStorageType());
 		long primaryKey = getPrimaryKey(entity);
 
@@ -134,7 +133,9 @@ public class ObjectRelationshipExtensionProvider
 				_getRelatedObjectDefinition(
 					objectDefinition, objectRelationship);
 
-			if (relatedObjectDefinition.isSystem()) {
+			if (!relatedObjectDefinition.isActive() ||
+				relatedObjectDefinition.isSystem()) {
+
 				continue;
 			}
 
@@ -158,7 +159,7 @@ public class ObjectRelationshipExtensionProvider
 
 	@Override
 	public boolean isApplicableExtension(long companyId, String className) {
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-162964"))) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-162964")) {
 			return false;
 		}
 
@@ -196,7 +197,7 @@ public class ObjectRelationshipExtensionProvider
 		for (String fieldName : fieldNames) {
 			ObjectRelationship objectRelationship =
 				_objectRelationshipLocalService.
-					fetchObjectRelationshipByObjectDefinitionId(
+					fetchObjectRelationshipByObjectDefinitionId1(
 						objectDefinition.getObjectDefinitionId(), fieldName);
 
 			if ((objectRelationship == null) ||
@@ -214,7 +215,9 @@ public class ObjectRelationshipExtensionProvider
 				_getRelatedObjectDefinition(
 					objectDefinition, objectRelationship);
 
-			if (relatedObjectDefinition.isSystem()) {
+			if (!relatedObjectDefinition.isActive() ||
+				relatedObjectDefinition.isSystem()) {
+
 				continue;
 			}
 
@@ -250,7 +253,7 @@ public class ObjectRelationshipExtensionProvider
 	private ObjectEntryLocalService _objectEntryLocalService;
 
 	@Reference
-	private ObjectEntryManagerTracker _objectEntryManagerTracker;
+	private ObjectEntryManagerRegistry _objectEntryManagerRegistry;
 
 	@Reference
 	private ObjectRelationshipLocalService _objectRelationshipLocalService;

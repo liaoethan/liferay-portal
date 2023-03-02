@@ -40,7 +40,6 @@ import com.liferay.portal.kernel.repository.InvalidRepositoryIdException;
 import com.liferay.portal.kernel.repository.Repository;
 import com.liferay.portal.kernel.repository.RepositoryException;
 import com.liferay.portal.kernel.repository.RepositoryProvider;
-import com.liferay.portal.kernel.repository.capabilities.TrashCapability;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.FileVersion;
@@ -75,7 +74,6 @@ import com.liferay.portal.repository.temporaryrepository.TemporaryFileEntryRepos
 import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.portlet.documentlibrary.service.base.DLAppServiceBaseImpl;
 import com.liferay.portlet.documentlibrary.util.DLAppUtil;
-import com.liferay.trash.kernel.service.TrashEntryService;
 
 import java.io.File;
 import java.io.IOException;
@@ -418,14 +416,16 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 	 */
 	@Override
 	public Folder addFolder(
-			long repositoryId, long parentFolderId, String name,
-			String description, ServiceContext serviceContext)
+			String externalReferenceCode, long repositoryId,
+			long parentFolderId, String name, String description,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		Repository repository = getRepository(repositoryId);
 
 		Folder folder = repository.addFolder(
-			getUserId(), parentFolderId, name, description, serviceContext);
+			externalReferenceCode, getUserId(), parentFolderId, name,
+			description, serviceContext);
 
 		_dlAppHelperLocalService.addFolder(getUserId(), folder, serviceContext);
 
@@ -735,7 +735,8 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 		Folder srcFolder = repository.getFolder(sourceFolderId);
 
 		Folder destFolder = repository.addFolder(
-			getUserId(), parentFolderId, name, description, serviceContext);
+			null, getUserId(), parentFolderId, name, description,
+			serviceContext);
 
 		_dlAppHelperLocalService.addFolder(
 			getUserId(), destFolder, serviceContext);
@@ -846,18 +847,6 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 
 		Folder folder = repository.getFolder(folderId);
 
-		if (repository.isCapabilityProvided(TrashCapability.class)) {
-			TrashCapability trashCapability = repository.getCapability(
-				TrashCapability.class);
-
-			if (trashCapability.isInTrash(folder)) {
-				_trashEntryService.deleteEntry(
-					DLFolderConstants.getClassName(), folder.getFolderId());
-
-				return;
-			}
-		}
-
 		List<FileEntry> fileEntries = repository.getRepositoryFileEntries(
 			0, folderId, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
 
@@ -885,20 +874,6 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 		throws PortalException {
 
 		Repository repository = getRepository(repositoryId);
-
-		Folder folder = repository.getFolder(parentFolderId, name);
-
-		if (repository.isCapabilityProvided(TrashCapability.class)) {
-			TrashCapability trashCapability = repository.getCapability(
-				TrashCapability.class);
-
-			if (trashCapability.isInTrash(folder)) {
-				_trashEntryService.deleteEntry(
-					DLFolderConstants.getClassName(), folder.getFolderId());
-
-				return;
-			}
-		}
 
 		repository.deleteFolder(parentFolderId, name);
 	}
@@ -1429,6 +1404,17 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 		Repository repository = getRepository(repositoryId);
 
 		return repository.getFolder(parentFolderId, name);
+	}
+
+	@Override
+	public Folder getFolderByExternalReferenceCode(
+			String externalReferenceCode, long groupId)
+		throws PortalException {
+
+		Repository repository = getRepository(groupId);
+
+		return repository.getFolderByExternalReferenceCode(
+			externalReferenceCode);
 	}
 
 	/**
@@ -3146,7 +3132,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 			Folder folder = fromRepository.getFolder(folderId);
 
 			newFolder = toRepository.addFolder(
-				getUserId(), parentFolderId, folder.getName(),
+				null, getUserId(), parentFolderId, folder.getName(),
 				folder.getDescription(), serviceContext);
 
 			_dlAppHelperLocalService.addFolder(
@@ -3203,7 +3189,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 
 			for (Folder srcSubfolder : srcSubfolders) {
 				Folder destSubfolder = repository.addFolder(
-					getUserId(), curDestFolder.getFolderId(),
+					null, getUserId(), curDestFolder.getFolderId(),
 					srcSubfolder.getName(), srcSubfolder.getDescription(),
 					serviceContext);
 
@@ -3265,7 +3251,7 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 				Folder currentFolder = (Folder)repositoryEntry;
 
 				Folder newFolder = toRepository.addFolder(
-					getUserId(), destinationFolder.getFolderId(),
+					null, getUserId(), destinationFolder.getFolderId(),
 					currentFolder.getName(), currentFolder.getDescription(),
 					serviceContext);
 
@@ -3404,9 +3390,5 @@ public class DLAppServiceImpl extends DLAppServiceBaseImpl {
 
 	@BeanReference(type = RepositoryPersistence.class)
 	private RepositoryPersistence _repositoryPersistence;
-
-	@BeanReference(type = TrashEntryService.class)
-	@SuppressWarnings("deprecation")
-	private TrashEntryService _trashEntryService;
 
 }

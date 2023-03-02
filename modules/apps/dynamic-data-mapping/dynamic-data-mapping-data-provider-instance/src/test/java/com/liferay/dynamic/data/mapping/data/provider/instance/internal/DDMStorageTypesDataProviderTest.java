@@ -16,16 +16,14 @@ package com.liferay.dynamic.data.mapping.data.provider.instance.internal;
 
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRequest;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderResponse;
-import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterTracker;
+import com.liferay.dynamic.data.mapping.storage.DDMStorageAdapterRegistry;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -49,8 +47,8 @@ public class DDMStorageTypesDataProviderTest {
 	public static void setUpClass() {
 		_ddmStorageTypesDataProvider = new DDMStorageTypesDataProvider();
 
-		_ddmStorageTypesDataProvider.ddmStorageAdapterTracker =
-			_ddmStorageAdapterTracker;
+		_ddmStorageTypesDataProvider.ddmStorageAdapterRegistry =
+			_ddmStorageAdapterRegistry;
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -84,22 +82,20 @@ public class DDMStorageTypesDataProviderTest {
 
 	private void _testStorageTypes(Set<String> expectedSet) {
 		Mockito.when(
-			_ddmStorageAdapterTracker.getDDMStorageAdapterTypes()
+			_ddmStorageAdapterRegistry.getDDMStorageAdapterTypes()
 		).thenReturn(
 			expectedSet
 		);
 
-		List<KeyValuePair> keyValuePairs = new ArrayList<>();
+		List<KeyValuePair> expectedKeyValuePairs = new ArrayList<>();
 
-		Stream<String> stream = expectedSet.stream();
+		for (String type : expectedSet) {
+			if (type.equals("json")) {
+				continue;
+			}
 
-		stream.filter(
-			type -> !type.equals("json")
-		).map(
-			type -> new KeyValuePair(type, type)
-		).forEach(
-			keyValuePairs::add
-		);
+			expectedKeyValuePairs.add(new KeyValuePair(type, type));
+		}
 
 		DDMDataProviderRequest.Builder builder =
 			DDMDataProviderRequest.Builder.newBuilder();
@@ -109,17 +105,15 @@ public class DDMStorageTypesDataProviderTest {
 
 		Assert.assertTrue(ddmDataProviderResponse.hasOutput("Default-Output"));
 
-		Optional<List<KeyValuePair>> optional =
-			ddmDataProviderResponse.getOutputOptional(
-				"Default-Output", List.class);
+		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
+			"Default-Output", List.class);
 
-		Assert.assertTrue(optional.isPresent());
-
-		Assert.assertEquals(keyValuePairs, optional.get());
+		Assert.assertNotNull(keyValuePairs);
+		Assert.assertEquals(expectedKeyValuePairs, keyValuePairs);
 	}
 
-	private static final DDMStorageAdapterTracker _ddmStorageAdapterTracker =
-		Mockito.mock(DDMStorageAdapterTracker.class);
+	private static final DDMStorageAdapterRegistry _ddmStorageAdapterRegistry =
+		Mockito.mock(DDMStorageAdapterRegistry.class);
 	private static DDMStorageTypesDataProvider _ddmStorageTypesDataProvider;
 
 }

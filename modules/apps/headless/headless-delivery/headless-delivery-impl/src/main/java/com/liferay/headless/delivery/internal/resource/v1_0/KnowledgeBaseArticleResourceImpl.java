@@ -209,6 +209,12 @@ public class KnowledgeBaseArticleResourceImpl
 					"postKnowledgeBaseFolderKnowledgeBaseArticle",
 					KBConstants.RESOURCE_NAME_ADMIN, kbFolder.getGroupId())
 			).put(
+				"createBatch",
+				addAction(
+					KBActionKeys.ADD_KB_ARTICLE,
+					"postKnowledgeBaseFolderKnowledgeBaseArticleBatch",
+					KBConstants.RESOURCE_NAME_ADMIN, kbFolder.getGroupId())
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW,
@@ -502,7 +508,8 @@ public class KnowledgeBaseArticleResourceImpl
 				knowledgeBaseArticle.getTitle(),
 				knowledgeBaseArticle.getFriendlyUrlPath(),
 				knowledgeBaseArticle.getArticleBody(),
-				knowledgeBaseArticle.getDescription(), null, null, null,
+				knowledgeBaseArticle.getDescription(), null, null, null, null,
+				null,
 				ServiceContextRequestUtil.createServiceContext(
 					knowledgeBaseArticle.getTaxonomyCategoryIds(),
 					knowledgeBaseArticle.getKeywords(),
@@ -662,6 +669,7 @@ public class KnowledgeBaseArticleResourceImpl
 				kbArticle.getResourcePrimKey(), knowledgeBaseArticle.getTitle(),
 				knowledgeBaseArticle.getArticleBody(),
 				knowledgeBaseArticle.getDescription(), null, null, null, null,
+				null, null,
 				ServiceContextRequestUtil.createServiceContext(
 					Optional.ofNullable(
 						knowledgeBaseArticle.getTaxonomyCategoryIds()

@@ -25,10 +25,10 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.object.util.LocalizedMapUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.util.Collections;
 import java.util.Map;
@@ -56,7 +56,7 @@ public class ObjectViewResourceTest extends BaseObjectViewResourceTestCase {
 
 		_objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				TestPropsValues.getUserId(),
+				TestPropsValues.getUserId(), false,
 				LocalizedMapUtil.getLocalizedMap(value), value, null, null,
 				LocalizedMapUtil.getLocalizedMap(value),
 				ObjectDefinitionConstants.SCOPE_COMPANY,
@@ -64,7 +64,7 @@ public class ObjectViewResourceTest extends BaseObjectViewResourceTestCase {
 				Collections.emptyList());
 
 		_objectField = _objectFieldLocalService.addCustomObjectField(
-			TestPropsValues.getUserId(), 0,
+			null, TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
 			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 			ObjectFieldConstants.DB_TYPE_STRING, null, false, false, null,
@@ -185,6 +185,25 @@ public class ObjectViewResourceTest extends BaseObjectViewResourceTestCase {
 	}
 
 	@Override
+	protected ObjectView
+			testGetObjectDefinitionByExternalReferenceCodeObjectViewsPage_addObjectView(
+				String externalReferenceCode, ObjectView objectView)
+		throws Exception {
+
+		return objectViewResource.
+			postObjectDefinitionByExternalReferenceCodeObjectView(
+				externalReferenceCode, objectView);
+	}
+
+	@Override
+	protected String
+			testGetObjectDefinitionByExternalReferenceCodeObjectViewsPage_getExternalReferenceCode()
+		throws Exception {
+
+		return _objectDefinition.getExternalReferenceCode();
+	}
+
+	@Override
 	protected Long
 		testGetObjectDefinitionObjectViewsPage_getObjectDefinitionId() {
 
@@ -203,6 +222,17 @@ public class ObjectViewResourceTest extends BaseObjectViewResourceTestCase {
 
 		return objectViewResource.postObjectDefinitionObjectView(
 			_objectDefinition.getObjectDefinitionId(), randomObjectView());
+	}
+
+	@Override
+	protected ObjectView
+			testPostObjectDefinitionByExternalReferenceCodeObjectView_addObjectView(
+				ObjectView objectView)
+		throws Exception {
+
+		return objectViewResource.
+			postObjectDefinitionByExternalReferenceCodeObjectView(
+				_objectDefinition.getExternalReferenceCode(), objectView);
 	}
 
 	@Override

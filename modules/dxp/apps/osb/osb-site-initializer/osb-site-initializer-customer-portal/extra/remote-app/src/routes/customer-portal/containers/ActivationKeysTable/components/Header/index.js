@@ -12,6 +12,7 @@
 import ClayAlert from '@clayui/alert';
 import {useCallback, useMemo, useState} from 'react';
 import i18n from '../../../../../../common/I18n';
+import {ROLE_TYPES} from '../../../../../../common/utils/constants';
 import {ALERT_DOWNLOAD_TYPE} from '../../../../utils/constants/alertDownloadType';
 import {ALERT_ACTIVATION_AGGREGATED_KEYS_DOWNLOAD_TEXT} from '../../utils/constants/alertAggregateKeysDownloadText';
 import {ALERT_ACTIVATION_MULTIPLE_KEYS_DOWNLOAD_TEXT} from '../../utils/constants/alertMultipleKeysDownloadText';
@@ -21,6 +22,7 @@ import BadgeFilter from '../BadgeFilter';
 import DeactivateButton from '../Deactivate';
 import DownloadAlert from '../DownloadAlert';
 import Filter from '../Filter';
+import useGetAccountUserAccount from './hooks/useGetAccountUserAccount';
 
 const ActivationKeysTableHeader = ({
 	activationKeysByStatusPaginatedChecked,
@@ -32,6 +34,26 @@ const ActivationKeysTableHeader = ({
 	filterState: [filters, setFilters],
 }) => {
 	const [activationKeys, setActivationKeys] = activationKeysState;
+
+	const {
+		userAccountsState: [userAccounts],
+	} = useGetAccountUserAccount(project);
+
+	const isAdminOrPartnerManager = useMemo(() => {
+		const currentUser = userAccounts?.find(
+			({id}) => id === +Liferay.ThemeDisplay.getUserId()
+		);
+
+		if (currentUser) {
+			const hasAdminRoles = currentUser?.roles?.some(
+				(role) =>
+					role === ROLE_TYPES.admin.key ||
+					role === ROLE_TYPES.partnerManager.key
+			);
+
+			return hasAdminRoles;
+		}
+	}, [userAccounts]);
 
 	const [status, setStatus] = useState({
 		deactivate: '',
@@ -87,6 +109,8 @@ const ActivationKeysTableHeader = ({
 		[activationKeysByStatusPaginatedChecked, setActivationKeys]
 	);
 
+	const allowSelfProvisioning = project.allowSelfProvisioning;
+
 	return (
 		<>
 			<div className="bg-neutral-1 d-flex flex-column pb-1 pt-3 px-3 rounded">
@@ -99,26 +123,30 @@ const ActivationKeysTableHeader = ({
 					<div className="align-items-center d-flex ml-auto">
 						{!!activationKeysByStatusPaginatedChecked.length && (
 							<>
-								<p className="font-weight-semi-bold m-0 ml-auto text-neutral-10">
+								<p className="font-weight-semi-bold m-0 ml-auto pr-2 text-neutral-10">
 									{i18n.sub('x-keys-selected', [
 										activationKeysByStatusPaginatedChecked.length,
 									])}
 								</p>
-
-								<DeactivateButton
-									deactivateKeysStatus={status.deactivate}
-									filterCheckedActivationKeys={
-										filterCheckedActivationKeys
-									}
-									handleDeactivate={handleDeactivate}
-									sessionId={sessionId}
-									setDeactivateKeysStatus={(value) =>
-										setStatus((previousStatus) => ({
-											...previousStatus,
-											deactivate: value,
-										}))
-									}
-								/>
+								{isAdminOrPartnerManager &&
+									allowSelfProvisioning && (
+										<DeactivateButton
+											deactivateKeysStatus={
+												status.deactivate
+											}
+											filterCheckedActivationKeys={
+												filterCheckedActivationKeys
+											}
+											handleDeactivate={handleDeactivate}
+											sessionId={sessionId}
+											setDeactivateKeysStatus={(value) =>
+												setStatus((previousStatus) => ({
+													...previousStatus,
+													deactivate: value,
+												}))
+											}
+										/>
+									)}
 							</>
 						)}
 
@@ -132,6 +160,7 @@ const ActivationKeysTableHeader = ({
 							isAbleToDownloadAggregateKeys={
 								isAbleToDownloadAggregateKeys
 							}
+							isAdminOrPartnerManager={isAdminOrPartnerManager}
 							productName={productName}
 							project={project}
 							sessionId={sessionId}

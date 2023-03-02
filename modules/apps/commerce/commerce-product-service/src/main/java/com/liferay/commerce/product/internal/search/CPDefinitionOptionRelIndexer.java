@@ -49,7 +49,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CPDefinitionOptionRelIndexer
 	extends BaseIndexer<CPDefinitionOptionRel> {
 
@@ -217,7 +217,7 @@ public class CPDefinitionOptionRelIndexer
 
 		_indexWriterHelper.updateDocument(
 			cpDefinitionOptionRel.getCompanyId(),
-			getDocument(cpDefinitionOptionRel), isCommitImmediately());
+			getDocument(cpDefinitionOptionRel));
 	}
 
 	@Override

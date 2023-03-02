@@ -26,6 +26,7 @@ import com.liferay.commerce.price.list.service.CommercePriceListLocalService;
 import com.liferay.commerce.price.list.service.CommercePriceListOrderTypeRelLocalService;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
@@ -45,7 +46,6 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.MissingFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.search.filter.TermsFilter;
-import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -57,7 +57,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Stream;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
@@ -69,7 +68,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 
 	public static final String CLASS_NAME = CommercePriceList.class.getName();
@@ -238,74 +237,40 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		document.addKeyword(
 			"catalogBasePriceList", commercePriceList.isCatalogBasePriceList());
 		document.addText("type", commercePriceList.getType());
+		document.addNumber(
+			"commerceAccountId",
+			TransformUtil.transformToLongArray(
+				_commercePriceListAccountRelLocalService.
+					getCommercePriceListAccountRels(
+						commercePriceList.getCommercePriceListId()),
+				CommercePriceListAccountRel::getCommerceAccountId));
+		document.addNumber(
+			"commerceChannelId",
+			TransformUtil.transformToLongArray(
+				_commercePriceListChannelRelLocalService.
+					getCommercePriceListChannelRels(
+						commercePriceList.getCommercePriceListId()),
+				CommercePriceListChannelRel::getCommerceChannelId));
 
-		List<CommercePriceListAccountRel> commercePriceListAccountRels =
-			_commercePriceListAccountRelLocalService.
-				getCommercePriceListAccountRels(
-					commercePriceList.getCommercePriceListId());
-
-		Stream<CommercePriceListAccountRel> commercePriceListAccountRelsStream =
-			commercePriceListAccountRels.stream();
-
-		long[] commerceAccountIds =
-			commercePriceListAccountRelsStream.mapToLong(
-				CommercePriceListAccountRel::getCommerceAccountId
-			).toArray();
-
-		document.addNumber("commerceAccountId", commerceAccountIds);
-
-		List<CommercePriceListChannelRel> commercePriceListChannelRels =
-			_commercePriceListChannelRelLocalService.
-				getCommercePriceListChannelRels(
-					commercePriceList.getCommercePriceListId());
-
-		Stream<CommercePriceListChannelRel> commercePriceListChannelRelsStream =
-			commercePriceListChannelRels.stream();
-
-		long[] commerceChannelIds =
-			commercePriceListChannelRelsStream.mapToLong(
-				CommercePriceListChannelRel::getCommerceChannelId
-			).toArray();
-
-		document.addNumber("commerceChannelId", commerceChannelIds);
-
-		List<CommercePriceListCommerceAccountGroupRel>
-			commercePriceListCommerceAccountGroupRels =
-				_commercePriceListCommerceAccountGroupRelLocalService.
-					getCommercePriceListCommerceAccountGroupRels(
-						commercePriceList.getCommercePriceListId());
-
-		Stream<CommercePriceListCommerceAccountGroupRel>
-			commercePriceListCommerceAccountGroupRelsStream =
-				commercePriceListCommerceAccountGroupRels.stream();
-
-		long[] commerceAccountGroupIds =
-			commercePriceListCommerceAccountGroupRelsStream.mapToLong(
-				CommercePriceListCommerceAccountGroupRel::
-					getCommerceAccountGroupId
-			).toArray();
+		long[] commerceAccountGroupIds = TransformUtil.transformToLongArray(
+			_commercePriceListCommerceAccountGroupRelLocalService.
+				getCommercePriceListCommerceAccountGroupRels(
+					commercePriceList.getCommercePriceListId()),
+			CommercePriceListCommerceAccountGroupRel::
+				getCommerceAccountGroupId);
 
 		document.addNumber("commerceAccountGroupIds", commerceAccountGroupIds);
-
 		document.addNumber(
 			"commerceAccountGroupIds_required_matches",
 			commerceAccountGroupIds.length);
 
-		List<CommercePriceListOrderTypeRel> commercePriceListOrderTypeRels =
-			_commercePriceListOrderTypeRelLocalService.
-				getCommercePriceListOrderTypeRels(
-					commercePriceList.getCommercePriceListId());
-
-		Stream<CommercePriceListOrderTypeRel>
-			commercePriceListOrderTypeRelsStream =
-				commercePriceListOrderTypeRels.stream();
-
-		long[] commerceOrderTypeIds =
-			commercePriceListOrderTypeRelsStream.mapToLong(
-				CommercePriceListOrderTypeRel::getCommerceOrderTypeId
-			).toArray();
-
-		document.addNumber("commerceOrderTypeId", commerceOrderTypeIds);
+		document.addNumber(
+			"commerceOrderTypeId",
+			TransformUtil.transformToLongArray(
+				_commercePriceListOrderTypeRelLocalService.
+					getCommercePriceListOrderTypeRels(
+						commercePriceList.getCommercePriceListId()),
+				CommercePriceListOrderTypeRel::getCommerceOrderTypeId));
 
 		if (_log.isDebugEnabled()) {
 			_log.debug(
@@ -333,8 +298,7 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			commercePriceList.getCompanyId(), getDocument(commercePriceList),
-			isCommitImmediately());
+			commercePriceList.getCompanyId(), getDocument(commercePriceList));
 
 		_commercePriceListLocalService.cleanPriceListCache();
 	}
@@ -393,9 +357,6 @@ public class CommercePriceListIndexer extends BaseIndexer<CommercePriceList> {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommercePriceListIndexer.class);
-
-	@Reference
-	private ClassNameLocalService _classNameLocalService;
 
 	@Reference
 	private CommerceCatalogLocalService _commerceCatalogLocalService;

@@ -14,6 +14,7 @@
 
 package com.liferay.site.admin.web.internal.portlet.action;
 
+import com.liferay.exportimport.kernel.staging.MergeLayoutPrototypesThreadLocal;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -46,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + SiteAdminPortletKeys.SITE_ADMIN,
 		"mvc.command.name=/site_admin/reset_merge_fail_count_and_merge"
@@ -78,6 +78,8 @@ public class ResetMergeFailCountAndMergeMVCActionCommand
 			groupId, privateLayoutSet);
 
 		_sites.resetPrototype(layoutSet);
+
+		MergeLayoutPrototypesThreadLocal.setSkipMerge(false);
 
 		_sites.mergeLayoutSetPrototypeLayouts(
 			_groupLocalService.getGroup(groupId), layoutSet);

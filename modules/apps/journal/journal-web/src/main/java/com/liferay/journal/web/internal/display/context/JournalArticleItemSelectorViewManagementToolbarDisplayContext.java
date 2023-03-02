@@ -29,17 +29,13 @@ import com.liferay.portal.kernel.portlet.PortletURLUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.ResourceBundle;
-
-import javax.portlet.PortletURL;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -106,7 +102,11 @@ public class JournalArticleItemSelectorViewManagementToolbarDisplayContext
 			}
 		).build();
 
-		dropdownItemList.addAll(super.getFilterDropdownItems());
+		List<DropdownItem> filterDropdownItems = super.getFilterDropdownItems();
+
+		if (ListUtil.isNotEmpty(filterDropdownItems)) {
+			dropdownItemList.addAll(filterDropdownItems);
+		}
 
 		return dropdownItemList;
 	}
@@ -140,10 +140,8 @@ public class JournalArticleItemSelectorViewManagementToolbarDisplayContext
 	}
 
 	@Override
-	public String getSearchActionURL() {
-		PortletURL searchActionURL = getPortletURL();
-
-		return searchActionURL.toString();
+	public String getSearchContainerId() {
+		return "articles";
 	}
 
 	@Override
@@ -156,13 +154,8 @@ public class JournalArticleItemSelectorViewManagementToolbarDisplayContext
 	}
 
 	@Override
-	public Boolean isDisabled() {
-		return false;
-	}
-
-	@Override
 	public Boolean isSelectable() {
-		return false;
+		return _journalArticleItemSelectorViewDisplayContext.isMultiSelection();
 	}
 
 	@Override
@@ -178,39 +171,6 @@ public class JournalArticleItemSelectorViewManagementToolbarDisplayContext
 	@Override
 	protected String[] getDisplayViews() {
 		return new String[] {"list", "descriptive", "icon"};
-	}
-
-	@Override
-	protected List<DropdownItem> getDropdownItems(
-		Map<String, String> entriesMap, PortletURL entryURL,
-		String parameterName, String parameterValue) {
-
-		if ((entriesMap == null) || entriesMap.isEmpty()) {
-			return null;
-		}
-
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", _themeDisplay.getLocale(), getClass());
-
-		return new DropdownItemList() {
-			{
-				for (Map.Entry<String, String> entry : entriesMap.entrySet()) {
-					add(
-						dropdownItem -> {
-							if (parameterValue != null) {
-								dropdownItem.setActive(
-									parameterValue.equals(entry.getValue()));
-							}
-
-							dropdownItem.setHref(
-								entryURL, parameterName, entry.getValue());
-							dropdownItem.setLabel(
-								LanguageUtil.get(
-									resourceBundle, entry.getKey()));
-						});
-				}
-			}
-		};
 	}
 
 	@Override

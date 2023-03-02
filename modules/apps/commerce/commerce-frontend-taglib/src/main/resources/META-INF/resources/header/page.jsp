@@ -54,7 +54,14 @@ String myWorkflowTasksPortletNamespace = PortalUtil.getPortletNamespace(PortletK
 						%>
 
 						<c:if test="<%= workflowedModel != null %>">
-							<aui:workflow-status bean="<%= bean %>" model="<%= model %>" showHelpMessage="<%= false %>" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= workflowedModel.getStatus() %>" />
+							<c:choose>
+								<c:when test="<%= bean instanceof GroupedModel %>">
+									<aui:workflow-status bean="<%= bean %>" model="<%= model %>" showHelpMessage="<%= false %>" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= workflowedModel.getStatus() %>" />
+								</c:when>
+								<c:otherwise>
+									<aui:workflow-status model="<%= model %>" showHelpMessage="<%= false %>" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= workflowedModel.getStatus() %>" />
+								</c:otherwise>
+							</c:choose>
 						</c:if>
 					</c:if>
 				</div>
@@ -318,7 +325,7 @@ String myWorkflowTasksPortletNamespace = PortalUtil.getPortletNamespace(PortletK
 						<aui:script require="commerce-frontend-js/components/dropdown/entry as dropdown">
 							dropdown.default('dropdown-header', 'dropdown-header-container', {
 								items: <%= jsonSerializer.serializeDeep(dropdownItems) %>,
-								spritemap: '<%= FrontendIconsUtil.getSpritemap(themeDisplay) %>',
+								spritemap: '<%= themeDisplay.getPathThemeSpritemap() %>',
 							});
 						</aui:script>
 					</c:if>
@@ -336,7 +343,9 @@ String myWorkflowTasksPortletNamespace = PortalUtil.getPortletNamespace(PortletK
 	</div>
 </div>
 
-<aui:script require="frontend-js-web/liferay/debounce/debounce.es as debounce">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {debounce} = frontendJsWeb;
+
 	var commerceHeader = document.querySelector('.commerce-header');
 	var pageHeader = document.querySelector('.page-header');
 
@@ -346,7 +355,7 @@ String myWorkflowTasksPortletNamespace = PortalUtil.getPortletNamespace(PortletK
 		pageHeader.style.top = distanceFromTop + 'px';
 	}
 
-	var debouncedUpdateMenuDistanceFromTop = debounce.default(
+	var debouncedUpdateMenuDistanceFromTop = debounce(
 		updateMenuDistanceFromTop,
 		200
 	);

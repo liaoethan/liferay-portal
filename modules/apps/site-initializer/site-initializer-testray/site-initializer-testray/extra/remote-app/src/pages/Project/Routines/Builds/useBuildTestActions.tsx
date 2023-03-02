@@ -21,8 +21,7 @@ import i18n from '../../../../i18n';
 import {Liferay} from '../../../../services/liferay';
 import {
 	TestrayCaseResult,
-	deleteResource,
-	testrayCaseResultRest,
+	testrayCaseResultImpl,
 } from '../../../../services/rest';
 import {Action} from '../../../../types';
 import {UserListView} from '../../../Manage/User';
@@ -45,8 +44,8 @@ const useBuildTestActions = () => {
 								},
 							}}
 							tableProps={{
-								onClickRow: (user) => {
-									testrayCaseResultRest
+								onClickRow: (user) =>
+									testrayCaseResultImpl
 										.assignTo(caseResult, user.id)
 										.then(() =>
 											updateItemFromList(
@@ -58,8 +57,7 @@ const useBuildTestActions = () => {
 										)
 										.then(form.onSuccess)
 										.catch(form.onError)
-										.finally(state.onClose);
-								},
+										.finally(state.onClose),
 							}}
 						/>
 					),
@@ -74,8 +72,8 @@ const useBuildTestActions = () => {
 				(caseResult.user &&
 				caseResult.user.id.toString() ===
 					Liferay.ThemeDisplay.getUserId()
-					? testrayCaseResultRest.removeAssign(caseResult)
-					: testrayCaseResultRest.assignToMe(caseResult)
+					? testrayCaseResultImpl.removeAssign(caseResult)
+					: testrayCaseResultImpl.assignToMe(caseResult)
 				).then((user) =>
 					updateItemFromList(
 						mutate,
@@ -99,8 +97,9 @@ const useBuildTestActions = () => {
 		},
 		{
 			action: ({id}, mutate) =>
-				deleteResource(`/caseresults/${id}`)
-					?.then(() => removeItemFromList(mutate, id))
+				testrayCaseResultImpl
+					.remove(id)
+					.then(() => removeItemFromList(mutate, id))
 					.then(form.onSave)
 					.catch(form.onError),
 			icon: 'trash',

@@ -382,6 +382,12 @@ public abstract class BaseBuild implements Build {
 		return gitRepositoryGitDetailsTempMap.get("github.upstream.branch.sha");
 	}
 
+	public String getBatchName(String jobVariant) {
+		jobVariant = jobVariant.replaceAll("(.*)/.*", "$1");
+
+		return jobVariant.replaceAll("_stable$", "");
+	}
+
 	@Override
 	public String getBranchName() {
 		return branchName;
@@ -440,8 +446,10 @@ public abstract class BaseBuild implements Build {
 	public JSONObject getBuildJSONObject() {
 		String urlSuffix = "api/json";
 
-		if (archiveFileExists(urlSuffix)) {
-			return new JSONObject(getArchiveFileContent(urlSuffix));
+		String archiveFileContent = getArchiveFileContent(urlSuffix);
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(archiveFileContent)) {
+			return new JSONObject(archiveFileContent);
 		}
 
 		try {
@@ -736,8 +744,10 @@ public abstract class BaseBuild implements Build {
 	public String getConsoleText() {
 		String urlSuffix = "consoleText";
 
-		if (archiveFileExists(urlSuffix)) {
-			return getArchiveFileContent(urlSuffix);
+		String archiveFileContent = getArchiveFileContent(urlSuffix);
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(archiveFileContent)) {
+			return archiveFileContent;
 		}
 
 		String buildURL = getBuildURL();
@@ -1569,16 +1579,16 @@ public abstract class BaseBuild implements Build {
 	public JSONObject getTestReportJSONObject(boolean checkCache) {
 		String result = getResult();
 
-		if ((result == null) ||
-			(!result.equals("SUCCESS") && !result.equals("UNSTABLE"))) {
-
+		if (result == null) {
 			return null;
 		}
 
 		String urlSuffix = "testReport/api/json";
 
-		if (archiveFileExists(urlSuffix)) {
-			return new JSONObject(getArchiveFileContent(urlSuffix));
+		String archiveFileContent = getArchiveFileContent(urlSuffix);
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(archiveFileContent)) {
+			return new JSONObject(archiveFileContent);
 		}
 
 		try {
@@ -1887,17 +1897,26 @@ public abstract class BaseBuild implements Build {
 
 	@Override
 	public boolean isUniqueFailure() {
-		if (_uniqueFailure != null) {
-			return _uniqueFailure;
+		if (!isFailing()) {
+			return false;
 		}
 
-		if (!Objects.equals(getStatus(), "completed")) {
-			return !UpstreamFailureUtil.isBuildFailingInUpstreamJob(this);
+		List<TestResult> testResults = new ArrayList<>();
+
+		testResults.addAll(getTestResults("FAILED"));
+		testResults.addAll(getTestResults("REGRESSION"));
+
+		if (testResults.isEmpty()) {
+			return true;
 		}
 
-		_uniqueFailure = !UpstreamFailureUtil.isBuildFailingInUpstreamJob(this);
+		for (TestResult testResult : testResults) {
+			if (testResult.isUniqueFailure()) {
+				return true;
+			}
+		}
 
-		return _uniqueFailure;
+		return false;
 	}
 
 	@Override
@@ -2546,7 +2565,7 @@ public abstract class BaseBuild implements Build {
 			}
 		}
 
-		if (fromArchive || fromCompletedBuild) {
+		if (fromArchive || isFromCompletedBuild()) {
 			update();
 		}
 	}
@@ -2675,15 +2694,17 @@ public abstract class BaseBuild implements Build {
 	}
 
 	protected String getArchiveFileContent(String urlSuffix) {
-		if (!archiveFileExists(urlSuffix)) {
+		File archiveFile = getArchiveFile(urlSuffix);
+
+		if (!archiveFile.exists()) {
 			return null;
 		}
 
 		try {
-			return JenkinsResultsParserUtil.read(getArchiveFile(urlSuffix));
+			return JenkinsResultsParserUtil.read(archiveFile);
 		}
 		catch (IOException ioException) {
-			throw new RuntimeException(ioException);
+			return null;
 		}
 	}
 
@@ -2753,8 +2774,10 @@ public abstract class BaseBuild implements Build {
 	protected JSONObject getBuildJSONObject(String tree) {
 		String urlSuffix = "api/json";
 
-		if (archiveFileExists(urlSuffix)) {
-			return new JSONObject(getArchiveFileContent(urlSuffix));
+		String archiveFileContent = getArchiveFileContent(urlSuffix);
+
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(archiveFileContent)) {
+			return new JSONObject(archiveFileContent);
 		}
 
 		return JenkinsAPIUtil.getAPIJSONObject(getBuildURL(), tree);
@@ -4262,7 +4285,7 @@ public abstract class BaseBuild implements Build {
 
 		_testClassResults = new ConcurrentHashMap<>();
 
-		if (testReportJSONObject == null) {
+		if ((testReportJSONObject == null) || testReportJSONObject.isEmpty()) {
 			return;
 		}
 
@@ -4383,6 +4406,5 @@ public abstract class BaseBuild implements Build {
 	private Map<String, TestClassResult> _testClassResults;
 	private List<URL> _testrayAttachmentURLs;
 	private List<URL> _testrayS3AttachmentURLs;
-	private Boolean _uniqueFailure;
 
 }

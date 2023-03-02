@@ -17,10 +17,10 @@ package com.liferay.dynamic.data.mapping.data.provider.internal;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProvider;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderInstanceSettings;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderInvoker;
+import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRegistry;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRequest;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderResponse;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderResponseStatus;
-import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderTracker;
 import com.liferay.dynamic.data.mapping.data.provider.internal.rest.DDMRESTDataProviderSettings;
 import com.liferay.dynamic.data.mapping.model.DDMDataProviderInstance;
 import com.liferay.dynamic.data.mapping.service.DDMDataProviderInstanceService;
@@ -29,14 +29,13 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import com.netflix.hystrix.Hystrix;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
 
 import java.lang.reflect.Field;
-
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -45,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMDataProviderInvoker.class)
+@Component(service = DDMDataProviderInvoker.class)
 public class DDMDataProviderInvokerImpl implements DDMDataProviderInvoker {
 
 	@Override
@@ -133,15 +132,15 @@ public class DDMDataProviderInvokerImpl implements DDMDataProviderInvoker {
 		String ddmDataProviderId =
 			ddmDataProviderRequest.getDDMDataProviderId();
 
-		Optional<DDMDataProviderInstance> ddmDataProviderInstanceOptional =
-			fetchDDMDataProviderInstanceOptional(ddmDataProviderId);
+		DDMDataProviderInstance ddmDataProviderInstance =
+			fetchDDMDataProviderInstance(ddmDataProviderId);
 
 		DDMDataProvider ddmDataProvider = getDDMDataProvider(
-			ddmDataProviderId, ddmDataProviderInstanceOptional);
+			ddmDataProviderId, ddmDataProviderInstance);
 
-		if (ddmDataProviderInstanceOptional.isPresent()) {
+		if (ddmDataProviderInstance != null) {
 			return doInvokeExternal(
-				ddmDataProviderInstanceOptional.get(), ddmDataProvider,
+				ddmDataProviderInstance, ddmDataProvider,
 				ddmDataProviderRequest);
 		}
 
@@ -164,9 +163,8 @@ public class DDMDataProviderInvokerImpl implements DDMDataProviderInvoker {
 		return ddmDataProviderInvokeCommand.execute();
 	}
 
-	protected Optional<DDMDataProviderInstance>
-			fetchDDMDataProviderInstanceOptional(
-				String ddmDataProviderInstanceId)
+	protected DDMDataProviderInstance fetchDDMDataProviderInstance(
+			String ddmDataProviderInstanceId)
 		throws PortalException {
 
 		DDMDataProviderInstance ddmDataProviderInstance =
@@ -178,25 +176,23 @@ public class DDMDataProviderInvokerImpl implements DDMDataProviderInvoker {
 
 			ddmDataProviderInstance =
 				ddmDataProviderInstanceService.fetchDataProviderInstance(
-					Long.valueOf(ddmDataProviderInstanceId));
+					GetterUtil.getLong(ddmDataProviderInstanceId));
 		}
 
-		return Optional.ofNullable(ddmDataProviderInstance);
+		return ddmDataProviderInstance;
 	}
 
 	protected DDMDataProvider getDDMDataProvider(
 		String ddmDataProviderInstanceId,
-		Optional<DDMDataProviderInstance> ddmDataProviderInstanceOptional) {
+		DDMDataProviderInstance ddmDataProviderInstance) {
 
-		Optional<DDMDataProvider> ddmDataProviderTypeOptional =
-			ddmDataProviderInstanceOptional.map(
-				ddmDataProviderInstance ->
-					ddmDataProviderTracker.getDDMDataProvider(
-						ddmDataProviderInstance.getType()));
+		if (ddmDataProviderInstance != null) {
+			return ddmDataProviderRegistry.getDDMDataProvider(
+				ddmDataProviderInstance.getType());
+		}
 
-		return ddmDataProviderTypeOptional.orElseGet(
-			() -> ddmDataProviderTracker.getDDMDataProviderByInstanceId(
-				ddmDataProviderInstanceId));
+		return ddmDataProviderRegistry.getDDMDataProviderByInstanceId(
+			ddmDataProviderInstanceId);
 	}
 
 	protected HystrixRuntimeException.FailureType getHystrixFailureType(
@@ -215,7 +211,7 @@ public class DDMDataProviderInvokerImpl implements DDMDataProviderInvoker {
 	protected DDMDataProviderInstanceSettings ddmDataProviderInstanceSettings;
 
 	@Reference
-	protected DDMDataProviderTracker ddmDataProviderTracker;
+	protected DDMDataProviderRegistry ddmDataProviderRegistry;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMDataProviderInvokerImpl.class);

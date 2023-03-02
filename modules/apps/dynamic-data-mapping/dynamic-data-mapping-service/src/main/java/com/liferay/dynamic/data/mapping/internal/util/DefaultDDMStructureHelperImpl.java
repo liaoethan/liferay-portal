@@ -62,7 +62,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = DefaultDDMStructureHelper.class)
+@Component(service = DefaultDDMStructureHelper.class)
 public class DefaultDDMStructureHelperImpl
 	implements DefaultDDMStructureHelper {
 
@@ -87,13 +87,8 @@ public class DefaultDDMStructureHelperImpl
 
 			String name = structureElement.elementText("name");
 
-			String ddmStructureKey = name;
-
-			DDMStructure ddmStructure =
-				_ddmStructureLocalService.fetchStructure(
-					groupId, classNameId, ddmStructureKey);
-
-			if ((ddmStructure != null) ||
+			if (_ddmStructureLocalService.hasStructure(
+					groupId, classNameId, name) ||
 				(name.equals(DLFileEntryTypeConstants.NAME_IG_IMAGE) &&
 				 !UpgradeProcessUtil.isCreateIGImageDocumentType())) {
 

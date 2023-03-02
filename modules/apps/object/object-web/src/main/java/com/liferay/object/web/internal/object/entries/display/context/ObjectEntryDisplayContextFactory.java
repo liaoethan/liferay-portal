@@ -16,10 +16,12 @@ package com.liferay.object.web.internal.object.entries.display.context;
 
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderer;
 import com.liferay.item.selector.ItemSelector;
-import com.liferay.object.field.business.type.ObjectFieldBusinessTypeTracker;
-import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerTracker;
+import com.liferay.object.display.context.ObjectEntryDisplayContext;
+import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
+import com.liferay.object.rest.manager.v1_0.ObjectEntryManagerRegistry;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
+import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectEntryService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectLayoutLocalService;
@@ -37,15 +39,15 @@ import org.osgi.service.component.annotations.Reference;
 public class ObjectEntryDisplayContextFactory {
 
 	public ObjectEntryDisplayContext create(
-		HttpServletRequest httpServletRequest, boolean readOnly) {
+		HttpServletRequest httpServletRequest) {
 
-		return new ObjectEntryDisplayContext(
+		return new ObjectEntryDisplayContextImpl(
 			_ddmFormRenderer, httpServletRequest, _itemSelector,
-			_objectDefinitionLocalService, _objectEntryManagerTracker,
-			_objectEntryService, _objectFieldBusinessTypeTracker,
-			_objectFieldLocalService, _objectLayoutLocalService,
-			_objectRelationshipLocalService, _objectScopeProviderRegistry,
-			readOnly);
+			_objectDefinitionLocalService, _objectEntryManagerRegistry,
+			_objectEntryLocalService, _objectEntryService,
+			_objectFieldBusinessTypeRegistry, _objectFieldLocalService,
+			_objectLayoutLocalService, _objectRelationshipLocalService,
+			_objectScopeProviderRegistry);
 	}
 
 	@Reference
@@ -58,13 +60,16 @@ public class ObjectEntryDisplayContextFactory {
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Reference
-	private ObjectEntryManagerTracker _objectEntryManagerTracker;
+	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private ObjectEntryManagerRegistry _objectEntryManagerRegistry;
 
 	@Reference
 	private ObjectEntryService _objectEntryService;
 
 	@Reference
-	private ObjectFieldBusinessTypeTracker _objectFieldBusinessTypeTracker;
+	private ObjectFieldBusinessTypeRegistry _objectFieldBusinessTypeRegistry;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;

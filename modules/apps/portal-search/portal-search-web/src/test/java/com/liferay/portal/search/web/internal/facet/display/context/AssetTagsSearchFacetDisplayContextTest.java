@@ -16,284 +16,72 @@ package com.liferay.portal.search.web.internal.facet.display.context;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.search.facet.Facet;
-import com.liferay.portal.kernel.search.facet.collector.FacetCollector;
-import com.liferay.portal.kernel.search.facet.collector.TermCollector;
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.theme.PortletDisplay;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.search.web.internal.BaseFacetDisplayContextTestCase;
 import com.liferay.portal.search.web.internal.facet.display.context.builder.AssetTagsSearchFacetDisplayContextBuilder;
 import com.liferay.portal.search.web.internal.tag.facet.configuration.TagFacetPortletInstanceConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.Collections;
-import java.util.List;
-
-import javax.portlet.RenderRequest;
-
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
-
-import org.mockito.Mockito;
 
 /**
  * @author André de Oliveira
  */
-public class AssetTagsSearchFacetDisplayContextTest {
+public class AssetTagsSearchFacetDisplayContextTest
+	extends BaseFacetDisplayContextTestCase {
 
 	@ClassRule
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
-	@Before
-	public void setUp() {
-		Mockito.doReturn(
-			_facetCollector
-		).when(
-			_facet
-		).getFacetCollector();
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(String parameterValue)
+		throws ConfigurationException {
+
+		return createFacetDisplayContext(parameterValue, "count:desc");
 	}
 
-	@Test
-	public void testEmptySearchResults() throws Exception {
-		String facetParam = "";
-
-		AssetTagsSearchFacetDisplayContext assetTagsSearchFacetDisplayContext =
-			createDisplayContext(facetParam);
-
-		List<AssetTagsSearchFacetTermDisplayContext>
-			assetTagsSearchFacetTermDisplayContexts =
-				assetTagsSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			assetTagsSearchFacetTermDisplayContexts.toString(), 0,
-			assetTagsSearchFacetTermDisplayContexts.size());
-
-		Assert.assertEquals(
-			facetParam, assetTagsSearchFacetDisplayContext.getParameterValue());
-		Assert.assertTrue(
-			assetTagsSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertTrue(assetTagsSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testEmptySearchResultsWithPreviousSelection() throws Exception {
-		String term = RandomTestUtil.randomString();
-
-		String facetParam = term;
-
-		AssetTagsSearchFacetDisplayContext assetTagsSearchFacetDisplayContext =
-			createDisplayContext(facetParam);
-
-		List<AssetTagsSearchFacetTermDisplayContext>
-			assetTagsSearchFacetTermDisplayContexts =
-				assetTagsSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			assetTagsSearchFacetTermDisplayContexts.toString(), 1,
-			assetTagsSearchFacetTermDisplayContexts.size());
-
-		AssetTagsSearchFacetTermDisplayContext
-			assetTagsSearchFacetTermDisplayContext =
-				assetTagsSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			term, assetTagsSearchFacetTermDisplayContext.getDisplayName());
-		Assert.assertEquals(
-			0, assetTagsSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			term, assetTagsSearchFacetTermDisplayContext.getValue());
-		Assert.assertTrue(assetTagsSearchFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(
-			assetTagsSearchFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			facetParam, assetTagsSearchFacetDisplayContext.getParameterValue());
-		Assert.assertFalse(
-			assetTagsSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetTagsSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testOneTerm() throws Exception {
-		String term = RandomTestUtil.randomString();
-		int frequency = RandomTestUtil.randomInt();
-
-		setUpOneTermCollector(term, frequency);
-
-		String facetParam = StringPool.BLANK;
-
-		AssetTagsSearchFacetDisplayContext assetTagsSearchFacetDisplayContext =
-			createDisplayContext(facetParam);
-
-		List<AssetTagsSearchFacetTermDisplayContext>
-			assetTagsSearchFacetTermDisplayContexts =
-				assetTagsSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			assetTagsSearchFacetTermDisplayContexts.toString(), 1,
-			assetTagsSearchFacetTermDisplayContexts.size());
-
-		AssetTagsSearchFacetTermDisplayContext
-			assetTagsSearchFacetTermDisplayContext =
-				assetTagsSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			term, assetTagsSearchFacetTermDisplayContext.getDisplayName());
-		Assert.assertEquals(
-			frequency, assetTagsSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			term, assetTagsSearchFacetTermDisplayContext.getValue());
-		Assert.assertFalse(assetTagsSearchFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(
-			assetTagsSearchFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			facetParam, assetTagsSearchFacetDisplayContext.getParameterValue());
-		Assert.assertTrue(
-			assetTagsSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetTagsSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testOneTermWithPreviousSelection() throws Exception {
-		String term = RandomTestUtil.randomString();
-		int frequency = RandomTestUtil.randomInt();
-
-		setUpOneTermCollector(term, frequency);
-
-		String facetParam = term;
-
-		AssetTagsSearchFacetDisplayContext assetTagsSearchFacetDisplayContext =
-			createDisplayContext(facetParam);
-
-		List<AssetTagsSearchFacetTermDisplayContext>
-			assetTagsSearchFacetTermDisplayContexts =
-				assetTagsSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			assetTagsSearchFacetTermDisplayContexts.toString(), 1,
-			assetTagsSearchFacetTermDisplayContexts.size());
-
-		AssetTagsSearchFacetTermDisplayContext
-			assetTagsSearchFacetTermDisplayContext =
-				assetTagsSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			term, assetTagsSearchFacetTermDisplayContext.getDisplayName());
-		Assert.assertEquals(
-			frequency, assetTagsSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			term, assetTagsSearchFacetTermDisplayContext.getValue());
-		Assert.assertTrue(assetTagsSearchFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(
-			assetTagsSearchFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			facetParam, assetTagsSearchFacetDisplayContext.getParameterValue());
-		Assert.assertFalse(
-			assetTagsSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(
-			assetTagsSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	protected AssetTagsSearchFacetDisplayContext createDisplayContext(
-			String facetParam)
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(
+			String parameterValue, String order)
 		throws ConfigurationException {
 
 		AssetTagsSearchFacetDisplayContextBuilder
 			assetTagsSearchFacetDisplayContextBuilder =
 				new AssetTagsSearchFacetDisplayContextBuilder(
-					getRenderRequest());
+					getRenderRequest(
+						TagFacetPortletInstanceConfiguration.class));
 
 		assetTagsSearchFacetDisplayContextBuilder.setDisplayStyle("cloud");
-		assetTagsSearchFacetDisplayContextBuilder.setFacet(_facet);
+		assetTagsSearchFacetDisplayContextBuilder.setFacet(facet);
 		assetTagsSearchFacetDisplayContextBuilder.setFrequenciesVisible(true);
 		assetTagsSearchFacetDisplayContextBuilder.setFrequencyThreshold(0);
 		assetTagsSearchFacetDisplayContextBuilder.setMaxTerms(0);
+		assetTagsSearchFacetDisplayContextBuilder.setOrder(order);
 		assetTagsSearchFacetDisplayContextBuilder.setParameterName(
-			_facet.getFieldId());
-		assetTagsSearchFacetDisplayContextBuilder.setParameterValue(facetParam);
+			facet.getFieldId());
+		assetTagsSearchFacetDisplayContextBuilder.setParameterValue(
+			parameterValue);
 
 		return assetTagsSearchFacetDisplayContextBuilder.build();
 	}
 
-	protected TermCollector createTermCollector(String term, int frequency) {
-		TermCollector termCollector = Mockito.mock(TermCollector.class);
+	@Override
+	protected void testOrderBy(
+			int[] expectedFrequencies, String[] expectedTerms,
+			int[] frequencies, String order, String[] terms)
+		throws Exception {
 
-		Mockito.doReturn(
-			frequency
-		).when(
-			termCollector
-		).getFrequency();
+		setUpTermCollectors(
+			facetCollector, getTermCollectors(terms, frequencies));
 
-		Mockito.doReturn(
-			term
-		).when(
-			termCollector
-		).getTerm();
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			StringPool.BLANK, order);
 
-		return termCollector;
+		assertFacetOrder(
+			facetDisplayContext.getBucketDisplayContexts(), expectedTerms,
+			expectedFrequencies);
 	}
-
-	protected PortletDisplay getPortletDisplay() throws ConfigurationException {
-		PortletDisplay portletDisplay = Mockito.mock(PortletDisplay.class);
-
-		Mockito.doReturn(
-			Mockito.mock(TagFacetPortletInstanceConfiguration.class)
-		).when(
-			portletDisplay
-		).getPortletInstanceConfiguration(
-			Mockito.any()
-		);
-
-		return portletDisplay;
-	}
-
-	protected RenderRequest getRenderRequest() throws ConfigurationException {
-		RenderRequest renderRequest = Mockito.mock(RenderRequest.class);
-
-		Mockito.doReturn(
-			getThemeDisplay()
-		).when(
-			renderRequest
-		).getAttribute(
-			WebKeys.THEME_DISPLAY
-		);
-
-		return renderRequest;
-	}
-
-	protected ThemeDisplay getThemeDisplay() throws ConfigurationException {
-		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
-
-		Mockito.doReturn(
-			getPortletDisplay()
-		).when(
-			themeDisplay
-		).getPortletDisplay();
-
-		return themeDisplay;
-	}
-
-	protected void setUpOneTermCollector(String facetParam, int frequency) {
-		Mockito.doReturn(
-			Collections.singletonList(
-				createTermCollector(facetParam, frequency))
-		).when(
-			_facetCollector
-		).getTermCollectors();
-	}
-
-	private final Facet _facet = Mockito.mock(Facet.class);
-	private final FacetCollector _facetCollector = Mockito.mock(
-		FacetCollector.class);
 
 }

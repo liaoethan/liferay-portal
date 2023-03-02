@@ -27,7 +27,6 @@ import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -158,7 +157,7 @@ public class ChangeTrackingIndicatorDynamicInclude extends BaseDynamicInclude {
 					"IndicatorComponent";
 			String module =
 				_npmResolver.resolveModuleName("change-tracking-web") +
-					"/publications/js/ChangeTrackingIndicator";
+					"/publications/js/components/ChangeTrackingIndicator";
 
 			_reactRenderer.renderReact(
 				new ComponentDescriptor(module, componentId),
@@ -241,7 +240,7 @@ public class ChangeTrackingIndicatorDynamicInclude extends BaseDynamicInclude {
 				return saveDisplayPreferenceURL.toString();
 			}
 		).put(
-			"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay)
+			"spritemap", themeDisplay.getPathThemeSpritemap()
 		).build();
 
 		long ctCollectionId = CTConstants.CT_COLLECTION_ID_PRODUCTION;
@@ -328,25 +327,20 @@ public class ChangeTrackingIndicatorDynamicInclude extends BaseDynamicInclude {
 				themeDisplay.getPermissionChecker(),
 				CTActionKeys.ADD_PUBLICATION)) {
 
-			PortletURL addURL = PortletURLBuilder.create(
-				_portal.getControlPanelPortletURL(
-					httpServletRequest, themeDisplay.getScopeGroup(),
-					CTPortletKeys.PUBLICATIONS, 0, 0,
-					PortletRequest.RENDER_PHASE)
-			).setMVCRenderCommandName(
-				"/change_tracking/add_ct_collection"
-			).buildPortletURL();
-
-			PortletURL redirectURL = _portal.getControlPanelPortletURL(
-				httpServletRequest, themeDisplay.getScopeGroup(),
-				CTPortletKeys.PUBLICATIONS, 0, 0, PortletRequest.RENDER_PHASE);
-
-			addURL.setParameter("redirect", redirectURL.toString());
-
 			data.put(
 				"createDropdownItem",
 				JSONUtil.put(
-					"href", addURL.toString()
+					"href",
+					PortletURLBuilder.create(
+						_portal.getControlPanelPortletURL(
+							httpServletRequest, themeDisplay.getScopeGroup(),
+							CTPortletKeys.PUBLICATIONS, 0, 0,
+							PortletRequest.RENDER_PHASE)
+					).setMVCRenderCommandName(
+						"/change_tracking/add_ct_collection"
+					).setRedirect(
+						themeDisplay.getURLCurrent()
+					).buildString()
 				).put(
 					"label",
 					_language.get(

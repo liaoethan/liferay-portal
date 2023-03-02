@@ -24,10 +24,10 @@ import com.liferay.asset.kernel.model.AssetEntryTable;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.search.InfoSearchClassMapperTracker;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
@@ -50,7 +50,6 @@ import com.liferay.portal.kernel.util.Portal;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -263,7 +262,7 @@ public class AssetDisplayPageEntryLocalServiceImpl
 		String className = _portal.getClassName(classNameId);
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			_layoutDisplayPageProviderTracker.
+			_layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(className);
 
 		if (layoutDisplayPageProvider == null) {
@@ -278,32 +277,32 @@ public class AssetDisplayPageEntryLocalServiceImpl
 			return LayoutConstants.DEFAULT_PLID;
 		}
 
-		long classTypeId = layoutDisplayPageObjectProvider.getClassTypeId();
-
-		LayoutPageTemplateEntry layoutPageTemplateEntry = Optional.ofNullable(
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.fetchLayoutPageTemplateEntry(
-				layoutPageTemplateEntryId)
-		).orElseGet(
-			() ->
+				layoutPageTemplateEntryId);
+
+		if (layoutPageTemplateEntry == null) {
+			layoutPageTemplateEntry =
 				_layoutPageTemplateEntryLocalService.
 					fetchDefaultLayoutPageTemplateEntry(
-						groupId, classNameId, classTypeId)
-		);
+						groupId, classNameId,
+						layoutDisplayPageObjectProvider.getClassTypeId());
+		}
 
 		if (layoutPageTemplateEntry != null) {
 			return layoutPageTemplateEntry.getPlid();
 		}
 
 		AssetRendererFactory<?> assetRendererFactory =
-			AssetRendererFactoryRegistryUtil.
-				getAssetRendererFactoryByClassNameId(classNameId);
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				className);
 
 		AssetEntry assetEntry = null;
 
 		if (assetRendererFactory != null) {
 			try {
 				assetEntry = assetRendererFactory.getAssetEntry(
-					_portal.getClassName(classNameId), classPK);
+					className, classPK);
 			}
 			catch (PortalException portalException) {
 				if (_log.isWarnEnabled()) {
@@ -346,7 +345,7 @@ public class AssetDisplayPageEntryLocalServiceImpl
 		).and(
 			() -> {
 				String searchClassName =
-					_infoSearchClassMapperTracker.getSearchClassName(
+					_infoSearchClassMapperRegistry.getSearchClassName(
 						_portal.getClassName(classNameId));
 
 				return AssetEntryTable.INSTANCE.classNameId.eq(
@@ -387,10 +386,11 @@ public class AssetDisplayPageEntryLocalServiceImpl
 	private AssetEntryLocalService _assetEntryLocalService;
 
 	@Reference
-	private InfoSearchClassMapperTracker _infoSearchClassMapperTracker;
+	private InfoSearchClassMapperRegistry _infoSearchClassMapperRegistry;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

@@ -14,9 +14,6 @@ import ClayPanel from '@clayui/panel';
 import ClayTable from '@clayui/table';
 import React, {useEffect, useState} from 'react';
 
-const currentPath = Liferay.currentURL.split('/');
-const mdfRequestId = +currentPath[currentPath.length - 1];
-
 const getIntlNumberFormat = () =>
 	new Intl.NumberFormat(Liferay.ThemeDisplay.getBCP47LanguageId(), {
 		currency: 'USD',
@@ -25,44 +22,12 @@ const getIntlNumberFormat = () =>
 
 const getBooleanValue = (value) => (value ? 'Yes' : 'No');
 
-const BudgetBreakdownTable = ({mdfRequestActivityId}) => {
-	const [budgets, setBudgets] = useState();
-
-	useEffect(() => {
-		const getActivityToBudgets = async () => {
-			// eslint-disable-next-line @liferay/portal/no-global-fetch
-			const response = await fetch(
-				`/o/c/activities/${mdfRequestActivityId}/activityToBudgets`,
-				{
-					headers: {
-						'accept': 'application/json',
-						'x-csrf-token': Liferay.authToken,
-					},
-				}
-			);
-
-			if (response.ok) {
-				setBudgets(await response.json());
-
-				return;
-			}
-
-			Liferay.Util.openToast({
-				message: 'An unexpected error occured.',
-				type: 'danger',
-			});
-		};
-
-		if (mdfRequestActivityId) {
-			getActivityToBudgets();
-		}
-	}, [mdfRequestActivityId]);
-
+const BudgetBreakdownTable = ({actToBgts}) => {
 	return (
 		<div>
-			{budgets && (
+			{!!actToBgts.length && (
 				<Table
-					items={budgets.items.map((budget) => ({
+					items={actToBgts.map((budget) => ({
 						title: budget.expense.name,
 						value: getIntlNumberFormat().format(budget.cost),
 					}))}
@@ -179,28 +144,47 @@ const getMiscellaneousMarketingField = (mdfRequestActivity) => [
 	},
 ];
 
-const TypeActivityExternalReferenceCode = {
-	CONTENT_MARKETING: 'PRMTACT-003',
-	DIGITAL_MARKETING: 'PRMTACT-002',
-	EVENT: 'PRMTACT-001',
-	MISCELLANEOUS_MARKETING: 'PRMTACT-004',
+const TypeActivityKey = {
+	CONTENT_MARKETING: 'prmtact003',
+	DIGITAL_MARKETING: 'prmtact002',
+	EVENT: 'prmtact001',
+	MISCELLANEOUS_MARKETING: 'prmtact004',
+};
+
+const ActivityStatus = {
+	ACTIVE: 'active',
+	APPROVED: 'approved',
+	CLAIMED: 'claimed',
+	EXPIRED: 'expired',
+	UNCLAIMED: 'unclaimed',
+};
+
+const activityStatusClassName = {
+	[ActivityStatus.ACTIVE]: 'label label-tonal-success ml-2',
+	[ActivityStatus.APPROVED]: 'label label-tonal-success ml-2',
+	[ActivityStatus.EXPIRED]: 'label label-tonal-danger ml-2',
+};
+
+const activityClaimStatusClassName = {
+	[ActivityStatus.CLAIMED]: 'ml-3 label label-tonal-info ml-2',
+	[ActivityStatus.UNCLAIMED]: 'ml-3 label label-tonal-danger ml-2',
 };
 
 const CampaignActivityTable = ({mdfRequestActivity}) => {
 	const fieldsByTypeActivity = {
-		[TypeActivityExternalReferenceCode.DIGITAL_MARKETING]: getDigitalMarketFields(
+		[TypeActivityKey.DIGITAL_MARKETING]: getDigitalMarketFields(
 			mdfRequestActivity
 		),
-		[TypeActivityExternalReferenceCode.CONTENT_MARKETING]: getContentMarketFields(
+		[TypeActivityKey.CONTENT_MARKETING]: getContentMarketFields(
 			mdfRequestActivity
 		),
-		[TypeActivityExternalReferenceCode.EVENT]: getEventFields(
-			mdfRequestActivity
-		),
-		[TypeActivityExternalReferenceCode.MISCELLANEOUS_MARKETING]: getMiscellaneousMarketingField(
+		[TypeActivityKey.EVENT]: getEventFields(mdfRequestActivity),
+		[TypeActivityKey.MISCELLANEOUS_MARKETING]: getMiscellaneousMarketingField(
 			mdfRequestActivity
 		),
 	};
+
+	const options = {timeZone: 'UTC'};
 
 	return (
 		<Table
@@ -211,25 +195,20 @@ const CampaignActivityTable = ({mdfRequestActivity}) => {
 				},
 				{
 					title: 'Type of Activity',
-					value:
-						mdfRequestActivity
-							.r_typeActivityToActivities_c_typeActivity.name,
+					value: mdfRequestActivity.typeActivity.name,
 				},
 				{
 					title: 'Tactic',
-					value:
-						mdfRequestActivity.r_tacticToActivities_c_tactic.name,
+					value: mdfRequestActivity.tactic.name,
 				},
-				...fieldsByTypeActivity[
-					mdfRequestActivity.r_typeActivityToActivities_c_typeActivity
-						.externalReferenceCode
-				],
+				...fieldsByTypeActivity[mdfRequestActivity.typeActivity.key],
 				{
 					title: 'Start Date',
 					value: new Date(
 						mdfRequestActivity.startDate
 					).toLocaleDateString(
-						Liferay.ThemeDisplay.getBCP47LanguageId()
+						Liferay.ThemeDisplay.getBCP47LanguageId(),
+						options
 					),
 				},
 				{
@@ -237,7 +216,8 @@ const CampaignActivityTable = ({mdfRequestActivity}) => {
 					value: new Date(
 						mdfRequestActivity.endDate
 					).toLocaleDateString(
-						Liferay.ThemeDisplay.getBCP47LanguageId()
+						Liferay.ThemeDisplay.getBCP47LanguageId(),
+						options
 					),
 				},
 			]}
@@ -281,6 +261,7 @@ const Table = ({items, title}) => (
 const DATE_FORMAT_OPTION = {
 	day: 'numeric',
 	month: 'short',
+	timeZone: 'UTC',
 };
 
 const RangeDate = ({endDate, startDate}) => (
@@ -299,38 +280,100 @@ const RangeDate = ({endDate, startDate}) => (
 	</div>
 );
 
-const Panel = ({children, mdfRequestActivity}) => (
-	<ClayPanel
-		className="border-brand-primary-lighten-4"
-		collapsable
-		displayTitle={
-			<ClayPanel.Title className="py-2 text-dark">
-				<RangeDate
-					endDate={mdfRequestActivity.endDate}
-					startDate={mdfRequestActivity.startDate}
-				/>
+const Panel = ({children, mdfRequestActivity}) => {
+	const activityClaimStatus = mdfRequestActivity.actToMDFClmActs
+		.map((mdfClaimActivity) => {
+			return (
+				mdfClaimActivity.r_mdfClmToMDFClmActs_c_mdfClaim.mdfClaimStatus
+					.key !== 'draft'
+			);
+		})
+		.includes(true);
 
-				<h4 className="mb-1">
-					{mdfRequestActivity.name} ({mdfRequestActivity.id})
-				</h4>
-			</ClayPanel.Title>
-		}
-		showCollapseIcon
-		spritemap
-	>
-		<ClayPanel.Body>{children}</ClayPanel.Body>
-	</ClayPanel>
-);
+	const daysLeftToClaim = Math.ceil(
+		(new Date(mdfRequestActivity.endDate) - new Date()) / (1000 * 3600 * 24)
+	);
+
+	return (
+		<ClayPanel
+			className="border-brand-primary-lighten-4"
+			collapsable
+			displayTitle={
+				<ClayPanel.Title className="py-2 text-dark">
+					<RangeDate
+						endDate={mdfRequestActivity.endDate}
+						startDate={mdfRequestActivity.startDate}
+					/>
+
+					<h4 className="mb-1">
+						{mdfRequestActivity.name} ({mdfRequestActivity.id})
+					</h4>
+
+					<div className="align-items-center d-sm-flex mb-1 text-neutral-7 text-weight-semi-bold">
+						<p className="mb-0">
+							Claim Status:
+							<div
+								className={
+									activityClaimStatusClassName[
+										activityClaimStatus
+											? 'claimed'
+											: 'unclaimed'
+									]
+								}
+							>
+								{activityClaimStatus ? 'Claimed' : 'Unclaimed'}
+							</div>
+						</p>
+					</div>
+
+					<div className="align-items-center d-sm-flex mb-1 text-neutral-7 text-weight-semi-bold">
+						<p className="mb-0">
+							Request Status:
+							<div
+								className={
+									activityStatusClassName[
+										mdfRequestActivity.activityStatus.key
+									]
+								}
+							>
+								{mdfRequestActivity.activityStatus.name}
+							</div>
+						</p>
+
+						<div className="font-weight-light ml-sm-2">
+							{daysLeftToClaim > 0 &&
+								`${daysLeftToClaim} days left to claim`}
+						</div>
+					</div>
+				</ClayPanel.Title>
+			}
+			showCollapseIcon
+			spritemap
+		>
+			<ClayPanel.Body>{children}</ClayPanel.Body>
+		</ClayPanel>
+	);
+};
 
 export default function () {
 	const [activities, setActivities] = useState();
+
 	const [loading, setLoading] = useState(true);
+
+	const findRequestIdUrl = (paramsUrl) => {
+		const splitParamsUrl = paramsUrl.split('?');
+
+		return splitParamsUrl[0];
+	};
+
+	const currentPath = Liferay.currentURL.split('/');
+	const mdfRequestId = findRequestIdUrl(currentPath.at(-1));
 
 	useEffect(() => {
 		const getActivities = async () => {
 			// eslint-disable-next-line @liferay/portal/no-global-fetch
 			const response = await fetch(
-				`/o/c/mdfrequests/${mdfRequestId}/mdfRequestToActivities/?nestedFields=typeActivity,tactic`,
+				`/o/c/mdfrequests/${mdfRequestId}/mdfReqToActs?nestedFields=actToBgts,actToMDFClmActs,r_mdfClmToMDFClmActs_c_mdfClaimId&nestedFieldsDepth=3`,
 				{
 					headers: {
 						'accept': 'application/json',
@@ -353,9 +396,10 @@ export default function () {
 			});
 		};
 
-		if (mdfRequestId) {
+		if (!isNaN(mdfRequestId)) {
 			getActivities();
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	if (loading) {
@@ -376,7 +420,7 @@ export default function () {
 						/>
 
 						<BudgetBreakdownTable
-							mdfRequestActivityId={mdfRequestActivity.id}
+							actToBgts={mdfRequestActivity.actToBgts}
 						/>
 
 						<LeadListTable

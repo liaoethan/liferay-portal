@@ -14,7 +14,7 @@
 
 package com.liferay.asset.publisher.web.internal.action;
 
-import com.liferay.asset.kernel.action.AssetEntryAction;
+import com.liferay.asset.publisher.action.AssetEntryAction;
 import com.liferay.osgi.service.tracker.collections.ServiceTrackerMapBuilder;
 import com.liferay.osgi.service.tracker.collections.map.PropertyServiceReferenceComparator;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
@@ -29,7 +29,7 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Jürgen Kappler
  */
-@Component(immediate = true, service = AssetEntryActionRegistry.class)
+@Component(service = AssetEntryActionRegistry.class)
 public class AssetEntryActionRegistry {
 
 	public List<AssetEntryAction<?>> getAssetEntryActions(String className) {

@@ -14,6 +14,10 @@
 
 package com.liferay.journal.service.impl;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.model.AssetLinkConstants;
+import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.asset.kernel.service.AssetLinkLocalService;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
@@ -45,6 +49,7 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -83,7 +88,7 @@ public class JournalFeedLocalServiceImpl
 		User user = _userLocalService.getUser(userId);
 		feedId = StringUtil.toUpperCase(StringUtil.trim(feedId));
 
-		validate(
+		_validate(
 			user.getCompanyId(), groupId, feedId, autoFeedId, name,
 			ddmStructureKey, targetLayoutFriendlyUrl, contentField);
 
@@ -125,6 +130,14 @@ public class JournalFeedLocalServiceImpl
 		feed.setExpandoBridgeAttributes(serviceContext);
 
 		feed = journalFeedPersistence.update(feed);
+
+		// Asset
+
+		_updateAssetEntry(
+			userId, feed, serviceContext.getAssetCategoryIds(),
+			serviceContext.getAssetTagNames(),
+			serviceContext.getAssetLinkEntryIds(),
+			serviceContext.getAssetPriority());
 
 		// DDM Structure Link
 
@@ -194,6 +207,17 @@ public class JournalFeedLocalServiceImpl
 
 		journalFeedPersistence.remove(feed);
 
+		// Resources
+
+		_resourceLocalService.deleteResource(
+			feed.getCompanyId(), JournalFeed.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL, feed.getId());
+
+		// Asset
+
+		_assetEntryLocalService.deleteEntry(
+			JournalFeed.class.getName(), feed.getId());
+
 		// DDM Structure Link
 
 		DDMStructure ddmStructure = _ddmStructureLocalService.getStructure(
@@ -204,12 +228,6 @@ public class JournalFeedLocalServiceImpl
 		_ddmStructureLinkLocalService.deleteStructureLink(
 			_classNameLocalService.getClassNameId(JournalFeed.class),
 			feed.getPrimaryKey(), ddmStructure.getStructureId());
-
-		// Resources
-
-		_resourceLocalService.deleteResource(
-			feed.getCompanyId(), JournalFeed.class.getName(),
-			ResourceConstants.SCOPE_INDIVIDUAL, feed.getId());
 
 		// Expando
 
@@ -316,7 +334,7 @@ public class JournalFeedLocalServiceImpl
 
 		JournalFeed feed = journalFeedPersistence.findByG_F(groupId, feedId);
 
-		validate(
+		_validate(
 			feed.getCompanyId(), groupId, name, ddmStructureKey,
 			targetLayoutFriendlyUrl, contentField);
 
@@ -345,6 +363,15 @@ public class JournalFeedLocalServiceImpl
 
 		feed = journalFeedPersistence.update(feed);
 
+		// Asset
+
+		_updateAssetEntry(
+			serviceContext.getUserId(), feed,
+			serviceContext.getAssetCategoryIds(),
+			serviceContext.getAssetTagNames(),
+			serviceContext.getAssetLinkEntryIds(),
+			serviceContext.getAssetPriority());
+
 		// DDM Structure Link
 
 		long classNameId = _classNameLocalService.getClassNameId(
@@ -366,7 +393,7 @@ public class JournalFeedLocalServiceImpl
 		return feed;
 	}
 
-	protected boolean isValidStructureOptionValue(
+	private boolean _isValidStructureOptionValue(
 		Map<String, DDMFormField> ddmFormFieldsMap, String contentField) {
 
 		for (DDMFormField ddmFormField : ddmFormFieldsMap.values()) {
@@ -394,7 +421,25 @@ public class JournalFeedLocalServiceImpl
 		return false;
 	}
 
-	protected void validate(
+	private void _updateAssetEntry(
+			long userId, JournalFeed feed, long[] assetCategoryIds,
+			String[] assetTagNames, long[] assetLinkEntryIds, Double priority)
+		throws PortalException {
+
+		AssetEntry assetEntry = _assetEntryLocalService.updateEntry(
+			userId, feed.getGroupId(), feed.getCreateDate(),
+			feed.getModifiedDate(), JournalFeed.class.getName(), feed.getId(),
+			feed.getUuid(), 0, assetCategoryIds, assetTagNames, true, true,
+			null, null, feed.getCreateDate(), null, ContentTypes.TEXT_PLAIN,
+			feed.getName(), feed.getDescription(), null, null, null, 0, 0,
+			priority);
+
+		_assetLinkLocalService.updateLinks(
+			userId, assetEntry.getEntryId(), assetLinkEntryIds,
+			AssetLinkConstants.TYPE_RELATED);
+	}
+
+	private void _validate(
 			long companyId, long groupId, String feedId, boolean autoFeedId,
 			String name, String ddmStructureKey, String targetLayoutFriendlyUrl,
 			String contentField)
@@ -418,12 +463,12 @@ public class JournalFeedLocalServiceImpl
 			}
 		}
 
-		validate(
+		_validate(
 			companyId, groupId, name, ddmStructureKey, targetLayoutFriendlyUrl,
 			contentField);
 	}
 
-	protected void validate(
+	private void _validate(
 			long companyId, long groupId, String name, String ddmStructureKey,
 			String targetLayoutFriendlyUrl, String contentField)
 		throws PortalException {
@@ -462,11 +507,17 @@ public class JournalFeedLocalServiceImpl
 			return;
 		}
 
-		if (!isValidStructureOptionValue(ddmFormFieldsMap, contentField)) {
+		if (!_isValidStructureOptionValue(ddmFormFieldsMap, contentField)) {
 			throw new FeedContentFieldException(
 				"Invalid content field " + contentField);
 		}
 	}
+
+	@Reference
+	private AssetEntryLocalService _assetEntryLocalService;
+
+	@Reference
+	private AssetLinkLocalService _assetLinkLocalService;
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;

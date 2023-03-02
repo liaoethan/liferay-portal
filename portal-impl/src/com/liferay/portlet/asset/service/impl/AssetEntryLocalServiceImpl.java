@@ -20,7 +20,6 @@ import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetLink;
 import com.liferay.asset.kernel.model.AssetLinkConstants;
-import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetLinkLocalService;
@@ -61,6 +60,7 @@ import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.RenderLayoutContentThreadLocal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.view.count.ViewCountManagerUtil;
@@ -437,6 +437,10 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 	@Override
 	public void incrementViewCounter(long userId, AssetEntry assetEntry)
 		throws PortalException {
+
+		if (RenderLayoutContentThreadLocal.isRenderLayoutContent()) {
+			return;
+		}
 
 		User user = _userLocalService.getUser(userId);
 
@@ -1308,21 +1312,7 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 			};
 		}
 
-		List<AssetRendererFactory<?>> rendererFactories =
-			AssetRendererFactoryRegistryUtil.getAssetRendererFactories(
-				companyId);
-
-		long[] classNameIds = new long[rendererFactories.size()];
-
-		for (int i = 0; i < rendererFactories.size(); i++) {
-			AssetRendererFactory<?> assetRendererFactory =
-				rendererFactories.get(i);
-
-			classNameIds[i] = _classNameLocalService.getClassNameId(
-				assetRendererFactory.getClassName());
-		}
-
-		return classNameIds;
+		return AssetRendererFactoryRegistryUtil.getClassNameIds(companyId);
 	}
 
 	protected long[] getTagIds(long[] groupIds, String tagName) {

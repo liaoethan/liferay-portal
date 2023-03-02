@@ -17,9 +17,15 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<ThemeJSCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<ThemeJSCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-ThemeJSCET themeJSCET = editClientExtensionEntryPartDisplayContext.getCET();
+ThemeJSCET themeJSCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input ignoreRequestValue="<%= true %>" label="url" name="url" type="text" value="<%= themeJSCET.getURL() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input ignoreRequestValue="<%= true %>" label="main-js-url" name="url" required="<%= true %>" type="text" value="<%= themeJSCET.getURL() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="this-javascript-replaces-main-js" />
+	</div>
+</aui:field-wrapper>

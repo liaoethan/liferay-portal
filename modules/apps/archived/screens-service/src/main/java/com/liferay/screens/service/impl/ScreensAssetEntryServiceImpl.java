@@ -39,7 +39,7 @@ import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -52,7 +52,6 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.PortletItemLocalService;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
@@ -159,7 +158,7 @@ public class ScreensAssetEntryServiceImpl
 				return toJSONArray(assetEntries, locale);
 			}
 
-			return JSONFactoryUtil.createJSONArray();
+			return _jsonFactory.createJSONArray();
 		}
 
 		try {
@@ -260,7 +259,7 @@ public class ScreensAssetEntryServiceImpl
 			return getUserJSONObject(assetEntry);
 		}
 
-		return JSONFactoryUtil.createJSONObject();
+		return _jsonFactory.createJSONObject();
 	}
 
 	protected JSONObject getBlogsEntryJSONObject(AssetEntry assetEntry)
@@ -268,8 +267,8 @@ public class ScreensAssetEntryServiceImpl
 
 		return JSONUtil.put(
 			"blogsEntry",
-			JSONFactoryUtil.createJSONObject(
-				JSONFactoryUtil.looseSerialize(
+			_jsonFactory.createJSONObject(
+				_jsonFactory.looseSerialize(
 					_blogsEntryService.getEntry(assetEntry.getClassPK()))));
 	}
 
@@ -281,8 +280,8 @@ public class ScreensAssetEntryServiceImpl
 
 		return JSONUtil.put(
 			"fileEntry",
-			JSONFactoryUtil.createJSONObject(
-				JSONFactoryUtil.looseSerialize(fileEntry))
+			_jsonFactory.createJSONObject(
+				_jsonFactory.looseSerialize(fileEntry))
 		).put(
 			"url", getFileEntryPreviewURL(fileEntry)
 		);
@@ -323,14 +322,13 @@ public class ScreensAssetEntryServiceImpl
 				journalArticleResource.getArticleId());
 		}
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			JSONFactoryUtil.looseSerialize(journalArticle));
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			_jsonFactory.looseSerialize(journalArticle));
 
 		JSONObject journalArticleJSONObject = JSONUtil.put(
 			"DDMStructure",
-			JSONFactoryUtil.createJSONObject(
-				JSONFactoryUtil.looseSerialize(
-					journalArticle.getDDMStructure()))
+			_jsonFactory.createJSONObject(
+				_jsonFactory.looseSerialize(journalArticle.getDDMStructure()))
 		).put(
 			"modelAttributes", jsonObject
 		).put(
@@ -349,15 +347,14 @@ public class ScreensAssetEntryServiceImpl
 
 		return JSONUtil.put(
 			"user",
-			JSONFactoryUtil.createJSONObject(
-				JSONFactoryUtil.looseSerialize(user)));
+			_jsonFactory.createJSONObject(_jsonFactory.looseSerialize(user)));
 	}
 
 	protected JSONArray toJSONArray(
 			List<AssetEntry> assetEntries, Locale locale)
 		throws PortalException {
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (AssetEntry assetEntry : assetEntries) {
 			JSONObject jsonObject = toJSONObject(assetEntry, locale);
@@ -371,8 +368,8 @@ public class ScreensAssetEntryServiceImpl
 	protected JSONObject toJSONObject(AssetEntry assetEntry, Locale locale)
 		throws PortalException {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-			JSONFactoryUtil.looseSerialize(assetEntry));
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			_jsonFactory.looseSerialize(assetEntry));
 
 		jsonObject.put(
 			"className", assetEntry.getClassName()
@@ -394,12 +391,6 @@ public class ScreensAssetEntryServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		ScreensAssetEntryServiceImpl.class);
 
-	private static volatile ModelResourcePermission<JournalArticle>
-		_journalArticleModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				ScreensAssetEntryServiceImpl.class,
-				"_journalArticleModelResourcePermission", JournalArticle.class);
-
 	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
 
@@ -415,9 +406,18 @@ public class ScreensAssetEntryServiceImpl
 	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
 
+	@Reference(
+		target = "(model.class.name=com.liferay.journal.model.JournalArticle)"
+	)
+	private ModelResourcePermission<JournalArticle>
+		_journalArticleModelResourcePermission;
+
 	@Reference
 	private JournalArticleResourceLocalService
 		_journalArticleResourceLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

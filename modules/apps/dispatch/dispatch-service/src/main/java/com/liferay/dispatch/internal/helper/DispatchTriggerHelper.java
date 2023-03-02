@@ -51,7 +51,7 @@ public class DispatchTriggerHelper {
 			_schedulerEngineHelper.schedule(
 				trigger, storageType, null,
 				DispatchConstants.EXECUTOR_DESTINATION_NAME,
-				_getPayload(dispatchTriggerId), 1000);
+				_getPayload(dispatchTriggerId));
 
 			if (_log.isDebugEnabled()) {
 				_log.debug(
@@ -96,18 +96,32 @@ public class DispatchTriggerHelper {
 	public Date getNextFireDate(long dispatchTriggerId, StorageType storageType)
 		throws SchedulerException {
 
-		return _schedulerEngineHelper.getNextFireTime(
-			_getJobName(dispatchTriggerId), _getGroupName(dispatchTriggerId),
-			storageType);
+		SchedulerResponse schedulerResponse =
+			_schedulerEngineHelper.getScheduledJob(
+				_getJobName(dispatchTriggerId),
+				_getGroupName(dispatchTriggerId), storageType);
+
+		if (schedulerResponse == null) {
+			return null;
+		}
+
+		return _schedulerEngineHelper.getNextFireTime(schedulerResponse);
 	}
 
 	public Date getPreviousFireDate(
 			long dispatchTriggerId, StorageType storageType)
 		throws SchedulerException {
 
-		return _schedulerEngineHelper.getPreviousFireTime(
-			_getJobName(dispatchTriggerId), _getGroupName(dispatchTriggerId),
-			storageType);
+		SchedulerResponse schedulerResponse =
+			_schedulerEngineHelper.getScheduledJob(
+				_getJobName(dispatchTriggerId),
+				_getGroupName(dispatchTriggerId), storageType);
+
+		if (schedulerResponse == null) {
+			return null;
+		}
+
+		return _schedulerEngineHelper.getPreviousFireTime(schedulerResponse);
 	}
 
 	public void unscheduleSchedulerJob(

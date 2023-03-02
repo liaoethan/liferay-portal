@@ -37,7 +37,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -45,9 +44,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(
-	enabled = false, immediate = true, service = InfoCollectionProvider.class
-)
+@Component(service = InfoCollectionProvider.class)
 public class CPDefinitionInfoCollectionProvider
 	implements InfoCollectionProvider<CPDefinition> {
 
@@ -69,26 +66,20 @@ public class CPDefinitionInfoCollectionProvider
 
 			String keywords = null;
 
-			Pagination pagination = collectionQuery.getPagination();
+			KeywordsInfoFilter keywordsInfoFilter =
+				collectionQuery.getInfoFilter(KeywordsInfoFilter.class);
 
-			Optional<KeywordsInfoFilter> keywordsInfoFilterOptional =
-				collectionQuery.getInfoFilterOptional(KeywordsInfoFilter.class);
-
-			if (keywordsInfoFilterOptional.isPresent()) {
-				KeywordsInfoFilter keywordsInfoFilter =
-					keywordsInfoFilterOptional.get();
-
+			if (keywordsInfoFilter != null) {
 				keywords = keywordsInfoFilter.getKeywords();
 			}
 
+			Pagination pagination = collectionQuery.getPagination();
+
 			Sort sort = null;
 
-			Optional<com.liferay.info.sort.Sort> sortOptional =
-				collectionQuery.getSortOptional();
+			com.liferay.info.sort.Sort infoSort = collectionQuery.getSort();
 
-			if (sortOptional.isPresent()) {
-				com.liferay.info.sort.Sort infoSort = sortOptional.get();
-
+			if (infoSort != null) {
 				sort = new Sort(
 					infoSort.getFieldName(), Sort.LONG_TYPE,
 					infoSort.isReverse());
@@ -98,14 +89,14 @@ public class CPDefinitionInfoCollectionProvider
 				cpDefinitionBaseModelSearchResult =
 					_cpDefinitionService.searchCPDefinitionsByChannelGroupId(
 						serviceContext.getCompanyId(), commerceChannelGroupId,
-						keywords, WorkflowConstants.STATUS_APPROVED,
+						keywords, WorkflowConstants.STATUS_APPROVED, false,
 						pagination.getStart(), pagination.getEnd(), sort);
 			}
 			else {
 				cpDefinitionBaseModelSearchResult =
 					_cpDefinitionService.searchCPDefinitions(
 						serviceContext.getCompanyId(), keywords,
-						WorkflowConstants.STATUS_APPROVED,
+						WorkflowConstants.STATUS_APPROVED, false,
 						pagination.getStart(), pagination.getEnd(), sort);
 			}
 

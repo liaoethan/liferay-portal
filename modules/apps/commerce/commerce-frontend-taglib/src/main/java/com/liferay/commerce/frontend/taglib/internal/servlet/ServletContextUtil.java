@@ -14,6 +14,7 @@
 
 package com.liferay.commerce.frontend.taglib.internal.servlet;
 
+import com.liferay.commerce.constants.CommerceOrderConstants;
 import com.liferay.commerce.frontend.util.ProductHelper;
 import com.liferay.commerce.inventory.engine.CommerceInventoryEngine;
 import com.liferay.commerce.order.CommerceOrderHttpHelper;
@@ -28,8 +29,9 @@ import com.liferay.commerce.product.util.CPSubscriptionTypeRegistry;
 import com.liferay.commerce.service.CommerceOrderItemLocalService;
 import com.liferay.commerce.service.CommerceOrderTypeLocalService;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
-import com.liferay.info.item.renderer.InfoItemRendererTracker;
+import com.liferay.info.item.renderer.InfoItemRendererRegistry;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 
 import javax.servlet.ServletContext;
 
@@ -42,9 +44,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true, service = ServletContextUtil.class
-)
+@Component(service = {})
 public class ServletContextUtil {
 
 	public static CommerceChannelLocalService getCommerceChannelLocalService() {
@@ -63,6 +63,12 @@ public class ServletContextUtil {
 		getCommerceOrderItemLocalService() {
 
 		return _servletContextUtil._getCommerceOrderItemLocalService();
+	}
+
+	public static PortletResourcePermission
+		getCommerceOrderPortletResourcePermission() {
+
+		return _servletContextUtil._getCommerceOrderPortletResourcePermission();
 	}
 
 	public static CommerceOrderTypeLocalService
@@ -105,8 +111,8 @@ public class ServletContextUtil {
 		return _servletContextUtil._getCPSubscriptionTypeRegistry();
 	}
 
-	public static InfoItemRendererTracker getInfoItemRendererTracker() {
-		return _servletContextUtil._getInfoItemRendererTracker();
+	public static InfoItemRendererRegistry getInfoItemRendererRegistry() {
+		return _servletContextUtil._getInfoItemRendererRegistry();
 	}
 
 	public static NPMResolver getNPMResolver() {
@@ -166,6 +172,17 @@ public class ServletContextUtil {
 		_commerceOrderHttpHelper = commerceOrderHttpHelper;
 	}
 
+	@Reference(
+		target = "(resource.name=" + CommerceOrderConstants.RESOURCE_NAME + ")",
+		unbind = "-"
+	)
+	protected void setCommerceOrderPortletResourcePermission(
+		PortletResourcePermission commerceOrderPortletResourcePermission) {
+
+		_commerceOrderPortletResourcePermission =
+			commerceOrderPortletResourcePermission;
+	}
+
 	@Reference(unbind = "-")
 	protected void setCommerceProductPriceCalculation(
 		CommerceProductPriceCalculation commerceProductPriceCalculation) {
@@ -215,10 +232,10 @@ public class ServletContextUtil {
 	}
 
 	@Reference(unbind = "-")
-	protected void setInfoItemRendererTracker(
-		InfoItemRendererTracker infoItemRendererTracker) {
+	protected void setInfoItemRendererRegistry(
+		InfoItemRendererRegistry infoItemRendererRegistry) {
 
-		_infoItemRendererTracker = infoItemRendererTracker;
+		_infoItemRendererRegistry = infoItemRendererRegistry;
 	}
 
 	@Reference(unbind = "-")
@@ -253,6 +270,12 @@ public class ServletContextUtil {
 
 	private CommerceOrderItemLocalService _getCommerceOrderItemLocalService() {
 		return _commerceOrderItemLocalService;
+	}
+
+	private PortletResourcePermission
+		_getCommerceOrderPortletResourcePermission() {
+
+		return _commerceOrderPortletResourcePermission;
 	}
 
 	private CommerceOrderTypeLocalService _getCommerceOrderTypeLocalService() {
@@ -293,8 +316,8 @@ public class ServletContextUtil {
 		return _cpSubscriptionTypeRegistry;
 	}
 
-	private InfoItemRendererTracker _getInfoItemRendererTracker() {
-		return _infoItemRendererTracker;
+	private InfoItemRendererRegistry _getInfoItemRendererRegistry() {
+		return _infoItemRendererRegistry;
 	}
 
 	private NPMResolver _getNPMResolver() {
@@ -315,6 +338,7 @@ public class ServletContextUtil {
 	private CommerceInventoryEngine _commerceInventoryEngine;
 	private CommerceOrderHttpHelper _commerceOrderHttpHelper;
 	private CommerceOrderItemLocalService _commerceOrderItemLocalService;
+	private PortletResourcePermission _commerceOrderPortletResourcePermission;
 	private CommerceOrderTypeLocalService _commerceOrderTypeLocalService;
 	private CommerceProductPriceCalculation _commerceProductPriceCalculation;
 	private ConfigurationProvider _configurationProvider;
@@ -324,7 +348,7 @@ public class ServletContextUtil {
 	private CPFriendlyURL _cpFriendlyURL;
 	private CPInstanceHelper _cpInstanceHelper;
 	private CPSubscriptionTypeRegistry _cpSubscriptionTypeRegistry;
-	private InfoItemRendererTracker _infoItemRendererTracker;
+	private InfoItemRendererRegistry _infoItemRendererRegistry;
 	private NPMResolver _npmResolver;
 	private ProductHelper _productHelper;
 	private ServletContext _servletContext;

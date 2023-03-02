@@ -20,6 +20,10 @@ import com.liferay.client.extension.service.ClientExtensionEntryRelLocalServiceU
 import com.liferay.client.extension.type.CET;
 import com.liferay.client.extension.type.manager.CETManager;
 import com.liferay.exportimport.kernel.staging.StagingUtil;
+import com.liferay.item.selector.ItemSelector;
+import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
+import com.liferay.layout.admin.web.internal.item.selector.MasterLayoutPageTemplateEntryItemSelectorCriterion;
+import com.liferay.layout.admin.web.internal.item.selector.StyleBookEntryItemSelectorCriterion;
 import com.liferay.layout.admin.web.internal.util.FaviconUtil;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
@@ -34,7 +38,8 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
-import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
@@ -76,6 +81,8 @@ public class LayoutLookAndFeelDisplayContext {
 
 		_cetManager = (CETManager)_httpServletRequest.getAttribute(
 			CETManager.class.getName());
+		_itemSelector = (ItemSelector)_httpServletRequest.getAttribute(
+			ItemSelector.class.getName());
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
@@ -122,10 +129,8 @@ public class LayoutLookAndFeelDisplayContext {
 			"globalCSSCETSelectorURL",
 			() -> PortletURLBuilder.create(
 				_layoutsAdminDisplayContext.getCETItemSelectorURL(
-					"selectGlobalCSSCETs",
+					true, "selectGlobalCSSCETs",
 					ClientExtensionEntryConstants.TYPE_GLOBAL_CSS)
-			).setParameter(
-				"multipleSelection", true
 			).buildString()
 		).put(
 			"selectGlobalCSSCETsEventName", "selectGlobalCSSCETs"
@@ -144,10 +149,8 @@ public class LayoutLookAndFeelDisplayContext {
 			"globalJSCETSelectorURL",
 			() -> PortletURLBuilder.create(
 				_layoutsAdminDisplayContext.getCETItemSelectorURL(
-					"selectGlobalJSCETs",
+					true, "selectGlobalJSCETs",
 					ClientExtensionEntryConstants.TYPE_GLOBAL_JS)
-			).setParameter(
-				"multipleSelection", true
 			).buildString()
 		).put(
 			"selectGlobalJSCETsEventName", "selectGlobalJSCETs"
@@ -157,13 +160,26 @@ public class LayoutLookAndFeelDisplayContext {
 	public Map<String, Object> getMasterLayoutConfigurationProps() {
 		return HashMapBuilder.<String, Object>put(
 			"changeMasterLayoutURL",
-			PortletURLBuilder.createRenderURL(
-				_liferayPortletResponse
-			).setMVCPath(
-				"/select_master_layout.jsp"
-			).setWindowState(
-				LiferayWindowState.POP_UP
-			).buildString()
+			() -> {
+				RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+					RequestBackedPortletURLFactoryUtil.create(
+						_httpServletRequest);
+
+				MasterLayoutPageTemplateEntryItemSelectorCriterion
+					masterLayoutPageTemplateEntryItemSelectorCriterion =
+						new MasterLayoutPageTemplateEntryItemSelectorCriterion();
+
+				masterLayoutPageTemplateEntryItemSelectorCriterion.
+					setDesiredItemSelectorReturnTypes(
+						new UUIDItemSelectorReturnType());
+
+				return String.valueOf(
+					_itemSelector.getItemSelectorURL(
+						requestBackedPortletURLFactory,
+						_liferayPortletResponse.getNamespace() +
+							"selectMasterLayout",
+						masterLayoutPageTemplateEntryItemSelectorCriterion));
+			}
 		).put(
 			"editMasterLayoutURL",
 			() -> {
@@ -236,23 +252,28 @@ public class LayoutLookAndFeelDisplayContext {
 	public Map<String, Object> getStyleBookConfigurationProps() {
 		return HashMapBuilder.<String, Object>put(
 			"changeStyleBookURL",
-			() -> PortletURLBuilder.createRenderURL(
-				_liferayPortletResponse
-			).setMVCPath(
-				"/select_style_book.jsp"
-			).setParameter(
-				"editableMasterLayout", hasEditableMasterLayout()
-			).setParameter(
-				"selPlid",
-				() -> {
-					Layout selLayout =
-						_layoutsAdminDisplayContext.getSelLayout();
+			() -> {
+				RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+					RequestBackedPortletURLFactoryUtil.create(
+						_httpServletRequest);
 
-					return selLayout.getPlid();
-				}
-			).setWindowState(
-				LiferayWindowState.POP_UP
-			).buildString()
+				StyleBookEntryItemSelectorCriterion
+					styleBookEntryItemSelectorCriterion =
+						new StyleBookEntryItemSelectorCriterion();
+
+				styleBookEntryItemSelectorCriterion.
+					setDesiredItemSelectorReturnTypes(
+						new UUIDItemSelectorReturnType());
+				styleBookEntryItemSelectorCriterion.setSelPlid(
+					_layoutsAdminDisplayContext.getSelPlid());
+
+				return String.valueOf(
+					_itemSelector.getItemSelectorURL(
+						requestBackedPortletURLFactory,
+						_liferayPortletResponse.getNamespace() +
+							"selectStyleBook",
+						styleBookEntryItemSelectorCriterion));
+			}
 		).put(
 			"styleBookEntryId",
 			() -> {
@@ -303,6 +324,40 @@ public class LayoutLookAndFeelDisplayContext {
 		}
 
 		return StringPool.BLANK;
+	}
+
+	public Map<String, Object> getThemeSpritemapCETConfigurationProps(
+		String className, long classPK) {
+
+		return HashMapBuilder.<String, Object>put(
+			"selectThemeSpritemapCETEventName", "selectThemeSpritemapCET"
+		).put(
+			"themeSpritemapCET",
+			() -> {
+				ClientExtensionEntryRel clientExtensionEntryRel =
+					ClientExtensionEntryRelLocalServiceUtil.
+						fetchClientExtensionEntryRel(
+							PortalUtil.getClassNameId(className), classPK,
+							ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP);
+
+				if (clientExtensionEntryRel == null) {
+					return null;
+				}
+
+				return _getCETJSONObject(
+					clientExtensionEntryRel, true,
+					LanguageUtil.format(
+						_themeDisplay.getLocale(), "from-x",
+						_getLayoutRootNodeName(), false));
+			}
+		).put(
+			"themeSpritemapCETSelectorURL",
+			() -> PortletURLBuilder.create(
+				_layoutsAdminDisplayContext.getCETItemSelectorURL(
+					false, "selectThemeSpritemapCET",
+					ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP)
+			).buildString()
+		).build();
 	}
 
 	public boolean hasEditableMasterLayout() {
@@ -557,6 +612,7 @@ public class LayoutLookAndFeelDisplayContext {
 	private Boolean _hasMasterLayout;
 	private Boolean _hasStyleBooks;
 	private final HttpServletRequest _httpServletRequest;
+	private final ItemSelector _itemSelector;
 	private final LayoutsAdminDisplayContext _layoutsAdminDisplayContext;
 	private final LiferayPortletResponse _liferayPortletResponse;
 	private String _masterLayoutName;

@@ -14,7 +14,6 @@
 
 package com.liferay.portal.configuration.persistence.internal.upgrade.registry;
 
-import com.liferay.portal.configuration.persistence.internal.upgrade.v1_0_0.UpgradeConfigurationPid;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import org.osgi.service.component.annotations.Component;
@@ -22,7 +21,7 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Sam Ziemer
  */
-@Component(immediate = true, service = UpgradeStepRegistrator.class)
+@Component(service = UpgradeStepRegistrator.class)
 public class ConfigurationPersistenceUpgradeStepRegistrator
 	implements UpgradeStepRegistrator {
 
@@ -30,7 +29,15 @@ public class ConfigurationPersistenceUpgradeStepRegistrator
 	public void register(Registry registry) {
 		registry.registerInitialization();
 
-		registry.register("0.0.1", "1.0.0", new UpgradeConfigurationPid());
+		registry.register(
+			"0.0.1", "1.0.0",
+			new com.liferay.portal.configuration.persistence.internal.upgrade.
+				v1_0_0.ConfigurationUpgradeProcess());
+
+		registry.register(
+			"1.0.0", "1.0.1",
+			new com.liferay.portal.configuration.persistence.internal.upgrade.
+				v1_0_1.ConfigurationUpgradeProcess());
 	}
 
 }

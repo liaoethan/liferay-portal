@@ -18,39 +18,54 @@ import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
+import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
+import com.liferay.exportimport.kernel.staging.Staging;
+import com.liferay.fragment.service.FragmentEntryLinkLocalService;
+import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.info.collection.provider.item.selector.criterion.RelatedInfoItemCollectionProviderItemSelectorCriterion;
 import com.liferay.info.item.InfoItemClassDetails;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemDetailsProvider;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
+import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.criteria.InfoItemItemSelectorReturnType;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.layout.content.page.editor.sidebar.panel.ContentPageEditorSidebarPanel;
 import com.liferay.layout.content.page.editor.web.internal.configuration.PageEditorConfiguration;
-import com.liferay.layout.content.page.editor.web.internal.info.search.InfoSearchClassMapperTrackerUtil;
 import com.liferay.layout.content.page.editor.web.internal.util.FragmentCollectionManager;
 import com.liferay.layout.content.page.editor.web.internal.util.FragmentEntryLinkManager;
 import com.liferay.layout.content.page.editor.web.internal.util.MappingContentUtil;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
-import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServiceUtil;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.portlet.PortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutSetLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
+import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.segments.configuration.provider.SegmentsConfigurationProvider;
 import com.liferay.segments.manager.SegmentsExperienceManager;
+import com.liferay.segments.service.SegmentsExperienceLocalService;
+import com.liferay.segments.service.SegmentsExperimentRelLocalService;
 import com.liferay.staging.StagingGroupHelper;
+import com.liferay.style.book.service.StyleBookEntryLocalService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,31 +85,52 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 	extends ContentPageEditorDisplayContext {
 
 	public ContentPageEditorLayoutPageTemplateDisplayContext(
+		DDMStructureLocalService ddmStructureLocalService,
 		List<ContentPageEditorSidebarPanel> contentPageEditorSidebarPanels,
 		FragmentCollectionManager fragmentCollectionManager,
 		FragmentEntryLinkManager fragmentEntryLinkManager,
+		FragmentEntryLinkLocalService fragmentEntryLinkLocalService,
+		FragmentEntryLocalService fragmentEntryLocalService,
 		FrontendTokenDefinitionRegistry frontendTokenDefinitionRegistry,
 		HttpServletRequest httpServletRequest,
-		InfoItemServiceTracker infoItemServiceTracker,
-		ItemSelector itemSelector,
+		InfoItemServiceRegistry infoItemServiceRegistry,
+		InfoSearchClassMapperRegistry infoSearchClassMapperRegistry,
+		ItemSelector itemSelector, JSONFactory jsonFactory, Language language,
+		LayoutLocalService layoutLocalService,
+		LayoutSetLocalService layoutSetLocalService,
+		LayoutPageTemplateEntryLocalService layoutPageTemplateEntryLocalService,
+		LayoutPageTemplateEntryService layoutPageTemplateEntryService,
+		LayoutPermission layoutPermission,
 		PageEditorConfiguration pageEditorConfiguration,
-		boolean pageIsDisplayPage, PortletRequest portletRequest,
-		RenderResponse renderResponse,
+		boolean pageIsDisplayPage, Portal portal, PortletRequest portletRequest,
+		PortletURLFactory portletURLFactory, RenderResponse renderResponse,
 		SegmentsConfigurationProvider segmentsConfigurationProvider,
 		SegmentsExperienceManager segmentsExperienceManager,
-		StagingGroupHelper stagingGroupHelper) {
+		SegmentsExperienceLocalService segmentsExperienceLocalService,
+		SegmentsExperimentRelLocalService segmentsExperimentRelLocalService,
+		Staging staging, StagingGroupHelper stagingGroupHelper,
+		StyleBookEntryLocalService styleBookEntryLocalService,
+		UserLocalService userLocalService,
+		WorkflowDefinitionLinkLocalService workflowDefinitionLinkLocalService) {
 
 		super(
 			contentPageEditorSidebarPanels, fragmentCollectionManager,
-			fragmentEntryLinkManager, frontendTokenDefinitionRegistry,
-			httpServletRequest, infoItemServiceTracker, itemSelector,
-			pageEditorConfiguration, portletRequest, renderResponse,
+			fragmentEntryLinkManager, fragmentEntryLinkLocalService,
+			fragmentEntryLocalService, frontendTokenDefinitionRegistry,
+			httpServletRequest, infoItemServiceRegistry,
+			infoSearchClassMapperRegistry, itemSelector, jsonFactory, language,
+			layoutLocalService, layoutPageTemplateEntryLocalService,
+			layoutPageTemplateEntryService, layoutPermission,
+			layoutSetLocalService, pageEditorConfiguration, portal,
+			portletRequest, portletURLFactory, renderResponse,
 			segmentsConfigurationProvider, segmentsExperienceManager,
-			stagingGroupHelper);
+			segmentsExperienceLocalService, segmentsExperimentRelLocalService,
+			staging, stagingGroupHelper, styleBookEntryLocalService,
+			userLocalService, workflowDefinitionLinkLocalService);
 
+		_ddmStructureLocalService = ddmStructureLocalService;
 		_itemSelector = itemSelector;
 		_pageIsDisplayPage = pageIsDisplayPage;
-		_renderResponse = renderResponse;
 	}
 
 	@Override
@@ -168,7 +204,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 
 		AssetRendererFactory<?> assetRendererFactory =
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
-				InfoSearchClassMapperTrackerUtil.getSearchClassName(className));
+				infoSearchClassMapperRegistry.getSearchClassName(className));
 
 		if (assetRendererFactory != null) {
 			sourceItemTypes.add(AssetEntry.class.getName());
@@ -199,7 +235,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 				key,
 				MappingContentUtil.getMappingFieldsJSONArray(
 					String.valueOf(layoutPageTemplateEntry.getClassTypeId()),
-					themeDisplay.getScopeGroupId(), infoItemServiceTracker,
+					themeDisplay.getScopeGroupId(), infoItemServiceRegistry,
 					layoutPageTemplateEntry.getClassName(),
 					themeDisplay.getLocale()));
 		}
@@ -229,7 +265,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 
 		PortletURL infoItemSelectorURL = _itemSelector.getItemSelectorURL(
 			RequestBackedPortletURLFactoryUtil.create(httpServletRequest),
-			_renderResponse.getNamespace() + "selectInfoItem",
+			renderResponse.getNamespace() + "selectInfoItem",
 			itemSelectorCriterion);
 
 		if (infoItemSelectorURL == null) {
@@ -244,8 +280,8 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 			return StringPool.BLANK;
 		}
 
-		DDMStructure ddmStructure =
-			DDMStructureLocalServiceUtil.fetchDDMStructure(classTypeId);
+		DDMStructure ddmStructure = _ddmStructureLocalService.fetchDDMStructure(
+			classTypeId);
 
 		if (ddmStructure != null) {
 			return ddmStructure.getStructureKey();
@@ -262,7 +298,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 		Layout draftLayout = themeDisplay.getLayout();
 
 		_layoutPageTemplateEntry =
-			LayoutPageTemplateEntryLocalServiceUtil.
+			layoutPageTemplateEntryLocalService.
 				fetchLayoutPageTemplateEntryByPlid(draftLayout.getClassPK());
 
 		return _layoutPageTemplateEntry;
@@ -273,7 +309,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 			_getLayoutPageTemplateEntry();
 
 		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-			infoItemServiceTracker.getFirstInfoItemService(
+			infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class,
 				layoutPageTemplateEntry.getClassName());
 
@@ -298,7 +334,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 			_getLayoutPageTemplateEntry();
 
 		InfoItemFormProvider<?> infoItemFormProvider =
-			infoItemServiceTracker.getFirstInfoItemService(
+			infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormProvider.class,
 				layoutPageTemplateEntry.getClassName());
 
@@ -307,7 +343,7 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 		}
 
 		InfoItemDetailsProvider<?> infoItemDetailsProvider =
-			infoItemServiceTracker.getFirstInfoItemService(
+			infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemDetailsProvider.class,
 				layoutPageTemplateEntry.getClassName());
 
@@ -333,19 +369,9 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 
 		return HashMapBuilder.<String, Object>put(
 			"mappingDescription",
-			LanguageUtil.get(
+			language.get(
 				httpServletRequest,
 				"content-source-selected-for-this-display-page-template")
-		).put(
-			"type",
-			HashMapBuilder.<String, Object>put(
-				"groupTypeTitle",
-				LanguageUtil.get(httpServletRequest, "content-type")
-			).put(
-				"id", layoutPageTemplateEntry.getClassNameId()
-			).put(
-				"label", _getMappingTypeLabel()
-			).build()
 		).put(
 			"subtype",
 			() -> {
@@ -357,19 +383,29 @@ public class ContentPageEditorLayoutPageTemplateDisplayContext
 
 				return HashMapBuilder.<String, Object>put(
 					"groupSubtypeTitle",
-					LanguageUtil.get(httpServletRequest, "subtype")
+					language.get(httpServletRequest, "subtype")
 				).put(
 					"id", layoutPageTemplateEntry.getClassTypeId()
 				).put(
 					"label", subtypeLabel
 				).build();
 			}
+		).put(
+			"type",
+			HashMapBuilder.<String, Object>put(
+				"groupTypeTitle",
+				language.get(httpServletRequest, "content-type")
+			).put(
+				"id", layoutPageTemplateEntry.getClassNameId()
+			).put(
+				"label", _getMappingTypeLabel()
+			).build()
 		).build();
 	}
 
+	private final DDMStructureLocalService _ddmStructureLocalService;
 	private final ItemSelector _itemSelector;
 	private LayoutPageTemplateEntry _layoutPageTemplateEntry;
 	private final boolean _pageIsDisplayPage;
-	private final RenderResponse _renderResponse;
 
 }

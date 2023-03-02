@@ -18,14 +18,13 @@ import {useOutletContext} from 'react-router-dom';
 import Button from '../../../components/Button';
 import Container from '../../../components/Layout/Container';
 import ListView from '../../../components/ListView';
+import SearchBuilder from '../../../core/SearchBuilder';
 import i18n from '../../../i18n';
 import {
 	TestrayCase,
 	TestrayRequirementCase,
-	caseRequirementsResource,
-	getCasesRequerimentsTransformData,
+	testrayCaseRequirementsImpl,
 } from '../../../services/rest';
-import {searchUtil} from '../../../util/search';
 import CaseRequirementLinkModal from './CaseRequirementLinkModal';
 import useCaseRequirementActions from './useCaseRequirementActions';
 
@@ -52,9 +51,10 @@ const CaseRequirement = () => {
 							{i18n.translate('link-requirements')}
 						</Button>
 					),
+					filterSchema: 'caseRequirements',
 					title: i18n.translate('requirements'),
 				}}
-				resource={caseRequirementsResource}
+				resource={testrayCaseRequirementsImpl.resource}
 				tableProps={{
 					columns: [
 						{
@@ -63,7 +63,7 @@ const CaseRequirement = () => {
 							render: (
 								_,
 								requirementCase: TestrayRequirementCase
-							) => requirementCase.requirement.key,
+							) => requirementCase.requirement?.key,
 							value: i18n.translate('key'),
 						},
 						{
@@ -73,11 +73,11 @@ const CaseRequirement = () => {
 								requirementCase: TestrayRequirementCase
 							) => (
 								<a
-									href={requirementCase.requirement.linkURL}
+									href={requirementCase.requirement?.linkURL}
 									rel="noopener noreferrer"
 									target="_blank"
 								>
-									{requirementCase.requirement.linkTitle}
+									{requirementCase.requirement?.linkTitle}
 
 									<ClayIcon
 										className="ml-2"
@@ -93,7 +93,7 @@ const CaseRequirement = () => {
 								_,
 								requirementCase: TestrayRequirementCase
 							) =>
-								requirementCase.requirement.component?.team
+								requirementCase.requirement?.component?.team
 									?.name,
 							value: i18n.translate('team'),
 						},
@@ -102,7 +102,7 @@ const CaseRequirement = () => {
 							render: (
 								_,
 								requirementCase: TestrayRequirementCase
-							) => requirementCase.requirement.component?.name,
+							) => requirementCase.requirement?.component?.name,
 							value: i18n.translate('component'),
 						},
 						{
@@ -110,7 +110,7 @@ const CaseRequirement = () => {
 							render: (
 								_,
 								requirementCase: TestrayRequirementCase
-							) => requirementCase.requirement.components,
+							) => requirementCase.requirement?.components,
 							value: i18n.translate('jira-components'),
 						},
 						{
@@ -118,7 +118,7 @@ const CaseRequirement = () => {
 							render: (
 								_,
 								requirementCase: TestrayRequirementCase
-							) => requirementCase.requirement.summary,
+							) => requirementCase.requirement?.summary,
 							value: i18n.translate('summary'),
 						},
 						{
@@ -126,16 +126,18 @@ const CaseRequirement = () => {
 							render: (
 								_,
 								requirementCase: TestrayRequirementCase
-							) => requirementCase.requirement.description,
+							) => requirementCase.requirement?.description,
 							value: i18n.translate('description'),
 						},
 					],
 					navigateTo: ({requirement}: TestrayRequirementCase) =>
-						`/project/${projectId}/requirements/${requirement.id}`,
+						`/project/${projectId}/requirements/${requirement?.id}`,
 				}}
-				transformData={getCasesRequerimentsTransformData}
+				transformData={(response) =>
+					testrayCaseRequirementsImpl.transformDataFromList(response)
+				}
 				variables={{
-					filter: searchUtil.eq('caseId', testrayCase.id),
+					filter: SearchBuilder.eq('caseId', testrayCase.id),
 				}}
 			>
 				{(response) => {

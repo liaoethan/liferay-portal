@@ -24,11 +24,11 @@ Map<String, String> languageIdsMap = TranslatorUtil.getLanguageIdsMap(locale, tr
 if (translation == null) {
 	String translationId = translatorConfiguration.translationId();
 
-	String[] fromAndTolanguageIds = TranslatorUtil.getFromAndToLanguageIds(translationId, languageIdsMap);
+	String[] fromAndToLanguageIds = TranslatorUtil.getFromAndToLanguageIds(translationId, languageIdsMap);
 
-	if (fromAndTolanguageIds != null) {
-		String fromLanguageId = fromAndTolanguageIds[0];
-		String toLanguageId = fromAndTolanguageIds[1];
+	if (fromAndToLanguageIds != null) {
+		String fromLanguageId = fromAndToLanguageIds[0];
+		String toLanguageId = fromAndToLanguageIds[1];
 
 		translation = new Translation(fromLanguageId, toLanguageId, StringPool.BLANK, StringPool.BLANK);
 	}
@@ -59,7 +59,7 @@ if (translation == null) {
 			</c:if>
 
 			<aui:fieldset>
-				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) %>" cssClass="lfr-textarea-container" label="" name="text" type="textarea" value="<%= translation.getFromText() %>" wrap="soft" />
+				<aui:input cssClass="lfr-textarea-container" label="" name="text" type="textarea" value="<%= translation.getFromText() %>" wrap="soft" />
 
 				<aui:select label="language-from" name="fromLanguageId">
 

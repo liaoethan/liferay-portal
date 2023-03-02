@@ -30,8 +30,6 @@ long[] selectableClassNameIds = ParamUtil.getLongValues(request, "selectableClas
 
 String eventName = ParamUtil.getString(request, "eventName", liferayPortletResponse.getNamespace() + "selectKBObject");
 
-String parentTitle = LanguageUtil.get(request, "home");
-
 KBSelectParentDisplayContext kbSelectParentDisplayContext = new KBSelectParentDisplayContext(request, liferayPortletRequest, liferayPortletResponse, renderRequest);
 
 kbSelectParentDisplayContext.populatePortletBreadcrumbEntries(currentURLObj);
@@ -57,7 +55,7 @@ kbSelectParentDisplayContext.populatePortletBreadcrumbEntries(currentURLObj);
 						).put(
 							"resourcePrimKey", kbSelectParentDisplayContext.getParentResourcePrimKey()
 						).put(
-							"title", parentTitle
+							"title", kbSelectParentDisplayContext.getParentTitle()
 						).build()
 					%>'
 					value='<%= (kbSelectParentDisplayContext.getParentResourceClassNameId() == kbFolderClassNameId) ? "select-this-folder" : "select-this-article" %>'
@@ -122,21 +120,21 @@ kbSelectParentDisplayContext.populatePortletBreadcrumbEntries(currentURLObj);
 						</liferay-ui:search-container-column-text>
 
 						<liferay-ui:search-container-column-text
-							cssClass="text-center"
+							cssClass="text-right"
 							href="<%= (rowURL == null) ? StringPool.BLANK : rowURL.toString() %>"
 							name="num-of-kb-folders"
 							value="<%= String.valueOf(kbFoldersCount) %>"
 						/>
 
 						<liferay-ui:search-container-column-text
-							cssClass="text-center"
+							cssClass="text-right"
 							href="<%= (rowURL == null) ? StringPool.BLANK : rowURL.toString() %>"
 							name="num-of-kb-articles"
 							value="<%= String.valueOf(kbArticlesCount) %>"
 						/>
 
 						<liferay-ui:search-container-column-text
-							cssClass="text-center"
+							cssClass="text-right"
 						>
 							<aui:button
 								cssClass="selector-button"
@@ -206,21 +204,21 @@ kbSelectParentDisplayContext.populatePortletBreadcrumbEntries(currentURLObj);
 						</liferay-ui:search-container-column-text>
 
 						<liferay-ui:search-container-column-text
-							cssClass="text-center"
+							cssClass="text-right"
 							href="<%= (rowURL == null) ? StringPool.BLANK : rowURL.toString() %>"
 							name="num-of-kb-folders"
 							value="-"
 						/>
 
 						<liferay-ui:search-container-column-text
-							cssClass="text-center"
+							cssClass="text-right"
 							href="<%= (rowURL == null) ? StringPool.BLANK : rowURL.toString() %>"
 							name="num-of-kb-articles"
 							value="<%= String.valueOf(kbArticlesCount) %>"
 						/>
 
 						<liferay-ui:search-container-column-text
-							cssClass="text-center"
+							cssClass="text-right"
 						>
 							<aui:button
 								cssClass="selector-button"

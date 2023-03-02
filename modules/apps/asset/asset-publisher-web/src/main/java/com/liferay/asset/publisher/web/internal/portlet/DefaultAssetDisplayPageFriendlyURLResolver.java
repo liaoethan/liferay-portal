@@ -74,7 +74,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.portlet.WindowState;
 
@@ -128,8 +127,7 @@ public class DefaultAssetDisplayPageFriendlyURLResolver
 
 			String assetFriendlyURL =
 				_assetDisplayPageFriendlyURLProvider.getFriendlyURL(
-					_portal.getClassName(
-						layoutDisplayPageObjectProvider.getClassNameId()),
+					layoutDisplayPageObjectProvider.getClassName(),
 					layoutDisplayPageObjectProvider.getClassPK(),
 					_portal.getLocale(httpServletRequest), themeDisplay);
 
@@ -201,25 +199,25 @@ public class DefaultAssetDisplayPageFriendlyURLResolver
 	}
 
 	private AssetEntry _getAssetEntry(JournalArticle journalArticle) {
+		AssetEntry assetEntry = _assetEntryLocalService.fetchEntry(
+			JournalArticle.class.getName(), journalArticle.getPrimaryKey());
+
+		if (assetEntry != null) {
+			return assetEntry;
+		}
+
 		AssetRendererFactory<?> assetRendererFactory =
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
 				JournalArticle.class.getName());
 
-		return Optional.ofNullable(
-			_assetEntryLocalService.fetchEntry(
-				JournalArticle.class.getName(), journalArticle.getPrimaryKey())
-		).orElseGet(
-			() -> {
-				try {
-					return assetRendererFactory.getAssetEntry(
-						JournalArticle.class.getName(),
-						journalArticle.getResourcePrimKey());
-				}
-				catch (PortalException portalException) {
-					throw new RuntimeException(portalException);
-				}
-			}
-		);
+		try {
+			return assetRendererFactory.getAssetEntry(
+				JournalArticle.class.getName(),
+				journalArticle.getResourcePrimKey());
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
 	}
 
 	private String _getBasicLayoutURL(
@@ -419,17 +417,18 @@ public class DefaultAssetDisplayPageFriendlyURLResolver
 
 		JournalArticle journalArticle = null;
 
-		String[] versionIds = params.get("version");
-
-		if (ArrayUtil.isNotEmpty(versionIds) && !_isDefaultUser()) {
-			long id = GetterUtil.getLong(versionIds[0]);
-
-			journalArticle = _journalArticleLocalService.fetchArticle(id);
-		}
-
 		String normalizedUrlTitle =
 			_friendlyURLNormalizer.normalizeWithEncoding(
 				_getFullURLTitle(friendlyURL));
+
+		String[] versions = params.get("version");
+
+		if (ArrayUtil.isNotEmpty(versions) && !_isDefaultUser()) {
+			double version = GetterUtil.getDouble(versions[0]);
+
+			journalArticle = _journalArticleLocalService.fetchArticleByUrlTitle(
+				groupId, normalizedUrlTitle, version);
+		}
 
 		if (journalArticle == null) {
 			journalArticle =
@@ -525,7 +524,7 @@ public class DefaultAssetDisplayPageFriendlyURLResolver
 		_getLayoutDisplayPageObjectProvider(JournalArticle journalArticle) {
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			layoutDisplayPageProviderTracker.
+			layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(
 					JournalArticle.class.getName());
 

@@ -20,18 +20,17 @@ const useQuestionsURLUtil = ({context, history, params}) => {
 
 	const {creatorId, sectionTitle, tag} = params;
 
-	function buildURL({
-		filterBy = '',
-		page,
-		pageSize,
-		search,
-		sortBy = '',
-		taggedWith = '',
-		selectedTags = [],
-	}) {
+	function buildParams(params) {
+		const {
+			filterBy = '',
+			page,
+			pageSize,
+			search,
+			sortBy = '',
+			taggedWith = '',
+			selectedTags = [],
+		} = params;
 		const searchParams = new URLSearchParams();
-
-		let url = '/questions';
 
 		searchParams.set('page', page);
 		searchParams.set('pagesize', pageSize);
@@ -56,6 +55,14 @@ const useQuestionsURLUtil = ({context, history, params}) => {
 			}
 		}
 
+		return searchParams.toString();
+	}
+
+	function buildURL(params) {
+		let url = '/questions';
+
+		const searchParams = buildParams(params);
+
 		if (sectionTitle || sectionTitle === ALL_SECTIONS_ID) {
 			url += `/${sectionTitle}`;
 		}
@@ -68,7 +75,7 @@ const useQuestionsURLUtil = ({context, history, params}) => {
 			url += `/creator/${creatorId}`;
 		}
 
-		return `${url}?${searchParams.toString()}`;
+		return `${url}?${searchParams}`;
 	}
 
 	function changePage(params) {
@@ -94,7 +101,7 @@ const useQuestionsURLUtil = ({context, history, params}) => {
 		return false;
 	};
 
-	return {changePage, historyPushParser, navigateToNewQuestion};
+	return {buildParams, changePage, historyPushParser, navigateToNewQuestion};
 };
 
 export default useQuestionsURLUtil;

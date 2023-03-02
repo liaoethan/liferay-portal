@@ -31,11 +31,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Brian Greenwald
  */
-@Component(
-	immediate = true,
-	property = "verify.process.name=com.liferay.portal.security.sso.opensso",
-	service = VerifyProcess.class
-)
+@Component(service = VerifyProcess.class)
 public class OpenSSOCompanySettingsVerifyProcess
 	extends BaseCompanySettingsVerifyProcess {
 

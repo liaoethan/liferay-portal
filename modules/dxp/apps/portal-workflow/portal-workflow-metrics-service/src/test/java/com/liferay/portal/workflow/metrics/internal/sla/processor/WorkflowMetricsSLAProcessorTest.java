@@ -21,9 +21,8 @@ import com.liferay.portal.search.document.DocumentBuilder;
 import com.liferay.portal.search.internal.document.DocumentBuilderImpl;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.workflow.metrics.internal.sla.calendar.DefaultWorkflowMetricsSLACalendar;
-import com.liferay.portal.workflow.metrics.internal.sla.calendar.WorkflowMetricsSLACalendarTrackerImpl;
 import com.liferay.portal.workflow.metrics.model.WorkflowMetricsSLADefinitionVersion;
-import com.liferay.portal.workflow.metrics.sla.calendar.WorkflowMetricsSLACalendarTracker;
+import com.liferay.portal.workflow.metrics.sla.calendar.WorkflowMetricsSLACalendarRegistry;
 import com.liferay.portal.workflow.metrics.sla.processor.WorkflowMetricsSLAStatus;
 
 import java.time.LocalDateTime;
@@ -548,10 +547,10 @@ public class WorkflowMetricsSLAProcessorTest {
 				{
 					setElapsedTime(10000);
 					setModifiedLocalDateTime(nowLocalDateTime);
+					setOnTime(true);
 					setRemainingTime(0);
 					setWorkflowMetricsSLAStatus(
 						WorkflowMetricsSLAStatus.STOPPED);
-					setOnTime(true);
 				}
 			},
 			nowLocalDateTime, true, 0, 1, workflowMetricsSLADefinitionVersion,
@@ -604,20 +603,20 @@ public class WorkflowMetricsSLAProcessorTest {
 		return _dateTimeFormatter.format(nowLocalDateTime);
 	}
 
-	private WorkflowMetricsSLACalendarTracker
-			_mockWorkflowMetricsSLACalendarTracker()
-		throws Exception {
+	private WorkflowMetricsSLACalendarRegistry
+		_mockWorkflowMetricsSLACalendarRegistry() {
 
-		WorkflowMetricsSLACalendarTrackerImpl
-			workflowMetricsSLACalendarTrackerImpl =
-				new WorkflowMetricsSLACalendarTrackerImpl();
+		WorkflowMetricsSLACalendarRegistry workflowMetricsSLACalendarRegistry =
+			Mockito.mock(WorkflowMetricsSLACalendarRegistry.class);
 
-		ReflectionTestUtil.setFieldValue(
-			workflowMetricsSLACalendarTrackerImpl,
-			"_defaultWorkflowMetricsSLACalendar",
-			new DefaultWorkflowMetricsSLACalendar());
+		Mockito.when(
+			workflowMetricsSLACalendarRegistry.getWorkflowMetricsSLACalendar(
+				Mockito.anyString())
+		).thenReturn(
+			new DefaultWorkflowMetricsSLACalendar()
+		);
 
-		return workflowMetricsSLACalendarTrackerImpl;
+		return workflowMetricsSLACalendarRegistry;
 	}
 
 	private void _test(
@@ -654,24 +653,27 @@ public class WorkflowMetricsSLAProcessorTest {
 	}
 
 	private void _test(
-			LocalDateTime completionLocalDateTime,
-			LocalDateTime createLocalDateTime, List<Document> documents,
-			long elapsedTime,
-			WorkflowMetricsSLAInstanceResult
-				lastWorkflowMetricsSLAInstanceResult,
-			LocalDateTime nowLocalDateTime, boolean onTime, long remainingTime,
-			long startNodeId,
-			WorkflowMetricsSLADefinitionVersion
-				workflowMetricsSLADefinitionVersion,
-			WorkflowMetricsSLAStatus workflowMetricsSLAStatus)
-		throws Exception {
+		LocalDateTime completionLocalDateTime,
+		LocalDateTime createLocalDateTime, List<Document> documents,
+		long elapsedTime,
+		WorkflowMetricsSLAInstanceResult lastWorkflowMetricsSLAInstanceResult,
+		LocalDateTime nowLocalDateTime, boolean onTime, long remainingTime,
+		long startNodeId,
+		WorkflowMetricsSLADefinitionVersion workflowMetricsSLADefinitionVersion,
+		WorkflowMetricsSLAStatus workflowMetricsSLAStatus) {
+
+		Mockito.when(
+			workflowMetricsSLADefinitionVersion.getCalendarKey()
+		).thenReturn(
+			""
+		);
 
 		WorkflowMetricsSLAProcessor workflowMetricsSLAProcessor =
 			new WorkflowMetricsSLAProcessor();
 
 		ReflectionTestUtil.setFieldValue(
-			workflowMetricsSLAProcessor, "_workflowMetricsSLACalendarTracker",
-			_mockWorkflowMetricsSLACalendarTracker());
+			workflowMetricsSLAProcessor, "_workflowMetricsSLACalendarRegistry",
+			_mockWorkflowMetricsSLACalendarRegistry());
 
 		WorkflowMetricsSLAInstanceResult workflowMetricsSLAInstanceResult =
 			workflowMetricsSLAProcessor.process(

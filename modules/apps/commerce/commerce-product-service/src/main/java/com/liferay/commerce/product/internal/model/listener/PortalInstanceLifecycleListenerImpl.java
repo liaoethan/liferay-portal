@@ -14,10 +14,12 @@
 
 package com.liferay.commerce.product.internal.model.listener;
 
+import com.liferay.commerce.product.constants.CPConstants;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.store.Store;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -36,13 +38,11 @@ import com.liferay.portal.kernel.repository.RepositoryFactory;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.repository.portletrepository.PortletRepository;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
 
 import java.io.File;
 
@@ -54,10 +54,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Luca Pellizzon
  */
-@Component(
-	enabled = false, immediate = true,
-	service = PortalInstanceLifecycleListener.class
-)
+@Component(service = PortalInstanceLifecycleListener.class)
 public class PortalInstanceLifecycleListenerImpl
 	extends BasePortalInstanceLifecycleListener {
 
@@ -105,12 +102,13 @@ public class PortalInstanceLifecycleListenerImpl
 					user.getUserId(), company.getGroupId(),
 					_portal.getClassNameId(PortletRepository.class.getName()),
 					DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-					PropsKeys.IMAGE_DEFAULT_COMPANY_LOGO, null, null,
-					new UnicodeProperties(), true, serviceContext);
+					PropsKeys.IMAGE_DEFAULT_COMPANY_LOGO, null,
+					CPConstants.SERVICE_NAME_PRODUCT, new UnicodeProperties(),
+					true, serviceContext);
 
 				Image image = _imageTool.getDefaultCompanyLogo();
 
-				File file = FileUtil.createTempFile(image.getTextObj());
+				File file = _file.createTempFile(image.getTextObj());
 
 				try {
 					String mimeType = MimeTypesUtil.getContentType(file);
@@ -123,7 +121,7 @@ public class PortalInstanceLifecycleListenerImpl
 						null, serviceContext);
 				}
 				finally {
-					FileUtil.delete(file);
+					_file.delete(file);
 				}
 			}
 		}
@@ -140,6 +138,9 @@ public class PortalInstanceLifecycleListenerImpl
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private com.liferay.portal.kernel.util.File _file;
 
 	@Reference
 	private ImageTool _imageTool;
@@ -160,7 +161,7 @@ public class PortalInstanceLifecycleListenerImpl
 	@Reference
 	private RepositoryLocalService _repositoryLocalService;
 
-	@Reference(target = "(dl.store.impl.enabled=true)")
-	private StoreFactory _storeFactory;
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 }

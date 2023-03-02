@@ -14,6 +14,8 @@
 
 package com.liferay.jenkins.results.parser;
 
+import com.liferay.jenkins.results.parser.test.clazz.TestClass;
+
 import java.io.IOException;
 
 import java.util.List;
@@ -29,6 +31,17 @@ public abstract class BaseTestResult implements TestResult {
 	@Override
 	public Build getBuild() {
 		return _build;
+	}
+
+	@Override
+	public TestClass getTestClass() {
+		TestClassResult testClassResult = getTestClassResult();
+
+		if (testClassResult == null) {
+			return null;
+		}
+
+		return testClassResult.getTestClass();
 	}
 
 	@Override
@@ -55,6 +68,17 @@ public abstract class BaseTestResult implements TestResult {
 	}
 
 	@Override
+	public TestHistory getTestHistory() {
+		TestClass testClass = getTestClass();
+
+		if (testClass == null) {
+			return null;
+		}
+
+		return testClass.getTestHistory();
+	}
+
+	@Override
 	public boolean isFailing() {
 		String status = getStatus();
 
@@ -69,7 +93,33 @@ public abstract class BaseTestResult implements TestResult {
 
 	@Override
 	public boolean isUniqueFailure() {
-		return !UpstreamFailureUtil.isTestFailingInUpstreamJob(this);
+		if (!isFailing()) {
+			return false;
+		}
+
+		Build build = getBuild();
+
+		if (!build.isCompareToUpstream()) {
+			return true;
+		}
+
+		String batchName = build.getBatchName(build.getJobVariant());
+
+		TopLevelBuild topLevelBuild = build.getTopLevelBuild();
+
+		for (String upstreamFailure :
+				UpstreamFailureUtil.getUpstreamJobFailures(
+					"test", topLevelBuild)) {
+
+			String testFailure = JenkinsResultsParserUtil.combine(
+				getDisplayName(), ",", batchName);
+
+			if (upstreamFailure.equals(testFailure)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	protected BaseTestResult(Build build) {

@@ -58,7 +58,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  * @author Peter Shin
@@ -117,13 +116,7 @@ public class ResourceOpenAPIParser {
 
 							javaMethodSignatures.add(javaMethodSignature);
 
-							List<String> disabledBatchSchemaNames =
-								configYAML.getDisabledBatchSchemaNames();
-
-							if (configYAML.isGenerateBatch() &&
-								!disabledBatchSchemaNames.contains(
-									schemaName)) {
-
+							if (configYAML.isGenerateBatch()) {
 								_addBatchJavaMethodSignature(
 									javaMethodSignature, javaMethodSignatures);
 							}
@@ -1042,25 +1035,24 @@ public class ResourceOpenAPIParser {
 		}
 
 		Integer httpStatusCode = null;
+		Response response = null;
 
 		Set<Map.Entry<ResponseCode, Response>> responseEntrySet =
 			responses.entrySet();
 
-		Stream<Map.Entry<ResponseCode, Response>> responseEntryStream =
-			responseEntrySet.stream();
+		for (Map.Entry<ResponseCode, Response> responseEntry :
+				responseEntrySet) {
 
-		Response response = responseEntryStream.filter(
-			responseEntry -> {
-				ResponseCode responseCode = responseEntry.getKey();
+			ResponseCode responseCode = responseEntry.getKey();
 
-				return responseCode.isDefaultResponse();
+			if (!responseCode.isDefaultResponse()) {
+				continue;
 			}
-		).findFirst(
-		).map(
-			Map.Entry::getValue
-		).orElse(
-			null
-		);
+
+			response = responseEntry.getValue();
+
+			break;
+		}
 
 		for (Map.Entry<ResponseCode, Response> entry : responses.entrySet()) {
 			ResponseCode responseCode = entry.getKey();
@@ -1176,7 +1168,9 @@ public class ResourceOpenAPIParser {
 	private static boolean _isValidParameter(String name, String schemaName) {
 		String schemaVarName = StringUtil.lowerCaseFirstLetter(schemaName);
 
-		if (!name.equals(schemaVarName + "Id") && !name.equals(schemaVarName)) {
+		if (!name.equals("id") && !name.equals(schemaVarName + "Id") &&
+			!name.equals(schemaVarName)) {
+
 			return true;
 		}
 

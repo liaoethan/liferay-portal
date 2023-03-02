@@ -36,15 +36,18 @@ public class ObjectActionServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectAction addObjectAction(
-			long objectDefinitionId, boolean active, String conditionExpression,
-			String description, String name, String objectActionExecutorKey,
-			String objectActionTriggerKey,
+			String externalReferenceCode, long objectDefinitionId,
+			boolean active, String conditionExpression, String description,
+			java.util.Map<java.util.Locale, String> errorMessageMap,
+			java.util.Map<java.util.Locale, String> labelMap, String name,
+			String objectActionExecutorKey, String objectActionTriggerKey,
 			com.liferay.portal.kernel.util.UnicodeProperties
 				parametersUnicodeProperties)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectActionService.addObjectAction(
-			objectDefinitionId, active, conditionExpression, description, name,
+			externalReferenceCode, objectDefinitionId, active,
+			conditionExpression, description, errorMessageMap, labelMap, name,
 			objectActionExecutorKey, objectActionTriggerKey,
 			parametersUnicodeProperties);
 	}
@@ -77,15 +80,18 @@ public class ObjectActionServiceWrapper
 
 	@Override
 	public com.liferay.object.model.ObjectAction updateObjectAction(
-			long objectActionId, boolean active, String conditionExpression,
-			String description, String name, String objectActionExecutorKey,
-			String objectActionTriggerKey,
+			String externalReferenceCode, long objectActionId, boolean active,
+			String conditionExpression, String description,
+			java.util.Map<java.util.Locale, String> errorMessageMap,
+			java.util.Map<java.util.Locale, String> labelMap, String name,
+			String objectActionExecutorKey, String objectActionTriggerKey,
 			com.liferay.portal.kernel.util.UnicodeProperties
 				parametersUnicodeProperties)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectActionService.updateObjectAction(
-			objectActionId, active, conditionExpression, description, name,
+			externalReferenceCode, objectActionId, active, conditionExpression,
+			description, errorMessageMap, labelMap, name,
 			objectActionExecutorKey, objectActionTriggerKey,
 			parametersUnicodeProperties);
 	}

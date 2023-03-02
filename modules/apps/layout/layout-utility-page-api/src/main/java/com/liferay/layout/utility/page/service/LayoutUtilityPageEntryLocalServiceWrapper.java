@@ -61,13 +61,26 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 
 	@Override
 	public LayoutUtilityPageEntry addLayoutUtilityPageEntry(
-			String externalReferenceCode, long userId, long groupId,
-			String name, int type, long masterLayoutPlid)
+			String externalReferenceCode, long userId, long groupId, long plid,
+			long previewFileEntryId, boolean defaultLayoutUtilityPageEntry,
+			String name, String type, long masterLayoutPlid,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
-			externalReferenceCode, userId, groupId, name, type,
-			masterLayoutPlid);
+			externalReferenceCode, userId, groupId, plid, previewFileEntryId,
+			defaultLayoutUtilityPageEntry, name, type, masterLayoutPlid,
+			serviceContext);
+	}
+
+	@Override
+	public LayoutUtilityPageEntry copyLayoutUtilityPageEntry(
+			long userId, long groupId, long layoutUtilityPageEntryId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws Exception {
+
+		return _layoutUtilityPageEntryLocalService.copyLayoutUtilityPageEntry(
+			userId, groupId, layoutUtilityPageEntryId, serviceContext);
 	}
 
 	/**
@@ -105,10 +118,12 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 	 *
 	 * @param layoutUtilityPageEntry the layout utility page entry
 	 * @return the layout utility page entry that was removed
+	 * @throws PortalException
 	 */
 	@Override
 	public LayoutUtilityPageEntry deleteLayoutUtilityPageEntry(
-		LayoutUtilityPageEntry layoutUtilityPageEntry) {
+			LayoutUtilityPageEntry layoutUtilityPageEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutUtilityPageEntryLocalService.deleteLayoutUtilityPageEntry(
 			layoutUtilityPageEntry);
@@ -252,7 +267,7 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 
 	@Override
 	public LayoutUtilityPageEntry fetchDefaultLayoutUtilityPageEntry(
-		long groupId, int type) {
+		long groupId, String type) {
 
 		return _layoutUtilityPageEntryLocalService.
 			fetchDefaultLayoutUtilityPageEntry(groupId, type);
@@ -266,34 +281,28 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 			LayoutUtilityPageEntryId);
 	}
 
-	/**
-	 * Returns the layout utility page entry with the matching external reference code and group.
-	 *
-	 * @param groupId the primary key of the group
-	 * @param externalReferenceCode the layout utility page entry's external reference code
-	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
-	 */
+	@Override
+	public LayoutUtilityPageEntry fetchLayoutUtilityPageEntry(
+		long groupId, String name, String type) {
+
+		return _layoutUtilityPageEntryLocalService.fetchLayoutUtilityPageEntry(
+			groupId, name, type);
+	}
+
 	@Override
 	public LayoutUtilityPageEntry
 		fetchLayoutUtilityPageEntryByExternalReferenceCode(
-			long groupId, String externalReferenceCode) {
+			String externalReferenceCode, long groupId) {
 
 		return _layoutUtilityPageEntryLocalService.
 			fetchLayoutUtilityPageEntryByExternalReferenceCode(
-				groupId, externalReferenceCode);
+				externalReferenceCode, groupId);
 	}
 
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchLayoutUtilityPageEntryByExternalReferenceCode(long, String)}
-	 */
-	@Deprecated
 	@Override
-	public LayoutUtilityPageEntry fetchLayoutUtilityPageEntryByReferenceCode(
-		long groupId, String externalReferenceCode) {
-
+	public LayoutUtilityPageEntry fetchLayoutUtilityPageEntryByPlid(long plid) {
 		return _layoutUtilityPageEntryLocalService.
-			fetchLayoutUtilityPageEntryByReferenceCode(
-				groupId, externalReferenceCode);
+			fetchLayoutUtilityPageEntryByPlid(plid);
 	}
 
 	/**
@@ -320,7 +329,7 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 
 	@Override
 	public LayoutUtilityPageEntry getDefaultLayoutUtilityPageEntry(
-			long groupId, int type)
+			long groupId, String type)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutUtilityPageEntryLocalService.
@@ -374,22 +383,22 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 
 	@Override
 	public java.util.List<LayoutUtilityPageEntry> getLayoutUtilityPageEntries(
-		long groupId, int type, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<LayoutUtilityPageEntry>
-			orderByComparator) {
-
-		return _layoutUtilityPageEntryLocalService.getLayoutUtilityPageEntries(
-			groupId, type, start, end, orderByComparator);
-	}
-
-	@Override
-	public java.util.List<LayoutUtilityPageEntry> getLayoutUtilityPageEntries(
 		long groupId, int start, int end,
 		com.liferay.portal.kernel.util.OrderByComparator<LayoutUtilityPageEntry>
 			orderByComparator) {
 
 		return _layoutUtilityPageEntryLocalService.getLayoutUtilityPageEntries(
 			groupId, start, end, orderByComparator);
+	}
+
+	@Override
+	public java.util.List<LayoutUtilityPageEntry> getLayoutUtilityPageEntries(
+		long groupId, String type, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<LayoutUtilityPageEntry>
+			orderByComparator) {
+
+		return _layoutUtilityPageEntryLocalService.getLayoutUtilityPageEntries(
+			groupId, type, start, end, orderByComparator);
 	}
 
 	/**
@@ -463,23 +472,15 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 			LayoutUtilityPageEntryId);
 	}
 
-	/**
-	 * Returns the layout utility page entry with the matching external reference code and group.
-	 *
-	 * @param groupId the primary key of the group
-	 * @param externalReferenceCode the layout utility page entry's external reference code
-	 * @return the matching layout utility page entry
-	 * @throws PortalException if a matching layout utility page entry could not be found
-	 */
 	@Override
 	public LayoutUtilityPageEntry
 			getLayoutUtilityPageEntryByExternalReferenceCode(
-				long groupId, String externalReferenceCode)
+				String externalReferenceCode, long groupId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _layoutUtilityPageEntryLocalService.
 			getLayoutUtilityPageEntryByExternalReferenceCode(
-				groupId, externalReferenceCode);
+				externalReferenceCode, groupId);
 	}
 
 	/**
@@ -546,6 +547,14 @@ public class LayoutUtilityPageEntryLocalServiceWrapper
 
 		return _layoutUtilityPageEntryLocalService.updateLayoutUtilityPageEntry(
 			layoutUtilityPageEntry);
+	}
+
+	@Override
+	public LayoutUtilityPageEntry updateLayoutUtilityPageEntry(
+		long layoutUtilityPageEntryId, long previewFileEntryId) {
+
+		return _layoutUtilityPageEntryLocalService.updateLayoutUtilityPageEntry(
+			layoutUtilityPageEntryId, previewFileEntryId);
 	}
 
 	@Override

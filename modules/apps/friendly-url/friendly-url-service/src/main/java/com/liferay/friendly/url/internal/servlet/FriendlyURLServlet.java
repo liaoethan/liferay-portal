@@ -46,6 +46,7 @@ import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUti
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutFriendlyURLLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
@@ -217,9 +218,10 @@ public class FriendlyURLServlet extends HttpServlet {
 			Layout layout = layoutFriendlyURLSeparatorComposite.getLayout();
 
 			if (layout != null) {
+				User user = _getUser(httpServletRequest);
+
 				PermissionChecker permissionChecker =
-					PermissionCheckerFactoryUtil.create(
-						_getUser(httpServletRequest));
+					PermissionCheckerFactoryUtil.create(user);
 
 				if (!LayoutPermissionUtil.contains(
 						permissionChecker, layout, ActionKeys.VIEW)) {
@@ -234,6 +236,14 @@ public class FriendlyURLServlet extends HttpServlet {
 					}
 
 					throw new LayoutPermissionException();
+				}
+
+				if (user.isDefaultUser() && layout.isSystem() &&
+					Objects.equals(
+						layout.getFriendlyURL(),
+						PropsValues.CONTROL_PANEL_LAYOUT_FRIENDLY_URL)) {
+
+					throw new NoSuchLayoutException();
 				}
 
 				if ((redirectProviderRedirect != null) &&
@@ -334,7 +344,18 @@ public class FriendlyURLServlet extends HttpServlet {
 			Layout redirectLayout = null;
 
 			if (layoutFriendlyURL == null) {
-				redirectLayout = defaultLayout;
+				if (exception instanceof LayoutPermissionException) {
+					List<Layout> layouts = layoutService.getLayouts(
+						group.getGroupId(), _private,
+						LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, 0, 1);
+
+					if (!layouts.isEmpty()) {
+						redirectLayout = layouts.get(0);
+					}
+				}
+				else {
+					redirectLayout = defaultLayout;
+				}
 			}
 			else {
 				List<Layout> layouts = layoutLocalService.getLayouts(
@@ -671,6 +692,9 @@ public class FriendlyURLServlet extends HttpServlet {
 
 	@Reference
 	protected LayoutLocalService layoutLocalService;
+
+	@Reference
+	protected LayoutService layoutService;
 
 	@Reference
 	protected Portal portal;

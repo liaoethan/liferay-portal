@@ -26,21 +26,21 @@ definition {
 		}
 
 		task ("Setup: Add 3 addresses to the account(Billing, Shipping, Billing & Shipping)") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
 			LexiconEntry.gotoEntry(rowEntry = "Commerce Account");
 
-			Accounts.gotoAssigneeTab(assigneeTab = "Addresses");
+			Account.gotoAssigneeTab(assigneeTab = "Addresses");
 
 			for (var typeList : list "Billing,Shipping,Billing and Shipping") {
-				Accounts.addAddressViaSetDefaultAddress(
+				Account.addAddressViaSetDefaultAddress(
 					addressCity = "Diamond Bar",
 					addressCountry = "United States",
 					addressName = "Liferay ${typeList}",
-					addressPostalCode = "91765",
+					addressPostalCode = 91765,
 					addressRegion = "California",
 					addressStreet1 = "1400 Montefino Ave",
-					addressType = "${typeList}",
+					addressType = ${typeList},
 					phoneNumber = "+1-877-543-3729");
 			}
 		}
@@ -51,8 +51,10 @@ definition {
 	}
 
 	@description = "Verify buyers without the View Addresses permission cannot view addresses on the addresses list."
-	@priority = "3"
+	@priority = 5
 	test CanBuyerRoleViewAddressesWithPermission {
+		property portal.acceptance = "true";
+
 		task ("Given the buyer role doesn't have permission to view addresses") {
 			Permissions.removePermissionViaAPI(
 				groupName = "Minium",
@@ -72,7 +74,7 @@ definition {
 
 			FrontStore.addInitializerProductToCart(
 				productName = "U-Joint",
-				productQuantity = "1");
+				productQuantity = 1);
 
 			CommerceCheckout.gotoCheckout();
 		}
@@ -123,8 +125,10 @@ definition {
 	}
 
 	@description = "Verify buyers without the Manage Addresses permission cannot add a shipping and billing address at checkout, only select existing ones."
-	@priority = "3"
+	@priority = 5
 	test CanOnlySelectPreDefinedShippingAndBillingAddressesWhithouPermission {
+		property portal.acceptance = "true";
+
 		task ("Given the buyer role doesn't have permission to manage addresses") {
 			Permissions.removePermissionViaAPI(
 				groupName = "Minium",
@@ -144,7 +148,7 @@ definition {
 
 			FrontStore.addInitializerProductToCart(
 				productName = "U-Joint",
-				productQuantity = "1");
+				productQuantity = 1);
 
 			CommerceCheckout.gotoCheckout();
 		}

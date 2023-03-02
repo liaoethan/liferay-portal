@@ -40,12 +40,25 @@ public class LayoutUtilityPageEntryServiceUtil {
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.layout.utility.page.service.impl.LayoutUtilityPageEntryServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static LayoutUtilityPageEntry addLayoutUtilityPageEntry(
-			String externalReferenceCode, long groupId, String name, int type,
-			long masterLayoutPlid)
+			String externalReferenceCode, long groupId, long plid,
+			long previewFileEntryId, boolean defaultLayoutUtilityPageEntry,
+			String name, String type, long masterLayoutPlid,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addLayoutUtilityPageEntry(
-			externalReferenceCode, groupId, name, type, masterLayoutPlid);
+			externalReferenceCode, groupId, plid, previewFileEntryId,
+			defaultLayoutUtilityPageEntry, name, type, masterLayoutPlid,
+			serviceContext);
+	}
+
+	public static LayoutUtilityPageEntry copyLayoutUtilityPageEntry(
+			long groupId, long layoutUtilityPageEntryId,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws Exception {
+
+		return getService().copyLayoutUtilityPageEntry(
+			groupId, layoutUtilityPageEntryId, serviceContext);
 	}
 
 	public static LayoutUtilityPageEntry deleteLayoutUtilityPageEntry(
@@ -64,7 +77,7 @@ public class LayoutUtilityPageEntryServiceUtil {
 	}
 
 	public static LayoutUtilityPageEntry getDefaultLayoutUtilityPageEntry(
-			long groupId, int type)
+			long groupId, String type)
 		throws PortalException {
 
 		return getService().getDefaultLayoutUtilityPageEntry(groupId, type);
@@ -77,19 +90,19 @@ public class LayoutUtilityPageEntryServiceUtil {
 	}
 
 	public static List<LayoutUtilityPageEntry> getLayoutUtilityPageEntries(
-		long groupId, int type, int start, int end,
-		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
-
-		return getService().getLayoutUtilityPageEntries(
-			groupId, type, start, end, orderByComparator);
-	}
-
-	public static List<LayoutUtilityPageEntry> getLayoutUtilityPageEntries(
 		long groupId, int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getService().getLayoutUtilityPageEntries(
 			groupId, start, end, orderByComparator);
+	}
+
+	public static List<LayoutUtilityPageEntry> getLayoutUtilityPageEntries(
+		long groupId, String type, int start, int end,
+		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
+
+		return getService().getLayoutUtilityPageEntries(
+			groupId, type, start, end, orderByComparator);
 	}
 
 	public static int getLayoutUtilityPageEntriesCount(long groupId) {
@@ -111,6 +124,22 @@ public class LayoutUtilityPageEntryServiceUtil {
 
 		return getService().setDefaultLayoutUtilityPageEntry(
 			layoutUtilityPageEntryId);
+	}
+
+	public static LayoutUtilityPageEntry unsetDefaultLayoutUtilityPageEntry(
+			long layoutUtilityPageEntryId)
+		throws PortalException {
+
+		return getService().unsetDefaultLayoutUtilityPageEntry(
+			layoutUtilityPageEntryId);
+	}
+
+	public static LayoutUtilityPageEntry updateLayoutUtilityPageEntry(
+			long layoutUtilityPageEntryId, long previewFileEntryId)
+		throws PortalException {
+
+		return getService().updateLayoutUtilityPageEntry(
+			layoutUtilityPageEntryId, previewFileEntryId);
 	}
 
 	public static LayoutUtilityPageEntry updateLayoutUtilityPageEntry(

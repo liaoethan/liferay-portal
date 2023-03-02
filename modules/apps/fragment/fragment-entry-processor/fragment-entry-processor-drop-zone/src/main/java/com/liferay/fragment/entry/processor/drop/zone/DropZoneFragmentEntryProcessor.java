@@ -14,22 +14,33 @@
 
 package com.liferay.fragment.entry.processor.drop.zone;
 
-import com.liferay.fragment.constants.FragmentEntryLinkConstants;
+import com.liferay.fragment.exception.FragmentEntryContentException;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.FragmentEntryProcessor;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
 import com.liferay.fragment.renderer.FragmentDropZoneRenderer;
+import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.layout.constants.LayoutWebKeys;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.util.structure.FragmentDropZoneLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.Language;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -45,7 +56,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true, property = "fragment.entry.processor.priority:Integer=6",
+	property = "fragment.entry.processor.priority:Integer=6",
 	service = FragmentEntryProcessor.class
 )
 public class DropZoneFragmentEntryProcessor implements FragmentEntryProcessor {
@@ -113,18 +124,85 @@ public class DropZoneFragmentEntryProcessor implements FragmentEntryProcessor {
 			return html;
 		}
 
+		if (httpServletRequest != null) {
+			httpServletRequest.setAttribute(
+				InfoDisplayWebKeys.INFO_FORM,
+				fragmentEntryProcessorContext.getInfoForm());
+		}
+
 		List<String> dropZoneItemIds = layoutStructureItem.getChildrenItemIds();
 
-		if (Objects.equals(
-				fragmentEntryProcessorContext.getMode(),
-				FragmentEntryLinkConstants.EDIT)) {
+		if (fragmentEntryProcessorContext.isEditMode()) {
+			boolean idsAvailable = true;
 
-			for (int i = 0;
-				 (i < dropZoneItemIds.size()) && (i < elements.size()); i++) {
+			for (Element element : elements) {
+				String dropZoneId = element.attr("data-lfr-drop-zone-id");
 
-				Element element = elements.get(i);
+				if (Validator.isBlank(dropZoneId)) {
+					idsAvailable = false;
 
-				element.attr("uuid", dropZoneItemIds.get(i));
+					break;
+				}
+			}
+
+			if (!idsAvailable) {
+				for (int i = 0;
+					 (i < dropZoneItemIds.size()) && (i < elements.size());
+					 i++) {
+
+					Element element = elements.get(i);
+
+					element.attr("uuid", dropZoneItemIds.get(i));
+				}
+			}
+			else {
+				Map<String, String> fragmentDropZoneIdsMap =
+					new LinkedHashMap<>();
+
+				List<String> noFragmentDropZoneItemIds = new LinkedList<>();
+
+				for (String dropZoneItemId : dropZoneItemIds) {
+					LayoutStructureItem childLayoutStructureItem =
+						layoutStructure.getLayoutStructureItem(dropZoneItemId);
+
+					if (!(childLayoutStructureItem instanceof
+							FragmentDropZoneLayoutStructureItem)) {
+
+						continue;
+					}
+
+					FragmentDropZoneLayoutStructureItem
+						fragmentDropZoneLayoutStructureItem =
+							(FragmentDropZoneLayoutStructureItem)
+								childLayoutStructureItem;
+
+					String fragmentDropZoneId =
+						fragmentDropZoneLayoutStructureItem.
+							getFragmentDropZoneId();
+
+					if (Validator.isBlank(fragmentDropZoneId)) {
+						noFragmentDropZoneItemIds.add(dropZoneItemId);
+					}
+					else {
+						fragmentDropZoneIdsMap.put(
+							fragmentDropZoneId, dropZoneItemId);
+					}
+				}
+
+				for (int i = 0; i < elements.size(); i++) {
+					Element element = elements.get(i);
+
+					String dropZoneId = element.attr("data-lfr-drop-zone-id");
+
+					if (fragmentDropZoneIdsMap.containsKey(dropZoneId)) {
+						element.attr(
+							"uuid", fragmentDropZoneIdsMap.get(dropZoneId));
+					}
+					else if (ListUtil.isNotEmpty(noFragmentDropZoneItemIds)) {
+						element.attr(
+							"uuid", noFragmentDropZoneItemIds.remove(0));
+					}
+				}
 			}
 
 			Element bodyElement = document.body();
@@ -148,13 +226,45 @@ public class DropZoneFragmentEntryProcessor implements FragmentEntryProcessor {
 			element.replaceWith(dropZoneElement);
 		}
 
+		if (httpServletRequest != null) {
+			httpServletRequest.removeAttribute(InfoDisplayWebKeys.INFO_FORM);
+		}
+
 		Element bodyElement = document.body();
 
 		return bodyElement.html();
 	}
 
 	@Override
-	public void validateFragmentEntryHTML(String html, String configuration) {
+	public void validateFragmentEntryHTML(String html, String configuration)
+		throws PortalException {
+
+		Document document = _getDocument(html);
+
+		Elements elements = document.select("lfr-drop-zone");
+
+		if (elements.isEmpty()) {
+			return;
+		}
+
+		Set<String> elementDropZoneIds = new LinkedHashSet<>();
+
+		for (Element element : elements) {
+			String dropZoneId = element.attr("data-lfr-drop-zone-id");
+
+			if (!Validator.isBlank(dropZoneId)) {
+				elementDropZoneIds.add(dropZoneId);
+			}
+		}
+
+		if (!elementDropZoneIds.isEmpty() &&
+			(elementDropZoneIds.size() != elements.size())) {
+
+			throw new FragmentEntryContentException(
+				_language.get(
+					_portal.getResourceBundle(LocaleUtil.getDefault()),
+					"you-must-define-a-unique-id-for-each-drop-zone"));
+		}
 	}
 
 	private Document _getDocument(String html) {
@@ -173,7 +283,13 @@ public class DropZoneFragmentEntryProcessor implements FragmentEntryProcessor {
 	private FragmentDropZoneRenderer _fragmentDropZoneRenderer;
 
 	@Reference
+	private Language _language;
+
+	@Reference
 	private LayoutPageTemplateStructureLocalService
 		_layoutPageTemplateStructureLocalService;
+
+	@Reference
+	private Portal _portal;
 
 }

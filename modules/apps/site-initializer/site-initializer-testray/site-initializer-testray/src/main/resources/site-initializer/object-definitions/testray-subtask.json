@@ -6,36 +6,36 @@
 	"objectFields": [
 		{
 			"DBType": "Long",
-			"indexed": false,
+			"indexed": true,
 			"indexedAsKeyword": false,
 			"label": {
-				"en_US": "Comment MB Message Id"
+				"en_US": "Message Board Message Id"
 			},
-			"name": "commentMBMessageId",
+			"name": "mbMessageId",
 			"required": false,
 			"type": "Long"
 		},
 		{
 			"DBType": "Long",
-			"indexed": false,
+			"indexed": true,
 			"indexedAsKeyword": false,
 			"label": {
-				"en_US": "Merged To Testray Subtask Id"
+				"en_US": "Message Board Thread Id"
 			},
-			"name": "mergedToTestraySubtaskId",
+			"name": "mbThreadId",
 			"required": false,
 			"type": "Long"
 		},
 		{
-			"DBType": "Long",
+			"DBType": "Clob",
 			"indexed": false,
 			"indexedAsKeyword": false,
 			"label": {
-				"en_US": "Split From Testray Subtask Id"
+				"en_US": "Errors"
 			},
-			"name": "splitFromTestraySubtaskId",
+			"name": "errors",
 			"required": false,
-			"type": "Long"
+			"type": "Clob"
 		},
 		{
 			"DBType": "String",
@@ -49,6 +49,17 @@
 			"type": "String"
 		},
 		{
+			"DBType": "Long",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"label": {
+				"en_US": "Number"
+			},
+			"name": "number",
+			"required": false,
+			"type": "Integer"
+		},
+		{
 			"DBType": "Integer",
 			"indexed": false,
 			"indexedAsKeyword": false,
@@ -60,15 +71,17 @@
 			"type": "Integer"
 		},
 		{
-			"DBType": "Integer",
+			"DBType": "String",
+			"businessType": "Picklist",
 			"indexed": true,
-			"indexedAsKeyword": false,
+			"indexedAsKeyword": true,
 			"label": {
-				"en_US": "Status"
+				"en_US": "Due Status"
 			},
+			"listTypeDefinitionId": "[$LIST_TYPE_DEFINITION_ID:SubTask Statuses$]",
 			"name": "dueStatus",
-			"required": true,
-			"type": "Integer"
+			"required": false,
+			"type": "String"
 		},
 		{
 			"DBType": "Date",

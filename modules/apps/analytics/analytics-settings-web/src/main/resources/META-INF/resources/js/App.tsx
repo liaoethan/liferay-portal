@@ -13,78 +13,128 @@
  */
 
 import {ClayIconSpriteContext} from '@clayui/icon';
-import React, {useReducer} from 'react';
+import {ClayTooltipProvider} from '@clayui/tooltip';
+import React, {useContext, useReducer} from 'react';
 
 import DefaultPage from './pages/default/DefaultPage';
 import WizardPage from './pages/wizard/WizardPage';
+import {SPRITEMAP} from './utils/constants';
 
-export const AppContext = React.createContext({
-	connected: false,
-	liferayAnalyticsURL: '',
-	token: '',
-} as any);
+export type TData = {
+	connected: boolean;
+	liferayAnalyticsURL: string;
+	pageView: EPageView;
+	token: string;
+	wizardMode: boolean;
+};
+
+type TView = {
+	[key in EPageView]: React.FC;
+};
 
 export enum EPageView {
 	Wizard = 'VIEW_WIZARD_MODE',
 	Default = 'VIEW_DEFAULT_MODE',
 }
 
-export enum Events {
-	Connected = 'CONNECTED',
-}
-
-type TView = {
-	[key in EPageView]: React.FC;
-};
-
-const View: TView = {
+export const View: TView = {
 	[EPageView.Wizard]: WizardPage,
 	[EPageView.Default]: DefaultPage,
 };
+
+export const initialState = {
+	connected: false,
+	liferayAnalyticsURL: '',
+	pageView: EPageView.Wizard,
+	token: '',
+	wizardMode: true,
+};
+
+export const AppContextData = React.createContext<TData>(initialState);
+const AppContextDispatch = React.createContext<any>(null);
+
+const useData = () => useContext(AppContextData);
+const useDispatch = () => useContext(AppContextDispatch);
+
+export enum Events {
+	Connect = 'CONNECT',
+	ChangePageView = 'CHANGE_PAGE_VIEW',
+}
 
 interface IAppProps extends React.HTMLAttributes<HTMLElement> {
 	connected: boolean;
 	liferayAnalyticsURL: string;
 	token: string;
+	wizardMode: boolean;
 }
 
-const App: React.FC<IAppProps> = ({connected, liferayAnalyticsURL, token}) => {
-	const initialState = {
-		connected,
-		liferayAnalyticsURL,
-		token,
-	};
+const AppContent = () => {
+	const {pageView} = useData();
 
-	const [state, dispatch] = useReducer(reducer, initialState);
-	const PageView: React.FC =
-		View[connected ? EPageView.Default : EPageView.Wizard];
-
-	const spritemap =
-		Liferay.ThemeDisplay.getPathThemeImages() + '/clay/icons.svg';
-
-	const value: any = [state, dispatch];
+	const PageView = View[pageView];
 
 	return (
-		<ClayIconSpriteContext.Provider value={spritemap}>
-			<AppContext.Provider value={value}>
-				<div className="analytics-settings-web mt-5">
-					<PageView />
-				</div>
-			</AppContext.Provider>
-		</ClayIconSpriteContext.Provider>
+		<div data-testid={pageView}>
+			<PageView />
+		</div>
 	);
 };
 
-function reducer(state: any, action: any) {
+const AppContextProvider: React.FC<IAppProps> = ({
+	children,
+	connected,
+	liferayAnalyticsURL,
+	token,
+	wizardMode,
+}) => {
+	const [state, dispatch] = useReducer(reducer, {
+		connected,
+		liferayAnalyticsURL,
+		pageView: wizardMode ? EPageView.Wizard : EPageView.Default,
+		token,
+	});
+
+	return (
+		<ClayTooltipProvider>
+			<ClayIconSpriteContext.Provider value={SPRITEMAP}>
+				<AppContextData.Provider value={state}>
+					<AppContextDispatch.Provider value={dispatch}>
+						{children}
+					</AppContextDispatch.Provider>
+				</AppContextData.Provider>
+			</ClayIconSpriteContext.Provider>
+		</ClayTooltipProvider>
+	);
+};
+
+function reducer(state: TData, action: {payload: any; type: Events}) {
 	switch (action.type) {
-		case Events.Connected:
+		case Events.Connect: {
 			return {
 				...state,
 				...action.payload,
 			};
+		}
+		case Events.ChangePageView: {
+			return {
+				...state,
+				pageView: action.payload,
+			};
+		}
 		default:
 			throw new Error();
 	}
 }
 
+const App: React.FC<IAppProps> = (props) => {
+	return (
+		<AppContextProvider {...props}>
+			<div className="analytics-settings-web mt-5">
+				<AppContent />
+			</div>
+		</AppContextProvider>
+	);
+};
+
+export {AppContextProvider, useData, useDispatch};
 export default App;

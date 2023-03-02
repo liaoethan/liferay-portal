@@ -39,14 +39,16 @@ public class KBArticleServiceWrapper
 			String externalReferenceCode, String portletId,
 			long parentResourceClassNameId, long parentResourcePrimKey,
 			String title, String urlTitle, String content, String description,
-			String sourceURL, String[] sections, String[] selectedFileNames,
+			String[] sections, String sourceURL, java.util.Date expirationDate,
+			java.util.Date reviewDate, String[] selectedFileNames,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kbArticleService.addKBArticle(
 			externalReferenceCode, portletId, parentResourceClassNameId,
 			parentResourcePrimKey, title, urlTitle, content, description,
-			sourceURL, sections, selectedFileNames, serviceContext);
+			sections, sourceURL, expirationDate, reviewDate, selectedFileNames,
+			serviceContext);
 	}
 
 	@Override
@@ -97,6 +99,16 @@ public class KBArticleServiceWrapper
 
 		_kbArticleService.deleteTempAttachment(
 			groupId, resourcePrimKey, fileName, tempFolderName);
+	}
+
+	@Override
+	public com.liferay.knowledge.base.model.KBArticle expireKBArticle(
+			long resourcePrimKey,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _kbArticleService.expireKBArticle(
+			resourcePrimKey, serviceContext);
 	}
 
 	@Override
@@ -184,12 +196,13 @@ public class KBArticleServiceWrapper
 
 	@Override
 	public String getGroupKBArticlesRSS(
-			int status, int rssDelta, String rssDisplayStyle, String rssFormat,
+			int status, int max, String type, double version,
+			String displayStyle,
 			com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kbArticleService.getGroupKBArticlesRSS(
-			status, rssDelta, rssDisplayStyle, rssFormat, themeDisplay);
+			status, max, type, version, displayStyle, themeDisplay);
 	}
 
 	@Override
@@ -215,13 +228,13 @@ public class KBArticleServiceWrapper
 
 	@Override
 	public String getKBArticleRSS(
-			long resourcePrimKey, int status, int rssDelta,
-			String rssDisplayStyle, String rssFormat,
+			long resourcePrimKey, int status, int max, String type,
+			double version, String displayStyle,
 			com.liferay.portal.kernel.theme.ThemeDisplay themeDisplay)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kbArticleService.getKBArticleRSS(
-			resourcePrimKey, status, rssDelta, rssDisplayStyle, rssFormat,
+			resourcePrimKey, status, max, type, version, displayStyle,
 			themeDisplay);
 	}
 
@@ -432,14 +445,16 @@ public class KBArticleServiceWrapper
 	@Override
 	public com.liferay.knowledge.base.model.KBArticle updateKBArticle(
 			long resourcePrimKey, String title, String content,
-			String description, String sourceURL, String[] sections,
+			String description, String[] sections, String sourceURL,
+			java.util.Date expirationDate, java.util.Date reviewDate,
 			String[] selectedFileNames, long[] removeFileEntryIds,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _kbArticleService.updateKBArticle(
-			resourcePrimKey, title, content, description, sourceURL, sections,
-			selectedFileNames, removeFileEntryIds, serviceContext);
+			resourcePrimKey, title, content, description, sections, sourceURL,
+			expirationDate, reviewDate, selectedFileNames, removeFileEntryIds,
+			serviceContext);
 	}
 
 	@Override

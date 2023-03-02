@@ -45,15 +45,11 @@ public class NotificationQueueEntryLocalServiceUtil {
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.notification.service.impl.NotificationQueueEntryLocalServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static NotificationQueueEntry addNotificationQueueEntry(
-			long userId, long notificationTemplateId, String bcc, String body,
-			String cc, String className, long classPK, String from,
-			String fromName, double priority, String subject, String to,
-			String toName, List<Long> fileEntryIds)
+			com.liferay.notification.context.NotificationContext
+				notificationContext)
 		throws PortalException {
 
-		return getService().addNotificationQueueEntry(
-			userId, notificationTemplateId, bcc, body, cc, className, classPK,
-			from, fromName, priority, subject, to, toName, fileEntryIds);
+		return getService().addNotificationQueueEntry(notificationContext);
 	}
 
 	/**
@@ -95,10 +91,11 @@ public class NotificationQueueEntryLocalServiceUtil {
 		return getService().createPersistedModel(primaryKeyObj);
 	}
 
-	public static void deleteNotificationQueueEntries(java.util.Date sentDate)
+	public static void deleteNotificationQueueEntries(
+			long companyId, java.util.Date sentDate)
 		throws PortalException {
 
-		getService().deleteNotificationQueueEntries(sentDate);
+		getService().deleteNotificationQueueEntries(companyId, sentDate);
 	}
 
 	/**
@@ -312,16 +309,18 @@ public class NotificationQueueEntryLocalServiceUtil {
 		return getService().getPersistedModel(primaryKeyObj);
 	}
 
+	public static List<NotificationQueueEntry> getUnsentNotificationEntries(
+		long companyId, String type) {
+
+		return getService().getUnsentNotificationEntries(companyId, type);
+	}
+
 	public static NotificationQueueEntry resendNotificationQueueEntry(
 			long notificationQueueEntryId)
 		throws PortalException {
 
 		return getService().resendNotificationQueueEntry(
 			notificationQueueEntryId);
-	}
-
-	public static void sendNotificationQueueEntries() {
-		getService().sendNotificationQueueEntries();
 	}
 
 	/**

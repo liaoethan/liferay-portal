@@ -32,8 +32,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.search.web.internal.facet.display.context.AssetEntriesSearchFacetDisplayContext;
-import com.liferay.portal.search.web.internal.facet.display.context.AssetEntriesSearchFacetTermDisplayContext;
+import com.liferay.portal.search.web.internal.facet.display.context.BucketDisplayContext;
 import com.liferay.portal.search.web.internal.type.facet.configuration.TypeFacetPortletInstanceConfiguration;
+import com.liferay.portal.search.web.internal.util.comparator.BucketDisplayContextComparatorFactoryUtil;
 
 import java.io.Serializable;
 
@@ -70,13 +71,15 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 	public AssetEntriesSearchFacetDisplayContext build() {
 		setTypeNames(getTypeNames());
 
-		List<AssetEntriesSearchFacetTermDisplayContext> termDisplayContexts =
-			buildTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			buildBucketDisplayContexts();
 
 		AssetEntriesSearchFacetDisplayContext
 			assetEntriesSearchFacetDisplayContext =
 				new AssetEntriesSearchFacetDisplayContext();
 
+		assetEntriesSearchFacetDisplayContext.setBucketDisplayContexts(
+			bucketDisplayContexts);
 		assetEntriesSearchFacetDisplayContext.setDisplayStyleGroupId(
 			getDisplayStyleGroupId());
 		assetEntriesSearchFacetDisplayContext.setNothingSelected(
@@ -89,9 +92,7 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 		assetEntriesSearchFacetDisplayContext.setParameterValues(
 			_parameterValues);
 		assetEntriesSearchFacetDisplayContext.setRenderNothing(
-			ListUtil.isEmpty(termDisplayContexts));
-		assetEntriesSearchFacetDisplayContext.setTermDisplayContexts(
-			termDisplayContexts);
+			ListUtil.isEmpty(bucketDisplayContexts));
 		assetEntriesSearchFacetDisplayContext.
 			setTypeFacetPortletInstanceConfiguration(
 				_typeFacetPortletInstanceConfiguration);
@@ -99,26 +100,21 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 		return assetEntriesSearchFacetDisplayContext;
 	}
 
-	public AssetEntriesSearchFacetTermDisplayContext buildTermDisplay(
+	public BucketDisplayContext buildBucketDisplayContext(
 		String typeName, boolean selected, String assetType, int frequency) {
 
-		AssetEntriesSearchFacetTermDisplayContext
-			assetEntriesSearchFacetFieldDisplayContext =
-				new AssetEntriesSearchFacetTermDisplayContext();
+		BucketDisplayContext bucketDisplayContext = new BucketDisplayContext();
 
-		assetEntriesSearchFacetFieldDisplayContext.setAssetType(assetType);
-		assetEntriesSearchFacetFieldDisplayContext.setFrequency(frequency);
-		assetEntriesSearchFacetFieldDisplayContext.setFrequencyVisible(
-			_frequenciesVisible);
-		assetEntriesSearchFacetFieldDisplayContext.setSelected(selected);
-		assetEntriesSearchFacetFieldDisplayContext.setTypeName(typeName);
+		bucketDisplayContext.setBucketText(typeName);
+		bucketDisplayContext.setFilterValue(assetType);
+		bucketDisplayContext.setFrequency(frequency);
+		bucketDisplayContext.setFrequencyVisible(_frequenciesVisible);
+		bucketDisplayContext.setSelected(selected);
 
-		return assetEntriesSearchFacetFieldDisplayContext;
+		return bucketDisplayContext;
 	}
 
-	public List<AssetEntriesSearchFacetTermDisplayContext>
-		buildTermDisplayContexts() {
-
+	public List<BucketDisplayContext> buildBucketDisplayContexts() {
 		if (_facet == null) {
 			return Collections.emptyList();
 		}
@@ -129,8 +125,7 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 			return Collections.emptyList();
 		}
 
-		List<AssetEntriesSearchFacetTermDisplayContext>
-			assetEntriesSearchFacetFieldDisplayContexts = new ArrayList<>();
+		List<BucketDisplayContext> bucketDisplayContexts = new ArrayList<>();
 
 		List<String> assetTypes = new SortedArrayList<>(
 			new ModelResourceComparator(_locale));
@@ -169,15 +164,20 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 				typeName = assetType;
 			}
 
-			AssetEntriesSearchFacetTermDisplayContext
-				assetEntriesSearchFacetFieldDisplayContext = buildTermDisplay(
+			BucketDisplayContext bucketDisplayContext =
+				buildBucketDisplayContext(
 					typeName, selected, assetType, frequency);
 
-			assetEntriesSearchFacetFieldDisplayContexts.add(
-				assetEntriesSearchFacetFieldDisplayContext);
+			bucketDisplayContexts.add(bucketDisplayContext);
 		}
 
-		return assetEntriesSearchFacetFieldDisplayContexts;
+		if (_order != null) {
+			bucketDisplayContexts.sort(
+				BucketDisplayContextComparatorFactoryUtil.
+					getBucketDisplayContextComparator(_order));
+		}
+
+		return bucketDisplayContexts;
 	}
 
 	public int getPopularity(
@@ -214,6 +214,10 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 
 	public void setLocale(Locale locale) {
 		_locale = locale;
+	}
+
+	public void setOrder(String order) {
+		_order = order;
 	}
 
 	public void setPaginationStartParameterName(
@@ -291,6 +295,10 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 					ObjectDefinitionLocalServiceUtil.fetchObjectDefinition(
 						Long.valueOf(parts[1]));
 
+				if (objectDefinition == null) {
+					continue;
+				}
+
 				typeName = objectDefinition.getLabel(_themeDisplay.getLocale());
 			}
 
@@ -305,6 +313,7 @@ public class AssetEntriesSearchFacetDisplayContextBuilder
 	private boolean _frequenciesVisible;
 	private int _frequencyThreshold;
 	private Locale _locale;
+	private String _order;
 	private String _paginationStartParameterName;
 	private String _parameterName;
 	private List<String> _parameterValues = Collections.emptyList();

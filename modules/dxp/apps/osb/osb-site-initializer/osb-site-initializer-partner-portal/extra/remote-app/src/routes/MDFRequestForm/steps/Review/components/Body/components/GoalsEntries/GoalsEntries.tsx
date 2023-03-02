@@ -9,34 +9,58 @@
  * distribution rights of the Software.
  */
 
+import Table from '../../../../../../../../common/components/Table';
 import MDFRequest from '../../../../../../../../common/interfaces/mdfRequest';
-import Table from '../../../Table';
 
 interface IProps {
 	mdfRequest: MDFRequest;
 }
 
+interface Item {
+	[key: string]: string | undefined;
+}
 const GoalsEntries = ({mdfRequest}: IProps) => (
 	<div>
-		<Table
-			items={[
+		<Table<Item>
+			className="bg-brand-primary-lighten-6 border-top table-striped"
+			columns={[
+				{
+					columnKey: 'title',
+					label: 'Partner Summary',
+				},
+				{
+					columnKey: 'value',
+					label: '',
+				},
+			]}
+			rows={[
 				{
 					title: 'Company Name',
-					value: mdfRequest.company.name,
+					value: mdfRequest.company?.name,
 				},
 				{
 					title: 'Region',
-					value: mdfRequest.country.name,
+					value: mdfRequest.country?.name,
 				},
 			]}
-			title="Partner Summary"
 		/>
 
-		<Table
-			items={[
+		<Table<Item>
+			className="bg-brand-primary-lighten-6 border-top table-striped"
+			columns={[
+				{
+					columnKey: 'title',
+					label: 'Activity Summary',
+				},
+				{
+					columnKey: 'value',
+					label: '',
+				},
+			]}
+			rows={[
 				{
 					title: 'Provide the name of the campaign',
-					value: mdfRequest.campaignName,
+					value: mdfRequest.overallCampaignName,
 				},
 				{
 					title:
@@ -45,30 +69,39 @@ const GoalsEntries = ({mdfRequest}: IProps) => (
 				},
 				{
 					title: 'Liferay business/sales goals',
-					value: mdfRequest.liferayBusinessSalesGoals.join('; '),
+					value: mdfRequest.liferayBusinessSalesGoals?.join('; '),
 				},
 			]}
-			title="Activity Summary"
 		/>
 
-		<Table
-			items={[
+		<Table<Item>
+			className="bg-brand-primary-lighten-6 border-top table-striped"
+			columns={[
+				{
+					columnKey: 'title',
+					label: 'Target Market',
+				},
+				{
+					columnKey: 'value',
+					label: '',
+				},
+			]}
+			rows={[
 				{
 					title: 'Target Market(s)',
-					value: mdfRequest.targetMarkets.join('; '),
+					value: mdfRequest.targetMarkets?.join('; '),
 				},
 				{
 					title: 'Additional Options',
-					value: mdfRequest.additionalOption.name
-						? mdfRequest.additionalOption.name
+					value: mdfRequest.additionalOption?.name
+						? mdfRequest.additionalOption?.name
 						: 'N/A',
 				},
 				{
 					title: 'Target Audience/Role',
-					value: mdfRequest.targetAudienceRoles.join('; '),
+					value: mdfRequest.targetAudienceRoles?.join('; '),
 				},
 			]}
-			title="Target Market"
 		/>
 	</div>
 );

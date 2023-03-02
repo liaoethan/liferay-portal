@@ -16,23 +16,20 @@ definition {
 
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to define a fixed filters with Boolean type for table view on the Display Page"
-	@priority = "4"
+	@priority = 4
 	test CanDefineFixedFilterForBooleanType {
-		property portal.upstream = "quarantine";
-
-		ObjectAdmin.openObjectAdmin();
-
-		ObjectAdmin.addNewObject(
-			fieldLabelName = "Custom Object 314",
+		ObjectAdmin.addObjectViaAPI(
+			labelName = "Custom Object 314",
+			objectName = "CustomObject314",
 			pluralLabelName = "Custom Objects 314");
 
-		ObjectAdmin.saveCustomObject();
+		ObjectAdmin.openObjectAdmin();
 
 		ObjectPortlet.selectCustomObject(label = "Custom Object 314");
 
@@ -41,14 +38,6 @@ definition {
 		ObjectAdmin.addObjectFieldViaUI(
 			fieldLabel = "Field",
 			fieldType = "Boolean");
-
-		ObjectAdmin.openObjectAdmin();
-
-		ObjectPortlet.selectCustomObject(label = "Custom Object 314");
-
-		CreateObject.selectPanelCategoryKey(panelCategoryKey = "Control Panel > Object");
-
-		CreateObject.saveObject();
 
 		ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject314");
 
@@ -106,15 +95,13 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to define a fixed filters with Picklist type for table view on the Display Page"
-	@priority = "4"
+	@priority = 4
 	test CanDefineFixedFilterForPicklistType {
-		property portal.upstream = "quarantine";
-
 		Picklist.addPicklistViaAPI(picklistName = "Custom Picklist");
 
 		for (var itemsName : list "1,2") {
 			Picklist.addPicklistItemViaAPI(
-				itemKey = "${itemsName}",
+				itemKey = ${itemsName},
 				itemName = "Item Test ${itemsName}",
 				picklistName = "Custom Picklist");
 		}
@@ -182,7 +169,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to set the pagination as Numeric"
-	@priority = "4"
+	@priority = 4
 	test CanSetPaginationNumeric {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 316",
@@ -245,11 +232,11 @@ definition {
 			pageName = "Test Content Page Name",
 			siteName = "Guest");
 
-		PageEditor.assertPaginationNumericTypeIsDisplayed(pageNumberList = "1");
+		PageEditor.assertPaginationNumericTypeIsDisplayed(pageNumberList = 1);
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to set the pagination as Simple"
-	@priority = "4"
+	@priority = 4
 	test CanSetPaginationSimple {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 317",
@@ -316,7 +303,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Big Decimal type for a specific Object"
-	@priority = "4"
+	@priority = 4
 	test DisplaySpecificEntryBigDecimal {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 318",
@@ -364,7 +351,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Boolean type for a specific Object"
-	@priority = "4"
+	@priority = 4
 	test DisplaySpecificEntryBoolean {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 319",
@@ -412,7 +399,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Date type for a specific Object"
-	@priority = "4"
+	@priority = 4
 	test DisplaySpecificEntryDate {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 320",
@@ -460,7 +447,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Double type for a specific Object"
-	@priority = "4"
+	@priority = 4
 	test DisplaySpecificEntryDouble {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 321",
@@ -508,7 +495,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Integer type for a specific Object"
-	@priority = "4"
+	@priority = 4
 	test DisplaySpecificEntryInteger {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 322",
@@ -528,7 +515,7 @@ definition {
 		ObjectAdmin.addObjectSingleFieldEntryViaAPI(
 			fieldName = "customObjectField",
 			objectName = "CustomObject322",
-			value = "123456789");
+			value = 123456789);
 
 		ContentPages.addPage(pageName = "Test Content Page Name");
 
@@ -544,7 +531,7 @@ definition {
 
 		VisualizeObjectCollectionDisplay.mapFragment(fieldLabel = "Integer");
 
-		VisualizeObjectDisplayPage.assertDisplayEntry(entry = "123456789");
+		VisualizeObjectDisplayPage.assertDisplayEntry(entry = 123456789);
 
 		PageEditor.publish();
 
@@ -552,11 +539,11 @@ definition {
 			menuItem = "View",
 			pageName = "Test Content Page Name");
 
-		VisualizeObjectDisplayPage.assertDisplayEntry(entry = "123456789");
+		VisualizeObjectDisplayPage.assertDisplayEntry(entry = 123456789);
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of Long type for a specific Object"
-	@priority = "4"
+	@priority = 4
 	test DisplaySpecificEntryLong {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 323",
@@ -576,7 +563,7 @@ definition {
 		ObjectAdmin.addObjectSingleFieldEntryViaAPI(
 			fieldName = "customObjectField",
 			objectName = "CustomObject323",
-			value = "1234567891234567");
+			value = 1234567891234567);
 
 		ContentPages.addPage(pageName = "Test Content Page Name");
 
@@ -592,7 +579,7 @@ definition {
 
 		VisualizeObjectCollectionDisplay.mapFragment(fieldLabel = "Long");
 
-		VisualizeObjectDisplayPage.assertDisplayEntry(entry = "1234567891234567");
+		VisualizeObjectDisplayPage.assertDisplayEntry(entry = 1234567891234567);
 
 		PageEditor.publish();
 
@@ -600,11 +587,11 @@ definition {
 			menuItem = "View",
 			pageName = "Test Content Page Name");
 
-		VisualizeObjectDisplayPage.assertDisplayEntry(entry = "1234567891234567");
+		VisualizeObjectDisplayPage.assertDisplayEntry(entry = 1234567891234567);
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify it is possible to display a specific entry of String type for a specific Object"
-	@priority = "5"
+	@priority = 5
 	test DisplaySpecificEntryString {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 324",
@@ -652,7 +639,7 @@ definition {
 	}
 
 	@description = "LPS-137104 - Verify if Objects and its data are displayed as a Content Type and Subtype for a Page Template"
-	@priority = "5"
+	@priority = 5
 	test ObjectDisplayedForPageTemplate {
 		property portal.acceptance = "true";
 
@@ -687,7 +674,7 @@ definition {
 	}
 
 	@description = "LPS-137105 - Verify if the Object entries are rendered when previewing it"
-	@priority = "5"
+	@priority = 5
 	test ObjectEntriesAreRendered {
 		property portal.acceptance = "true";
 
@@ -697,7 +684,7 @@ definition {
 			fieldLabelName = "Custom Object 326",
 			pluralLabelName = "Custom Objects 326");
 
-		ObjectAdmin.saveCustomObject();
+		CreateObject.saveObject();
 
 		ObjectPortlet.selectCustomObject(label = "Custom Object 326");
 
@@ -744,10 +731,8 @@ definition {
 	}
 
 	@description = "LPS-137106 - Verify if it is possible to link a Mapped URL with the Objects Page Template"
-	@priority = "5"
+	@priority = 5
 	test ObjectMappedURL {
-		property portal.acceptance = "quarantine";
-
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 327",
 			objectName = "CustomObject327",
@@ -833,7 +818,7 @@ definition {
 	}
 
 	@description = "LPS-133867|LPS-135004 - Verify if it's possible map and view the image of user Profile in a Fragment of Display Page"
-	@priority = "4"
+	@priority = 4
 	test ViewImageUserProfileFromSpecificEntry {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 327",

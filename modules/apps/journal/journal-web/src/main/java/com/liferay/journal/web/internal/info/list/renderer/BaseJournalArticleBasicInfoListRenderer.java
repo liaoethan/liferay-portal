@@ -15,7 +15,7 @@
 package com.liferay.journal.web.internal.info.list.renderer;
 
 import com.liferay.info.item.renderer.InfoItemRenderer;
-import com.liferay.info.item.renderer.InfoItemRendererTracker;
+import com.liferay.info.item.renderer.InfoItemRendererRegistry;
 import com.liferay.info.list.renderer.DefaultInfoListRendererContext;
 import com.liferay.info.list.renderer.InfoListRendererContext;
 import com.liferay.info.taglib.list.renderer.BasicInfoListRenderer;
@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,7 +41,7 @@ public abstract class BaseJournalArticleBasicInfoListRenderer
 
 	@Override
 	public List<InfoItemRenderer<?>> getAvailableInfoItemRenderers() {
-		return infoItemRendererTracker.getInfoItemRenderers(
+		return infoItemRendererRegistry.getInfoItemRenderers(
 			JournalArticle.class.getName());
 	}
 
@@ -66,14 +65,11 @@ public abstract class BaseJournalArticleBasicInfoListRenderer
 
 		infoListBasicListTag.setInfoListObjects(articles);
 
-		Optional<String> infoListItemRendererKeyOptional =
-			infoListRendererContext.getListItemRendererKeyOptional();
+		String listItemRendererKey =
+			infoListRendererContext.getListItemRendererKey();
 
-		if (infoListItemRendererKeyOptional.isPresent() &&
-			Validator.isNotNull(infoListItemRendererKeyOptional.get())) {
-
-			infoListBasicListTag.setItemRendererKey(
-				infoListItemRendererKeyOptional.get());
+		if (Validator.isNotNull(listItemRendererKey)) {
+			infoListBasicListTag.setItemRendererKey(listItemRendererKey);
 		}
 		else {
 			infoListBasicListTag.setItemRendererKey(
@@ -82,13 +78,10 @@ public abstract class BaseJournalArticleBasicInfoListRenderer
 
 		infoListBasicListTag.setListStyleKey(getListStyle());
 
-		Optional<String> templateKeyOptional =
-			infoListRendererContext.getTemplateKeyOptional();
+		String templateKey = infoListRendererContext.getTemplateKey();
 
-		if (templateKeyOptional.isPresent() &&
-			Validator.isNotNull(templateKeyOptional.get())) {
-
-			infoListBasicListTag.setTemplateKey(templateKeyOptional.get());
+		if (Validator.isNotNull(templateKey)) {
+			infoListBasicListTag.setTemplateKey(templateKey);
 		}
 
 		try {
@@ -102,7 +95,7 @@ public abstract class BaseJournalArticleBasicInfoListRenderer
 	}
 
 	@Reference
-	protected InfoItemRendererTracker infoItemRendererTracker;
+	protected InfoItemRendererRegistry infoItemRendererRegistry;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseJournalArticleBasicInfoListRenderer.class);

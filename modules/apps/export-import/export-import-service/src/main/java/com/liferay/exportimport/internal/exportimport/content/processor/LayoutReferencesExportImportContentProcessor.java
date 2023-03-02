@@ -74,7 +74,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.exportimport.configuration.ExportImportServiceConfiguration",
-	immediate = true, property = "content.processor.type=LayoutReferences",
+	property = "content.processor.type=LayoutReferences",
 	service = ExportImportContentProcessor.class
 )
 public class LayoutReferencesExportImportContentProcessor
@@ -1187,7 +1187,7 @@ public class LayoutReferencesExportImportContentProcessor
 				}
 			}
 
-			if (uri != null) {
+			if ((uri != null) && Validator.isIPAddress(uri.getHost())) {
 				InetAddress inetAddress = InetAddressUtil.getInetAddressByName(
 					uri.getHost());
 

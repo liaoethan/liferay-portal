@@ -23,16 +23,16 @@ String url = StringPool.BLANK;
 boolean useNewTab = false;
 
 if (siteNavigationMenuItem != null) {
-	UnicodeProperties typeSettingsProperties = UnicodePropertiesBuilder.fastLoad(
+	UnicodeProperties typeSettingsUnicodeProperties = UnicodePropertiesBuilder.fastLoad(
 		siteNavigationMenuItem.getTypeSettings()
 	).build();
 
-	url = typeSettingsProperties.getProperty("url");
-	useNewTab = GetterUtil.getBoolean(typeSettingsProperties.getProperty("useNewTab", Boolean.FALSE.toString()));
+	url = typeSettingsUnicodeProperties.getProperty("url");
+	useNewTab = GetterUtil.getBoolean(typeSettingsUnicodeProperties.getProperty("useNewTab", Boolean.FALSE.toString()));
 }
 %>
 
-<aui:input autoFocus="<%= true %>" defaultLanguageId="<%= LocaleUtil.toLanguageId(themeDisplay.getSiteDefaultLocale()) %>" label="name" localized="<%= true %>" maxlength='<%= ModelHintsUtil.getMaxLength(SiteNavigationMenuItem.class.getName(), "name") %>' name="name" placeholder="name" type="text" value='<%= SiteNavigationMenuItemUtil.getSiteNavigationMenuItemXML(siteNavigationMenuItem, "name") %>'>
+<aui:input defaultLanguageId="<%= LocaleUtil.toLanguageId(themeDisplay.getSiteDefaultLocale()) %>" label="name" localized="<%= true %>" maxlength='<%= ModelHintsUtil.getMaxLength(SiteNavigationMenuItem.class.getName(), "name") %>' name="name" placeholder="name" type="text" value='<%= SiteNavigationMenuItemUtil.getSiteNavigationMenuItemXML(siteNavigationMenuItem, "name") %>'>
 	<aui:validator name="required" />
 </aui:input>
 

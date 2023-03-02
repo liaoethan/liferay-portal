@@ -21,6 +21,7 @@ import com.liferay.headless.delivery.dto.v1_0.ContentElement;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.ContentElementEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.ContentElementResource;
 import com.liferay.journal.model.JournalArticle;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.search.BooleanClause;
 import com.liferay.portal.kernel.search.BooleanClauseFactoryUtil;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -43,7 +44,6 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.portlet.asset.util.AssetSearcher;
 
 import java.util.HashMap;
@@ -62,6 +62,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/content-element.properties",
 	scope = ServiceScope.PROTOTYPE, service = ContentElementResource.class
 )
+@CTAware
 public class ContentElementResourceImpl extends BaseContentElementResourceImpl {
 
 	@Override
@@ -102,8 +103,7 @@ public class ContentElementResourceImpl extends BaseContentElementResourceImpl {
 		assetSearcher.setAssetEntryQuery(assetEntryQuery);
 
 		return Page.of(
-			new HashMap<>(),
-			TransformUtil.transform(facets.values(), FacetUtil::toFacet),
+			new HashMap<>(), transform(facets.values(), FacetUtil::toFacet),
 			transform(
 				_assetHelper.getAssetEntries(
 					assetSearcher.search(searchContext)),

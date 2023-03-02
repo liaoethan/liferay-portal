@@ -38,7 +38,6 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Validator;
@@ -64,7 +63,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.product.type.virtual.order.model.CommerceVirtualOrderItem",
 	service = AopService.class
 )
@@ -251,7 +249,7 @@ public class CommerceVirtualOrderItemLocalServiceImpl
 			}
 		}
 
-		File tempFile = FileUtil.createTempFile(contentInputStream);
+		File tempFile = _file.createTempFile(contentInputStream);
 
 		File file = new File(
 			tempFile.getParent(),
@@ -466,6 +464,9 @@ public class CommerceVirtualOrderItemLocalServiceImpl
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private com.liferay.portal.kernel.util.File _file;
 
 	@Reference
 	private UserLocalService _userLocalService;

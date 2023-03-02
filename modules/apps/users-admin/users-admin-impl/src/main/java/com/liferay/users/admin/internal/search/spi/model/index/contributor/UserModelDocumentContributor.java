@@ -14,6 +14,7 @@
 
 package com.liferay.users.admin.internal.search.spi.model.index.contributor;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchCountryException;
 import com.liferay.portal.kernel.exception.NoSuchRegionException;
@@ -23,10 +24,10 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Country;
-import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.Team;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.search.Document;
@@ -37,6 +38,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.RegionService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.TeamLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -48,7 +50,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,7 +58,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luan Maoski
  */
 @Component(
-	immediate = true,
 	property = "indexer.class.name=com.liferay.portal.kernel.model.User",
 	service = ModelDocumentContributor.class
 )
@@ -108,7 +108,7 @@ public class UserModelDocumentContributor
 					_roleLocalService.getRoles(roleIds), Role.NAME_ACCESSOR));
 
 			document.addText("screenName", user.getScreenName());
-			document.addKeyword("teamIds", user.getTeamIds());
+			document.addKeyword("teamIds", _getTeamIds(user));
 			document.addKeyword("userGroupIds", user.getUserGroupIds());
 
 			long[] userGroupRoleIds = _getUserGroupRoleIds(user.getUserId());
@@ -151,17 +151,16 @@ public class UserModelDocumentContributor
 	private long[] _getActiveTransitiveGroupIds(long userId)
 		throws PortalException {
 
-		List<Group> groups = groupLocalService.getUserGroups(userId, true);
+		return ArrayUtil.toLongArray(
+			TransformUtil.transform(
+				groupLocalService.getUserGroups(userId, true),
+				group -> {
+					if (group.isActive() && group.isSite()) {
+						return group.getGroupId();
+					}
 
-		Stream<Group> stream = groups.stream();
-
-		return stream.filter(
-			Group::isSite
-		).filter(
-			Group::isActive
-		).mapToLong(
-			Group::getGroupId
-		).toArray();
+					return null;
+				}));
 	}
 
 	private long[] _getAncestorOrganizationIds(long[] organizationIds)
@@ -199,6 +198,24 @@ public class UserModelDocumentContributor
 		}
 
 		return countryNames;
+	}
+
+	private long[] _getTeamIds(User user) {
+		long[] userGroupIds = user.getUserGroupIds();
+
+		if (userGroupIds.length == 0) {
+			return user.getTeamIds();
+		}
+
+		List<Team> teams = new ArrayList<>();
+
+		for (long userGroupId : user.getUserGroupIds()) {
+			teams.addAll(_teamLocalService.getUserGroupTeams(userGroupId));
+		}
+
+		return ArrayUtil.append(
+			ListUtil.toLongArray(teams, Team.TEAM_ID_ACCESSOR),
+			user.getTeamIds());
 	}
 
 	private long[] _getUserGroupRoleIds(long userId) {
@@ -283,5 +300,8 @@ public class UserModelDocumentContributor
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private TeamLocalService _teamLocalService;
 
 }

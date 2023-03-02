@@ -18,7 +18,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.IndexWriter;
 import com.liferay.portal.kernel.search.SearchContext;
@@ -35,7 +34,6 @@ import java.util.Map;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
@@ -44,16 +42,13 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.configuration.IndexWriterHelperConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	service = UpdateDocumentIndexWriter.class
 )
 public class UpdateDocumentIndexWriterImpl
 	implements UpdateDocumentIndexWriter {
 
 	@Override
-	public void updateDocument(
-		long companyId, Document document, boolean commitImmediately) {
-
+	public void updateDocument(long companyId, Document document) {
 		if (indexStatusManager.isIndexReadOnly() || (document == null)) {
 			return;
 		}
@@ -73,9 +68,7 @@ public class UpdateDocumentIndexWriterImpl
 
 		searchContext.setCompanyId(companyId);
 
-		_setCommitImmediately(
-			searchContext,
-			commitImmediately || ProxyModeThreadLocal.isForceSync());
+		_setCommitImmediately(searchContext, true);
 
 		try {
 			indexWriter.updateDocument(searchContext, document);

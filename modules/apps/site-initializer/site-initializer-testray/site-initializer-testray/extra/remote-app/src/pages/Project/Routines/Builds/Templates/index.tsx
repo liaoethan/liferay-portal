@@ -17,29 +17,40 @@ import {useNavigate, useParams} from 'react-router-dom';
 import Container from '../../../../../components/Layout/Container';
 import ListViewRest from '../../../../../components/ListView';
 import {useHeader} from '../../../../../hooks';
+import useSearchBuilder from '../../../../../hooks/useSearchBuilder';
 import i18n from '../../../../../i18n';
-import {filters} from '../../../../../schema/filter';
 import dayjs from '../../../../../util/date';
-import {searchUtil} from '../../../../../util/search';
+import {BuildStatuses} from '../../../../../util/statuses';
 import useBuildTemplateActions from './useBuildTemplateActions';
 
 const BuildTemplates = () => {
-	const navigate = useNavigate();
-	const {projectId, routineId} = useParams();
 	const {actions} = useBuildTemplateActions();
+	const {projectId, routineId} = useParams();
+	const navigate = useNavigate();
+	const searchBuilder = useSearchBuilder({useURIEncode: false});
+
+	const buildFilter = searchBuilder
+		.eq('projectId', projectId as string)
+		.and()
+		.eq('routineId', routineId as string)
+		.and()
+		.eq('template', true)
+		.and()
+		.eq('dueStatus', BuildStatuses.ACTIVE)
+		.build();
 
 	useHeader({
+		headerActions: {actions: []},
+		tabs: [],
 		timeout: 110,
-		useHeaderActions: {actions: []},
-		useTabs: [],
 	});
 
 	return (
 		<Container>
 			<ListViewRest
 				managementToolbarProps={{
-					addButton: () => navigate('../create'),
-					filterFields: filters.template as any,
+					addButton: () => navigate('../create/template/true'),
+					filterSchema: 'buildTemplates',
 					title: i18n.translate('templates'),
 				}}
 				resource="/builds"
@@ -49,10 +60,7 @@ const BuildTemplates = () => {
 						{
 							key: 'active',
 							render: (active) =>
-								active
-									? i18n.translate('active')
-									: i18n.translate('deactive'),
-
+								i18n.translate(active ? 'active' : 'deactive'),
 							sorteable: true,
 							value: i18n.translate('status'),
 						},
@@ -75,19 +83,10 @@ const BuildTemplates = () => {
 							value: i18n.translate('last-used-date'),
 						},
 					],
-					navigateTo: ({id}) => id?.toString(),
+					navigateTo: ({id}) => id,
 				}}
 				variables={{
-					filter: `${searchUtil.eq(
-						'projectId',
-						projectId as string
-					)} and ${searchUtil.eq(
-						'routineId',
-						routineId as string
-					)} and ${searchUtil.eq(
-						'template',
-						true
-					)} and ${searchUtil.eq('active', true)}`,
+					filter: buildFilter,
 				}}
 			/>
 		</Container>

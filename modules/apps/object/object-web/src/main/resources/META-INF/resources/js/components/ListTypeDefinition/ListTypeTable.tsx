@@ -25,21 +25,31 @@ import {IModalState} from './ListTypeEntriesModal';
 
 interface IProps {
 	pickListId: number;
+	readOnly: boolean;
+	setValues: (values: Partial<PickList>) => void;
+	values: Partial<PickList>;
 }
 
 interface ItemData {
+	externalReferenceCode: string;
 	id: number;
 	key: string;
 	name: {props: {id: number}};
 	name_i18n: LocalizedValue<string>;
 }
+
 interface fdsItem {
 	action: {id: string};
 	itemData: ItemData;
 	value: string;
 }
 
-export default function ListTypeTable({pickListId}: IProps) {
+export default function ListTypeTable({
+	pickListId,
+	readOnly,
+	setValues,
+	values,
+}: IProps) {
 	const [dataSetProps, setDataSetProps] = useState<IFrontendDataSetProps>();
 
 	useEffect(() => {
@@ -64,12 +74,14 @@ export default function ListTypeTable({pickListId}: IProps) {
 
 		Liferay.on('handleAddItems', handleAddItems);
 
-		setDataSetProps(getDataSetProps(fireModal, pickListId!));
+		setDataSetProps(
+			getDataSetProps(fireModal, pickListId!, readOnly, setValues, values)
+		);
 
 		return () => {
 			Liferay.detach('handleAddItems');
 		};
-	}, [pickListId]);
+	}, [pickListId, readOnly, setValues, values]);
 
 	return dataSetProps && Object.keys(dataSetProps).length ? (
 		<FrontendDataSet {...dataSetProps} />
@@ -78,16 +90,33 @@ export default function ListTypeTable({pickListId}: IProps) {
 
 function getDataSetProps(
 	fireModal: (modalProps: IModalState) => void,
-	pickListId: number
+	pickListId: number,
+	readOnly: boolean,
+	setValues: (values: Partial<PickList>) => void,
+	values: Partial<PickList>
 ): IFrontendDataSetProps {
 	const onActionDropdownItemClick = ({action, itemData}: fdsItem) => {
 		if (action.id === 'addListTypeEntry') {
 			fireModal({
 				header: Liferay.Language.get('edit-item'),
+				itemExternalReferenceCode: itemData.externalReferenceCode,
 				itemId: itemData.id,
 				itemKey: itemData.key,
 				modalType: 'edit',
 				name_i18n: itemData.name_i18n,
+				readOnly,
+			});
+		}
+
+		if (action.id === 'deleteListTypeEntry') {
+			const {listTypeEntries} = values;
+			const newListTypeEntries = listTypeEntries?.filter(
+				(listTypeEntry) => listTypeEntry.key !== itemData.key
+			);
+
+			setValues({
+				...values,
+				listTypeEntries: newListTypeEntries as PickListItem[],
 			});
 		}
 	};
@@ -107,18 +136,20 @@ function getDataSetProps(
 		);
 	}
 
+	const addButton = {
+		href: 'handleAddItems',
+		label: Liferay.Language.get('add-item'),
+		target: 'event',
+		type: 'item',
+	};
+
+	const addItemMenu = readOnly ? [] : [addButton];
+
 	return {
 		actionParameterName: '',
 		apiURL: `/o/headless-admin-list-type/v1.0/list-type-definitions/${pickListId}/list-type-entries`,
 		creationMenu: {
-			primaryItems: [
-				{
-					href: 'handleAddItems',
-					label: Liferay.Language.get('add-item'),
-					target: 'event',
-					type: 'item',
-				},
-			],
+			primaryItems: addItemMenu,
 		},
 		currentURL: window.location.pathname + window.location.search,
 		customDataRenderers: {
@@ -142,6 +173,7 @@ function getDataSetProps(
 				},
 				href: '/o/headless-admin-list-type/v1.0/list-type-entries/{id}',
 				icon: 'trash',
+				id: 'deleteListTypeEntry',
 				label: 'Delete',
 				target: 'async',
 			},
@@ -195,6 +227,15 @@ function getDataSetProps(
 							expand: false,
 							fieldName: 'key',
 							label: Liferay.Language.get('key'),
+							localizeLabel: true,
+							sortable: false,
+						},
+						{
+							expand: false,
+							fieldName: 'externalReferenceCode',
+							label: Liferay.Language.get(
+								'external-reference-code'
+							),
 							localizeLabel: true,
 							sortable: false,
 						},

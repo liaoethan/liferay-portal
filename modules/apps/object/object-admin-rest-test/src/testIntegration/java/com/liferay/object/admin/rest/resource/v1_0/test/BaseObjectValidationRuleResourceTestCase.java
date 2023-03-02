@@ -56,6 +56,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -189,6 +190,7 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 
 		objectValidationRule.setEngine(regex);
 		objectValidationRule.setEngineLabel(regex);
+		objectValidationRule.setObjectDefinitionExternalReferenceCode(regex);
 		objectValidationRule.setScript(regex);
 
 		String json = ObjectValidationRuleSerDes.toJSON(objectValidationRule);
@@ -199,7 +201,195 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 
 		Assert.assertEquals(regex, objectValidationRule.getEngine());
 		Assert.assertEquals(regex, objectValidationRule.getEngineLabel());
+		Assert.assertEquals(
+			regex,
+			objectValidationRule.getObjectDefinitionExternalReferenceCode());
 		Assert.assertEquals(regex, objectValidationRule.getScript());
+	}
+
+	@Test
+	public void testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage()
+		throws Exception {
+
+		String externalReferenceCode =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getExternalReferenceCode();
+		String irrelevantExternalReferenceCode =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getIrrelevantExternalReferenceCode();
+
+		Page<ObjectValidationRule> page =
+			objectValidationRuleResource.
+				getObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage(
+					externalReferenceCode, null, Pagination.of(1, 10));
+
+		Assert.assertEquals(0, page.getTotalCount());
+
+		if (irrelevantExternalReferenceCode != null) {
+			ObjectValidationRule irrelevantObjectValidationRule =
+				testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+					irrelevantExternalReferenceCode,
+					randomIrrelevantObjectValidationRule());
+
+			page =
+				objectValidationRuleResource.
+					getObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage(
+						irrelevantExternalReferenceCode, null,
+						Pagination.of(1, 2));
+
+			Assert.assertEquals(1, page.getTotalCount());
+
+			assertEquals(
+				Arrays.asList(irrelevantObjectValidationRule),
+				(List<ObjectValidationRule>)page.getItems());
+			assertValid(
+				page,
+				testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getExpectedActions(
+					irrelevantExternalReferenceCode));
+		}
+
+		ObjectValidationRule objectValidationRule1 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+				externalReferenceCode, randomObjectValidationRule());
+
+		ObjectValidationRule objectValidationRule2 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+				externalReferenceCode, randomObjectValidationRule());
+
+		page =
+			objectValidationRuleResource.
+				getObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage(
+					externalReferenceCode, null, Pagination.of(1, 10));
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(objectValidationRule1, objectValidationRule2),
+			(List<ObjectValidationRule>)page.getItems());
+		assertValid(
+			page,
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getExpectedActions(
+				externalReferenceCode));
+
+		objectValidationRuleResource.deleteObjectValidationRule(
+			objectValidationRule1.getId());
+
+		objectValidationRuleResource.deleteObjectValidationRule(
+			objectValidationRule2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getExpectedActions(
+				String externalReferenceCode)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPageWithPagination()
+		throws Exception {
+
+		String externalReferenceCode =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getExternalReferenceCode();
+
+		ObjectValidationRule objectValidationRule1 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+				externalReferenceCode, randomObjectValidationRule());
+
+		ObjectValidationRule objectValidationRule2 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+				externalReferenceCode, randomObjectValidationRule());
+
+		ObjectValidationRule objectValidationRule3 =
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+				externalReferenceCode, randomObjectValidationRule());
+
+		Page<ObjectValidationRule> page1 =
+			objectValidationRuleResource.
+				getObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage(
+					externalReferenceCode, null, Pagination.of(1, 2));
+
+		List<ObjectValidationRule> objectValidationRules1 =
+			(List<ObjectValidationRule>)page1.getItems();
+
+		Assert.assertEquals(
+			objectValidationRules1.toString(), 2,
+			objectValidationRules1.size());
+
+		Page<ObjectValidationRule> page2 =
+			objectValidationRuleResource.
+				getObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage(
+					externalReferenceCode, null, Pagination.of(2, 2));
+
+		Assert.assertEquals(3, page2.getTotalCount());
+
+		List<ObjectValidationRule> objectValidationRules2 =
+			(List<ObjectValidationRule>)page2.getItems();
+
+		Assert.assertEquals(
+			objectValidationRules2.toString(), 1,
+			objectValidationRules2.size());
+
+		Page<ObjectValidationRule> page3 =
+			objectValidationRuleResource.
+				getObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage(
+					externalReferenceCode, null, Pagination.of(1, 3));
+
+		assertEqualsIgnoringOrder(
+			Arrays.asList(
+				objectValidationRule1, objectValidationRule2,
+				objectValidationRule3),
+			(List<ObjectValidationRule>)page3.getItems());
+	}
+
+	protected ObjectValidationRule
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_addObjectValidationRule(
+				String externalReferenceCode,
+				ObjectValidationRule objectValidationRule)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getExternalReferenceCode()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testGetObjectDefinitionByExternalReferenceCodeObjectValidationRulesPage_getIrrelevantExternalReferenceCode()
+		throws Exception {
+
+		return null;
+	}
+
+	@Test
+	public void testPostObjectDefinitionByExternalReferenceCodeObjectValidationRule()
+		throws Exception {
+
+		ObjectValidationRule randomObjectValidationRule =
+			randomObjectValidationRule();
+
+		ObjectValidationRule postObjectValidationRule =
+			testPostObjectDefinitionByExternalReferenceCodeObjectValidationRule_addObjectValidationRule(
+				randomObjectValidationRule);
+
+		assertEquals(randomObjectValidationRule, postObjectValidationRule);
+		assertValid(postObjectValidationRule);
+	}
+
+	protected ObjectValidationRule
+			testPostObjectDefinitionByExternalReferenceCodeObjectValidationRule_addObjectValidationRule(
+				ObjectValidationRule objectValidationRule)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	@Test
@@ -235,7 +425,10 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantObjectValidationRule),
 				(List<ObjectValidationRule>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetObjectDefinitionObjectValidationRulesPage_getExpectedActions(
+					irrelevantObjectDefinitionId));
 		}
 
 		ObjectValidationRule objectValidationRule1 =
@@ -256,13 +449,37 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(objectValidationRule1, objectValidationRule2),
 			(List<ObjectValidationRule>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetObjectDefinitionObjectValidationRulesPage_getExpectedActions(
+				objectDefinitionId));
 
 		objectValidationRuleResource.deleteObjectValidationRule(
 			objectValidationRule1.getId());
 
 		objectValidationRuleResource.deleteObjectValidationRule(
 			objectValidationRule2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetObjectDefinitionObjectValidationRulesPage_getExpectedActions(
+				Long objectDefinitionId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/object-admin/v1.0/object-definitions/{objectDefinitionId}/object-validation-rules/batch".
+				replace(
+					"{objectDefinitionId}",
+					String.valueOf(objectDefinitionId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
 	}
 
 	@Test
@@ -747,6 +964,19 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 			}
 
 			if (Objects.equals(
+					"objectDefinitionExternalReferenceCode",
+					additionalAssertFieldName)) {
+
+				if (objectValidationRule.
+						getObjectDefinitionExternalReferenceCode() == null) {
+
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
 					"objectDefinitionId", additionalAssertFieldName)) {
 
 				if (objectValidationRule.getObjectDefinitionId() == null) {
@@ -773,6 +1003,13 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 	}
 
 	protected void assertValid(Page<ObjectValidationRule> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<ObjectValidationRule> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<ObjectValidationRule> objectValidationRules =
@@ -788,6 +1025,20 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -959,6 +1210,22 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 			}
 
 			if (Objects.equals(
+					"objectDefinitionExternalReferenceCode",
+					additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						objectValidationRule1.
+							getObjectDefinitionExternalReferenceCode(),
+						objectValidationRule2.
+							getObjectDefinitionExternalReferenceCode())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
 					"objectDefinitionId", additionalAssertFieldName)) {
 
 				if (!Objects.deepEquals(
@@ -1042,6 +1309,10 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
@@ -1189,6 +1460,17 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("objectDefinitionExternalReferenceCode")) {
+			sb.append("'");
+			sb.append(
+				String.valueOf(
+					objectValidationRule.
+						getObjectDefinitionExternalReferenceCode()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("objectDefinitionId")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1255,6 +1537,8 @@ public abstract class BaseObjectValidationRuleResourceTestCase {
 				engineLabel = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
+				objectDefinitionExternalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				objectDefinitionId = RandomTestUtil.randomLong();
 				script = StringUtil.toLowerCase(RandomTestUtil.randomString());
 			}

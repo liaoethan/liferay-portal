@@ -18,7 +18,6 @@ import com.liferay.commerce.product.constants.CPOptionCategoryConstants;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionSpecificationOptionValue;
 import com.liferay.commerce.product.model.CPOptionCategory;
-import com.liferay.commerce.product.service.CPDefinitionService;
 import com.liferay.commerce.product.service.CPDefinitionSpecificationOptionValueLocalService;
 import com.liferay.commerce.product.service.CPOptionCategoryLocalService;
 import com.liferay.info.collection.provider.CollectionQuery;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -41,10 +39,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true,
-	service = RelatedInfoItemCollectionProvider.class
-)
+@Component(service = RelatedInfoItemCollectionProvider.class)
 public class
 	CPDefinitionSpecificationOptionValuesRelatedInfoItemCollectionProvider
 		implements RelatedInfoItemCollectionProvider
@@ -54,10 +49,7 @@ public class
 	public InfoPage<CPDefinitionSpecificationOptionValue> getCollectionInfoPage(
 		CollectionQuery collectionQuery) {
 
-		Optional<Object> relatedItemOptional =
-			collectionQuery.getRelatedItemObjectOptional();
-
-		Object relatedItem = relatedItemOptional.orElse(null);
+		Object relatedItem = collectionQuery.getRelatedItem();
 
 		Pagination pagination = collectionQuery.getPagination();
 
@@ -114,9 +106,6 @@ public class
 
 		return cpDefinitionSpecificationOptionValues;
 	}
-
-	@Reference
-	private CPDefinitionService _cpDefinitionService;
 
 	@Reference
 	private CPDefinitionSpecificationOptionValueLocalService

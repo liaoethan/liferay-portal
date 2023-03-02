@@ -61,7 +61,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/option-value.properties",
 	scope = ServiceScope.PROTOTYPE,
 	service = {NestedFieldSupport.class, OptionValueResource.class}
@@ -132,7 +131,7 @@ public class OptionValueResourceImpl
 			pagination, totalItems);
 	}
 
-	@NestedField(parentClass = Option.class, value = "values")
+	@NestedField(parentClass = Option.class, value = "optionValues")
 	@Override
 	public Page<OptionValue> getOptionIdOptionValuesPage(
 			Long id, String search, Pagination pagination, Sort[] sorts)

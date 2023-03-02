@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.Arrays;
@@ -82,16 +81,14 @@ public class ViewNotificationTemplatesDisplayContext {
 		_addDropdownItem(
 			creationMenu, "email", NotificationConstants.TYPE_EMAIL);
 
-		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-162133"))) {
-			_addDropdownItem(
-				creationMenu, "user-notification",
-				NotificationConstants.TYPE_USER_NOTIFICATION);
-		}
+		_addDropdownItem(
+			creationMenu, "user-notification",
+			NotificationConstants.TYPE_USER_NOTIFICATION);
 
 		return creationMenu;
 	}
 
-	public Object getEditorConfig(String editorConfigKey) {
+	public Object getEditorConfig() {
 		HttpServletRequest httpServletRequest =
 			_notificationRequestHelper.getRequest();
 
@@ -101,9 +98,11 @@ public class ViewNotificationTemplatesDisplayContext {
 
 		EditorConfiguration editorConfiguration =
 			_editorConfigurationFactory.getEditorConfiguration(
-				themeDisplay.getPpid(), editorConfigKey, "ckeditor_classic",
+				themeDisplay.getPpid(), "rich_text", "ckeditor_classic",
 				HashMapBuilder.<String, Object>put(
 					"liferay-ui:input-editor:allowBrowseDocuments", true
+				).put(
+					"liferay-ui:input-editor:name", "richTextLocalizedEditor"
 				).build(),
 				(ThemeDisplay)httpServletRequest.getAttribute(
 					WebKeys.THEME_DISPLAY),
@@ -130,6 +129,11 @@ public class ViewNotificationTemplatesDisplayContext {
 				LanguageUtil.get(
 					_notificationRequestHelper.getRequest(), "view"),
 				"get", null, null),
+			new FDSActionDropdownItem(
+				getAPIURL() + "/{id}/copy", "copy", "copy",
+				LanguageUtil.get(
+					_notificationRequestHelper.getRequest(), "duplicate"),
+				"post", "copy", "async"),
 			new FDSActionDropdownItem(
 				getAPIURL() + "/{id}", "trash", "delete",
 				LanguageUtil.get(

@@ -38,17 +38,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
@@ -57,8 +55,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Javier Gamarra
  */
 @Component(
-	configurationPid = "com.liferay.questions.web.internal.configuration.QuestionsConfiguration",
-	configurationPolicy = ConfigurationPolicy.REQUIRE,
 	property = "model.class.name=com.liferay.questions.web.internal.configuration.QuestionsConfiguration",
 	service = ConfigurationModelListener.class
 )
@@ -68,12 +64,15 @@ public class QuestionsConfigurationModelListener
 	@Override
 	public void onAfterSave(String pid, Dictionary<String, Object> properties) {
 		try {
-			List<String> keys = Collections.list(properties.keys());
+			Map<String, Object> propertiesMap = new HashMap<>();
 
-			Stream<String> stream = keys.stream();
+			Enumeration<String> enumeration = properties.keys();
 
-			Map<String, Object> propertiesMap = stream.collect(
-				Collectors.toMap(Function.identity(), properties::get));
+			while (enumeration.hasMoreElements()) {
+				String key = enumeration.nextElement();
+
+				propertiesMap.put(key, properties.get(key));
+			}
 
 			_enableAssetRenderer(propertiesMap);
 
@@ -146,22 +145,36 @@ public class QuestionsConfigurationModelListener
 			_sapEntryService.deleteSAPEntry(sapEntry);
 		}
 		else if (enableAnonymousRead && (sapEntry == null)) {
-			String mbPackage = "com.liferay.message.boards.service.";
+			String headlessDeliveryPackage =
+				"com.liferay.headless.delivery.internal.resource.v1_0.";
 
 			_sapEntryService.addSAPEntry(
 				StringBundler.concat(
-					"com.liferay.commerce.product.service.",
-					"CommerceCatalogService#getCommerceCatalogs\n",
-					"com.liferay.expando.kernel.service.",
-					"ExpandoValueService#getData\n", mbPackage,
-					"MBCategoryService#getCategory\n", mbPackage,
-					"MBCategoryService#getCategoriesCount\n", mbPackage,
-					"MBMessageService#fetchMBMessageByUrlSubject\n", mbPackage,
-					"MBMessageService#getChildMessages\n", mbPackage,
-					"MBMessageService#getChildMessagesCount\n", mbPackage,
-					"MBMessageService#getMessage\n", mbPackage,
-					"MBThreadService#getThreads\n", mbPackage,
-					"MBThreadService#getThreadsCount\n"),
+					"com.liferay.headless.admin.taxonomy.internal.resource.",
+					"v1_0.KeywordResourceImpl#getKeywordsRankedPage\n",
+					"com.liferay.headless.admin.user.internal.resource.v1_0.",
+					"SubscriptionResourceImpl#",
+					"getMyUserAccountSubscriptionsPage\n",
+					headlessDeliveryPackage,
+					"MessageBoardMessageResourceImpl#getMessageBoardMessage\n",
+					headlessDeliveryPackage, "MessageBoardMessageResourceImpl#",
+					"getMessageBoardThreadMessageBoardMessagesPage\n",
+					headlessDeliveryPackage, "MessageBoardMessageResourceImpl#",
+					"getSiteMessageBoardMessageByFriendlyUrlPath\n",
+					headlessDeliveryPackage, "MessageBoardMessageResourceImpl#",
+					"getSiteMessageBoardMessagesPage\n",
+					headlessDeliveryPackage, "MessageBoardSectionResourceImpl#",
+					"getMessageBoardSection\n", headlessDeliveryPackage,
+					"MessageBoardSectionResourceImpl#",
+					"getSiteMessageBoardSectionsPage\n",
+					headlessDeliveryPackage, "MessageBoardThreadResourceImpl#",
+					"getMessageBoardSectionMessageBoardThreadsPage\n",
+					headlessDeliveryPackage, "MessageBoardThreadResourceImpl#",
+					"getMessageBoardThreadsRankedPage\n",
+					headlessDeliveryPackage, "MessageBoardThreadResourceImpl#",
+					"getSiteMessageBoardThreadByFriendlyUrlPath\n",
+					headlessDeliveryPackage, "MessageBoardThreadResourceImpl#",
+					"getSiteMessageBoardThreadsPage\n"),
 				true, true, name,
 				Collections.singletonMap(
 					LocaleThreadLocal.getDefaultLocale(), name),

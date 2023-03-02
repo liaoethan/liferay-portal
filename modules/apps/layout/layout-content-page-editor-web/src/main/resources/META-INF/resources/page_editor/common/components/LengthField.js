@@ -25,9 +25,9 @@ import {VIEWPORT_SIZES} from '../../app/config/constants/viewportSizes';
 import {useSelector} from '../../app/contexts/StoreContext';
 import {getResetLabelByViewport} from '../../app/utils/getResetLabelByViewport';
 import isValidStyleValue from '../../app/utils/isValidStyleValue';
-import useControlledState from '../../core/hooks/useControlledState';
-import {useId} from '../../core/hooks/useId';
-import {ConfigurationFieldPropTypes} from '../../prop-types/index';
+import {ConfigurationFieldPropTypes} from '../../prop_types/index';
+import useControlledState from '../hooks/useControlledState';
+import {useId} from '../hooks/useId';
 
 import './LengthField.scss';
 
@@ -50,7 +50,7 @@ const getInitialValue = (value) => {
 		return {unit: UNITS[0], value: ''};
 	}
 
-	const match = value.toLowerCase().match(REGEX);
+	const match = value.toString().toLowerCase().match(REGEX);
 
 	if (match) {
 		const [, number, unit] = match;
@@ -75,15 +75,16 @@ export function LengthField({field, onEnter, onValueSelect, value}) {
 		RESTORABLE_FIELDS.has(field.name) && value !== field.defaultValue
 	);
 
+	const resetButtonLabel = useMemo(
+		() => getResetLabelByViewport(selectedViewportSize),
+		[selectedViewportSize]
+	);
+
 	return (
 		<div className="align-items-center d-flex page-editor__length-field">
 			<LengthInput
 				className={field.icon ? 'mb-0' : null}
-				defaultUnit={
-					Liferay.FeatureFlags['LPS-163362']
-						? field.typeOptions?.defaultUnit
-						: null
-				}
+				defaultUnit={field.typeOptions?.defaultUnit}
 				field={field}
 				onEnter={onEnter}
 				onValueSelect={(name, value) => {
@@ -99,6 +100,7 @@ export function LengthField({field, onEnter, onValueSelect, value}) {
 
 			{showRestoreButton ? (
 				<ClayButtonWithIcon
+					aria-label={resetButtonLabel}
 					className="border-0 flex-shrink-0 mb-0 ml-2"
 					displayType="secondary"
 					onClick={() => {
@@ -107,9 +109,9 @@ export function LengthField({field, onEnter, onValueSelect, value}) {
 						);
 						onValueSelect(field.name, null);
 					}}
-					small
+					size="sm"
 					symbol="restore"
-					title={getResetLabelByViewport(selectedViewportSize)}
+					title={resetButtonLabel}
 				/>
 			) : null}
 		</div>
@@ -146,6 +148,8 @@ export function LengthInput({
 	const handleUnitSelect = (unit) => {
 		setActive(false);
 		setNextUnit(unit);
+
+		document.getElementById(triggerId)?.focus();
 
 		if (!nextValue || unit === nextUnit) {
 			return;
@@ -232,7 +236,7 @@ export function LengthInput({
 			return;
 		}
 
-		const [, , unit] = value.toLowerCase().match(REGEX) || [];
+		const [, , unit] = value.toString().toLowerCase().match(REGEX) || [];
 
 		setNextUnit(unit || CUSTOM);
 	}, [value]);
@@ -302,6 +306,7 @@ export function LengthInput({
 							},
 						}}
 						onActiveChange={setActive}
+						renderMenuOnClick
 						trigger={
 							<ClayButton
 								aria-expanded={active}
@@ -314,7 +319,7 @@ export function LengthInput({
 								disabled={defaultUnit}
 								displayType="secondary"
 								id={triggerId}
-								small
+								size="sm"
 								title={Liferay.Language.get('select-units')}
 							>
 								{defaultUnit ||

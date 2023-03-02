@@ -23,6 +23,8 @@ import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.repository.registry.RepositoryClassDefinition;
 import com.liferay.portal.repository.registry.RepositoryClassDefinitionCatalogUtil;
@@ -39,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Cheryl Tang
  */
-@Component(immediate = true, service = CTDisplayRenderer.class)
+@Component(service = CTDisplayRenderer.class)
 public class RepositoryCTDisplayRenderer
 	extends BaseCTDisplayRenderer<Repository> {
 
@@ -81,6 +83,12 @@ public class RepositoryCTDisplayRenderer
 	@Override
 	public String getTitle(Locale locale, Repository repository) {
 		return repository.getName();
+	}
+
+	@Override
+	public boolean isHideable(Repository repository) {
+		return StringUtil.equals(
+			repository.getName(), TempFileEntryUtil.class.getName());
 	}
 
 	@Override

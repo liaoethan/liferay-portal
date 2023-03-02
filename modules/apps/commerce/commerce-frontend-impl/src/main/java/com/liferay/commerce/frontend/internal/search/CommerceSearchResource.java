@@ -31,6 +31,7 @@ import com.liferay.commerce.frontend.internal.account.model.OrderList;
 import com.liferay.commerce.frontend.internal.order.CommerceOrderResource;
 import com.liferay.commerce.frontend.internal.search.model.SearchItemModel;
 import com.liferay.commerce.frontend.internal.search.util.CommerceSearchUtil;
+import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.order.CommerceOrderHttpHelper;
 import com.liferay.commerce.product.catalog.CPCatalogEntry;
 import com.liferay.commerce.product.catalog.CPQuery;
@@ -87,7 +88,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, service = CommerceSearchResource.class)
+@Component(service = CommerceSearchResource.class)
 public class CommerceSearchResource {
 
 	@GET
@@ -171,6 +172,19 @@ public class CommerceSearchResource {
 		editURL.setParameter("commerceAccountId", String.valueOf(accountId));
 
 		return editURL.toString();
+	}
+
+	private CommerceOrder _getCommerceOrder(long commerceOrderId) {
+		try {
+			return _commerceOrderService.getCommerceOrder(commerceOrderId);
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			return null;
+		}
 	}
 
 	private SearchItemModel _getSearchItemModel(
@@ -283,8 +297,7 @@ public class CommerceSearchResource {
 					_commerceOrderHttpHelper.getCommerceCartPortletURL(
 						themeDisplay.getScopeGroupId(),
 						themeDisplay.getRequest(),
-						_commerceOrderService.getCommerceOrder(
-							order.getId()))));
+						_getCommerceOrder(order.getId()))));
 
 			searchItemModels.add(searchItemModel);
 		}

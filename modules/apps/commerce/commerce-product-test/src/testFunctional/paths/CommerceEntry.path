@@ -16,6 +16,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>CHANNEL_ACCOUNT_DEFAULTS_MODAL_DROPDOWN</td>
+	<td>//div[contains(@class,'form-group input-select-wrapper')]//option[contains(text(),'${key_value}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>ANY_MENU_ITEM</td>
 	<td>//div[contains(@class,'show')]//button[contains(.,'${key_menuItem}')] | //div[contains(@class,'show')]//a[contains(.,'${key_menuItem}')]</td>
 	<td></td>
@@ -86,6 +91,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>PRODUCT_DETAIL_UUID</td>
+	<td>//*[contains(text(),'${uuid}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>PRODUCT_CARD_COMPARE_CHECKBOX_DISABLED</td>
 	<td>//p[@title='${key_productName}']//../..//input[contains(@aria-label,'Compare') and @disabled]</td>
 	<td></td>
@@ -133,6 +143,11 @@
 <tr>
 	<td>CHANGE_TAX_CATEGORY</td>
 	<td>//label[text()='Shipping Tax Category']/..//input[@type='text']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>COMMERCE_OBJECT_NAME_ON_HEADER</td>
+	<td>//h1[contains(@class,'control-menu-level-1-heading') and contains(.,'${value1}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -312,7 +327,7 @@
 </tr>
 <tr>
 	<td>OPTION_SELECT</td>
-	<td>//div[contains (@class, 'select-field-trigger')]/a</td>
+	<td>//div[contains (@class, 'select-field-trigger')]//a</td>
 	<td></td>
 </tr>
 <tr>
@@ -471,8 +486,8 @@
 	<td></td>
 </tr>
 <tr>
-	<td>FIX_ISSUE_BUTTON_N</td>
-	<td>//tr[contains (@data-qa-id,'row')]//td/button[contains (@id,'fixIssueButton${key_buttonRowNumber}')and contains(@class,'${key_buttonStatus}')]</td>
+	<td>FIX_ISSUE_BUTTON_NAME</td>
+	<td>//tr/td[contains(@class,'lfr-name-column') and contains(.,'${key_buttonRowName}')]//../td[contains(@class,'lfr-entry-action') and contains(.,'Fix Issue')]/button[(contains(@class,'${key_buttonStatus}'))]</td>
 	<td></td>
 </tr>
 <tr>
@@ -581,6 +596,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>BODY_VERTICAL_ELLIPSIS_ORDER</td>
+	<td>//div[contains(@class,'portlet') and contains(@class,'container')]//a[span/*[name()='svg'][contains(@class,'icon-ellipsis')]] | //*[contains(@class,'sheet-title')]//*[contains(@class,'dropdown-toggle')][.//*[name()='svg'][contains(@class,'icon-ellipsis')]]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>CHANNEL_TYPE_VALUE</td>
 	<td>//header[contains(., 'Type')]/../div[@class='description']</td>
 	<td></td>
@@ -661,6 +681,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>TABLE_ENTRY_ROW_FIELD_GENERIC</td>
+	<td>//div[@class= 'dnd-tr'][${key_rowIndex}]//div[@class='dnd-td'][${key_columnIndex}]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>TABLE_ENTRY_STATUS</td>
 	<td>//h4[contains(.,'${key_table}')]//..//div/a[contains(.,'${key_entryName}')]/parent::div/parent::div/parent::div//div[@class='dnd-td']/span[contains(@class,'label')][contains(.,'${key_entryStatus}')]</td>
 	<td></td>
@@ -688,6 +713,11 @@
 <tr>
 	<td>TABLE_ENTRY_EDIT_BUTTON</td>
 	<td>//h4[contains(.,'${key_table}')]//..//div/a[contains(.,'${key_entryName}')]//..//..//../div/a[contains(.,'Edit')] | //div[contains(.,'${key_table}')]//div[@class='dnd-tr'][contains(.,'${key_entryName}')]//a[contains(text(),'Edit')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TABLE_ASSERT_TWO_COLUMNS_EDIT_BUTTON</td>
+	<td>//div[contains(@id,'${key_table}')]//div[1][@class='dnd-td' and contains(.,'${key_firstColumnValue}')]/../div[@class='dnd-td' and contains (.,'${key_secondColumnValue}')]/../div[contains(.,'Edit')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -989,6 +1019,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>PRODUCT_DETAIL_CARD_HEADER</td>
+	<td>//div[contains(@class,'card d-flex')]//h4[contains(.,'${key_cardName}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>PRODUCT_FULL_DESCRIPTION</td>
 	<td>//div/label[@class='control-label' and contains(.,'${key_customFieldName}')]/..//p</td>
 	<td></td>
@@ -1078,6 +1113,11 @@
 	<td>xpath=((//a[text()='${key_productName}'])[${key_row}]/../../..//strong[contains(.,'${key_status}')])</td>
 	<td></td>
 </tr>
+<tr>
+	<td>PRODUCT_ENTRY_CHECKBOX</td>
+	<td>//a[text()='${key_productName}']/../../..//input[@type='checkbox']</td>
+	<td></td>
+</tr>
 
 <!--OPTION-->
 
@@ -1117,8 +1157,8 @@
 	<td></td>
 </tr>
 <tr>
-	<td>HEALTH_CHECK_ICON_CHECK_N</td>
-	<td>//div[contains(@class,'commerce-health-status-check-row-icon-check${key_value}')][not(contains(@class,'hide'))]</td>
+	<td>HEALTH_CHECK_ICON_CHECK_NAME</td>
+	<td>//tr/td[contains(@class,'lfr-name-column') and contains(.,'${key_value}')]//..//div[contains(@class,'commerce-health-status-check-row-icon-check')][not(contains(@class,'hide'))]</td>
 	<td></td>
 </tr>
 <tr>
@@ -1127,13 +1167,13 @@
 	<td></td>
 </tr>
 <tr>
-	<td>FIRST_CURRENCY_ELEMENT</td>
-	<td>//tr[contains(@data-qa-id,'row')]//a[contains(text(),'${key_entryName}')] | //a[@id='_com_liferay_commerce_currency_web_internal_portlet_CommerceCurrencyPortlet_commerceCurrencies_1_menu']</td>
+	<td>ANY_CURRENCY_PRIORITY_ELEMENT</td>
+	<td>xpath=(//tr[contains(@data-qa-id,'row') and not(contains(@class, 'd-none'))])[${key_rowNumber}]//td//a[text()='${key_entryName}']//..//..//td[contains(@class,"lfr-priority-column")]</td>
 	<td></td>
 </tr>
 <tr>
-	<td>LAST_CURRENCY_ELEMENT</td>
-	<td>//tr[contains(@data-qa-id,'row')]//td//a[contains(text(),'${key_entryName}')]//..//..//a[contains(@id,'_commerceCurrencies_10')]</td>
+	<td>LAST_CURRENCY_PRIORITY_ELEMENT</td>
+	<td>xpath=(//tr[contains(@data-qa-id,'row') and not(contains(@class, 'd-none'))])[last()]//td//a[text()='${key_entryName}']//..//..//td[contains(@class,"lfr-priority-column")]</td>
 	<td></td>
 </tr>
 <tr>
@@ -1227,6 +1267,20 @@
 	<td>//h4[contains(.,"${key_name}")]//span[contains(@id,'toggle-switch')]//..//..//..//div[contains(@class,'collapse show')]</td>
 	<td></td>
 </tr>
+
+<!--SITEMAP-->
+
+<tr>
+	<td>PRODUCT_DETAIL_SITEMAP_URL</td>
+	<td>//*[text()='${key_basePortalURL}/web/minium/p/${key_productName}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PRODUCT_DETAIL_SITEMAP_URL_HREF_HREFLANG</td>
+	<td>//*[text()='${key_basePortalURL}/web/minium/p/${key_productURLName}']/following-sibling::*[@href = '${key_basePortalURL}/web/minium/p/${key_productName}'][@hreflang='${key_productNameLang}']</td>
+	<td></td>
+</tr>
+
 </tbody>
 </table>
 </body>

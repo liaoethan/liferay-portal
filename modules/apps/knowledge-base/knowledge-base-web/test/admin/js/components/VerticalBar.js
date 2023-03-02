@@ -55,6 +55,7 @@ const defaultProps = {
 		},
 	],
 	parentContainerId: PARENT_CONTAINER_ID,
+	portletNamespace: '_portletNamespace_',
 	productMenuOpen: true,
 };
 
@@ -80,6 +81,7 @@ describe('VerticalBar', () => {
 		};
 
 		const productMenu = {
+			destroy: jest.fn(),
 			hide: jest.fn(),
 			on: () => productMenuOn,
 		};
@@ -90,7 +92,7 @@ describe('VerticalBar', () => {
 	it('renders three navigation items', () => {
 		const {getAllByRole, getByTitle} = renderComponent();
 
-		expect(getAllByRole('button').length).toBe(3);
+		expect(getAllByRole('tab').length).toBe(3);
 
 		expect(getByTitle(FOLDERS_AND_ARTICLES_TITLE)).toBeInTheDocument();
 		expect(getByTitle(TEMPLATES_TITLE)).toBeInTheDocument();
@@ -115,7 +117,7 @@ describe('VerticalBar', () => {
 	it('does not navigate if user clicks on the current panel icon', () => {
 		const {getAllByRole} = renderComponent();
 
-		const foldersAndArticlesButton = getAllByRole('button')[0];
+		const foldersAndArticlesButton = getAllByRole('tab')[0];
 
 		fireEvent.click(foldersAndArticlesButton);
 
@@ -128,7 +130,7 @@ describe('VerticalBar', () => {
 			productMenuOpen: false,
 		});
 
-		const templatesButton = getAllByRole('button')[1];
+		const templatesButton = getAllByRole('tab')[1];
 
 		fireEvent.click(templatesButton);
 
@@ -138,7 +140,7 @@ describe('VerticalBar', () => {
 	it('opens the panel if user clicks on the current panel icon', () => {
 		const {container, getAllByRole} = renderComponent();
 
-		const foldersAndArticlesButton = getAllByRole('button')[0];
+		const foldersAndArticlesButton = getAllByRole('tab')[0];
 
 		fireEvent.click(foldersAndArticlesButton);
 

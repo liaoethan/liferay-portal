@@ -16,7 +16,6 @@ package com.liferay.portal.deploy.hot;
 
 import com.liferay.document.library.kernel.util.DLProcessor;
 import com.liferay.document.library.kernel.util.DLProcessorRegistryUtil;
-import com.liferay.mail.kernel.util.Hook;
 import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
@@ -199,7 +198,7 @@ public class HookHotDeployListener
 		"login.create.account.allow.custom.password", "login.dialog.disabled",
 		"login.events.post", "login.events.pre", "login.form.navigation.post",
 		"login.form.navigation.pre", "logout.events.post", "logout.events.pre",
-		"mail.hook.impl", "my.sites.show.private.sites.with.no.layouts",
+		"my.sites.show.private.sites.with.no.layouts",
 		"my.sites.show.public.sites.with.no.layouts",
 		"my.sites.show.user.private.sites.with.no.layouts",
 		"my.sites.show.user.public.sites.with.no.layouts",
@@ -1184,26 +1183,20 @@ public class HookHotDeployListener
 			return;
 		}
 
-		Configuration portalPropertiesConfiguration = null;
+		String name = portalPropertiesLocation;
 
-		try {
-			String name = portalPropertiesLocation;
+		int pos = name.lastIndexOf(".properties");
 
-			int pos = name.lastIndexOf(".properties");
-
-			if (pos != -1) {
-				name = name.substring(0, pos);
-			}
-
-			portalPropertiesConfiguration =
-				ConfigurationFactoryUtil.getConfiguration(
-					portletClassLoader, name);
+		if (pos != -1) {
+			name = name.substring(0, pos);
 		}
-		catch (Exception exception) {
-			_log.error("Unable to read " + portalPropertiesLocation, exception);
-		}
+
+		Configuration portalPropertiesConfiguration =
+			ConfigurationFactoryUtil.getConfiguration(portletClassLoader, name);
 
 		if (portalPropertiesConfiguration == null) {
+			_log.error("Unable to read " + portalPropertiesLocation);
+
 			return;
 		}
 
@@ -1402,18 +1395,6 @@ public class HookHotDeployListener
 					servletContextName, lockListenerClassName,
 					LockListener.class, lockListener, "service.ranking", 1000);
 			}
-		}
-
-		if (portalProperties.containsKey(PropsKeys.MAIL_HOOK_IMPL)) {
-			String mailHookClassName = portalProperties.getProperty(
-				PropsKeys.MAIL_HOOK_IMPL);
-
-			Hook mailHook = (Hook)newInstance(
-				portletClassLoader, Hook.class, mailHookClassName);
-
-			registerService(
-				servletContextName, mailHookClassName, Hook.class, mailHook,
-				"service.ranking", 1000);
 		}
 
 		if (portalProperties.containsKey(

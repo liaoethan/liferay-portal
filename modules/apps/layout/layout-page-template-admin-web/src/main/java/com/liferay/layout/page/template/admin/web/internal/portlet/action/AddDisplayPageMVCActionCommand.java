@@ -21,9 +21,10 @@ import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.portal.kernel.exception.NoSuchClassNameException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
@@ -31,7 +32,6 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.service.LayoutService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
 import com.liferay.portal.kernel.servlet.MultiSessionMessages;
@@ -41,11 +41,8 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-
-import java.util.ResourceBundle;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -58,7 +55,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
 		"mvc.command.name=/layout_page_template_admin/add_display_page"
@@ -121,7 +117,7 @@ public class AddDisplayPageMVCActionCommand extends BaseMVCActionCommand {
 	private JSONObject _addDisplayPage(
 		ActionRequest actionRequest, ServiceContext serviceContext) {
 
-		JSONObject errorJSONObject = JSONFactoryUtil.createJSONObject();
+		JSONObject errorJSONObject = _jsonFactory.createJSONObject();
 
 		long layoutPageTemplateCollectionId = ParamUtil.getLong(
 			actionRequest, "layoutPageTemplateCollectionId");
@@ -131,9 +127,6 @@ public class AddDisplayPageMVCActionCommand extends BaseMVCActionCommand {
 		long classTypeId = ParamUtil.getLong(actionRequest, "classTypeId");
 		long masterLayoutPlid = ParamUtil.getLong(
 			actionRequest, "masterLayoutPlid");
-
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			serviceContext.getLocale(), AddDisplayPageMVCActionCommand.class);
 
 		try {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
@@ -151,14 +144,14 @@ public class AddDisplayPageMVCActionCommand extends BaseMVCActionCommand {
 			if (portalException instanceof NoSuchClassNameException) {
 				errorJSONObject = JSONUtil.put(
 					"classNameId",
-					ResourceBundleUtil.getString(
-						resourceBundle, "invalid-content-type"));
+					_language.get(
+						serviceContext.getLocale(), "invalid-content-type"));
 			}
 			else if (portalException instanceof NoSuchClassTypeException) {
 				errorJSONObject = JSONUtil.put(
 					"classTypeId",
-					ResourceBundleUtil.getString(
-						resourceBundle, "invalid-subtype"));
+					_language.get(
+						serviceContext.getLocale(), "invalid-subtype"));
 			}
 			else {
 				errorJSONObject = JSONUtil.put(
@@ -178,6 +171,12 @@ public class AddDisplayPageMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference
@@ -186,9 +185,6 @@ public class AddDisplayPageMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
-
-	@Reference
-	private LayoutService _layoutService;
 
 	@Reference
 	private Portal _portal;

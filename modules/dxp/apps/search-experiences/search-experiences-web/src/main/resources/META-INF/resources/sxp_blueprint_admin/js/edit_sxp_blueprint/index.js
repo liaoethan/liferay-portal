@@ -15,8 +15,9 @@ import useClipboardJS from '../hooks/useClipboardJS';
 import ErrorBoundary from '../shared/ErrorBoundary';
 import ThemeContext from '../shared/ThemeContext';
 import {COPY_BUTTON_CSS_CLASS} from '../utils/constants';
-import {fetchData} from '../utils/fetch';
-import {renameKeys, transformLocale} from '../utils/language';
+import fetchData from '../utils/fetch/fetch_data';
+import renameKeys from '../utils/language/rename_keys';
+import transformLocale from '../utils/language/transform_locale';
 import {openInitialSuccessToast} from '../utils/toasts';
 import EditSXPBlueprintForm from './EditSXPBlueprintForm';
 
@@ -69,12 +70,14 @@ export default function ({
 					<EditSXPBlueprintForm
 						entityJSON={resource.entityJSON}
 						initialConfiguration={resource.configuration}
-						initialDescription={renameKeys(
+						initialDescription={resource.description}
+						initialDescriptionI18n={renameKeys(
 							resource.description_i18n,
 							transformLocale
 						)}
 						initialSXPElementInstances={resource.elementInstances}
-						initialTitle={renameKeys(
+						initialTitle={resource.title}
+						initialTitleI18n={renameKeys(
 							resource.title_i18n,
 							transformLocale
 						)}

@@ -16,12 +16,16 @@ package com.liferay.knowledge.base.web.internal.fragment.renderer;
 
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetRenderer;
-import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.friendly.url.info.item.provider.InfoItemFriendlyURLProvider;
+import com.liferay.info.exception.NoSuchInfoItemException;
+import com.liferay.info.item.InfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.knowledge.base.service.KBArticleService;
 import com.liferay.knowledge.base.web.internal.display.context.KBArticleNavigationFragmentDisplayContext;
@@ -43,7 +47,6 @@ import java.io.PrintWriter;
 
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -62,7 +65,7 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 
 	@Override
 	public String getCollectionKey() {
-		return "content-display";
+		return "menu-display";
 	}
 
 	@Override
@@ -81,6 +84,9 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 							"name", "itemSelector"
 						).put(
 							"type", "itemSelector"
+						).put(
+							"typeOptions",
+							JSONUtil.put("itemType", KBArticle.class.getName())
 						),
 						JSONUtil.put(
 							"defaultValue", String.valueOf(_MAX_NESTING_LEVEL)
@@ -110,7 +116,7 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 
 	@Override
 	public String getLabel(Locale locale) {
-		return _language.get(locale, "knowledge-base-article-navigation");
+		return _language.get(locale, "knowledge-base-navigation");
 	}
 
 	@Override
@@ -124,11 +130,7 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 			KBArticle kbArticle = _getKBArticle(
 				httpServletRequest, fragmentRendererContext);
 
-			if ((kbArticle == null) &&
-				Objects.equals(
-					FragmentEntryLinkConstants.EDIT,
-					fragmentRendererContext.getMode())) {
-
+			if ((kbArticle == null) && fragmentRendererContext.isEditMode()) {
 				_printPortletMessageInfo(
 					httpServletRequest, httpServletResponse,
 					"the-navigation-tree-for-the-displayed-knowledge-base-" +
@@ -168,6 +170,31 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 		}
 	}
 
+	private Object _getInfoItem(InfoItemReference infoItemReference) {
+		if (infoItemReference == null) {
+			return null;
+		}
+
+		InfoItemIdentifier infoItemIdentifier =
+			infoItemReference.getInfoItemIdentifier();
+
+		InfoItemObjectProvider<Object> infoItemObjectProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemObjectProvider.class, infoItemReference.getClassName(),
+				infoItemIdentifier.getInfoItemServiceFilter());
+
+		try {
+			return infoItemObjectProvider.getInfoItem(infoItemIdentifier);
+		}
+		catch (NoSuchInfoItemException noSuchInfoItemException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchInfoItemException);
+			}
+		}
+
+		return null;
+	}
+
 	private KBArticle _getKBArticle(AssetEntry assetEntry) {
 		if (assetEntry == null) {
 			return null;
@@ -203,16 +230,21 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 					WorkflowConstants.STATUS_ANY);
 			}
 
-			Optional<Object> displayObjectOptional =
-				fragmentRendererContext.getDisplayObjectOptional();
+			InfoItemReference infoItemReference =
+				fragmentRendererContext.getContextInfoItemReference();
 
-			Object displayObject = displayObjectOptional.orElseGet(
-				() -> _getKBArticle(
+			if (infoItemReference != null) {
+				if (Objects.equals(
+						infoItemReference.getClassName(),
+						KBArticle.class.getName())) {
+
+					return (KBArticle)_getInfoItem(infoItemReference);
+				}
+			}
+			else {
+				return _getKBArticle(
 					(AssetEntry)httpServletRequest.getAttribute(
-						WebKeys.LAYOUT_ASSET_ENTRY)));
-
-			if (displayObject instanceof KBArticle) {
-				return (KBArticle)displayObject;
+						WebKeys.LAYOUT_ASSET_ENTRY));
 			}
 
 			return null;
@@ -282,6 +314,9 @@ public class KBArticleNavigationFragmentRenderer implements FragmentRenderer {
 		target = "(item.class.name=com.liferay.knowledge.base.model.KBArticle)"
 	)
 	private InfoItemFriendlyURLProvider<KBArticle> _infoItemFriendlyURLProvider;
+
+	@Reference
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private KBArticleService _kbArticleService;

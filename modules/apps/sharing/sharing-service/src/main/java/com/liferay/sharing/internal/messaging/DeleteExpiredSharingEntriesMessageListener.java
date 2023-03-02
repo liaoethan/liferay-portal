@@ -32,7 +32,6 @@ import java.util.Map;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -40,13 +39,12 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.sharing.internal.configuration.SharingSystemConfiguration",
-	immediate = true, service = DeleteExpiredSharingEntriesMessageListener.class
+	service = {}
 )
 public class DeleteExpiredSharingEntriesMessageListener
 	extends BaseMessageListener {
 
 	@Activate
-	@Modified
 	protected void activate(Map<String, Object> properties) {
 		_sharingSystemConfiguration = ConfigurableUtil.createConfigurable(
 			SharingSystemConfiguration.class, properties);

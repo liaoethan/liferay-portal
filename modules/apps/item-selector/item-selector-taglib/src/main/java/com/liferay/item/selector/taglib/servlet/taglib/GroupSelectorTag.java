@@ -16,7 +16,7 @@ package com.liferay.item.selector.taglib.servlet.taglib;
 
 import com.liferay.item.selector.provider.GroupItemSelectorProvider;
 import com.liferay.item.selector.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.item.selector.taglib.internal.util.GroupItemSelectorTrackerUtil;
+import com.liferay.item.selector.taglib.internal.util.GroupItemSelectorProviderRegistryUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.dao.search.SearchPaginationUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -29,7 +29,6 @@ import com.liferay.taglib.util.IncludeTag;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.PageContext;
@@ -96,8 +95,8 @@ public class GroupSelectorTag extends IncludeTag {
 	private List<Group> _getGroups(HttpServletRequest httpServletRequest) {
 		String groupType = _getGroupType(httpServletRequest);
 
-		Optional<GroupItemSelectorProvider> groupItemSelectorProviderOptional =
-			GroupItemSelectorTrackerUtil.getGroupItemSelectorProviderOptional(
+		GroupItemSelectorProvider groupItemSelectorProvider =
+			GroupItemSelectorProviderRegistryUtil.getGroupItemSelectorProvider(
 				groupType);
 
 		ThemeDisplay themeDisplay =
@@ -113,30 +112,39 @@ public class GroupSelectorTag extends IncludeTag {
 			_groups = new ArrayList<>();
 
 			_groups.add(group);
+
+			return _groups;
 		}
-		else {
-			String keywords = ParamUtil.getString(
-				httpServletRequest, "keywords");
 
-			int cur = ParamUtil.getInteger(
-				httpServletRequest, SearchContainer.DEFAULT_CUR_PARAM,
-				SearchContainer.DEFAULT_CUR);
-			int delta = ParamUtil.getInteger(
-				httpServletRequest, SearchContainer.DEFAULT_DELTA_PARAM,
-				SearchContainer.DEFAULT_DELTA);
+		int cur = ParamUtil.getInteger(
+			httpServletRequest, SearchContainer.DEFAULT_CUR_PARAM,
+			SearchContainer.DEFAULT_CUR);
+		int delta = ParamUtil.getInteger(
+			httpServletRequest, SearchContainer.DEFAULT_DELTA_PARAM,
+			SearchContainer.DEFAULT_DELTA);
 
-			int[] startAndEnd = SearchPaginationUtil.calculateStartAndEnd(
-				cur, delta);
+		int[] startAndEnd = SearchPaginationUtil.calculateStartAndEnd(
+			cur, delta);
 
-			_groups = groupItemSelectorProviderOptional.map(
-				groupItemSelectorProvider ->
-					groupItemSelectorProvider.getGroups(
-						group.getCompanyId(), group.getGroupId(), keywords,
-						startAndEnd[0], startAndEnd[1])
-			).orElse(
-				Collections.emptyList()
-			);
+		if (groupItemSelectorProvider == null) {
+			_groups = Collections.emptyList();
+
+			return _groups;
 		}
+
+		String keywords = ParamUtil.getString(httpServletRequest, "keywords");
+
+		List<Group> groups = groupItemSelectorProvider.getGroups(
+			group.getCompanyId(), group.getGroupId(), keywords, startAndEnd[0],
+			startAndEnd[1]);
+
+		if (groups == null) {
+			_groups = Collections.emptyList();
+
+			return _groups;
+		}
+
+		_groups = groups;
 
 		return _groups;
 	}
@@ -147,29 +155,30 @@ public class GroupSelectorTag extends IncludeTag {
 
 		if (Validator.isNotNull(scopeGroupType)) {
 			_groupsCount = 1;
+
+			return _groupsCount;
 		}
-		else {
-			Optional<GroupItemSelectorProvider> groupSelectorProviderOptional =
-				GroupItemSelectorTrackerUtil.
-					getGroupItemSelectorProviderOptional(
-						_getGroupType(httpServletRequest));
 
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)httpServletRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
+		GroupItemSelectorProvider groupSelectorProvider =
+			GroupItemSelectorProviderRegistryUtil.getGroupItemSelectorProvider(
+				_getGroupType(httpServletRequest));
 
-			Group group = _getGroup(themeDisplay);
+		if (groupSelectorProvider == null) {
+			_groupsCount = 0;
 
-			String keywords = ParamUtil.getString(
-				httpServletRequest, "keywords");
-
-			_groupsCount = groupSelectorProviderOptional.map(
-				groupSelectorProvider -> groupSelectorProvider.getGroupsCount(
-					group.getCompanyId(), group.getGroupId(), keywords)
-			).orElse(
-				0
-			);
+			return _groupsCount;
 		}
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		Group group = _getGroup(themeDisplay);
+
+		String keywords = ParamUtil.getString(httpServletRequest, "keywords");
+
+		_groupsCount = groupSelectorProvider.getGroupsCount(
+			group.getCompanyId(), group.getGroupId(), keywords);
 
 		return _groupsCount;
 	}

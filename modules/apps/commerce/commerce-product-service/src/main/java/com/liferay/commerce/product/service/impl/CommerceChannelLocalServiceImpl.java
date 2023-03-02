@@ -15,7 +15,9 @@
 package com.liferay.commerce.product.service.impl;
 
 import com.liferay.commerce.pricing.constants.CommercePricingConstants;
+import com.liferay.commerce.product.channel.CommerceChannelTypeRegistry;
 import com.liferay.commerce.product.constants.CommerceChannelConstants;
+import com.liferay.commerce.product.exception.CommerceChannelTypeException;
 import com.liferay.commerce.product.exception.DuplicateCommerceChannelException;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.model.CommerceChannelTable;
@@ -29,8 +31,8 @@ import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.sql.dsl.query.GroupByStep;
 import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
-import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
@@ -58,7 +60,6 @@ import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,10 +67,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Alec Sloan
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.product.model.CommerceChannel",
+	service = AopService.class
+)
 public class CommerceChannelLocalServiceImpl
 	extends CommerceChannelLocalServiceBaseImpl {
 
@@ -97,6 +105,8 @@ public class CommerceChannelLocalServiceImpl
 				throw new DuplicateCommerceChannelException();
 			}
 		}
+
+		_validateType(type);
 
 		long commerceChannelId = counterLocalService.increment();
 
@@ -164,6 +174,8 @@ public class CommerceChannelLocalServiceImpl
 				commerceChannelLocalService.fetchByExternalReferenceCode(
 					externalReferenceCode, user.getCompanyId());
 		}
+
+		_validateType(type);
 
 		if (commerceChannel == null) {
 			return commerceChannelLocalService.addCommerceChannel(
@@ -238,8 +250,8 @@ public class CommerceChannelLocalServiceImpl
 			return null;
 		}
 
-		return commerceChannelPersistence.fetchByC_ERC(
-			companyId, externalReferenceCode);
+		return commerceChannelPersistence.fetchByERC_C(
+			externalReferenceCode, companyId);
 	}
 
 	@Override
@@ -393,6 +405,8 @@ public class CommerceChannelLocalServiceImpl
 			String commerceCurrencyCode)
 		throws PortalException {
 
+		_validateType(type);
+
 		CommerceChannel commerceChannel =
 			commerceChannelPersistence.findByPrimaryKey(commerceChannelId);
 
@@ -424,6 +438,8 @@ public class CommerceChannelLocalServiceImpl
 			String commerceCurrencyCode, String priceDisplayType,
 			boolean discountsTargetNetPrice)
 		throws PortalException {
+
+		_validateType(type);
 
 		CommerceChannel commerceChannel =
 			commerceChannelPersistence.findByPrimaryKey(commerceChannelId);
@@ -585,30 +601,42 @@ public class CommerceChannelLocalServiceImpl
 			group.getGroupId(), typeSettingsUnicodeProperties.toString());
 	}
 
+	private void _validateType(String type) throws PortalException {
+		if (Validator.isNull(type) ||
+			(_commerceChannelTypeRegistry.getCommerceChannelType(type) ==
+				null)) {
+
+			throw new CommerceChannelTypeException();
+		}
+	}
+
 	private static final String[] _SELECTED_FIELD_NAMES = {
 		Field.ENTRY_CLASS_PK, Field.COMPANY_ID
 	};
 
-	@ServiceReference(type = ClassNameLocalService.class)
+	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
-	@BeanReference(type = CommerceChannelAccountEntryRelLocalService.class)
+	@Reference
 	private CommerceChannelAccountEntryRelLocalService
 		_commerceChannelAccountEntryRelLocalService;
 
-	@BeanReference(type = CommerceChannelRelLocalService.class)
+	@Reference
 	private CommerceChannelRelLocalService _commerceChannelRelLocalService;
 
-	@ServiceReference(type = CustomSQL.class)
+	@Reference
+	private CommerceChannelTypeRegistry _commerceChannelTypeRegistry;
+
+	@Reference
 	private CustomSQL _customSQL;
 
-	@ServiceReference(type = GroupLocalService.class)
+	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@ServiceReference(type = ResourceLocalService.class)
+	@Reference
 	private ResourceLocalService _resourceLocalService;
 
-	@ServiceReference(type = UserLocalService.class)
+	@Reference
 	private UserLocalService _userLocalService;
 
 }

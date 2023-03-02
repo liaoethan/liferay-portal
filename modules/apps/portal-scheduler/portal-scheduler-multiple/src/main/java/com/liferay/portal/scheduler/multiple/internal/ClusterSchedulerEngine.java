@@ -14,7 +14,6 @@
 
 package com.liferay.portal.scheduler.multiple.internal;
 
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cluster.BaseClusterMasterTokenTransitionListener;
@@ -27,7 +26,6 @@ import com.liferay.portal.kernel.cluster.ClusterableContextThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiService;
 import com.liferay.portal.kernel.module.framework.service.IdentifiableOSGiServiceUtil;
 import com.liferay.portal.kernel.scheduler.JobState;
@@ -198,31 +196,6 @@ public class ClusterSchedulerEngine
 
 	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
 	@Override
-	public void pause(String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		boolean memoryClusteredSlaveJob = _isMemoryClusteredSlaveJob(
-			storageType);
-
-		_readLock.lock();
-
-		try {
-			if (memoryClusteredSlaveJob) {
-				_updateMemoryClusteredJobs(groupName, TriggerState.PAUSED);
-			}
-			else {
-				_schedulerEngine.pause(groupName, storageType);
-			}
-		}
-		finally {
-			_readLock.unlock();
-		}
-
-		setClusterableThreadLocal(storageType);
-	}
-
-	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
-	@Override
 	public void pause(String jobName, String groupName, StorageType storageType)
 		throws SchedulerException {
 
@@ -238,31 +211,6 @@ public class ClusterSchedulerEngine
 			}
 			else {
 				_schedulerEngine.pause(jobName, groupName, storageType);
-			}
-		}
-		finally {
-			_readLock.unlock();
-		}
-
-		setClusterableThreadLocal(storageType);
-	}
-
-	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
-	@Override
-	public void resume(String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		boolean memoryClusteredSlaveJob = _isMemoryClusteredSlaveJob(
-			storageType);
-
-		_readLock.lock();
-
-		try {
-			if (memoryClusteredSlaveJob) {
-				_updateMemoryClusteredJobs(groupName, TriggerState.NORMAL);
-			}
-			else {
-				_schedulerEngine.resume(groupName, storageType);
 			}
 		}
 		finally {
@@ -297,6 +245,15 @@ public class ClusterSchedulerEngine
 		}
 
 		setClusterableThreadLocal(storageType);
+	}
+
+	@Override
+	public void run(
+			long companyId, String jobName, String groupName,
+			StorageType storageType)
+		throws SchedulerException {
+
+		_schedulerEngine.run(companyId, jobName, groupName, storageType);
 	}
 
 	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
@@ -428,54 +385,6 @@ public class ClusterSchedulerEngine
 
 	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
 	@Override
-	public void suppressError(
-			String jobName, String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		boolean memoryClusteredSlaveJob = _isMemoryClusteredSlaveJob(
-			storageType);
-
-		if (!memoryClusteredSlaveJob) {
-			_readLock.lock();
-
-			try {
-				_schedulerEngine.suppressError(jobName, groupName, storageType);
-			}
-			finally {
-				_readLock.unlock();
-			}
-		}
-
-		setClusterableThreadLocal(storageType);
-	}
-
-	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
-	@Override
-	public void unschedule(String groupName, StorageType storageType)
-		throws SchedulerException {
-
-		boolean memoryClusteredSlaveJob = _isMemoryClusteredSlaveJob(
-			storageType);
-
-		_readLock.lock();
-
-		try {
-			if (memoryClusteredSlaveJob) {
-				_removeMemoryClusteredJobs(groupName);
-			}
-			else {
-				_schedulerEngine.unschedule(groupName, storageType);
-			}
-		}
-		finally {
-			_readLock.unlock();
-		}
-
-		setClusterableThreadLocal(storageType);
-	}
-
-	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
-	@Override
 	public void unschedule(
 			String jobName, String groupName, StorageType storageType)
 		throws SchedulerException {
@@ -491,56 +400,6 @@ public class ClusterSchedulerEngine
 			}
 			else {
 				_schedulerEngine.unschedule(jobName, groupName, storageType);
-			}
-		}
-		finally {
-			_readLock.unlock();
-		}
-
-		setClusterableThreadLocal(storageType);
-	}
-
-	@Clusterable(acceptor = SchedulerClusterInvokeAcceptor.class)
-	@Override
-	public void update(Trigger trigger, StorageType storageType)
-		throws SchedulerException {
-
-		String jobName = trigger.getJobName();
-		String groupName = trigger.getGroupName();
-
-		boolean memoryClusteredSlaveJob = _isMemoryClusteredSlaveJob(
-			storageType);
-
-		_readLock.lock();
-
-		try {
-			if (memoryClusteredSlaveJob) {
-				boolean updated = false;
-
-				for (ObjectValuePair<SchedulerResponse, TriggerState>
-						memoryClusteredJob : _memoryClusteredJobs.values()) {
-
-					SchedulerResponse schedulerResponse =
-						memoryClusteredJob.getKey();
-
-					if (jobName.equals(schedulerResponse.getJobName()) &&
-						groupName.equals(schedulerResponse.getGroupName())) {
-
-						schedulerResponse.setTrigger(trigger);
-
-						updated = true;
-
-						break;
-					}
-				}
-
-				if (!updated) {
-					throw new SchedulerException(
-						"Unable to update trigger for memory clustered job");
-				}
-			}
-			else {
-				_schedulerEngine.update(trigger, storageType);
 			}
 		}
 		finally {
@@ -822,20 +681,6 @@ public class ClusterSchedulerEngine
 		}
 	}
 
-	private void _updateMemoryClusteredJobs(
-		String groupName, TriggerState triggerState) {
-
-		for (ObjectValuePair<SchedulerResponse, TriggerState>
-				memoryClusteredJob : _memoryClusteredJobs.values()) {
-
-			SchedulerResponse schedulerResponse = memoryClusteredJob.getKey();
-
-			if (groupName.equals(schedulerResponse.getGroupName())) {
-				memoryClusteredJob.setValue(triggerState);
-			}
-		}
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		ClusterSchedulerEngine.class);
 
@@ -872,9 +717,7 @@ public class ClusterSchedulerEngine
 
 		@Override
 		protected void doMasterTokenAcquired() throws Exception {
-			try (SafeCloseable safeCloseable =
-					ProxyModeThreadLocal.setWithSafeCloseable(true)) {
-
+			try {
 				_writeLock.lock();
 
 				for (ObjectValuePair<SchedulerResponse, TriggerState>

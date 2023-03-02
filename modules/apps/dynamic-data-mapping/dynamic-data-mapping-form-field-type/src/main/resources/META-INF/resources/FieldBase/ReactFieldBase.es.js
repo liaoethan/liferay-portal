@@ -22,7 +22,7 @@ import {
 	EVENT_TYPES as CORE_EVENT_TYPES,
 	FieldFeedback,
 	Layout,
-	getRepeatedIndex,
+	PagesVisitor,
 	useForm,
 	useFormState,
 } from 'data-engine-js-components-web';
@@ -172,9 +172,11 @@ export function FieldBase({
 	displayErrors,
 	errorMessage,
 	fieldName,
+	fieldReference,
 	hideField,
 	hideEditedFlag,
 	id,
+	itemPath,
 	label,
 	localizedValue = {},
 	name,
@@ -194,7 +196,7 @@ export function FieldBase({
 	visible,
 	warningMessage,
 }) {
-	const {editingLanguageId} = useFormState();
+	const {editingLanguageId, pages} = useFormState();
 	const dispatch = useForm();
 
 	const hasError = displayErrors && errorMessage && !valid;
@@ -234,7 +236,6 @@ export function FieldBase({
 
 	const renderLabel =
 		(label && showLabel) || hideField || repeatable || required || tooltip;
-	const repeatedIndex = useMemo(() => getRepeatedIndex(name), [name]);
 	const showLegend =
 		type === 'checkbox_multiple' ||
 		type === 'grid' ||
@@ -245,7 +246,8 @@ export function FieldBase({
 		type === 'text' ||
 		type === 'numeric' ||
 		type === 'image' ||
-		type === 'search_location';
+		type === 'search_location' ||
+		type === 'select';
 
 	const accessibleProps = {
 		...(accessible && fieldDetails && {'aria-labelledby': fieldDetailsId}),
@@ -256,6 +258,26 @@ export function FieldBase({
 		columns: [{fields: [field], size: 12}],
 	}));
 
+	const checkRepetitions = () => {
+		let repetitionsCounter = 0;
+
+		const visitor = new PagesVisitor(pages);
+
+		const newFieldName = fieldName ?? fieldReference;
+
+		visitor.mapFields(
+			(field) => {
+				if (newFieldName === field.fieldName) {
+					repetitionsCounter++;
+				}
+			},
+			true,
+			true
+		);
+
+		return repetitionsCounter;
+	};
+
 	return (
 		<ClayForm.Group
 			aria-labelledby={!renderLabel ? fieldDetailsId : null}
@@ -265,13 +287,14 @@ export function FieldBase({
 				'hide': !visible,
 			})}
 			data-field-name={name}
+			data-field-reference={fieldReference}
 			onClick={onClick}
 			style={style}
 			tabIndex={!renderLabel ? 0 : undefined}
 		>
 			{repeatable && (
 				<div className="lfr-ddm-form-field-repeatable-toolbar">
-					{repeatedIndex > 0 && (
+					{checkRepetitions() > 1 && (
 						<ClayButton
 							aria-label={sub(
 								Liferay.Language.get('remove-duplicate-field'),
@@ -349,6 +372,7 @@ export function FieldBase({
 								className={classNames({
 									'ddm-empty': !showLabel && !required,
 									'ddm-label': showLabel || required,
+									'ddm-repeatable': repeatable,
 								})}
 							>
 								{showLabel && label && (
@@ -412,7 +436,7 @@ export function FieldBase({
 				/>
 			)}
 
-			{defaultRows && <Layout rows={defaultRows} />}
+			{defaultRows && <Layout itemPath={itemPath} rows={defaultRows} />}
 		</ClayForm.Group>
 	);
 }

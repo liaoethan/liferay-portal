@@ -17,9 +17,9 @@ package com.liferay.dynamic.data.mapping.data.provider.instance.internal;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProvider;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderOutputParametersSettings;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderParameterSettings;
+import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRegistry;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRequest;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderResponse;
-import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderTracker;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializerDeserializeResponse;
@@ -37,7 +37,6 @@ import com.liferay.portal.kernel.util.KeyValuePair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -46,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Rafael Praxedes
  */
 @Component(
-	immediate = true,
 	property = "ddm.data.provider.instance.id=getDataProviderInstanceOutputParameters",
 	service = DDMDataProvider.class
 )
@@ -57,15 +55,11 @@ public class DDMDataProviderInstanceOutputParametersDataProvider
 	public DDMDataProviderResponse getData(
 		DDMDataProviderRequest ddmDataProviderRequest) {
 
-		Optional<Long> dataProviderInstanceIdOptional =
-			ddmDataProviderRequest.getParameterOptional(
-				"dataProviderInstanceId", String.class);
+		String dataProviderInstanceId = ddmDataProviderRequest.getParameter(
+			"dataProviderInstanceId", String.class);
 
-		long dataProviderInstanceId = 0;
-
-		if (dataProviderInstanceIdOptional.isPresent()) {
-			dataProviderInstanceId = GetterUtil.getLong(
-				dataProviderInstanceIdOptional.get());
+		if (dataProviderInstanceId == null) {
+			dataProviderInstanceId = "0";
 		}
 
 		DDMDataProviderResponse.Builder builder =
@@ -73,7 +67,7 @@ public class DDMDataProviderInstanceOutputParametersDataProvider
 
 		List<KeyValuePair> keyValuePairs = new ArrayList<>();
 
-		if (dataProviderInstanceId == 0) {
+		if (GetterUtil.getLong(dataProviderInstanceId) == 0) {
 			return builder.withOutput(
 				"outputParameterNames", keyValuePairs
 			).build();
@@ -83,7 +77,7 @@ public class DDMDataProviderInstanceOutputParametersDataProvider
 			DDMDataProviderOutputParametersSettings[]
 				ddmDataProviderOutputParametersSettings =
 					_getDDMDataProviderOutputParametersSettings(
-						dataProviderInstanceId);
+						GetterUtil.getLong(dataProviderInstanceId));
 
 			for (DDMDataProviderOutputParametersSettings
 					ddmDataProviderOutputParametersSetting :
@@ -101,7 +95,7 @@ public class DDMDataProviderInstanceOutputParametersDataProvider
 			_log.error(
 				String.format(
 					"Unable to get the output parameters for data provider " +
-						"instance with id '%d'",
+						"instance with id '%s'",
 					dataProviderInstanceId),
 				exception);
 		}
@@ -132,7 +126,7 @@ public class DDMDataProviderInstanceOutputParametersDataProvider
 	protected DDMDataProviderInstanceService ddmDataProviderInstanceService;
 
 	@Reference
-	protected DDMDataProviderTracker ddmDataProviderTracker;
+	protected DDMDataProviderRegistry ddmDataProviderRegistry;
 
 	@Reference(target = "(ddm.form.values.deserializer.type=json)")
 	protected DDMFormValuesDeserializer jsonDDMFormValuesDeserializer;
@@ -156,7 +150,7 @@ public class DDMDataProviderInstanceOutputParametersDataProvider
 				dataProviderInstanceId);
 
 		DDMDataProvider ddmDataProvider =
-			ddmDataProviderTracker.getDDMDataProvider(
+			ddmDataProviderRegistry.getDDMDataProvider(
 				ddmDataProviderInstance.getType());
 
 		if (!ClassUtil.isSubclass(

@@ -59,7 +59,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CPAttachmentFileEntryIndexer
 	extends BaseIndexer<CPAttachmentFileEntry> {
 
@@ -269,7 +269,7 @@ public class CPAttachmentFileEntryIndexer
 
 		_indexWriterHelper.updateDocument(
 			cpAttachmentFileEntry.getCompanyId(),
-			getDocument(cpAttachmentFileEntry), isCommitImmediately());
+			getDocument(cpAttachmentFileEntry));
 	}
 
 	@Override

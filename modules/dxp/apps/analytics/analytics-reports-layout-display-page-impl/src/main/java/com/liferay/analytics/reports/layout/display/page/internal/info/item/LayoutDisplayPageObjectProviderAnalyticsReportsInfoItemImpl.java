@@ -22,16 +22,16 @@ import com.liferay.asset.display.page.util.AssetDisplayPageUtil;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
 import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
-import com.liferay.info.display.contributor.field.InfoDisplayContributorFieldTracker;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.field.type.DateInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.type.WebImage;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.seo.kernel.LayoutSEOLink;
 import com.liferay.layout.seo.kernel.LayoutSEOLinkManager;
 import com.liferay.petra.string.StringPool;
@@ -39,32 +39,27 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
-import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.PropsUtil;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -110,18 +105,21 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 	public List<Locale> getAvailableLocales(
 		LayoutDisplayPageObjectProvider layoutDisplayPageObjectProvider) {
 
-		return Optional.ofNullable(
-			_groupLocalService.fetchGroup(
-				layoutDisplayPageObjectProvider.getGroupId())
-		).map(
-			Group::getGroupId
-		).map(
-			_language::getAvailableLocales
-		).map(
-			ListUtil::fromCollection
-		).orElseGet(
-			() -> Collections.singletonList(LocaleUtil.getDefault())
-		);
+		Group group = _groupLocalService.fetchGroup(
+			layoutDisplayPageObjectProvider.getGroupId());
+
+		if (group == null) {
+			return Collections.singletonList(LocaleUtil.getDefault());
+		}
+
+		Set<Locale> availableLocales = _language.getAvailableLocales(
+			group.getGroupId());
+
+		if (availableLocales == null) {
+			return Collections.singletonList(LocaleUtil.getDefault());
+		}
+
+		return ListUtil.fromCollection(availableLocales);
 	}
 
 	@Override
@@ -129,64 +127,59 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 		LayoutDisplayPageObjectProvider layoutDisplayPageObjectProvider,
 		Locale locale) {
 
-		Optional<ThemeDisplay> themeDisplayOptional =
-			_getThemeDisplayOptional();
+		ThemeDisplay themeDisplay = _getThemeDisplay();
 
-		return themeDisplayOptional.map(
-			themeDisplay -> {
-				Optional<Layout> layoutOptional = _getLayoutOptional(
-					layoutDisplayPageObjectProvider);
+		if (themeDisplay == null) {
+			return StringPool.BLANK;
+		}
 
-				return layoutOptional.map(
-					layout -> {
-						HttpServletRequest httpServletRequest =
-							themeDisplay.getRequest();
+		Layout layout = _getLayout(layoutDisplayPageObjectProvider);
 
-						LayoutDisplayPageObjectProvider<?>
-							initialLayoutDisplayPageObjectProvider =
-								(LayoutDisplayPageObjectProvider<?>)
-									httpServletRequest.getAttribute(
-										LayoutDisplayPageWebKeys.
-											LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER);
+		if (layout == null) {
+			return StringPool.BLANK;
+		}
 
-						httpServletRequest.setAttribute(
-							LayoutDisplayPageWebKeys.
-								LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
-							layoutDisplayPageObjectProvider);
+		HttpServletRequest httpServletRequest = themeDisplay.getRequest();
 
-						String completeURL = _portal.getCurrentCompleteURL(
-							httpServletRequest);
+		LayoutDisplayPageObjectProvider<?>
+			initialLayoutDisplayPageObjectProvider =
+				(LayoutDisplayPageObjectProvider<?>)
+					httpServletRequest.getAttribute(
+						LayoutDisplayPageWebKeys.
+							LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER);
 
-						try {
-							String canonicalURL = _portal.getCanonicalURL(
-								completeURL, themeDisplay, layout, false,
-								false);
+		httpServletRequest.setAttribute(
+			LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
+			layoutDisplayPageObjectProvider);
 
-							LayoutSEOLink layoutSEOLink =
-								_layoutSEOLinkManager.getCanonicalLayoutSEOLink(
-									layout, locale, canonicalURL, themeDisplay);
+		String completeURL = _portal.getCurrentCompleteURL(httpServletRequest);
 
-							return layoutSEOLink.getHref();
-						}
-						catch (PortalException portalException) {
-							_log.error(portalException);
+		try {
+			String canonicalURL = _portal.getCanonicalURL(
+				completeURL, themeDisplay, layout, false, false);
 
-							return StringPool.BLANK;
-						}
-						finally {
-							httpServletRequest.setAttribute(
-								LayoutDisplayPageWebKeys.
-									LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
-								initialLayoutDisplayPageObjectProvider);
-						}
-					}
-				).orElse(
-					StringPool.BLANK
-				);
+			LayoutSEOLink layoutSEOLink =
+				_layoutSEOLinkManager.getCanonicalLayoutSEOLink(
+					layout, locale, canonicalURL, themeDisplay);
+
+			String href = layoutSEOLink.getHref();
+
+			if (href == null) {
+				return StringPool.BLANK;
 			}
-		).orElse(
-			StringPool.BLANK
-		);
+
+			return href;
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+
+			return StringPool.BLANK;
+		}
+		finally {
+			httpServletRequest.setAttribute(
+				LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_OBJECT_PROVIDER,
+				initialLayoutDisplayPageObjectProvider);
+		}
 	}
 
 	@Override
@@ -208,51 +201,47 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 	public Date getPublishDate(
 		LayoutDisplayPageObjectProvider layoutDisplayPageObjectProvider) {
 
-		try {
-			ClassName className = _classNameLocalService.getClassName(
-				layoutDisplayPageObjectProvider.getClassNameId());
+		Object firstInfoItemService =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFieldValuesProvider.class,
+				layoutDisplayPageObjectProvider.getClassName());
 
-			Date date = (Date)Optional.ofNullable(
-				_infoItemServiceTracker.getFirstInfoItemService(
-					InfoItemFieldValuesProvider.class, className.getClassName())
-			).map(
-				infoItemFieldValuesProvider ->
-					infoItemFieldValuesProvider.getInfoFieldValue(
-						layoutDisplayPageObjectProvider.getDisplayObject(),
-						"createDate")
-			).filter(
-				infoFieldValue -> {
-					InfoField infoField = infoFieldValue.getInfoField();
+		Date date = new Date();
 
-					return Objects.equals(
+		if (firstInfoItemService != null) {
+			InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
+				(InfoItemFieldValuesProvider<Object>)firstInfoItemService;
+
+			InfoFieldValue<Object> infoFieldValue =
+				infoItemFieldValuesProvider.getInfoFieldValue(
+					layoutDisplayPageObjectProvider.getDisplayObject(),
+					"createDate");
+
+			if (infoFieldValue != null) {
+				InfoField infoField = infoFieldValue.getInfoField();
+
+				if (Objects.equals(
 						infoField.getInfoFieldType(),
-						DateInfoFieldType.INSTANCE);
+						DateInfoFieldType.INSTANCE)) {
+
+					date = (Date)infoFieldValue.getValue();
 				}
-			).map(
-				InfoFieldValue::getValue
-			).orElseGet(
-				Date::new
-			);
-
-			return Optional.ofNullable(
-				_assetDisplayPageEntryLocalService.fetchAssetDisplayPageEntry(
-					layoutDisplayPageObjectProvider.getGroupId(),
-					layoutDisplayPageObjectProvider.getClassNameId(),
-					layoutDisplayPageObjectProvider.getClassPK())
-			).filter(
-				assetDisplayPageEntry -> date.before(
-					assetDisplayPageEntry.getCreateDate())
-			).map(
-				AssetDisplayPageEntry::getCreateDate
-			).orElse(
-				date
-			);
-		}
-		catch (PortalException portalException) {
-			_log.error(portalException);
+			}
 		}
 
-		return new Date();
+		AssetDisplayPageEntry assetDisplayPageEntry =
+			_assetDisplayPageEntryLocalService.fetchAssetDisplayPageEntry(
+				layoutDisplayPageObjectProvider.getGroupId(),
+				layoutDisplayPageObjectProvider.getClassNameId(),
+				layoutDisplayPageObjectProvider.getClassPK());
+
+		if ((assetDisplayPageEntry == null) ||
+			!date.before(assetDisplayPageEntry.getCreateDate())) {
+
+			return date;
+		}
+
+		return assetDisplayPageEntry.getCreateDate();
 	}
 
 	@Override
@@ -260,94 +249,91 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 		LayoutDisplayPageObjectProvider layoutDisplayPageObjectProvider,
 		Locale locale) {
 
-		try {
-			ClassName className = _classNameLocalService.getClassName(
-				layoutDisplayPageObjectProvider.getClassNameId());
+		InfoItemFieldValuesProvider infoItemFieldValuesProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFieldValuesProvider.class,
+				layoutDisplayPageObjectProvider.getClassName());
 
-			InfoItemFieldValuesProvider infoItemFieldValuesProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
-					InfoItemFieldValuesProvider.class,
-					className.getClassName());
+		InfoFieldValue<Object> infoFieldValue =
+			infoItemFieldValuesProvider.getInfoFieldValue(
+				layoutDisplayPageObjectProvider.getDisplayObject(), "title");
 
-			return (String)Optional.ofNullable(
-				infoItemFieldValuesProvider.getInfoFieldValue(
-					layoutDisplayPageObjectProvider.getDisplayObject(), "title")
-			).filter(
-				infoFieldValue -> {
-					InfoField infoField = infoFieldValue.getInfoField();
-
-					return Objects.equals(
-						infoField.getInfoFieldType(),
-						TextInfoFieldType.INSTANCE);
-				}
-			).map(
-				infoItemFieldValue -> infoItemFieldValue.getValue(locale)
-			).orElse(
-				StringPool.BLANK
-			);
-		}
-		catch (PortalException portalException) {
-			_log.error(portalException);
+		if (infoFieldValue == null) {
+			return StringPool.BLANK;
 		}
 
-		return StringPool.BLANK;
+		InfoField infoField = infoFieldValue.getInfoField();
+
+		if (!Objects.equals(
+				infoField.getInfoFieldType(), TextInfoFieldType.INSTANCE)) {
+
+			return StringPool.BLANK;
+		}
+
+		return (String)infoFieldValue.getValue(locale);
 	}
 
 	@Override
 	public boolean isShow(
 		LayoutDisplayPageObjectProvider layoutDisplayPageObjectProvider) {
 
-		Optional<Layout> layoutOptional = _getLayoutOptional(
-			layoutDisplayPageObjectProvider);
+		Layout layout = _getLayout(layoutDisplayPageObjectProvider);
 
-		return layoutOptional.filter(
-			Layout::isTypeAssetDisplay
-		).filter(
-			layout -> !_isEmbeddedPersonalApplicationLayout(layout)
-		).filter(
-			layout -> {
-				try {
-					return _hasEditPermission(
-						layoutDisplayPageObjectProvider, layout,
-						PermissionThreadLocal.getPermissionChecker());
-				}
-				catch (PortalException portalException) {
-					_log.error(portalException);
+		if (layout == null) {
+			return false;
+		}
 
-					return false;
-				}
+		if (layout.isTypeAssetDisplay() &&
+			!layout.isEmbeddedPersonalApplication()) {
+
+			try {
+				return _hasEditPermission(
+					layoutDisplayPageObjectProvider, layout,
+					PermissionThreadLocal.getPermissionChecker());
 			}
-		).isPresent();
+			catch (PortalException portalException) {
+				_log.error(portalException);
+
+				return false;
+			}
+		}
+
+		return false;
 	}
 
-	private Optional<Layout> _getLayoutOptional(
+	private Layout _getLayout(
 		LayoutDisplayPageObjectProvider<?> layoutDisplayPageObjectProvider) {
 
-		return Optional.ofNullable(
-			layoutDisplayPageObjectProvider
-		).filter(
-			currentLayoutDisplayPageObjectProvider ->
-				currentLayoutDisplayPageObjectProvider.getDisplayObject() !=
-					null
-		).map(
-			currentLayoutDisplayPageObjectProvider ->
-				AssetDisplayPageUtil.getAssetDisplayPageLayoutPageTemplateEntry(
-					layoutDisplayPageObjectProvider.getGroupId(),
-					layoutDisplayPageObjectProvider.getClassNameId(),
-					layoutDisplayPageObjectProvider.getClassPK(),
-					layoutDisplayPageObjectProvider.getClassTypeId())
-		).map(
-			layoutPageTemplateEntry -> _layoutLocalService.fetchLayout(
-				layoutPageTemplateEntry.getPlid())
-		);
+		if ((layoutDisplayPageObjectProvider == null) ||
+			(layoutDisplayPageObjectProvider.getDisplayObject() == null)) {
+
+			return null;
+		}
+
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			AssetDisplayPageUtil.getAssetDisplayPageLayoutPageTemplateEntry(
+				layoutDisplayPageObjectProvider.getGroupId(),
+				layoutDisplayPageObjectProvider.getClassNameId(),
+				layoutDisplayPageObjectProvider.getClassPK(),
+				layoutDisplayPageObjectProvider.getClassTypeId());
+
+		if (layoutPageTemplateEntry == null) {
+			return null;
+		}
+
+		return _layoutLocalService.fetchLayout(
+			layoutPageTemplateEntry.getPlid());
 	}
 
-	private Optional<ThemeDisplay> _getThemeDisplayOptional() {
-		return Optional.ofNullable(
-			ServiceContextThreadLocal.getServiceContext()
-		).map(
-			ServiceContext::getThemeDisplay
-		);
+	private ThemeDisplay _getThemeDisplay() {
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		if (serviceContext == null) {
+			return null;
+		}
+
+		return serviceContext.getThemeDisplay();
 	}
 
 	private boolean _hasEditPermission(
@@ -356,9 +342,8 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 		throws PortalException {
 
 		AssetRendererFactory<?> assetRendererFactory =
-			AssetRendererFactoryRegistryUtil.
-				getAssetRendererFactoryByClassNameId(
-					layoutDisplayPageObjectProvider.getClassNameId());
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				layoutDisplayPageObjectProvider.getClassName());
 
 		AssetRenderer<?> assetRenderer = null;
 
@@ -378,23 +363,6 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 		return true;
 	}
 
-	private boolean _isEmbeddedPersonalApplicationLayout(Layout layout) {
-		if (layout.isTypeControlPanel()) {
-			return false;
-		}
-
-		String layoutFriendlyURL = layout.getFriendlyURL();
-
-		if (layout.isSystem() &&
-			layoutFriendlyURL.equals(
-				PropsUtil.get(PropsKeys.CONTROL_PANEL_LAYOUT_FRIENDLY_URL))) {
-
-			return true;
-		}
-
-		return false;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl.class);
 
@@ -403,17 +371,10 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 		_assetDisplayPageEntryLocalService;
 
 	@Reference
-	private ClassNameLocalService _classNameLocalService;
-
-	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private InfoDisplayContributorFieldTracker
-		_infoDisplayContributorFieldTracker;
-
-	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;
@@ -426,8 +387,5 @@ public class LayoutDisplayPageObjectProviderAnalyticsReportsInfoItemImpl
 
 	@Reference
 	private Portal _portal;
-
-	@Reference
-	private UserLocalService _userLocalService;
 
 }

@@ -36,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = InfoCollectionProvider.class)
+@Component(service = InfoCollectionProvider.class)
 public class HighestRatedAssetsInfoCollectionProvider
 	extends BaseAssetsInfoCollectionProvider
 	implements InfoCollectionProvider<AssetEntry> {
@@ -50,7 +50,8 @@ public class HighestRatedAssetsInfoCollectionProvider
 
 		AssetEntryQuery assetEntryQuery = getAssetEntryQuery(
 			serviceContext.getCompanyId(), serviceContext.getScopeGroupId(),
-			collectionQuery.getPagination(), new Sort("ratings", true));
+			collectionQuery.getPagination(), new Sort("ratings", true),
+			new Sort("title", true));
 
 		try {
 			return InfoPage.of(

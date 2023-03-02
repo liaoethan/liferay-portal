@@ -19,7 +19,7 @@ import com.liferay.asset.kernel.model.AssetRenderer;
 import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.asset.kernel.model.BaseJSPAssetRenderer;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.petra.string.CharPool;
@@ -41,7 +41,6 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
 import java.util.Locale;
-import java.util.Optional;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
@@ -57,12 +56,12 @@ public class TranslationEntryAssetRenderer
 	extends BaseJSPAssetRenderer<TranslationEntry> {
 
 	public TranslationEntryAssetRenderer(
-		InfoItemServiceTracker infoItemServiceTracker,
+		InfoItemServiceRegistry infoItemServiceRegistry,
 		ServletContext servletContext, TranslationEntry translationEntry,
 		TranslationInfoFieldChecker translationInfoFieldChecker,
 		TranslationSnapshotProvider translationSnapshotProvider) {
 
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 		_translationEntry = translationEntry;
 		_translationInfoFieldChecker = translationInfoFieldChecker;
 		_translationSnapshotProvider = translationSnapshotProvider;
@@ -107,17 +106,19 @@ public class TranslationEntryAssetRenderer
 	@Override
 	public String getTitle(Locale locale) {
 		InfoItemHelper infoItemHelper = new InfoItemHelper(
-			_translationEntry.getClassName(), _infoItemServiceTracker);
+			_translationEntry.getClassName(), _infoItemServiceRegistry);
 
-		Optional<String> infoItemTitleOptional =
-			infoItemHelper.getInfoItemTitleOptional(
-				_translationEntry.getClassPK(), locale);
+		String infoItemTitle = infoItemHelper.getInfoItemTitle(
+			_translationEntry.getClassPK(), locale);
+
+		if (infoItemTitle == null) {
+			infoItemTitle = _getAssetRendererTitle(locale);
+		}
 
 		return LanguageUtil.format(
 			locale, "translation-of-x-to-x",
 			new Object[] {
-				infoItemTitleOptional.orElseGet(
-					() -> _getAssetRendererTitle(locale)),
+				infoItemTitle,
 				StringUtil.replace(
 					_translationEntry.getLanguageId(), CharPool.UNDERLINE,
 					CharPool.DASH)
@@ -146,10 +147,10 @@ public class TranslationEntryAssetRenderer
 		throws Exception {
 
 		InfoItemFormProvider<Object> infoItemFormProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormProvider.class, _translationEntry.getClassName());
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, _translationEntry.getClassName());
 
 		String content = _translationEntry.getContent();
@@ -196,8 +197,8 @@ public class TranslationEntryAssetRenderer
 		try {
 			AssetRendererFactory<?> assetRendererFactory =
 				AssetRendererFactoryRegistryUtil.
-					getAssetRendererFactoryByClassNameId(
-						_translationEntry.getClassNameId());
+					getAssetRendererFactoryByClassName(
+						_translationEntry.getClassName());
 
 			if (assetRendererFactory == null) {
 				return LanguageUtil.get(locale, "translation");
@@ -222,7 +223,7 @@ public class TranslationEntryAssetRenderer
 	private static final Log _log = LogFactoryUtil.getLog(
 		TranslationEntryAssetRenderer.class);
 
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 	private final TranslationEntry _translationEntry;
 	private final TranslationInfoFieldChecker _translationInfoFieldChecker;
 	private final TranslationSnapshotProvider _translationSnapshotProvider;

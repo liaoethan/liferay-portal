@@ -18,6 +18,7 @@ import ClayModal, {useModal} from '@clayui/modal';
 import {createResourceURL, fetch} from 'frontend-js-web';
 import React, {useEffect, useRef, useState} from 'react';
 
+import {REQUIRED_MSG} from '../utils/constants';
 import CodeEditor, {SidebarCategory} from './CodeEditor/index';
 import {FieldBase} from './FieldBase';
 
@@ -68,6 +69,7 @@ export function ExpressionBuilder({
 
 				<ClayInput.GroupItem append shrink>
 					<ClayButtonWithIcon
+						aria-label={Liferay.Language.get('expand-input-area')}
 						disabled={buttonDisabled}
 						displayType="secondary"
 						onClick={onOpenModal}
@@ -83,11 +85,21 @@ export function ExpressionBuilder({
 export function ExpressionBuilderModal({sidebarElements}: IModalProps) {
 	const editorRef = useRef<CodeMirror.Editor>(null);
 	const [
-		{error, onSave, required, source, validateExpressionURL},
+		{
+			error,
+			header,
+			onSave,
+			placeholder,
+			required,
+			source,
+			validateExpressionURL,
+		},
 		setState,
 	] = useState<{
 		error?: string;
+		header?: string;
 		onSave?: Callback;
+		placeholder?: string;
 		required?: boolean;
 		source?: string;
 		validateExpressionURL?: string;
@@ -99,7 +111,9 @@ export function ExpressionBuilderModal({sidebarElements}: IModalProps) {
 
 	useEffect(() => {
 		const openModal = (params: {
+			header: string;
 			onSave: Callback;
+			placeholder: string;
 			required: boolean;
 			source: string;
 			validateExpressionURL: string;
@@ -130,7 +144,7 @@ export function ExpressionBuilderModal({sidebarElements}: IModalProps) {
 		let error: string | undefined;
 
 		if (required && !source?.trim()) {
-			error = Liferay.Language.get('required');
+			error = REQUIRED_MSG;
 		}
 		else if (source?.trim() && validateExpressionURL) {
 			const response = await fetch(
@@ -165,19 +179,22 @@ export function ExpressionBuilderModal({sidebarElements}: IModalProps) {
 			size="lg"
 		>
 			<ClayModal.Header>
-				{Liferay.Language.get('expression-builder')}
+				{header ?? Liferay.Language.get('expression-builder')}
 			</ClayModal.Header>
 
 			<ClayModal.Body>
 				<CodeEditor
 					error={error}
 					onChange={() => {}}
-					placeholder={`<#-- ${Liferay.Util.sub(
-						Liferay.Language.get(
-							'create-the-condition-of-the-action-using-the-expression-builder-type-x-to-use-the-autocomplete-feature'
-						),
-						['"${"']
-					)} -->`}
+					placeholder={
+						placeholder ??
+						`<#-- ${Liferay.Util.sub(
+							Liferay.Language.get(
+								'create-the-condition-of-the-action-using-the-expression-builder-type-x-to-use-the-autocomplete-feature'
+							),
+							['"${"']
+						)} -->`
+					}
 					ref={editorRef}
 					sidebarElements={sidebarElements}
 					value={source}

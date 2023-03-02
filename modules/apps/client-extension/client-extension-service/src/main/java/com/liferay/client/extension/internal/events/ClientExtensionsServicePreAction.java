@@ -21,16 +21,23 @@ import com.liferay.client.extension.type.CET;
 import com.liferay.client.extension.type.ThemeCSSCET;
 import com.liferay.client.extension.type.ThemeFaviconCET;
 import com.liferay.client.extension.type.ThemeJSCET;
+import com.liferay.client.extension.type.ThemeSpritemapCET;
 import com.liferay.client.extension.type.manager.CETManager;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.events.Action;
 import com.liferay.portal.kernel.events.LifecycleAction;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,8 +49,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true, property = "key=servlet.service.events.pre",
-	service = LifecycleAction.class
+	property = "key=servlet.service.events.pre", service = LifecycleAction.class
 )
 public class ClientExtensionsServicePreAction extends Action {
 
@@ -58,7 +64,29 @@ public class ClientExtensionsServicePreAction extends Action {
 
 		Layout layout = themeDisplay.getLayout();
 
-		if ((layout == null) || layout.isTypeControlPanel()) {
+		if (layout.isTypeControlPanel()) {
+			String mode = ParamUtil.getString(
+				httpServletRequest, "p_l_mode", Constants.VIEW);
+
+			if (!Objects.equals(mode, Constants.PREVIEW)) {
+				return;
+			}
+
+			long selPlid = ParamUtil.getLong(
+				httpServletRequest,
+				StringBundler.concat(
+					StringPool.UNDERLINE,
+					ParamUtil.getString(httpServletRequest, "p_p_id"),
+					"_selPlid"));
+
+			if (selPlid <= 0) {
+				return;
+			}
+
+			layout = _layoutLocalService.fetchLayout(selPlid);
+		}
+
+		if (layout == null) {
 			return;
 		}
 
@@ -69,6 +97,12 @@ public class ClientExtensionsServicePreAction extends Action {
 		if (themeCSSCET != null) {
 			themeDisplay.setClayCSSURL(themeCSSCET.getClayURL());
 			themeDisplay.setMainCSSURL(themeCSSCET.getMainURL());
+		}
+
+		ThemeSpritemapCET themeSpritemapCET = _getThemeSpritemapCET(layout);
+
+		if (themeSpritemapCET != null) {
+			themeDisplay.setPathThemeSpritemap(themeSpritemapCET.getURL());
 		}
 
 		ThemeJSCET themeJSCET = _getThemeJSCET(layout);
@@ -214,6 +248,35 @@ public class ClientExtensionsServicePreAction extends Action {
 
 		if (cet != null) {
 			return (ThemeJSCET)cet;
+		}
+
+		return null;
+	}
+
+	private ThemeSpritemapCET _getThemeSpritemapCET(Layout layout) {
+		CET cet = _getCET(
+			_portal.getClassNameId(Layout.class), layout.getPlid(),
+			layout.getCompanyId(),
+			ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP);
+
+		if (cet == null) {
+			cet = _getCET(
+				_portal.getClassNameId(Layout.class),
+				layout.getMasterLayoutPlid(), layout.getCompanyId(),
+				ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP);
+		}
+
+		if (cet == null) {
+			LayoutSet layoutSet = layout.getLayoutSet();
+
+			cet = _getCET(
+				_portal.getClassNameId(LayoutSet.class),
+				layoutSet.getLayoutSetId(), layout.getCompanyId(),
+				ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP);
+		}
+
+		if (cet != null) {
+			return (ThemeSpritemapCET)cet;
 		}
 
 		return null;

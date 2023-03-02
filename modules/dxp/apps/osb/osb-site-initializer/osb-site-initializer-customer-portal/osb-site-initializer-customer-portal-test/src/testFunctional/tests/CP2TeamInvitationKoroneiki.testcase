@@ -19,72 +19,71 @@ definition {
 		}
 
 		task ("Create a new Customer Portal Site") {
-			CustomerPortal.addCustomerPortalSite(siteName = "${testSiteName}");
+			CustomerPortal.addCustomerPortalSite(siteName = ${testSiteName});
 		}
 
 		task ("Add test user access to all Accounts") {
 			CustomerPortal.assignUserToOrganization();
 
-			CustomerPortal.addUserToOneOrMoreAccounts(accountsList = "${testAccount}");
+			CustomerPortal.addUserToOneOrMoreAccounts(accountsList = ${testAccount});
 		}
 	}
 
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
+		CP2Utils.deleteSpecificObjectEntry(
+			email = "test01@liferay.com",
+			portlet = "Team Members Invitation");
+
 		CustomerPortal.customerPortalTearDown();
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
-			JSONGroup.deleteGroupByName(groupName = "${testSiteName}");
+			JSONGroup.deleteGroupByName(groupName = ${testSiteName});
 		}
 	}
 
 	@description = "Automation ID: LPS-148181 | Test Summary: Verify if when the user types a email at Invite Your Team Members the same email appears at Accounts - Details - Project that you are testing"
-	@priority = "5"
+	@priority = 5
 	test IfInvitedIsSeenOnAccountRoles {
 		task ("Change the user role in the project") {
-			Accounts.openAccountsAdmin();
+			Account.openAccountsAdmin();
 
-			CustomerPortal.accountTableProject(title = "${testAccount}");
+			CustomerPortal.accountTableProject(title = ${testAccount});
 
-			Accounts.addAssigneeToRoleViaUsersTab(
+			Account.addAssigneeToRoleViaUsersTab(
 				accountRoleTitle = "Account Administrator",
 				accountUserName = "Test Test");
 		}
 
 		task ("Go to CP2.0 and join a project") {
-			ApplicationsMenu.gotoSite(key_site = "${testSiteName}");
+			CP2Utils.goToCustomerPortalSiteWithRefresh();
 
-			CustomerPortal.enterOnProject(title = "${testAccount}");
+			CustomerPortal.enterOnProject(title = ${testAccount});
 		}
 
 		task ("Start the project configuration and invite a user to the project") {
 			CustomerPortal.clickOnStartProjectSetup();
 
 			CP2TeamMembers.addFieldsTeamMembersExtra(
-				position = "0",
-				positionNumber = "0",
+				position = 0,
+				positionNumber = 0,
 				rowEmail = "test01@liferay.com",
 				rowRole = "User");
 
 			CP2TeamMembers.clickTeamMembersSendInvitation();
 		}
 
-		task ("Go to admin accounts") {
-			Accounts.openAccountsAdmin();
-
-			CustomerPortal.accountTableProject(title = "${testAccount}");
-
-			Navigator.gotoNavTab(navTab = "Users");
-		}
-
 		task ("Assert that the guest user is being shown") {
-			AssertElementPresent(
-				email = "test01@liferay.com",
-				locator1 = "CP2TeamMembers#ACCOUNT_USER_NAME");
+			ApplicationsMenu.gotoPortlet(
+				category = "Object",
+				panel = "Control Panel",
+				portlet = "Team Members Invitation");
+
+			CP2TeamMembers.assertThatUserGuestIsVisible(email = "test01@liferay.com");
 		}
 	}
 

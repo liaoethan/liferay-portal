@@ -14,21 +14,26 @@
 
 import {useOutletContext, useParams} from 'react-router-dom';
 
+import JiraLink from '../../../components/JiraLink';
 import Container from '../../../components/Layout/Container';
-import ListView from '../../../components/ListView';
-import StatusBadge from '../../../components/StatusBadge';
 import QATable from '../../../components/Table/QATable';
+import SearchBuilder from '../../../core/SearchBuilder';
+import useIssuesFound from '../../../hooks/data/useIssuesFound';
 import i18n from '../../../i18n';
-import {TestrayCase, testrayCaseResultRest} from '../../../services/rest';
-import {getStatusLabel} from '../../../util/constants';
+import {TestrayCase} from '../../../services/rest';
 import dayjs from '../../../util/date';
-import {searchUtil} from '../../../util/search';
+import CaseResultHistory from './CaseResultHistory';
 import useCaseActions from './useCaseActions';
 
+type CaseOutlet = {
+	testrayCase: TestrayCase;
+};
+
 const Case = () => {
-	const {caseId, projectId} = useParams();
-	const {testrayCase}: {testrayCase: TestrayCase} = useOutletContext();
 	const {actions} = useCaseActions();
+	const {projectId} = useParams();
+	const {testrayCase}: CaseOutlet = useOutletContext();
+	const issues = useIssuesFound({caseId: testrayCase.id});
 
 	return (
 		<>
@@ -71,94 +76,27 @@ const Case = () => {
 						},
 						{
 							title: i18n.translate('all-issues-found'),
-							value: '-',
+							value: issues.length ? (
+								<JiraLink issue={issues} />
+							) : (
+								'-'
+							),
 						},
 					]}
 				/>
 			</Container>
 
 			<Container className="mt-3">
-				<ListView
-					initialContext={{
-						columns: {
-							caseType: false,
-							dateCreated: false,
-							dateModified: false,
-							issues: false,
-							team: false,
+				<CaseResultHistory
+					listViewProps={{
+						variables: {
+							filter: SearchBuilder.eq('caseId', testrayCase.id),
 						},
 					}}
-					managementToolbarProps={{
-						title: i18n.translate('test-history'),
-						visible: true,
-					}}
-					resource={testrayCaseResultRest.resource}
 					tableProps={{
 						actions,
-						columns: [
-							{
-								clickable: true,
-								key: 'dateCreated',
-								render: (date) => dayjs(date).format('lll'),
-								size: 'sm',
-								value: i18n.translate('create-date'),
-							},
-							{
-								clickable: true,
-								key: 'build',
-								render: (build) => {
-									return build?.gitHash;
-								},
-								value: i18n.translate('git-hash'),
-							},
-							{
-								clickable: true,
-								key: 'product-version',
-								render: (_, {build}) =>
-									build?.productVersion?.name,
-								value: i18n.translate('product-version'),
-							},
-							{
-								clickable: true,
-								key: 'run',
-								render: (run) => run?.externalReferencePK,
-								size: 'lg',
-								value: i18n.translate('environment'),
-							},
-							{
-								clickable: true,
-								key: 'routine',
-								render: (_, {build}) => build?.routine?.name,
-								value: i18n.translate('routine'),
-							},
-							{
-								key: 'dueStatus',
-								render: (dueStatus) => {
-									return (
-										<StatusBadge
-											type={getStatusLabel(dueStatus)}
-										>
-											{getStatusLabel(dueStatus)}
-										</StatusBadge>
-									);
-								},
-								value: i18n.translate('status'),
-							},
-							{
-								key: 'warnings',
-								value: i18n.translate('warnings'),
-							},
-							{key: 'issues', value: i18n.translate('issues')},
-							{key: 'errors', value: i18n.translate('errors')},
-						],
 						navigateTo: ({build, id}) =>
 							`/project/${projectId}/routines/${build?.routine?.id}/build/${build?.id}/case-result/${id}`,
-					}}
-					transformData={(response) =>
-						testrayCaseResultRest.transformDataFromList(response)
-					}
-					variables={{
-						filter: searchUtil.eq('caseId', caseId as string),
 					}}
 				/>
 			</Container>

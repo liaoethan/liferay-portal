@@ -55,6 +55,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -197,6 +198,7 @@ public abstract class BaseFieldMappingInfoResourceTestCase {
 	public void testGetFieldMappingInfosPage() throws Exception {
 		Page<FieldMappingInfo> page =
 			fieldMappingInfoResource.getFieldMappingInfosPage(
+				null, RandomTestUtil.randomString(),
 				RandomTestUtil.randomString());
 
 		long totalCount = page.getTotalCount();
@@ -209,7 +211,8 @@ public abstract class BaseFieldMappingInfoResourceTestCase {
 			testGetFieldMappingInfosPage_addFieldMappingInfo(
 				randomFieldMappingInfo());
 
-		page = fieldMappingInfoResource.getFieldMappingInfosPage(null);
+		page = fieldMappingInfoResource.getFieldMappingInfosPage(
+			null, null, null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
@@ -217,7 +220,16 @@ public abstract class BaseFieldMappingInfoResourceTestCase {
 			fieldMappingInfo1, (List<FieldMappingInfo>)page.getItems());
 		assertContains(
 			fieldMappingInfo2, (List<FieldMappingInfo>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetFieldMappingInfosPage_getExpectedActions());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetFieldMappingInfosPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	protected FieldMappingInfo testGetFieldMappingInfosPage_addFieldMappingInfo(
@@ -351,6 +363,13 @@ public abstract class BaseFieldMappingInfoResourceTestCase {
 	}
 
 	protected void assertValid(Page<FieldMappingInfo> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<FieldMappingInfo> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<FieldMappingInfo> fieldMappingInfos =
@@ -366,6 +385,20 @@ public abstract class BaseFieldMappingInfoResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -532,6 +565,10 @@ public abstract class BaseFieldMappingInfoResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

@@ -27,6 +27,9 @@ import com.liferay.portal.language.override.web.internal.constants.PLOPortletKey
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStreamReader;
+
+import java.nio.charset.StandardCharsets;
 
 import java.util.Enumeration;
 import java.util.Objects;
@@ -42,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + PLOPortletKeys.PORTAL_LANGUAGE_OVERRIDE,
 		"mvc.command.name=/portal_language_override/import_translations"
@@ -92,7 +94,9 @@ public class ImportTranslationsMVCActionCommand extends BaseMVCActionCommand {
 
 		Properties languageProperties = new Properties();
 
-		languageProperties.load(new FileInputStream(file));
+		languageProperties.load(
+			new InputStreamReader(
+				new FileInputStream(file), StandardCharsets.UTF_8));
 
 		if (languageProperties.size() == 0) {
 			SessionErrors.add(actionRequest, "fileInvalid");

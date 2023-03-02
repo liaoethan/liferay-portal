@@ -16,6 +16,9 @@ package com.liferay.journal.web.internal.portlet.action;
 
 import com.liferay.asset.display.page.constants.AssetDisplayPageConstants;
 import com.liferay.asset.display.page.portlet.AssetDisplayPageEntryFormProcessor;
+import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
+import com.liferay.asset.kernel.model.AssetRenderer;
+import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.dynamic.data.mapping.form.values.factory.DDMFormValuesFactory;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
@@ -28,7 +31,6 @@ import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.journal.util.JournalConverter;
 import com.liferay.journal.util.JournalHelper;
-import com.liferay.journal.web.internal.util.JournalUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -44,6 +46,7 @@ import com.liferay.portal.kernel.upload.LiferayFileItemException;
 import com.liferay.portal.kernel.upload.UploadException;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -69,7 +72,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + JournalPortletKeys.JOURNAL,
 		"mvc.command.name=/journal/save_as_draft_article"
@@ -89,7 +91,43 @@ public class SaveAsDraftArticleMVCActionCommand extends BaseMVCActionCommand {
 			JSONPortletResponseUtil.writeJSON(
 				actionRequest, actionResponse,
 				JSONUtil.put(
+					"articleId", article.getArticleId()
+				).put(
 					"classPK", article.getResourcePrimKey()
+				).put(
+					"friendlyUrlMap", article.getFriendlyURLMap()
+				).put(
+					"previewURL",
+					() -> {
+						AssetRendererFactory<JournalArticle>
+							assetRendererFactory =
+								AssetRendererFactoryRegistryUtil.
+									getAssetRendererFactoryByClass(
+										JournalArticle.class);
+
+						AssetRenderer<JournalArticle> assetRenderer =
+							assetRendererFactory.getAssetRenderer(
+								article.getResourcePrimKey(),
+								AssetRendererFactory.TYPE_LATEST);
+
+						String viewContentURL = StringPool.BLANK;
+
+						try {
+							viewContentURL = assetRenderer.getURLViewInContext(
+								_portal.getLiferayPortletRequest(actionRequest),
+								_portal.getLiferayPortletResponse(
+									actionResponse),
+								null);
+						}
+						catch (Exception exception) {
+							if (_log.isDebugEnabled()) {
+								_log.debug(exception);
+							}
+						}
+
+						return HttpComponentsUtil.addParameter(
+							viewContentURL, "p_l_mode", Constants.PREVIEW);
+					}
 				).put(
 					"version", article.getVersion()
 				));
@@ -346,10 +384,6 @@ public class SaveAsDraftArticleMVCActionCommand extends BaseMVCActionCommand {
 					smallImageURL, smallFile, null, articleURL, serviceContext);
 			}
 		}
-
-		// Recent articles
-
-		JournalUtil.addRecentArticle(actionRequest, article);
 
 		// Asset display page
 

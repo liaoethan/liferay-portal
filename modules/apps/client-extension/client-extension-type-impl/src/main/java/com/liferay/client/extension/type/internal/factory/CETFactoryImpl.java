@@ -24,6 +24,7 @@ import com.liferay.client.extension.type.factory.CETImplFactory;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropertiesUtil;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -48,7 +50,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Brian Wing Shun Chan
  */
-@Component(immediate = true, service = CETFactory.class)
+@Component(service = CETFactory.class)
 public class CETFactoryImpl implements CETFactory {
 
 	public CETFactoryImpl() {
@@ -65,8 +67,14 @@ public class CETFactoryImpl implements CETFactory {
 			ClientExtensionEntryConstants.TYPE_IFRAME,
 			new IFrameCETImplFactoryImpl()
 		).put(
+			ClientExtensionEntryConstants.TYPE_STATIC_CONTENT,
+			new StaticContentCETImplFactoryImpl()
+		).put(
 			ClientExtensionEntryConstants.TYPE_THEME_CSS,
 			 new ThemeCSSCETImplFactoryImpl()
+		).put(
+			ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP,
+			 new ThemeSpritemapCETImplFactoryImpl()
 		).put(
 			ClientExtensionEntryConstants.TYPE_THEME_FAVICON,
 			new ThemeFaviconCETImplFactoryImpl()
@@ -157,7 +165,11 @@ public class CETFactoryImpl implements CETFactory {
 
 		CETImplFactory cetImplFactory = _cetImplFactories.get(type);
 
-		if (cetImplFactory != null) {
+		if ((cetImplFactory != null) &&
+			(!Objects.equals(
+				type, ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP) ||
+			 FeatureFlagManagerUtil.isEnabled("LPS-166479"))) {
+
 			return cetImplFactory;
 		}
 

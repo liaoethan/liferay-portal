@@ -29,7 +29,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = "type=" + TemplateContextContributor.TYPE_THEME,
 	service = TemplateContextContributor.class
 )
@@ -44,9 +43,7 @@ public class LayoutEditModeTemplateContextContributor
 		String layoutMode = ParamUtil.getString(
 			httpServletRequest, "p_l_mode", Constants.VIEW);
 
-		if (layoutMode.equals(Constants.EDIT) ||
-			layoutMode.equals(Constants.PREVIEW)) {
-
+		if (layoutMode.equals(Constants.EDIT)) {
 			contextObjects.put(
 				"bodyCssClass",
 				GetterUtil.getString(contextObjects.get("bodyCssClass")) +

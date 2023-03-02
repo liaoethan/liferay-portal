@@ -18,16 +18,23 @@ import com.liferay.fragment.constants.FragmentPortletKeys;
 import com.liferay.fragment.exception.NoSuchEntryException;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentEntryService;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.transaction.Transactional;
+import com.liferay.portal.kernel.upload.UploadPortletRequest;
+import com.liferay.portal.kernel.upload.UploadRequest;
+import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
+
+import java.io.File;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -39,7 +46,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + FragmentPortletKeys.FRAGMENT,
 		"mvc.command.name=/fragment/edit_fragment_entry"
@@ -83,15 +89,18 @@ public class EditFragmentEntryMVCActionCommand
 			}
 		}
 
+		UploadPortletRequest uploadPortletRequest =
+			_portal.getUploadPortletRequest(actionRequest);
+
 		String name = ParamUtil.getString(actionRequest, "name");
-		String css = ParamUtil.getString(actionRequest, "cssContent");
-		String html = ParamUtil.getString(actionRequest, "htmlContent");
-		String js = ParamUtil.getString(actionRequest, "jsContent");
+		String css = _read("cssContent", uploadPortletRequest);
+		String html = _read("htmlContent", uploadPortletRequest);
+		String js = _read("jsContent", uploadPortletRequest);
 		String configuration = ParamUtil.getString(
 			actionRequest, "configurationContent");
 		int status = ParamUtil.getInteger(actionRequest, "status");
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		draftFragmentEntry.setName(name);
 		draftFragmentEntry.setCss(css);
@@ -103,10 +112,10 @@ public class EditFragmentEntryMVCActionCommand
 			String[] fieldTypes = ParamUtil.getStringValues(
 				actionRequest, "fieldTypes");
 
-			JSONArray fieldTypesJSONArray = JSONFactoryUtil.createJSONArray(
+			JSONArray fieldTypesJSONArray = _jsonFactory.createJSONArray(
 				fieldTypes);
 
-			JSONObject typeOptionsJSONObject = JSONFactoryUtil.createJSONObject(
+			JSONObject typeOptionsJSONObject = _jsonFactory.createJSONObject(
 				draftFragmentEntry.getTypeOptions());
 
 			typeOptionsJSONObject.put("fieldTypes", fieldTypesJSONArray);
@@ -133,7 +142,25 @@ public class EditFragmentEntryMVCActionCommand
 			actionRequest, actionResponse, jsonObject);
 	}
 
+	private String _read(String fileName, UploadRequest uploadRequest)
+		throws Exception {
+
+		File file = uploadRequest.getFile(fileName);
+
+		if (file != null) {
+			return FileUtil.read(file);
+		}
+
+		return StringPool.BLANK;
+	}
+
 	@Reference
 	private FragmentEntryService _fragmentEntryService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Portal _portal;
 
 }

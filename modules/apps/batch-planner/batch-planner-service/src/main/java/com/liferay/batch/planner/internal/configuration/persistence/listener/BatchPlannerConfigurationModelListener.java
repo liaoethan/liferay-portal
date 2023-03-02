@@ -17,7 +17,7 @@ package com.liferay.batch.planner.internal.configuration.persistence.listener;
 import com.liferay.batch.planner.configuration.BatchPlannerConfiguration;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListener;
 import com.liferay.portal.configuration.persistence.listener.ConfigurationModelListenerException;
-import com.liferay.portal.kernel.upload.UploadServletRequestConfigurationHelperUtil;
+import com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
@@ -31,7 +31,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Igor Beslic
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.batch.planner.configuration.BatchPlannerConfiguration",
 	service = ConfigurationModelListener.class
 )
@@ -61,7 +60,9 @@ public class BatchPlannerConfigurationModelListener
 	}
 
 	private boolean _isValid(long value) {
-		if (value > UploadServletRequestConfigurationHelperUtil.getMaxSize()) {
+		if (value >
+				UploadServletRequestConfigurationProviderUtil.getMaxSize()) {
+
 			return false;
 		}
 

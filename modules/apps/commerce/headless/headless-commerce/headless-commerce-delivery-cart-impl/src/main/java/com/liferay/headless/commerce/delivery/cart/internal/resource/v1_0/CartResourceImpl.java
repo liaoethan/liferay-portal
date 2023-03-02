@@ -14,8 +14,9 @@
 
 package com.liferay.headless.commerce.delivery.cart.internal.resource.v1_0;
 
-import com.liferay.commerce.account.model.CommerceAccount;
-import com.liferay.commerce.account.service.CommerceAccountService;
+import com.liferay.account.constants.AccountConstants;
+import com.liferay.account.model.AccountEntry;
+import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.commerce.constants.CommerceAddressConstants;
 import com.liferay.commerce.constants.CommercePaymentConstants;
 import com.liferay.commerce.constants.CommercePortletKeys;
@@ -36,21 +37,17 @@ import com.liferay.commerce.model.CommerceShippingMethod;
 import com.liferay.commerce.order.CommerceOrderValidatorRegistry;
 import com.liferay.commerce.order.CommerceOrderValidatorResult;
 import com.liferay.commerce.order.engine.CommerceOrderEngine;
-import com.liferay.commerce.payment.engine.CommercePaymentEngine;
 import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CPInstanceLocalService;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
-import com.liferay.commerce.product.service.CommerceChannelService;
 import com.liferay.commerce.service.CommerceAddressService;
 import com.liferay.commerce.service.CommerceOrderItemService;
 import com.liferay.commerce.service.CommerceOrderService;
-import com.liferay.commerce.service.CommerceOrderTypeLocalService;
 import com.liferay.commerce.service.CommerceOrderTypeService;
 import com.liferay.commerce.service.CommerceShippingMethodLocalService;
 import com.liferay.commerce.util.CommerceCheckoutStep;
-import com.liferay.commerce.util.CommerceCheckoutStepServicesTracker;
-import com.liferay.commerce.util.CommerceShippingHelper;
+import com.liferay.commerce.util.CommerceCheckoutStepRegistry;
 import com.liferay.headless.commerce.core.util.ExpandoUtil;
 import com.liferay.headless.commerce.core.util.ServiceContextHelper;
 import com.liferay.headless.commerce.delivery.cart.dto.v1_0.Address;
@@ -106,7 +103,7 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, properties = "OSGI-INF/liferay/rest/v1_0/cart.properties",
+	properties = "OSGI-INF/liferay/rest/v1_0/cart.properties",
 	scope = ServiceScope.PROTOTYPE, service = CartResource.class
 )
 public class CartResourceImpl extends BaseCartResourceImpl {
@@ -333,11 +330,19 @@ public class CartResourceImpl extends BaseCartResourceImpl {
 			commerceCurrencyId = commerceCurrency.getCommerceCurrencyId();
 		}
 
-		CommerceAccount commerceAccount =
-			_commerceAccountService.getCommerceAccount(cart.getAccountId());
+		AccountEntry accountEntry = null;
+
+		if (cart.getAccountId() == AccountConstants.ACCOUNT_ENTRY_ID_GUEST) {
+			accountEntry = _accountEntryLocalService.getGuestAccountEntry(
+				contextCompany.getCompanyId());
+		}
+		else {
+			accountEntry = _accountEntryLocalService.getAccountEntry(
+				cart.getAccountId());
+		}
 
 		return _commerceOrderService.addCommerceOrder(
-			commerceChannelGroupId, commerceAccount.getCommerceAccountId(),
+			commerceChannelGroupId, accountEntry.getAccountEntryId(),
 			commerceCurrencyId, _getCommerceOrderTypeId(cart));
 	}
 
@@ -542,8 +547,8 @@ public class CartResourceImpl extends BaseCartResourceImpl {
 			"checkoutStepName",
 			() -> {
 				CommerceCheckoutStep commerceCheckoutStep =
-					_commerceCheckoutStepServicesTracker.
-						getCommerceCheckoutStep("order-confirmation");
+					_commerceCheckoutStepRegistry.getCommerceCheckoutStep(
+						"order-confirmation");
 
 				return commerceCheckoutStep.getName();
 			}
@@ -798,13 +803,13 @@ public class CartResourceImpl extends BaseCartResourceImpl {
 	}
 
 	@Reference
+	private AccountEntryLocalService _accountEntryLocalService;
+
+	@Reference
 	private CartDTOConverter _cartDTOConverter;
 
 	@Reference
 	private CartItemDTOConverter _cartItemDTOConverter;
-
-	@Reference
-	private CommerceAccountService _commerceAccountService;
 
 	@Reference
 	private CommerceAddressService _commerceAddressService;
@@ -813,11 +818,7 @@ public class CartResourceImpl extends BaseCartResourceImpl {
 	private CommerceChannelLocalService _commerceChannelLocalService;
 
 	@Reference
-	private CommerceChannelService _commerceChannelService;
-
-	@Reference
-	private CommerceCheckoutStepServicesTracker
-		_commerceCheckoutStepServicesTracker;
+	private CommerceCheckoutStepRegistry _commerceCheckoutStepRegistry;
 
 	@Reference
 	private CommerceContextFactory _commerceContextFactory;
@@ -835,19 +836,10 @@ public class CartResourceImpl extends BaseCartResourceImpl {
 	private CommerceOrderService _commerceOrderService;
 
 	@Reference
-	private CommerceOrderTypeLocalService _commerceOrderTypeLocalService;
-
-	@Reference
 	private CommerceOrderTypeService _commerceOrderTypeService;
 
 	@Reference
 	private CommerceOrderValidatorRegistry _commerceOrderValidatorRegistry;
-
-	@Reference
-	private CommercePaymentEngine _commercePaymentEngine;
-
-	@Reference
-	private CommerceShippingHelper _commerceShippingHelper;
 
 	@Reference
 	private CommerceShippingMethodLocalService

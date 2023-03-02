@@ -14,6 +14,7 @@
 
 package com.liferay.fragment.internal.upgrade.registry;
 
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.fragment.internal.upgrade.v1_1_0.PortletPreferencesUpgradeProcess;
 import com.liferay.fragment.internal.upgrade.v2_0_0.util.FragmentCollectionTable;
 import com.liferay.fragment.internal.upgrade.v2_0_0.util.FragmentEntryLinkTable;
@@ -26,6 +27,7 @@ import com.liferay.portal.kernel.upgrade.BaseSQLServerDatetimeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.CTModelUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.view.count.ViewCountManager;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -36,7 +38,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author José Ángel Jiménez
  */
-@Component(immediate = true, service = UpgradeStepRegistrator.class)
+@Component(service = UpgradeStepRegistrator.class)
 public class FragmentServiceUpgradeStepRegistrator
 	implements UpgradeStepRegistrator {
 
@@ -92,7 +94,7 @@ public class FragmentServiceUpgradeStepRegistrator
 			new MVCCVersionUpgradeProcess() {
 
 				@Override
-				protected String[] getModuleTableNames() {
+				protected String[] getTableNames() {
 					return new String[] {
 						"FragmentCollection", "FragmentEntry",
 						"FragmentEntryLink"
@@ -137,7 +139,7 @@ public class FragmentServiceUpgradeStepRegistrator
 			new MVCCVersionUpgradeProcess() {
 
 				@Override
-				protected String[] getModuleTableNames() {
+				protected String[] getTableNames() {
 					return new String[] {"FragmentEntryVersion"};
 				}
 
@@ -181,9 +183,30 @@ public class FragmentServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.9.4", "2.10.0",
-			new com.liferay.fragment.internal.upgrade.v2_10_0.
-				FragmentEntryLinkUpgradeProcess());
+			UpgradeProcessFactory.addColumns(
+				"FragmentEntryLink", "deleted BOOLEAN"));
+
+		registry.register(
+			"2.10.0", "2.10.1",
+			new com.liferay.fragment.internal.upgrade.v2_10_1.
+				FragmentCollectionUpgradeProcess(_dlFolderLocalService));
+
+		registry.register(
+			"2.10.1", "2.10.2",
+			new UpgradeProcess() {
+
+				@Override
+				protected void doUpgrade() throws Exception {
+					runSQL(
+						"update FragmentEntryLink set deleted = [$FALSE$] " +
+							"where deleted is null");
+				}
+
+			});
 	}
+
+	@Reference
+	private DLFolderLocalService _dlFolderLocalService;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

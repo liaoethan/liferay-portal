@@ -14,6 +14,7 @@
 
 package com.liferay.search.experiences.rest.internal.resource.v1_0;
 
+import com.liferay.portal.json.JSONFactoryImpl;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -50,9 +51,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -88,6 +86,8 @@ public class SearchResponseResourceImplTest {
 		ReflectionTestUtil.setFieldValue(
 			_searchResponseResourceImpl, "contextUser",
 			Mockito.mock(User.class));
+		ReflectionTestUtil.setFieldValue(
+			_searchResponseResourceImpl, "_jsonFactory", new JSONFactoryImpl());
 		ReflectionTestUtil.setFieldValue(
 			_searchResponseResourceImpl, "_searcher", _searcher);
 		ReflectionTestUtil.setFieldValue(
@@ -488,17 +488,16 @@ public class SearchResponseResourceImplTest {
 	private void _assertEquals(
 		Map<String, String> expectedMap, Map<String, String> actualMap) {
 
-		Set<Map.Entry<String, String>> entries = actualMap.entrySet();
+		Map<String, String> map = new HashMap<>();
 
-		Stream<Map.Entry<String, String>> stream = entries.stream();
+		for (Map.Entry<String, String> entry : actualMap.entrySet()) {
+			if (expectedMap.containsKey(entry.getKey())) {
+				map.put(entry.getKey(), entry.getValue());
+			}
+		}
 
 		AssertUtils.assertEquals(
-			() -> String.valueOf(actualMap), expectedMap,
-			stream.filter(
-				entry -> expectedMap.containsKey(entry.getKey())
-			).collect(
-				Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)
-			));
+			() -> String.valueOf(actualMap), expectedMap, map);
 	}
 
 	private SearchHit _createSearchHit(

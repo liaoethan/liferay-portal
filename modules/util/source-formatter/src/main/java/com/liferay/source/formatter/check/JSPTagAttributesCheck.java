@@ -42,10 +42,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -125,6 +125,15 @@ public class JSPTagAttributesCheck extends BaseTagAttributesCheck {
 			String attributeValue = entry.getValue();
 
 			String tagFullName = tag.getFullName();
+
+			Matcher matcher = _taglibNamePattern.matcher(tagFullName);
+
+			if (matcher.find()) {
+				attributeValue = _moveLiteralStringInsideJPSExpression(
+					attributeValue);
+
+				tag.putAttribute(attributeName, attributeValue);
+			}
 
 			if (tagFullName.matches("\\w+")) {
 				tag.putAttribute(
@@ -329,7 +338,7 @@ public class JSPTagAttributesCheck extends BaseTagAttributesCheck {
 			return attributeValue;
 		}
 
-		Map<String, String> styleAttributesMap = new LinkedHashMap<>();
+		Map<String, String> styleAttributesMap = new TreeMap<>();
 
 		String styleAttributeAttributeName = null;
 		int x = -1;
@@ -591,6 +600,47 @@ public class JSPTagAttributesCheck extends BaseTagAttributesCheck {
 		return false;
 	}
 
+	private String _moveLiteralStringInsideJPSExpression(
+		String attributeValue) {
+
+		if ((!attributeValue.contains("<%=") &&
+			 !attributeValue.contains("%>")) ||
+			(attributeValue.startsWith("<%=") &&
+			 attributeValue.endsWith("%>")) ||
+			(getLevel(attributeValue, "<%", "%>") != 0)) {
+
+			return attributeValue;
+		}
+
+		attributeValue = attributeValue.trim();
+
+		if (attributeValue.startsWith("<%=") && attributeValue.endsWith("%>")) {
+			return attributeValue;
+		}
+
+		int x = attributeValue.indexOf("<%=");
+
+		if (x > 0) {
+			String literalString = StringUtil.quote(
+				attributeValue.substring(0, x), StringPool.QUOTE);
+
+			attributeValue = StringBundler.concat(
+				"<%= ", literalString, " +", attributeValue.substring(x + 3));
+		}
+
+		x = attributeValue.lastIndexOf("%>");
+
+		if ((x != -1) && (x < (attributeValue.length() - 2))) {
+			String literalString = StringUtil.quote(
+				attributeValue.substring(x + 2), StringPool.QUOTE);
+
+			attributeValue = StringBundler.concat(
+				attributeValue.substring(0, x), "+ ", literalString, " %>");
+		}
+
+		return attributeValue;
+	}
+
 	private static final String _JAVA_SOURCE_REPLACEMENT = "__JAVA_SOURCE__";
 
 	private static final String[] _SINGLE_LINE_TAG_WHITELIST = {
@@ -612,6 +662,8 @@ public class JSPTagAttributesCheck extends BaseTagAttributesCheck {
 		"^(<%= )new \\w+\\[\\] \\{([^<>]+)\\}( %>)$");
 	private static final Pattern _styleAttributePattern = Pattern.compile(
 		"(\\A|\\W)([a-z\\-]+)\\s*:");
+	private static final Pattern _taglibNamePattern = Pattern.compile(
+		"(aui|c|chart|clay|display|liferay(-[\\w-]+)|portlet|soy):.+");
 
 	private List<String> _allFileNames;
 	private final Map<String, Map<String, String>> _classSetMethodsMap =

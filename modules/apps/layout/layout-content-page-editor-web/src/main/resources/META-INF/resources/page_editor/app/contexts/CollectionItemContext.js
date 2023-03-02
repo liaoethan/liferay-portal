@@ -19,9 +19,9 @@ import {updateFragmentEntryLinkContent} from '../actions/index';
 import FragmentService from '../services/FragmentService';
 import InfoItemService from '../services/InfoItemService';
 import LayoutService from '../services/LayoutService';
-import isMappedToInfoItem from '../utils/editable-value/isMappedToInfoItem';
-import isMappedToLayout from '../utils/editable-value/isMappedToLayout';
-import isMappedToStructure from '../utils/editable-value/isMappedToStructure';
+import isMappedToInfoItem from '../utils/editable_value/isMappedToInfoItem';
+import isMappedToLayout from '../utils/editable_value/isMappedToLayout';
+import isMappedToStructure from '../utils/editable_value/isMappedToStructure';
 import isNullOrUndefined from '../utils/isNullOrUndefined';
 import {useDisplayPagePreviewItem} from './DisplayPagePreviewItemContext';
 import {useDispatch} from './StoreContext';
@@ -177,6 +177,12 @@ const useGetContent = (
 	);
 };
 
+const useWithinCollection = () => {
+	const context = useContext(CollectionItemContext);
+
+	return !isNullOrUndefined(context.collectionItem);
+};
+
 const shouldRenderFragmentEntryLink = ({
 	editableValues,
 	hasLocalizable,
@@ -298,5 +304,6 @@ export {
 	useCustomCollectionSelectorURL,
 	useParentToControlsId,
 	useToControlsId,
+	useWithinCollection,
 	useGetFieldValue,
 };

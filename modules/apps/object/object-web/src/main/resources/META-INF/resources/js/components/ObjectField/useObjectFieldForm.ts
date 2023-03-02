@@ -12,7 +12,11 @@
  * details.
  */
 
-import {invalidateRequired, useForm} from '@liferay/object-js-components-web';
+import {
+	REQUIRED_MSG,
+	invalidateRequired,
+	useForm,
+} from '@liferay/object-js-components-web';
 import {sub} from 'frontend-js-web';
 
 import {normalizeFieldSettings} from '../../utils/fieldSettings';
@@ -27,7 +31,6 @@ interface IUseObjectFieldForm {
 }
 
 const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
-const REQUIRED_MSG = Liferay.Language.get('required');
 
 export function useObjectFieldForm({
 	forbiddenChars,
@@ -167,9 +170,14 @@ export function useObjectFieldForm({
 				}
 			}
 		}
+		else if (field.businessType === 'Formula') {
+			if (invalidateRequired(settings.output as string)) {
+				errors.output = REQUIRED_MSG;
+			}
+		}
 		else if (
-			field.businessType === 'Text' ||
-			field.businessType === 'LongText'
+			field.businessType === 'LongText' ||
+			field.businessType === 'Text'
 		) {
 			if (settings.showCounter && !settings.maxLength) {
 				errors.maxLength = REQUIRED_MSG;

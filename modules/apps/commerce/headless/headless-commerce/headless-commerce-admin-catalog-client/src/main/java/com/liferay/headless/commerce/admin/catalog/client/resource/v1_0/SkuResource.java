@@ -71,12 +71,11 @@ public interface SkuResource {
 			Long id, Sku sku)
 		throws Exception;
 
-	public void postProductIdSkuBatch(
-			Long id, String callbackURL, Object object)
+	public void postProductIdSkuBatch(String callbackURL, Object object)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse postProductIdSkuBatchHttpResponse(
-			Long id, String callbackURL, Object object)
+			String callbackURL, Object object)
 		throws Exception;
 
 	public Page<Sku> getSkusPage(
@@ -104,7 +103,7 @@ public interface SkuResource {
 			String externalReferenceCode)
 		throws Exception;
 
-	public void patchSkuByExternalReferenceCode(
+	public Sku patchSkuByExternalReferenceCode(
 			String externalReferenceCode, Sku sku)
 		throws Exception;
 
@@ -117,11 +116,11 @@ public interface SkuResource {
 	public HttpInvoker.HttpResponse deleteSkuHttpResponse(Long id)
 		throws Exception;
 
-	public void deleteSkuBatch(Long id, String callbackURL, Object object)
+	public void deleteSkuBatch(String callbackURL, Object object)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse deleteSkuBatchHttpResponse(
-			Long id, String callbackURL, Object object)
+			String callbackURL, Object object)
 		throws Exception;
 
 	public Sku getSku(Long id) throws Exception;
@@ -129,7 +128,7 @@ public interface SkuResource {
 	public HttpInvoker.HttpResponse getSkuHttpResponse(Long id)
 		throws Exception;
 
-	public void patchSku(Long id, Sku sku) throws Exception;
+	public Sku patchSku(Long id, Sku sku) throws Exception;
 
 	public HttpInvoker.HttpResponse patchSkuHttpResponse(Long id, Sku sku)
 		throws Exception;
@@ -558,12 +557,11 @@ public interface SkuResource {
 			return httpInvoker.invoke();
 		}
 
-		public void postProductIdSkuBatch(
-				Long id, String callbackURL, Object object)
+		public void postProductIdSkuBatch(String callbackURL, Object object)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
-				postProductIdSkuBatchHttpResponse(id, callbackURL, object);
+				postProductIdSkuBatchHttpResponse(callbackURL, object);
 
 			String content = httpResponse.getContent();
 
@@ -592,7 +590,7 @@ public interface SkuResource {
 		}
 
 		public HttpInvoker.HttpResponse postProductIdSkuBatchHttpResponse(
-				Long id, String callbackURL, Object object)
+				String callbackURL, Object object)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -627,8 +625,6 @@ public interface SkuResource {
 				_builder._scheme + "://" + _builder._host + ":" +
 					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-admin-catalog/v1.0/products/skus/batch");
-
-			httpInvoker.path("id", id);
 
 			httpInvoker.userNameAndPassword(
 				_builder._login + ":" + _builder._password);
@@ -893,7 +889,7 @@ public interface SkuResource {
 			return httpInvoker.invoke();
 		}
 
-		public void patchSkuByExternalReferenceCode(
+		public Sku patchSkuByExternalReferenceCode(
 				String externalReferenceCode, Sku sku)
 			throws Exception {
 
@@ -924,6 +920,17 @@ public interface SkuResource {
 				_logger.fine(
 					"HTTP response status code: " +
 						httpResponse.getStatusCode());
+			}
+
+			try {
+				return SkuSerDes.toDTO(content);
+			}
+			catch (Exception e) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response: " + content, e);
+
+				throw new Problem.ProblemException(Problem.toDTO(content));
 			}
 		}
 
@@ -1034,11 +1041,11 @@ public interface SkuResource {
 			return httpInvoker.invoke();
 		}
 
-		public void deleteSkuBatch(Long id, String callbackURL, Object object)
+		public void deleteSkuBatch(String callbackURL, Object object)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse = deleteSkuBatchHttpResponse(
-				id, callbackURL, object);
+				callbackURL, object);
 
 			String content = httpResponse.getContent();
 
@@ -1067,7 +1074,7 @@ public interface SkuResource {
 		}
 
 		public HttpInvoker.HttpResponse deleteSkuBatchHttpResponse(
-				Long id, String callbackURL, Object object)
+				String callbackURL, Object object)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -1102,8 +1109,6 @@ public interface SkuResource {
 				_builder._scheme + "://" + _builder._host + ":" +
 					_builder._port + _builder._contextPath +
 						"/o/headless-commerce-admin-catalog/v1.0/skus/batch");
-
-			httpInvoker.path("id", id);
 
 			httpInvoker.userNameAndPassword(
 				_builder._login + ":" + _builder._password);
@@ -1188,7 +1193,7 @@ public interface SkuResource {
 			return httpInvoker.invoke();
 		}
 
-		public void patchSku(Long id, Sku sku) throws Exception {
+		public Sku patchSku(Long id, Sku sku) throws Exception {
 			HttpInvoker.HttpResponse httpResponse = patchSkuHttpResponse(
 				id, sku);
 
@@ -1215,6 +1220,17 @@ public interface SkuResource {
 				_logger.fine(
 					"HTTP response status code: " +
 						httpResponse.getStatusCode());
+			}
+
+			try {
+				return SkuSerDes.toDTO(content);
+			}
+			catch (Exception e) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response: " + content, e);
+
+				throw new Problem.ProblemException(Problem.toDTO(content));
 			}
 		}
 

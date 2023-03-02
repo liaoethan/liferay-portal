@@ -30,10 +30,12 @@ import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.search.capabilities.SearchCapabilities;
 import com.liferay.portal.search.rest.configuration.SearchSuggestionsCompanyConfiguration;
 import com.liferay.portal.search.searcher.SearchRequest;
 import com.liferay.portal.search.searcher.SearchResponse;
@@ -74,7 +76,8 @@ public class SearchBarPortletDisplayContextFactory {
 	public SearchBarPortletDisplayContext create(
 		PortletPreferencesLookup portletPreferencesLookup,
 		PortletSharedSearchRequest portletSharedSearchRequest,
-		SearchBarPrecedenceHelper searchBarPrecedenceHelper) {
+		SearchBarPrecedenceHelper searchBarPrecedenceHelper,
+		SearchCapabilities searchCapabilities) {
 
 		SearchBarPortletDisplayContext searchBarPortletDisplayContext =
 			new SearchBarPortletDisplayContext();
@@ -183,6 +186,9 @@ public class SearchBarPortletDisplayContextFactory {
 		if (searchBarPortletPreferences.isInvisible()) {
 			searchBarPortletDisplayContext.setRenderNothing(true);
 		}
+
+		searchBarPortletDisplayContext.setSearchExperiencesSupported(
+			searchCapabilities.isSearchExperiencesSupported());
 
 		SearchSuggestionsCompanyConfiguration
 			searchSuggestionsCompanyConfiguration =
@@ -297,25 +303,28 @@ public class SearchBarPortletDisplayContextFactory {
 		Portlet headerSearchBarPortlet =
 			searchBarPrecedenceHelper.findHeaderSearchBarPortlet(themeDisplay);
 
-		if (headerSearchBarPortlet != null) {
-			Optional<PortletPreferences> headerPortletPreferencesOptional =
-				portletPreferencesLookup.fetchPreferences(
-					headerSearchBarPortlet, themeDisplay);
-
-			if (headerPortletPreferencesOptional.isPresent() &&
-				SearchBarPortletDestinationUtil.isSameDestination(
-					headerPortletPreferencesOptional.get(), themeDisplay)) {
-
-				Optional<String> optional = searchSettings.getScope();
-
-				if (optional.isPresent()) {
-					return SearchScopePreference.getSearchScopePreference(
-						optional.get());
-				}
-			}
+		if (headerSearchBarPortlet == null) {
+			return searchBarPortletPreferences.getSearchScopePreference();
 		}
 
-		return searchBarPortletPreferences.getSearchScopePreference();
+		Optional<PortletPreferences> headerPortletPreferencesOptional =
+			portletPreferencesLookup.fetchPreferences(
+				headerSearchBarPortlet, themeDisplay);
+
+		if (!headerPortletPreferencesOptional.isPresent() ||
+			!SearchBarPortletDestinationUtil.isSameDestination(
+				headerPortletPreferencesOptional.get(), themeDisplay)) {
+
+			return searchBarPortletPreferences.getSearchScopePreference();
+		}
+
+		String scope = searchSettings.getScope();
+
+		if (scope == null) {
+			return searchBarPortletPreferences.getSearchScopePreference();
+		}
+
+		return SearchScopePreference.getSearchScopePreference(scope);
 	}
 
 	protected SearchSuggestionsCompanyConfiguration
@@ -357,24 +366,24 @@ public class SearchBarPortletDisplayContextFactory {
 		Portlet headerSearchBarPortlet =
 			searchBarPrecedenceHelper.findHeaderSearchBarPortlet(themeDisplay);
 
-		if (headerSearchBarPortlet != null) {
-			Optional<PortletPreferences> headerPortletPreferencesOptional =
-				portletPreferencesLookup.fetchPreferences(
-					headerSearchBarPortlet, themeDisplay);
-
-			if (headerPortletPreferencesOptional.isPresent() &&
-				SearchBarPortletDestinationUtil.isSameDestination(
-					headerPortletPreferencesOptional.get(), themeDisplay)) {
-
-				Optional<String> optional =
-					searchSettings.getKeywordsParameterName();
-
-				return optional.orElse(
-					searchBarPortletPreferences.getKeywordsParameterName());
-			}
+		if (headerSearchBarPortlet == null) {
+			return searchBarPortletPreferences.getKeywordsParameterName();
 		}
 
-		return searchBarPortletPreferences.getKeywordsParameterName();
+		Optional<PortletPreferences> headerPortletPreferencesOptional =
+			portletPreferencesLookup.fetchPreferences(
+				headerSearchBarPortlet, themeDisplay);
+
+		if (!headerPortletPreferencesOptional.isPresent() ||
+			!SearchBarPortletDestinationUtil.isSameDestination(
+				headerPortletPreferencesOptional.get(), themeDisplay)) {
+
+			return searchBarPortletPreferences.getKeywordsParameterName();
+		}
+
+		return GetterUtil.getString(
+			searchSettings.getKeywordsParameterName(),
+			searchBarPortletPreferences.getKeywordsParameterName());
 	}
 
 	private String _getScopeParameterName(
@@ -387,21 +396,25 @@ public class SearchBarPortletDisplayContextFactory {
 		Portlet headerSearchBarPortlet =
 			searchBarPrecedenceHelper.findHeaderSearchBarPortlet(themeDisplay);
 
-		if (headerSearchBarPortlet != null) {
-			Optional<PortletPreferences> headerPortletPreferencesOptional =
-				portletPreferencesLookup.fetchPreferences(
-					headerSearchBarPortlet, themeDisplay);
+		if (headerSearchBarPortlet == null) {
+			return searchBarPortletPreferences.getScopeParameterName();
+		}
 
-			if (headerPortletPreferencesOptional.isPresent() &&
-				SearchBarPortletDestinationUtil.isSameDestination(
-					headerPortletPreferencesOptional.get(), themeDisplay)) {
+		Optional<PortletPreferences> headerPortletPreferencesOptional =
+			portletPreferencesLookup.fetchPreferences(
+				headerSearchBarPortlet, themeDisplay);
 
-				Optional<String> optional =
-					searchSettings.getScopeParameterName();
+		if (!headerPortletPreferencesOptional.isPresent() ||
+			!SearchBarPortletDestinationUtil.isSameDestination(
+				headerPortletPreferencesOptional.get(), themeDisplay)) {
 
-				return optional.orElse(
-					searchBarPortletPreferences.getScopeParameterName());
-			}
+			return searchBarPortletPreferences.getScopeParameterName();
+		}
+
+		String scopeParameterName = searchSettings.getScopeParameterName();
+
+		if (scopeParameterName != null) {
+			return scopeParameterName;
 		}
 
 		return searchBarPortletPreferences.getScopeParameterName();
@@ -412,7 +425,7 @@ public class SearchBarPortletDisplayContextFactory {
 		SearchBarPortletPreferences searchBarPortletPreferences) {
 
 		return portletSharedSearchResponse.getFederatedSearchResponse(
-			searchBarPortletPreferences.getFederatedSearchKeyOptional());
+			searchBarPortletPreferences.getFederatedSearchKey());
 	}
 
 	private String _getURLCurrentPath(ThemeDisplay themeDisplay) {

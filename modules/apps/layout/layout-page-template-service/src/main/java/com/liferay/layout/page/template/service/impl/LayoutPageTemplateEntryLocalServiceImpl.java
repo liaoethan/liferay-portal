@@ -15,15 +15,13 @@
 package com.liferay.layout.page.template.service.impl;
 
 import com.liferay.asset.kernel.NoSuchClassTypeException;
-import com.liferay.document.library.kernel.model.DLFileEntry;
-import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLinkLocalService;
-import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
+import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.exception.LayoutPageTemplateEntryNameException;
 import com.liferay.layout.page.template.exception.NoSuchPageTemplateEntryException;
@@ -51,6 +49,7 @@ import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -63,6 +62,7 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.ThemeLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.File;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.OrderByComparator;
@@ -261,7 +261,7 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 	public LayoutPageTemplateEntry copyLayoutPageTemplateEntry(
 			long userId, long groupId, long layoutPageTemplateCollectionId,
 			long layoutPageTemplateEntryId, ServiceContext serviceContext)
-		throws PortalException {
+		throws Exception {
 
 		LayoutPageTemplateEntry sourceLayoutPageTemplateEntry =
 			layoutPageTemplateEntryPersistence.findByPrimaryKey(
@@ -272,16 +272,37 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 			sourceLayoutPageTemplateEntry.getType(),
 			serviceContext.getLocale());
 
-		long previewFileEntryId = _copyPreviewFileEntryId(
-			userId, sourceLayoutPageTemplateEntry.getPreviewFileEntryId(), name,
+		long masterLayoutPlid = 0;
+
+		Layout layout = _layoutLocalService.fetchLayout(
+			sourceLayoutPageTemplateEntry.getPlid());
+
+		if (layout != null) {
+			masterLayoutPlid = layout.getMasterLayoutPlid();
+		}
+
+		LayoutPageTemplateEntry targetLayoutPageTemplateEntry =
+			addLayoutPageTemplateEntry(
+				userId, groupId, layoutPageTemplateCollectionId,
+				sourceLayoutPageTemplateEntry.getClassNameId(),
+				sourceLayoutPageTemplateEntry.getClassTypeId(), name,
+				sourceLayoutPageTemplateEntry.getType(), 0, false,
+				sourceLayoutPageTemplateEntry.getLayoutPrototypeId(), 0,
+				masterLayoutPlid, sourceLayoutPageTemplateEntry.getStatus(),
+				serviceContext);
+
+		FileEntry targetPreviewFileEntry = _copyPreviewFileEntry(
+			sourceLayoutPageTemplateEntry, targetLayoutPageTemplateEntry,
 			serviceContext);
 
-		return addLayoutPageTemplateEntry(
-			userId, groupId, layoutPageTemplateCollectionId,
-			sourceLayoutPageTemplateEntry.getClassNameId(),
-			sourceLayoutPageTemplateEntry.getClassTypeId(), name,
-			sourceLayoutPageTemplateEntry.getType(), previewFileEntryId, false,
-			0, 0, 0, sourceLayoutPageTemplateEntry.getStatus(), serviceContext);
+		if (targetPreviewFileEntry == null) {
+			return targetLayoutPageTemplateEntry;
+		}
+
+		return layoutPageTemplateEntryLocalService.
+			updateLayoutPageTemplateEntry(
+				targetLayoutPageTemplateEntry.getLayoutPageTemplateEntryId(),
+				targetPreviewFileEntry.getFileEntryId());
 	}
 
 	@Override
@@ -622,6 +643,9 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 		}
 
 		layoutPageTemplateEntry.setModifiedDate(new Date());
+		layoutPageTemplateEntry.setLayoutPageTemplateEntryKey(
+			_generateLayoutPageTemplateEntryKey(
+				layoutPageTemplateEntry.getGroupId(), name));
 		layoutPageTemplateEntry.setName(name);
 		layoutPageTemplateEntry.setStatus(status);
 		layoutPageTemplateEntry.setStatusByUserId(userId);
@@ -650,6 +674,9 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 			layoutPageTemplateEntry.getType());
 
 		layoutPageTemplateEntry.setModifiedDate(new Date());
+		layoutPageTemplateEntry.setLayoutPageTemplateEntryKey(
+			_generateLayoutPageTemplateEntryKey(
+				layoutPageTemplateEntry.getGroupId(), name));
 		layoutPageTemplateEntry.setName(name);
 
 		layoutPageTemplateEntry =
@@ -783,21 +810,13 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 			String colorSchemeId = _getColorSchemeId(
 				layout.getCompanyId(), themeId, StringPool.BLANK);
 
-			draftLayout = _layoutLocalService.updateLookAndFeel(
+			_layoutLocalService.updateLookAndFeel(
 				groupId, privateLayout, draftLayout.getLayoutId(), themeId,
 				colorSchemeId, StringPool.BLANK);
 
 			layout = _layoutLocalService.updateLookAndFeel(
 				groupId, privateLayout, layout.getLayoutId(), themeId,
 				colorSchemeId, StringPool.BLANK);
-		}
-
-		if (status == WorkflowConstants.STATUS_DRAFT) {
-			_layoutLocalService.updateStatus(
-				userId, draftLayout.getPlid(), status, serviceContext);
-
-			layout = _layoutLocalService.updateStatus(
-				userId, layout.getPlid(), status, serviceContext);
 		}
 
 		return layout;
@@ -830,27 +849,38 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 			new ServiceContext());
 	}
 
-	private long _copyPreviewFileEntryId(
-			long userId, long previewFileEntryId, String name,
+	private FileEntry _copyPreviewFileEntry(
+			LayoutPageTemplateEntry sourceLayoutPageTemplateEntry,
+			LayoutPageTemplateEntry targetLayoutPageTemplateEntry,
 			ServiceContext serviceContext)
-		throws PortalException {
+		throws Exception {
 
-		if (previewFileEntryId == 0) {
-			return previewFileEntryId;
+		long sourcePreviewFileEntryId =
+			sourceLayoutPageTemplateEntry.getPreviewFileEntryId();
+
+		if (sourcePreviewFileEntryId <= 0) {
+			return null;
 		}
 
-		DLFileEntry dlFileEntry = _dlFileEntryLocalService.getFileEntry(
-			previewFileEntryId);
+		FileEntry portletFileEntry = _portletFileRepository.getPortletFileEntry(
+			sourcePreviewFileEntryId);
 
-		Folder folder = _portletFileRepository.addPortletFolder(
-			userId, dlFileEntry.getRepositoryId(),
-			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, name, serviceContext);
+		Folder folder = portletFileEntry.getFolder();
 
-		DLFileEntry copyDLFileEntry = _dlFileEntryLocalService.copyFileEntry(
-			userId, dlFileEntry.getGroupId(), dlFileEntry.getRepositoryId(),
-			previewFileEntryId, folder.getFolderId(), serviceContext);
+		long targetLayoutPageTemplateEntryId =
+			targetLayoutPageTemplateEntry.getLayoutPageTemplateEntryId();
 
-		return copyDLFileEntry.getFileEntryId();
+		String fileName =
+			targetLayoutPageTemplateEntryId + "_preview." +
+				portletFileEntry.getExtension();
+
+		return _portletFileRepository.addPortletFileEntry(
+			portletFileEntry.getGroupId(), serviceContext.getUserId(),
+			LayoutPageTemplateEntry.class.getName(),
+			targetLayoutPageTemplateEntryId, LayoutAdminPortletKeys.GROUP_PAGES,
+			folder.getFolderId(),
+			_file.getBytes(portletFileEntry.getContentStream()), fileName,
+			portletFileEntry.getMimeType(), false);
 	}
 
 	private String _generateLayoutPageTemplateEntryKey(
@@ -939,7 +969,7 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 		}
 
 		InfoItemFormProvider<?> infoItemFormProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormProvider.class, className);
 
 		if (infoItemFormProvider == null) {
@@ -949,7 +979,7 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 		}
 
 		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class, className);
 
 		if (infoItemFormVariationsProvider == null) {
@@ -1017,10 +1047,10 @@ public class LayoutPageTemplateEntryLocalServiceImpl
 	private DLFileEntryLocalService _dlFileEntryLocalService;
 
 	@Reference
-	private FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;
+	private File _file;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;

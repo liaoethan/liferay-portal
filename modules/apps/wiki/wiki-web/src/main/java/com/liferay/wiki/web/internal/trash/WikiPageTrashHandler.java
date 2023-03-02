@@ -42,7 +42,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
 import com.liferay.trash.constants.TrashEntryConstants;
-import com.liferay.trash.kernel.exception.RestoreEntryException;
+import com.liferay.trash.exception.RestoreEntryException;
 import com.liferay.trash.kernel.model.TrashEntry;
 import com.liferay.wiki.constants.WikiPortletKeys;
 import com.liferay.wiki.engine.WikiEngineRenderer;
@@ -142,11 +142,11 @@ public class WikiPageTrashHandler extends BaseWikiTrashHandler {
 			try {
 				WikiPage parentPage = page.getParentPage();
 
-				while (parentPage.isInTrashImplicitly()) {
+				while (_trashHelper.isInTrashImplicitly(parentPage)) {
 					parentPage = parentPage.getParentPage();
 				}
 
-				if (parentPage.isInTrashExplicitly()) {
+				if (_trashHelper.isInTrashExplicitly(parentPage)) {
 					return parentPage;
 				}
 			}
@@ -327,7 +327,7 @@ public class WikiPageTrashHandler extends BaseWikiTrashHandler {
 			return false;
 		}
 
-		return !page.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(page);
 	}
 
 	@Override
@@ -464,6 +464,11 @@ public class WikiPageTrashHandler extends BaseWikiTrashHandler {
 
 		return _wikiPageModelResourcePermission.contains(
 			permissionChecker, classPK, actionId);
+	}
+
+	@Override
+	protected boolean isInTrashExplicitly(WikiPage page) {
+		return _trashHelper.isInTrashExplicitly(page);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

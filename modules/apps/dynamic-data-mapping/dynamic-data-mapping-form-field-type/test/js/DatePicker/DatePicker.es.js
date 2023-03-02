@@ -47,7 +47,9 @@ describe('DatePicker', () => {
 	it('expands the datepicker on calendar icon click', () => {
 		render(<DatePicker />);
 
-		userEvent.click(screen.getByLabelText('Choose date'));
+		const [button] = screen.getAllByLabelText('Choose date');
+
+		userEvent.click(button);
 
 		expect(
 			document.body.querySelector('.date-picker-dropdown-menu.show')
@@ -55,12 +57,14 @@ describe('DatePicker', () => {
 	});
 
 	it('fills the input with the date selected on Date Picker', () => {
-		render(<DatePicker onChange={() => {}} />);
+		const {getByLabelText} = render(<DatePicker onChange={() => {}} />);
 
-		userEvent.click(screen.getByLabelText('Choose date'));
-		userEvent.click(screen.getByLabelText('Select current date'));
+		const [button] = screen.getAllByLabelText('Choose date');
 
-		expect(screen.getByRole('textbox')).toHaveValue(
+		userEvent.click(button);
+		fireEvent.click(getByLabelText('Select current date'));
+
+		expect(screen.getByRole('textbox', {hidden: true})).toHaveValue(
 			moment().format('MM/DD/YYYY')
 		);
 	});
@@ -70,8 +74,10 @@ describe('DatePicker', () => {
 
 		render(<DatePicker onChange={onChange} />);
 
-		userEvent.click(screen.getByLabelText('Choose date'));
-		userEvent.click(screen.getByLabelText('Select current date'));
+		const [button] = screen.getAllByLabelText('Choose date');
+
+		userEvent.click(button);
+		fireEvent.click(screen.getByLabelText('Select current date'));
 
 		expect(onChange).toHaveBeenCalledWith(
 			{},
@@ -82,10 +88,12 @@ describe('DatePicker', () => {
 	it('fills the input date according to the locale', () => {
 		render(<DatePicker locale="ja_JP" onChange={() => {}} />);
 
-		userEvent.click(screen.getByLabelText('Choose date'));
-		userEvent.click(screen.getByLabelText('Select current date'));
+		const [button] = screen.getAllByLabelText('Choose date');
 
-		expect(screen.getByRole('textbox')).toHaveValue(
+		userEvent.click(button);
+		fireEvent.click(screen.getByLabelText('Select current date'));
+
+		expect(screen.getByRole('textbox', {hidden: true})).toHaveValue(
 			moment().format('YYYY/MM/DD')
 		);
 	});

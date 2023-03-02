@@ -22,15 +22,14 @@ import React, {useContext, useEffect, useState} from 'react';
 
 import {ASSET_CATEGORY_ID} from '../../utils/constants';
 import {DEFAULT_SXP_ELEMENT_ICON} from '../../utils/data';
-import {INPUT_TYPES} from '../../utils/inputTypes';
-import {
-	cleanUIConfiguration,
-	getSXPElementJSON,
-	isDefined,
-} from '../../utils/utils';
+import isDefined from '../../utils/functions/is_defined';
+import cleanUIConfiguration from '../../utils/sxp_element/clean_ui_configuration';
+import getSXPElementJSON from '../../utils/sxp_element/get_sxp_element_json';
+import getSXPElementTitleAndDescription from '../../utils/sxp_element/get_sxp_element_title_and_description';
+import isElementInactiveFromNonCompanyIndex from '../../utils/sxp_element/is_element_inactive_from_noncompany_index';
+import {INPUT_TYPES} from '../../utils/types/inputTypes';
 import {PreviewModalWithCopyDownload} from '../PreviewModal';
 import ThemeContext from '../ThemeContext';
-import {getLocalizedText} from './../../utils/language';
 import DateInput from './DateInput';
 import FieldInput from './FieldInput';
 import FieldListInput from './FieldListInput';
@@ -80,8 +79,10 @@ function SXPElement({
 	const [collapse, setCollapse] = useState(false);
 	const [active, setActive] = useState(false);
 
-	const description = getLocalizedText(sxpElement.description_i18n, locale);
-	const title = getLocalizedText(sxpElement.title_i18n, locale);
+	const [title, description] = getSXPElementTitleAndDescription(
+		sxpElement,
+		locale
+	);
 
 	const fieldSets = cleanUIConfiguration(
 		sxpElement.elementDefinition?.uiConfiguration
@@ -107,17 +108,6 @@ function SXPElement({
 		return isDefined(enabled) ? enabled : true;
 	};
 
-	/**
-	 * All system elements that are not 'Custom JSON Element' or 'Paste Any
-	 * Elasticsearch Query Element' are inactive when search index is not the
-	 * company index.
-	 * @returns {boolean}
-	 */
-	const _isInactiveFromNonCompanyIndex = () =>
-		!isIndexCompany &&
-		sxpElement.readOnly &&
-		sxpElement.elementDefinition?.category !== 'custom';
-
 	const _handleDelete = () => {
 		onDeleteSXPElement(id);
 	};
@@ -136,7 +126,9 @@ function SXPElement({
 
 	const _renderInput = (config) => {
 		const disabled =
-			!_isEnabled() || _isInactiveFromNonCompanyIndex() || isSubmitting;
+			!_isEnabled() ||
+			isElementInactiveFromNonCompanyIndex(isIndexCompany, sxpElement) ||
+			isSubmitting;
 		const inputId = _getInputId(id, config.name);
 		const inputName = _getInputName(config.name);
 		const typeOptions = config.typeOptions || {};
@@ -336,7 +328,12 @@ function SXPElement({
 	return (
 		<div
 			className={getCN('sxp-element', 'sheet', {
-				disabled: !_isEnabled() || _isInactiveFromNonCompanyIndex(),
+				disabled:
+					!_isEnabled() ||
+					isElementInactiveFromNonCompanyIndex(
+						isIndexCompany,
+						sxpElement
+					),
 			})}
 			id={prefixedId}
 		>
@@ -365,7 +362,10 @@ function SXPElement({
 						)}
 					</ClayList.ItemField>
 
-					{_isInactiveFromNonCompanyIndex() ? (
+					{isElementInactiveFromNonCompanyIndex(
+						isIndexCompany,
+						sxpElement
+					) ? (
 						<ClayTooltipProvider>
 							<div
 								data-tooltip-align="top"

@@ -45,40 +45,38 @@ renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 	<aui:input name="groupId" type="hidden" value="<%= scopeGroupId %>" />
 
 	<liferay-frontend:edit-form-body>
-		<liferay-frontend:fieldset-group>
-			<liferay-frontend:fieldset>
-				<div class="button-holder">
-					<liferay-asset:asset-tags-selector
-						addCallback="onAddTag"
-						allowAddEntry="<%= false %>"
-						hiddenInput="mergeTagNames"
-						id="assetTagsSelector"
-						removeCallback="onRemoveTag"
-						tagNames="<%= StringUtil.merge(assetTagsDisplayContext.getMergeTagNames()) %>"
-					/>
-				</div>
+		<liferay-frontend:fieldset>
+			<div class="button-holder">
+				<liferay-asset:asset-tags-selector
+					addCallback="onAddTag"
+					allowAddEntry="<%= false %>"
+					hiddenInput="mergeTagNames"
+					id="assetTagsSelector"
+					removeCallback="onRemoveTag"
+					tagNames="<%= StringUtil.merge(assetTagsDisplayContext.getMergeTagNames()) %>"
+				/>
+			</div>
 
-				<aui:select cssClass="target-tag" label="into-this-tag" name="targetTagName">
+			<aui:select cssClass="target-tag" label="into-this-tag" name="targetTagName">
 
-					<%
-					for (String tagName : assetTagsDisplayContext.getMergeTagNames()) {
-					%>
+				<%
+				for (String tagName : assetTagsDisplayContext.getMergeTagNames()) {
+				%>
 
-						<aui:option label="<%= tagName %>" />
+					<aui:option label="<%= tagName %>" />
 
-					<%
-					}
-					%>
+				<%
+				}
+				%>
 
-				</aui:select>
-			</liferay-frontend:fieldset>
-		</liferay-frontend:fieldset-group>
+			</aui:select>
+		</liferay-frontend:fieldset>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button href="<%= redirect %>" type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			redirect="<%= redirect %>"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -131,17 +129,10 @@ renderResponse.setTitle(LanguageUtil.get(request, "merge-tags"));
 			);
 
 			if (mergeTagNames.length < 2) {
-				if (Liferay.FeatureFlags['LPS-148659']) {
-					Liferay.Util.openAlertModal({
-						message:
-							'<liferay-ui:message arguments="2" key="please-choose-at-least-x-tags" />',
-					});
-				}
-				else {
-					alert(
-						'<liferay-ui:message arguments="2" key="please-choose-at-least-x-tags" />'
-					);
-				}
+				Liferay.Util.openAlertModal({
+					message:
+						'<liferay-ui:message arguments="2" key="please-choose-at-least-x-tags" />',
+				});
 
 				return;
 			}

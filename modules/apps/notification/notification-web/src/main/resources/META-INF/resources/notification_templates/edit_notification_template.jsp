@@ -23,9 +23,11 @@ ViewNotificationTemplatesDisplayContext viewNotificationTemplatesDisplayContext 
 
 NotificationTemplate notificationTemplate = viewNotificationTemplatesDisplayContext.getNotificationTemplate();
 
+String externalReferenceCode = StringPool.BLANK;
 long notificationTemplateId = 0;
 
 if (notificationTemplate != null) {
+	externalReferenceCode = notificationTemplate.getExternalReferenceCode();
 	notificationTemplateId = notificationTemplate.getNotificationTemplateId();
 }
 
@@ -41,13 +43,19 @@ renderResponse.setTitle(LanguageUtil.get(request, "notification-template"));
 	module="js/components/EditNotificationTemplate"
 	props='<%=
 		HashMapBuilder.<String, Object>put(
+			"backURL", ParamUtil.getString(request, "backURL", String.valueOf(renderResponse.createRenderURL()))
+		).put(
 			"baseResourceURL", String.valueOf(baseResourceURL)
 		).put(
-			"editorConfig", viewNotificationTemplatesDisplayContext.getEditorConfig("rich_text")
+			"editorConfig", viewNotificationTemplatesDisplayContext.getEditorConfig()
+		).put(
+			"externalReferenceCode", externalReferenceCode
 		).put(
 			"notificationTemplateId", notificationTemplateId
 		).put(
 			"notificationTemplateType", viewNotificationTemplatesDisplayContext.getNotificationTemplateType()
+		).put(
+			"portletNamespace", liferayPortletResponse.getNamespace()
 		).build()
 	%>'
 />

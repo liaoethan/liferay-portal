@@ -14,266 +14,69 @@
 
 package com.liferay.portal.search.web.internal.facet.display.context;
 
-import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.search.facet.Facet;
-import com.liferay.portal.kernel.search.facet.collector.FacetCollector;
-import com.liferay.portal.kernel.search.facet.collector.TermCollector;
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.theme.PortletDisplay;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.search.web.internal.BaseFacetDisplayContextTestCase;
 import com.liferay.portal.search.web.internal.facet.display.context.builder.UserSearchFacetDisplayContextBuilder;
 import com.liferay.portal.search.web.internal.user.facet.configuration.UserFacetPortletInstanceConfiguration;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.Collections;
-import java.util.List;
-
-import javax.portlet.RenderRequest;
-
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
-
-import org.mockito.Mockito;
 
 /**
  * @author Lino Alves
  */
-public class UserSearchFacetDisplayContextTest {
+public class UserSearchFacetDisplayContextTest
+	extends BaseFacetDisplayContextTestCase {
 
 	@ClassRule
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
-	@Before
-	public void setUp() {
-		Mockito.doReturn(
-			_facetCollector
-		).when(
-			_facet
-		).getFacetCollector();
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(String parameterValue)
+		throws Exception {
+
+		return createFacetDisplayContext(parameterValue, "count:desc");
 	}
 
-	@Test
-	public void testEmptySearchResults() throws Exception {
-		String paramValue = "";
-
-		UserSearchFacetDisplayContext userSearchFacetDisplayContext =
-			createDisplayContext(paramValue);
-
-		List<UserSearchFacetTermDisplayContext>
-			userSearchFacetTermDisplayContexts =
-				userSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			userSearchFacetTermDisplayContexts.toString(), 0,
-			userSearchFacetTermDisplayContexts.size());
-
-		Assert.assertEquals(
-			paramValue, userSearchFacetDisplayContext.getParamValue());
-		Assert.assertTrue(userSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertTrue(userSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testEmptySearchResultsWithPreviousSelection() throws Exception {
-		String userName = RandomTestUtil.randomString();
-
-		String paramValue = userName;
-
-		UserSearchFacetDisplayContext userSearchFacetDisplayContext =
-			createDisplayContext(paramValue);
-
-		List<UserSearchFacetTermDisplayContext>
-			userSearchFacetTermDisplayContexts =
-				userSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			userSearchFacetTermDisplayContexts.toString(), 1,
-			userSearchFacetTermDisplayContexts.size());
-
-		UserSearchFacetTermDisplayContext userSearchFacetTermDisplayContext =
-			userSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			0, userSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			userName, userSearchFacetTermDisplayContext.getUserName());
-		Assert.assertTrue(userSearchFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(
-			userSearchFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			paramValue, userSearchFacetDisplayContext.getParamValue());
-		Assert.assertFalse(userSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(userSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testOneTerm() throws Exception {
-		String userName = RandomTestUtil.randomString();
-
-		int count = RandomTestUtil.randomInt();
-
-		setUpOneTermCollector(userName, count);
-
-		String paramValue = "";
-
-		UserSearchFacetDisplayContext userSearchFacetDisplayContext =
-			createDisplayContext(paramValue);
-
-		List<UserSearchFacetTermDisplayContext>
-			userSearchFacetTermDisplayContexts =
-				userSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			userSearchFacetTermDisplayContexts.toString(), 1,
-			userSearchFacetTermDisplayContexts.size());
-
-		UserSearchFacetTermDisplayContext userSearchFacetTermDisplayContext =
-			userSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			count, userSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			userName, userSearchFacetTermDisplayContext.getUserName());
-		Assert.assertFalse(userSearchFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(
-			userSearchFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			paramValue, userSearchFacetDisplayContext.getParamValue());
-		Assert.assertTrue(userSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(userSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testOneTermWithPreviousSelection() throws Exception {
-		String userName = RandomTestUtil.randomString();
-
-		int count = RandomTestUtil.randomInt();
-
-		setUpOneTermCollector(userName, count);
-
-		String paramValue = userName;
-
-		UserSearchFacetDisplayContext userSearchFacetDisplayContext =
-			createDisplayContext(paramValue);
-
-		List<UserSearchFacetTermDisplayContext>
-			userSearchFacetTermDisplayContexts =
-				userSearchFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			userSearchFacetTermDisplayContexts.toString(), 1,
-			userSearchFacetTermDisplayContexts.size());
-
-		UserSearchFacetTermDisplayContext userSearchFacetTermDisplayContext =
-			userSearchFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			count, userSearchFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			userName, userSearchFacetTermDisplayContext.getUserName());
-		Assert.assertTrue(userSearchFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(
-			userSearchFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			paramValue, userSearchFacetDisplayContext.getParamValue());
-		Assert.assertFalse(userSearchFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(userSearchFacetDisplayContext.isRenderNothing());
-	}
-
-	protected UserSearchFacetDisplayContext createDisplayContext(
-			String paramValue)
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(
+			String parameterValue, String order)
 		throws Exception {
 
 		UserSearchFacetDisplayContextBuilder
 			userSearchFacetDisplayContextBuilder =
-				new UserSearchFacetDisplayContextBuilder(getRenderRequest());
+				new UserSearchFacetDisplayContextBuilder(
+					getRenderRequest(
+						UserFacetPortletInstanceConfiguration.class));
 
-		userSearchFacetDisplayContextBuilder.setFacet(_facet);
-		userSearchFacetDisplayContextBuilder.setParamValue(paramValue);
+		userSearchFacetDisplayContextBuilder.setFacet(facet);
 		userSearchFacetDisplayContextBuilder.setFrequenciesVisible(true);
 		userSearchFacetDisplayContextBuilder.setFrequencyThreshold(0);
 		userSearchFacetDisplayContextBuilder.setMaxTerms(0);
+		userSearchFacetDisplayContextBuilder.setOrder(order);
+		userSearchFacetDisplayContextBuilder.setParamValue(parameterValue);
 
 		return userSearchFacetDisplayContextBuilder.build();
 	}
 
-	protected TermCollector createTermCollector(String userName, int count) {
-		TermCollector termCollector = Mockito.mock(TermCollector.class);
+	@Override
+	protected void testOrderBy(
+			int[] expectedFrequencies, String[] expectedUserNames,
+			int[] frequencies, String order, String[] userNames)
+		throws Exception {
 
-		Mockito.doReturn(
-			count
-		).when(
-			termCollector
-		).getFrequency();
+		setUpTermCollectors(
+			facetCollector, getTermCollectors(userNames, frequencies));
 
-		Mockito.doReturn(
-			userName
-		).when(
-			termCollector
-		).getTerm();
+		FacetDisplayContext facetDisplayContext = createFacetDisplayContext(
+			StringPool.BLANK, order);
 
-		return termCollector;
+		assertFacetOrder(
+			facetDisplayContext.getBucketDisplayContexts(), expectedUserNames,
+			expectedFrequencies);
 	}
-
-	protected PortletDisplay getPortletDisplay() throws ConfigurationException {
-		PortletDisplay portletDisplay = Mockito.mock(PortletDisplay.class);
-
-		Mockito.doReturn(
-			Mockito.mock(UserFacetPortletInstanceConfiguration.class)
-		).when(
-			portletDisplay
-		).getPortletInstanceConfiguration(
-			Mockito.any()
-		);
-
-		return portletDisplay;
-	}
-
-	protected RenderRequest getRenderRequest() throws ConfigurationException {
-		RenderRequest renderRequest = Mockito.mock(RenderRequest.class);
-
-		Mockito.doReturn(
-			getThemeDisplay()
-		).when(
-			renderRequest
-		).getAttribute(
-			WebKeys.THEME_DISPLAY
-		);
-
-		return renderRequest;
-	}
-
-	protected ThemeDisplay getThemeDisplay() throws ConfigurationException {
-		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
-
-		Mockito.doReturn(
-			getPortletDisplay()
-		).when(
-			themeDisplay
-		).getPortletDisplay();
-
-		return themeDisplay;
-	}
-
-	protected void setUpOneTermCollector(String userName, int count) {
-		Mockito.doReturn(
-			Collections.singletonList(createTermCollector(userName, count))
-		).when(
-			_facetCollector
-		).getTermCollectors();
-	}
-
-	private final Facet _facet = Mockito.mock(Facet.class);
-	private final FacetCollector _facetCollector = Mockito.mock(
-		FacetCollector.class);
 
 }

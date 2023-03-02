@@ -20,7 +20,7 @@ import com.liferay.portal.instances.web.internal.constants.PortalInstancesPortle
 import com.liferay.portal.kernel.exception.CompanyMxException;
 import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -32,12 +32,9 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.WebKeys;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
-
-import javax.servlet.ServletContext;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -46,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Víctor Galán Grande
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + PortalInstancesPortletKeys.PORTAL_INSTANCES,
 		"mvc.command.name=/portal_instances/add_instance"
@@ -60,7 +56,7 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			_addInstance(actionRequest);
@@ -85,6 +81,8 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 			jsonObject.put(
 				"error",
 				_language.get(actionRequest.getLocale(), errorMessage));
+
+			hideDefaultSuccessMessage(actionRequest);
 		}
 
 		JSONPortletResponseUtil.writeJSON(
@@ -104,15 +102,13 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 		String siteInitializerKey = ParamUtil.getString(
 			actionRequest, "siteInitializerKey");
-		ServletContext servletContext =
-			(ServletContext)actionRequest.getAttribute(WebKeys.CTX);
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setWithSafeCloseable(
 					company.getCompanyId())) {
 
 			_portalInstancesLocalService.initializePortalInstance(
-				company.getCompanyId(), siteInitializerKey, servletContext);
+				company.getCompanyId(), siteInitializerKey);
 		}
 
 		_synchronizePortalInstances();
@@ -127,6 +123,9 @@ public class AddInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private CompanyService _companyService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

@@ -15,10 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.evaluator.internal.function;
 
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunction;
-import com.liferay.portal.kernel.util.Validator;
-
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.liferay.petra.string.StringBundler;
 
 /**
  * @author Leonardo Barros
@@ -30,15 +27,17 @@ public class ConcatFunction
 
 	@Override
 	public String apply(Object[] values) {
-		return Stream.of(
-			values
-		).filter(
-			Validator::isNotNull
-		).map(
-			Object::toString
-		).collect(
-			Collectors.joining()
-		);
+		StringBundler sb = new StringBundler(values.length);
+
+		for (Object value : values) {
+			if (value == null) {
+				continue;
+			}
+
+			sb.append(value.toString());
+		}
+
+		return sb.toString();
 	}
 
 	@Override

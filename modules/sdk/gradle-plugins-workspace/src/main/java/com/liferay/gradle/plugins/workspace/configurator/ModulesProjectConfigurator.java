@@ -29,6 +29,7 @@ import com.liferay.gradle.plugins.soy.SoyPlugin;
 import com.liferay.gradle.plugins.soy.SoyTranslationPlugin;
 import com.liferay.gradle.plugins.test.integration.TestIntegrationBasePlugin;
 import com.liferay.gradle.plugins.test.integration.TestIntegrationPlugin;
+import com.liferay.gradle.plugins.test.integration.TestIntegrationTomcatExtension;
 import com.liferay.gradle.plugins.upgrade.table.builder.UpgradeTableBuilderPlugin;
 import com.liferay.gradle.plugins.util.BndUtil;
 import com.liferay.gradle.plugins.workspace.FrontendPlugin;
@@ -178,9 +179,11 @@ public class ModulesProjectConfigurator extends BaseProjectConfigurator {
 			jarSourcePath = jar;
 		}
 		else {
+			File clientExtensionYamlFile = project.file(
+				"client-extension.yaml");
 			File packageJsonFile = project.file("package.json");
 
-			if (packageJsonFile.exists() &&
+			if (!clientExtensionYamlFile.exists() && packageJsonFile.exists() &&
 				_hasJsPortletBuildScript(packageJsonFile.toPath())) {
 
 				GradleUtil.applyPlugin(project, FrontendPlugin.class);
@@ -290,9 +293,12 @@ public class ModulesProjectConfigurator extends BaseProjectConfigurator {
 						return FileVisitResult.SKIP_SUBTREE;
 					}
 
+					Path clientExtensionYamlPath = dirPath.resolve(
+						"client-extension.yaml");
 					Path packageJsonPath = dirPath.resolve("package.json");
 
-					if (Files.exists(packageJsonPath) &&
+					if (!Files.exists(clientExtensionYamlPath) &&
+						Files.exists(packageJsonPath) &&
 						_hasJsPortletBuildScript(packageJsonPath)) {
 
 						projectDirs.add(dirPath.toFile());
@@ -309,6 +315,24 @@ public class ModulesProjectConfigurator extends BaseProjectConfigurator {
 	}
 
 	protected static final String NAME = "modules";
+
+	private void _configureExtensionTestIntegrationTomcat(
+		TestIntegrationTomcatExtension testIntegrationTomcatExtension,
+		final WorkspaceExtension workspaceExtension) {
+
+		testIntegrationTomcatExtension.setDir(
+			new Callable<File>() {
+
+				@Override
+				public File call() throws Exception {
+					return new File(
+						workspaceExtension.getHomeDir(),
+						"tomcat-" +
+							workspaceExtension.getAppServerTomcatVersion());
+				}
+
+			});
+	}
 
 	private void _configureLiferayOSGi(Project project) {
 		LiferayOSGiExtension liferayOSGiExtension = GradleUtil.getExtension(
@@ -436,7 +460,21 @@ public class ModulesProjectConfigurator extends BaseProjectConfigurator {
 				project.getRootProject(),
 				RootProjectConfigurator.INIT_BUNDLE_TASK_NAME);
 
-			setUpTestableTomcatTask.dependsOn(initBundleTask);
+			Task copyTestModulesTask = GradleUtil.getTask(
+				project, TestIntegrationPlugin.COPY_TEST_MODULES_TASK_NAME);
+
+			copyTestModulesTask.dependsOn(initBundleTask);
+
+			setUpTestableTomcatTask.dependsOn(copyTestModulesTask);
+
+			ExtensionContainer extensionContainer = project.getExtensions();
+
+			TestIntegrationTomcatExtension testIntegrationTomcatExtension =
+				extensionContainer.getByType(
+					TestIntegrationTomcatExtension.class);
+
+			_configureExtensionTestIntegrationTomcat(
+				testIntegrationTomcatExtension, workspaceExtension);
 		}
 	}
 

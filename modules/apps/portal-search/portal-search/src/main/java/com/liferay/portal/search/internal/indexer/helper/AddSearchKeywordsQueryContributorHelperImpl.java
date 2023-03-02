@@ -23,15 +23,14 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.constants.SearchContextAttributes;
 import com.liferay.portal.search.internal.indexer.IndexerProvidedClausesUtil;
-import com.liferay.portal.search.internal.indexer.KeywordQueryContributorsHolder;
+import com.liferay.portal.search.internal.indexer.KeywordQueryContributorsRegistry;
 import com.liferay.portal.search.internal.util.SearchStringUtil;
 import com.liferay.portal.search.spi.model.query.contributor.KeywordQueryContributor;
 import com.liferay.portal.search.spi.model.query.contributor.helper.KeywordQueryContributorHelper;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -39,9 +38,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author André de Oliveira
  */
-@Component(
-	immediate = true, service = AddSearchKeywordsQueryContributorHelper.class
-)
+@Component(service = AddSearchKeywordsQueryContributorHelper.class)
 public class AddSearchKeywordsQueryContributorHelperImpl
 	implements AddSearchKeywordsQueryContributorHelper {
 
@@ -61,12 +58,11 @@ public class AddSearchKeywordsQueryContributorHelperImpl
 
 		return Arrays.asList(
 			SearchStringUtil.splitAndUnquote(
-				Optional.ofNullable(
-					(String)searchContext.getAttribute(string))));
+				(String)searchContext.getAttribute(string)));
 	}
 
 	@Reference
-	protected KeywordQueryContributorsHolder keywordQueryContributorsHolder;
+	protected KeywordQueryContributorsRegistry keywordQueryContributorsRegistry;
 
 	private void _addKeywordQueryContributorClauses(
 		BooleanQuery booleanQuery, SearchContext searchContext) {
@@ -83,8 +79,8 @@ public class AddSearchKeywordsQueryContributorHelperImpl
 			return;
 		}
 
-		Stream<KeywordQueryContributor> stream =
-			keywordQueryContributorsHolder.stream(
+		List<KeywordQueryContributor> filteredKeywordQueryContributors =
+			keywordQueryContributorsRegistry.filterKeywordQueryContributors(
 				getStrings(
 					"search.full.query.clause.contributors.excludes",
 					searchContext),
@@ -92,8 +88,10 @@ public class AddSearchKeywordsQueryContributorHelperImpl
 					"search.full.query.clause.contributors.includes",
 					searchContext));
 
-		stream.forEach(
-			keywordQueryContributor -> keywordQueryContributor.contribute(
+		for (KeywordQueryContributor keywordQueryContributor :
+				filteredKeywordQueryContributors) {
+
+			keywordQueryContributor.contribute(
 				keywords, booleanQuery,
 				new KeywordQueryContributorHelper() {
 
@@ -103,7 +101,7 @@ public class AddSearchKeywordsQueryContributorHelperImpl
 					}
 
 					@Override
-					public Stream<String> getSearchClassNamesStream() {
+					public String[] getSearchClassNames() {
 						throw new UnsupportedOperationException();
 					}
 
@@ -112,7 +110,8 @@ public class AddSearchKeywordsQueryContributorHelperImpl
 						return searchContext;
 					}
 
-				}));
+				});
+		}
 	}
 
 	private void _addStringQuery(BooleanQuery booleanQuery, String keywords) {

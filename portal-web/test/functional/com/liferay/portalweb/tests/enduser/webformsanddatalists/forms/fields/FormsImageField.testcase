@@ -1,9 +1,8 @@
 @component-name = "portal-web-forms-and-data-lists"
 definition {
 
-	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -17,7 +16,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -34,7 +33,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-98073."
-	@priority = "5"
+	@priority = 5
 	test CanBeCreated {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "FormsImageField#CanBeCreated";
@@ -44,7 +43,7 @@ definition {
 		Form.editName(formName = "Form");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		Form.save();
@@ -57,7 +56,7 @@ definition {
 	}
 
 	@description = "LPS-84335 - Verify that an Image Field can be deleted"
-	@priority = "5"
+	@priority = 5
 	test CanBeDeleted {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "FormsImageField#CanBeDeleted";
@@ -67,13 +66,13 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "1",
+			fieldPositionNumber = 1,
 			fieldType = "Image");
 
 		Form.editFieldLabelMetal(fieldValue = "Image Field 2");
@@ -94,14 +93,14 @@ definition {
 	}
 
 	@description = "Verify that an Image Field can be duplicated"
-	@priority = "5"
+	@priority = 5
 	test CanBeDuplicated {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		FormFields.editHelpText(
@@ -128,7 +127,7 @@ definition {
 	}
 
 	@description = "LPS-98073 - Verify that an Image Field can be edited"
-	@priority = "5"
+	@priority = 5
 	test CanBeEdited {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "FormsImageField#CanBeEdited";
@@ -138,7 +137,7 @@ definition {
 		Form.editName(formName = "Form");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		Form.save();
@@ -163,7 +162,7 @@ definition {
 	}
 
 	@description = "LPS-98073 - Verify that an Image Field can be required"
-	@priority = "5"
+	@priority = 5
 	test CanBeRequired {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "FormsImageField#CanBeRequired";
@@ -174,12 +173,12 @@ definition {
 
 		Form.editPageTitle(
 			formPageName = "Created Form Page Name",
-			formTitleNumber = "1");
+			formTitleNumber = 1);
 
 		Form.editDescription();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		FormFields.enableSwitch(fieldName = "required");
@@ -195,11 +194,11 @@ definition {
 		FormFields.selectImageUpload(
 			fileName = "Document_1.jpg",
 			navTab = "Documents and Media",
-			rowNumber = "1");
+			rowNumber = 1);
 
 		Form.editImageDescription(
 			descriptionContent = "Test Image Description",
-			descriptionPosition = "1");
+			descriptionPosition = 1);
 
 		FormPortlet.submitSuccessfullyAndViewSuccessPage();
 
@@ -215,16 +214,16 @@ definition {
 	}
 
 	@description = "Verify that an Image Field can be set to repeatable"
-	@priority = "5"
+	@priority = 5
 	test CanBeSetToRepeatable {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.gotoAdvancedTab();
 
@@ -232,7 +231,7 @@ definition {
 
 		FormFields.viewFieldRepeatableButton(
 			fieldName = "Image",
-			key_repeatableFieldsNumber = "1");
+			key_repeatableFieldsNumber = 1);
 
 		Form.save();
 
@@ -244,7 +243,7 @@ definition {
 
 		FormFields.addRepeatableField(
 			key_fieldName = "Image",
-			key_repeatableFieldNumber = "1");
+			key_repeatableFieldNumber = 1);
 
 		FormFields.viewFieldRepeatableButton(
 			fieldName = "Image",
@@ -259,7 +258,7 @@ definition {
 	}
 
 	@description = "Verify that an image can be uploaded"
-	@priority = "5"
+	@priority = 5
 	test CanUploadAnImage {
 		property portal.acceptance = "true";
 
@@ -268,7 +267,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		Form.save();
@@ -280,7 +279,7 @@ definition {
 		FormFields.selectImageUpload(
 			fileName = "Document_1.jpg",
 			navTab = "Documents and Media",
-			rowNumber = "1");
+			rowNumber = 1);
 
 		FormPortlet.submitSuccessfully();
 
@@ -290,12 +289,12 @@ definition {
 	}
 
 	@description = "Verify that an image can be uploaded from Liferay Documents and Media"
-	@priority = "5"
+	@priority = 5
 	test CanUploadFromDocumentsAndMedia {
-		property portal.acceptance = "quarantine";
-		property portal.upstream = "quarantine";
+		property portal.acceptance = "true";
+		property portal.upstream = "true";
 
-		var siteName = TestCase.getSiteName(siteName = "${siteName}");
+		var siteName = TestCase.getSiteName(siteName = ${siteName});
 
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
@@ -311,7 +310,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		Form.save();
@@ -322,7 +321,7 @@ definition {
 
 		FormFields.selectImageFromSite(
 			imageFileName = "Document_1.jpg",
-			siteName = "${siteName}");
+			siteName = ${siteName});
 
 		FormPortlet.submitSuccessfully();
 
@@ -333,7 +332,7 @@ definition {
 
 	@description = "Verify that changes to the Field can be canceled"
 	@ignore = "Test Stub"
-	@priority = "5"
+	@priority = 5
 	test ChangesCanBeCanceled {
 		property portal.acceptance = "false";
 
@@ -342,7 +341,7 @@ definition {
 	}
 
 	@description = "Verify that an Image Description can be added to an uploaded Image"
-	@priority = "4"
+	@priority = 4
 	test DescriptionCanBeAdded {
 		property portal.acceptance = "true";
 
@@ -351,9 +350,9 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.save();
 
@@ -371,7 +370,7 @@ definition {
 
 		Form.editImageDescription(
 			descriptionContent = "Test Image Description",
-			descriptionPosition = "1");
+			descriptionPosition = 1);
 
 		FormPortlet.submitSuccessfully();
 
@@ -392,16 +391,16 @@ definition {
 	}
 
 	@description = "Verify that a help text can be added to an Image Field"
-	@priority = "5"
+	@priority = 5
 	test HelpTextCanBeAdded {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		FormViewBuilder.setFieldHelpText(fieldLabel = "Image Help Text");
 
@@ -429,16 +428,16 @@ definition {
 	}
 
 	@description = "Verify that the Field Label can be edited"
-	@priority = "5"
+	@priority = 5
 	test LabelCanBeEdited {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.editFieldLabelMetal(fieldValue = "Test Image");
 
@@ -456,7 +455,7 @@ definition {
 	}
 
 	@description = "Veriy that the Field Label can be hidden"
-	@priority = "5"
+	@priority = 5
 	test LabelCanBeHidden {
 		property portal.acceptance = "true";
 
@@ -465,7 +464,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		FormFields.viewFieldLabel(
@@ -488,7 +487,7 @@ definition {
 	}
 
 	@description = "Verify that a Predefined Value can be set"
-	@priority = "4"
+	@priority = 4
 	test PredefinedValueCanBeAdded {
 		property portal.acceptance = "true";
 
@@ -497,9 +496,9 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		FormFields.setImagePredefinedValue(uploadFileName = "Document_1.jpg");
 
@@ -523,7 +522,7 @@ definition {
 	}
 
 	@description = "Verify that the Field Reference can be edited"
-	@priority = "5"
+	@priority = 5
 	test ReferenceCanBeEdited {
 		property portal.acceptance = "true";
 
@@ -532,7 +531,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image");
 
 		Form.gotoAdvancedTab();
@@ -551,7 +550,7 @@ definition {
 	}
 
 	@description = "Verify that an image added to the Image Field can be removed by clicking the Clear button"
-	@priority = "5"
+	@priority = 5
 	test SelectedImagesCanBeCleared {
 		property portal.acceptance = "true";
 
@@ -560,9 +559,9 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Image",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.save();
 
@@ -591,7 +590,7 @@ definition {
 
 	@description = " Verify that the Field Type can be changed"
 	@ignore = "Test Stub"
-	@priority = "5"
+	@priority = 5
 	test TypeCanBeChanged {
 		property portal.acceptance = "false";
 

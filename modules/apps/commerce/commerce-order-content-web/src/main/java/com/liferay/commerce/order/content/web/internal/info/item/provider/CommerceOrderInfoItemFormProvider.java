@@ -14,8 +14,6 @@
 
 package com.liferay.commerce.order.content.web.internal.info.item.provider;
 
-import com.liferay.asset.info.item.provider.AssetEntryInfoItemFieldSetProvider;
-import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.order.content.web.internal.info.CommerceOrderInfoItemFields;
 import com.liferay.expando.info.item.provider.ExpandoInfoItemFieldSetProvider;
@@ -39,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Danny Situ
  */
 @Component(
-	enabled = false, immediate = true,
 	property = Constants.SERVICE_RANKING + ":Integer=10",
 	service = InfoItemFormProvider.class
 )
@@ -116,8 +113,7 @@ public class CommerceOrderInfoItemFormProvider
 		).infoFieldSetEntry(
 			CommerceOrderInfoItemFields.shippingAddressIdInfoField
 		).labelInfoLocalizedValue(
-			InfoLocalizedValue.localize(
-				"com.liferay.commerce.lang", "basic-information")
+			InfoLocalizedValue.localize(getClass(), "basic-information")
 		).name(
 			"basic-information"
 		).build();
@@ -262,8 +258,7 @@ public class CommerceOrderInfoItemFormProvider
 		).infoFieldSetEntry(
 			CommerceOrderInfoItemFields.uuidInfoField
 		).labelInfoLocalizedValue(
-			InfoLocalizedValue.localize(
-				"com.liferay.commerce.lang", "detailed-information")
+			InfoLocalizedValue.localize(getClass(), "detailed-information")
 		).name(
 			"detailed-information"
 		).build();
@@ -340,8 +335,7 @@ public class CommerceOrderInfoItemFormProvider
 		).infoFieldSetEntry(
 			CommerceOrderInfoItemFields.subscriptionOrderStatusInfoField
 		).labelInfoLocalizedValue(
-			InfoLocalizedValue.localize(
-				"com.liferay.commerce.lang", "order-status-information")
+			InfoLocalizedValue.localize(getClass(), "order-status-information")
 		).name(
 			"order-status-information"
 		).build();
@@ -377,18 +371,11 @@ public class CommerceOrderInfoItemFormProvider
 			CommerceOrderInfoItemFields.statusDateInfoField
 		).labelInfoLocalizedValue(
 			InfoLocalizedValue.localize(
-				"com.liferay.commerce.lang", "workflow-status-information")
+				getClass(), "workflow-status-information")
 		).name(
 			"workflow-status-information"
 		).build();
 	}
-
-	@Reference
-	private AssetEntryInfoItemFieldSetProvider
-		_assetEntryInfoItemFieldSetProvider;
-
-	@Reference
-	private AssetEntryLocalService _assetEntryLocalService;
 
 	@Reference
 	private ExpandoInfoItemFieldSetProvider _expandoInfoItemFieldSetProvider;

@@ -217,6 +217,7 @@
 	.scheduler-event-content,
 	.scheduler-event-name,
 	.scheduler-event-title {
+		color: $dark;
 		font-family: inherit;
 		font-size: inherit;
 		line-height: inherit;
@@ -570,6 +571,7 @@
 
 .simple-menu {
 	position: absolute;
+	z-index: 100 !important;
 
 	.simple-menu-content {
 		background: none repeat scroll 0 0 #fff;

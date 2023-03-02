@@ -12,30 +12,30 @@
  * details.
  */
 
-import Container from '../../components/Layout/Container';
-import ListView from '../../components/ListView';
-import {useHeader} from '../../hooks';
-import i18n from '../../i18n';
+import Container from '~/components/Layout/Container';
+import ListView from '~/components/ListView';
+import {useHeader} from '~/hooks';
+import i18n from '~/i18n';
+
 import useProjectActions from './useProjectActions';
 
 type ProjectsProps = {
 	PageContainer?: React.FC;
-	addHeading?: boolean;
 };
 
 const Projects: React.FC<ProjectsProps> = ({PageContainer = Container}) => {
 	const {actions, navigate} = useProjectActions();
 
 	useHeader({
-		useDropdown: [],
-		useHeaderActions: {actions: []},
-		useHeading: [
+		dropdown: [],
+		headerActions: {actions: []},
+		heading: [
 			{
 				category: i18n.translate('project'),
 				title: i18n.translate('project-directory'),
 			},
 		],
-		useIcon: 'polls',
+		icon: 'polls',
 	});
 
 	return (

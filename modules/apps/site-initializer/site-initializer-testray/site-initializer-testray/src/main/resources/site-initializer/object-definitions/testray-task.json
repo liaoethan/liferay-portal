@@ -16,15 +16,28 @@
 			"type": "String"
 		},
 		{
-			"DBType": "Integer",
+			"DBType": "Long",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"label": {
+				"en_US": "Dispatch Trigger ID"
+			},
+			"name": "dispatchTriggerId",
+			"required": false,
+			"type": "Long"
+		},
+		{
+			"DBType": "String",
+			"businessType": "Picklist",
 			"indexed": true,
 			"indexedAsKeyword": true,
 			"label": {
-				"en_US": "Status"
+				"en_US": "Due Status"
 			},
+			"listTypeDefinitionId": "[$LIST_TYPE_DEFINITION_ID:Task Statuses$]",
 			"name": "dueStatus",
-			"required": true,
-			"type": "Integer"
+			"required": false,
+			"type": "String"
 		},
 		{
 			"DBType": "Date",

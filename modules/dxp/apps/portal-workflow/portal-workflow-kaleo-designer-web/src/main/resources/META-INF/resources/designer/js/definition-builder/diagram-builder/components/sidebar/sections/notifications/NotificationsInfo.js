@@ -15,7 +15,6 @@ import {MultipleSelect} from '@liferay/object-js-components-web';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 
-import {DEFAULT_LANGUAGE} from '../../../../../source-builder/constants';
 import {DiagramBuilderContext} from '../../../../DiagramBuilderContext';
 import ScriptInput from '../../../shared-components/ScriptInput';
 import SidebarPanel from '../../SidebarPanel';
@@ -80,17 +79,6 @@ const templateLanguageOptions = [
 	},
 ];
 
-const scriptLanguageOptions = [
-	{
-		label: Liferay.Language.get('groovy'),
-		value: 'groovy',
-	},
-	{
-		label: Liferay.Language.get('java'),
-		value: 'java',
-	},
-];
-
 const NotificationsInfo = ({
 	identifier,
 	index: notificationIndex,
@@ -150,11 +138,21 @@ const NotificationsInfo = ({
 
 	const [items, setItems] = useState(notificationTypesOptions);
 
-	const [recipientType, setRecipientType] = useState(
-		getRecipientType(
+	let recipientTypeHolder;
+
+	if (
+		selectedItem.data.notifications?.recipients?.[notificationIndex]
+			?.length !== 0
+	) {
+		recipientTypeHolder = getRecipientType(
 			selectedItem.data.notifications?.recipients?.[notificationIndex]
-		) || 'assetCreator'
-	);
+		);
+	}
+	else {
+		recipientTypeHolder = 'assetCreator';
+	}
+
+	const [recipientType, setRecipientType] = useState(recipientTypeHolder);
 
 	const RecipientTypeComponent = recipientTypeComponents[recipientType];
 
@@ -166,11 +164,6 @@ const NotificationsInfo = ({
 		selectedItem.data.notifications?.templateLanguage?.[
 			notificationIndex
 		] || 'freemarker'
-	);
-
-	const [scriptLanguage, setScriptLanguage] = useState(
-		selectedItem.data.notifications?.recipients[notificationIndex]
-			?.scriptLanguage || DEFAULT_LANGUAGE
 	);
 
 	const deleteSection = () => {
@@ -188,9 +181,11 @@ const NotificationsInfo = ({
 	const scriptedRecipientUpdateSelectedItem = ({target}) => {
 		setSelectedItem((previousItem) => {
 			previousItem.data.notifications.recipients[notificationIndex] = {
+				...previousItem.data.notifications.recipients[
+					notificationIndex
+				],
 				assignmentType: ['scriptedRecipient'],
 				script: [target.value],
-				scriptLanguage: [scriptLanguage],
 			};
 
 			return previousItem;
@@ -305,14 +300,14 @@ const NotificationsInfo = ({
 			})
 			.map((item) => item.label);
 
-		if (checkedTrue.includes('Email')) {
+		if (checkedTrue.includes(Liferay.Language.get('email'))) {
 			setNotificationTypeEmail(true);
 		}
 		else {
 			setNotificationTypeEmail(false);
 		}
 
-		if (checkedTrue.includes('User Notification')) {
+		if (checkedTrue.includes(Liferay.Language.get('user-notification'))) {
 			setNotificationTypeUserNotification(true);
 		}
 		else {
@@ -329,6 +324,16 @@ const NotificationsInfo = ({
 
 				if (recipientType === 'assetCreator') {
 					recipientDetails = {assignmentType: ['user']};
+
+					if (
+						selectedItem.data.notifications.recipients[
+							notificationIndex
+						]
+					) {
+						delete selectedItem.data.notifications?.recipients?.[
+							notificationIndex
+						].emailAddress;
+					}
 				}
 				else if (recipientType === 'taskAssignees') {
 					recipientDetails = {assignmentType: ['taskAssignees']};
@@ -373,11 +378,12 @@ const NotificationsInfo = ({
 			selectedItem.data.notifications.recipients[notificationIndex];
 
 		if (recipients && recipientType === 'roleType') {
-			for (let i = 0; i < recipients.roleName.length; i++) {
+			for (let i = 0; i < recipients.roleType.length; i++) {
 				sectionsData.push({
 					autoCreate: recipients.autoCreate?.[i],
 					identifier: `${Date.now()}-${i}`,
-					roleName: recipients.roleName[i],
+					roleKey: recipients.roleKey[i],
+					roleName: recipients.roleName?.[i],
 					roleType: recipients.roleType[i],
 				});
 			}
@@ -550,48 +556,35 @@ const NotificationsInfo = ({
 			{recipientType !== 'assetCreator' &&
 				recipientType !== 'taskAssignees' && (
 					<SidebarPanel panelTitle={Liferay.Language.get('type')}>
-						<label htmlFor="script-language">
-							{Liferay.Language.get('script-language')}
-						</label>
-
-						<ClaySelect
-							aria-label="Select"
-							defaultValue={scriptLanguage}
-							id="script-language"
-							onChange={({target}) => {
-								setScriptLanguage(target.value);
-							}}
-							onClickCapture={() =>
-								setSelectedItem((previousItem) => {
-									previousItem.data.notifications.recipients[
-										notificationIndex
-									] = {
-										...previousItem.data.notifications
-											.recipients[notificationIndex],
-										scriptLanguage: [scriptLanguage],
-									};
-
-									return previousItem;
-								})
-							}
-						>
-							{scriptLanguageOptions &&
-								scriptLanguageOptions.map((item) => (
-									<ClaySelect.Option
-										key={item.value}
-										label={item.label}
-										value={item.value}
-									/>
-								))}
-						</ClaySelect>
-
 						<ClayForm.Group className="recipient-type-form-group">
 							{internalSections.map((props, index) => (
 								<RecipientTypeComponent
+									defaultScriptLanguage={
+										selectedItem.data.notifications
+											?.recipients?.[notificationIndex]
+											?.scriptLanguage
+									}
+									handleClickCapture={(scriptLanguage) =>
+										setSelectedItem((previousItem) => {
+											previousItem.data.notifications.recipients[
+												notificationIndex
+											] = {
+												...previousItem.data
+													.notifications.recipients[
+													notificationIndex
+												],
+												scriptLanguage: [
+													scriptLanguage,
+												],
+											};
+
+											return previousItem;
+										})
+									}
 									index={index}
 									inputValue={
 										selectedItem.data.notifications
-											?.recipients[notificationIndex]
+											?.recipients?.[notificationIndex]
 											?.script?.[0]
 									}
 									key={`section-${props.identifier}`}

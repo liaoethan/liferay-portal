@@ -35,7 +35,6 @@ import com.liferay.users.admin.web.internal.constants.UsersAdminWebKeys;
 import com.liferay.users.admin.web.internal.util.DisplayStyleUtil;
 
 import java.util.LinkedHashMap;
-import java.util.Optional;
 
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
@@ -75,13 +74,13 @@ public class ViewFlatUsersDisplayContextFactory {
 				_isShowDeleteButton(userSearchTerms),
 				_isShowRestoreButton(userSearchTerms));
 
-		Optional<FilterContributor[]> filterContributorsOptional =
-			_getFilterContributorsOptional(httpServletRequest);
+		FilterContributor[] filterContributors = _getFilterContributors(
+			httpServletRequest);
 
-		if (filterContributorsOptional.isPresent()) {
+		if (filterContributors != null) {
 			managementToolbarDisplayContext =
 				new FiltersManagementToolbarDisplayContextWrapper(
-					filterContributorsOptional.get(), httpServletRequest,
+					filterContributors, httpServletRequest,
 					liferayPortletRequest, liferayPortletResponse,
 					managementToolbarDisplayContext);
 		}
@@ -119,6 +118,9 @@ public class ViewFlatUsersDisplayContextFactory {
 		if (navigation.equals("active")) {
 			status = WorkflowConstants.STATUS_APPROVED;
 		}
+		else if (navigation.equals("all")) {
+			status = WorkflowConstants.STATUS_ANY;
+		}
 		else if (navigation.equals("inactive")) {
 			status = WorkflowConstants.STATUS_INACTIVE;
 		}
@@ -145,13 +147,11 @@ public class ViewFlatUsersDisplayContextFactory {
 
 		LinkedHashMap<String, Object> params = new LinkedHashMap<>();
 
-		Optional<FilterContributor[]> filterContributorsOptional =
-			_getFilterContributorsOptional(httpServletRequest);
+		FilterContributor[] filterContributors = _getFilterContributors(
+			httpServletRequest);
 
-		if (filterContributorsOptional.isPresent()) {
-			for (FilterContributor filterContributor :
-					filterContributorsOptional.get()) {
-
+		if (filterContributors != null) {
+			for (FilterContributor filterContributor : filterContributors) {
 				params.putAll(
 					filterContributor.getSearchParameters(
 						ParamUtil.getString(
@@ -185,12 +185,11 @@ public class ViewFlatUsersDisplayContextFactory {
 		return userSearch;
 	}
 
-	private static Optional<FilterContributor[]> _getFilterContributorsOptional(
+	private static FilterContributor[] _getFilterContributors(
 		HttpServletRequest httpServletRequest) {
 
-		return Optional.ofNullable(
-			(FilterContributor[])httpServletRequest.getAttribute(
-				UsersAdminWebKeys.MANAGEMENT_TOOLBAR_FILTER_CONTRIBUTORS));
+		return (FilterContributor[])httpServletRequest.getAttribute(
+			UsersAdminWebKeys.MANAGEMENT_TOOLBAR_FILTER_CONTRIBUTORS);
 	}
 
 	private static boolean _isShowDeleteButton(

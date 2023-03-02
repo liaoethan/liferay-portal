@@ -22,8 +22,6 @@ import com.liferay.portal.kernel.search.facet.Facet;
 import com.liferay.portal.kernel.search.facet.config.FacetConfiguration;
 import com.liferay.portal.kernel.util.StringUtil;
 
-import java.util.Optional;
-
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -35,7 +33,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Michael C. Han
  */
 @Component(
-	immediate = true,
 	property = "class.name=com.liferay.portal.kernel.search.facet.DateRangeFacet",
 	service = FacetProcessor.class
 )
@@ -43,7 +40,7 @@ public class DateRangeFacetProcessor
 	implements FacetProcessor<SearchRequestBuilder> {
 
 	@Override
-	public Optional<AggregationBuilder> processFacet(Facet facet) {
+	public AggregationBuilder processFacet(Facet facet) {
 		FacetConfiguration facetConfiguration = facet.getFacetConfiguration();
 
 		JSONObject jsonObject = facetConfiguration.getData();
@@ -51,7 +48,7 @@ public class DateRangeFacetProcessor
 		JSONArray jsonArray = jsonObject.getJSONArray("ranges");
 
 		if (jsonArray == null) {
-			return Optional.empty();
+			return null;
 		}
 
 		DateRangeAggregationBuilder dateRangeAggregationBuilder =
@@ -78,7 +75,7 @@ public class DateRangeFacetProcessor
 			dateRangeAggregationBuilder.addRange(rangeParts[0], rangeParts[2]);
 		}
 
-		return Optional.of(dateRangeAggregationBuilder);
+		return dateRangeAggregationBuilder;
 	}
 
 }

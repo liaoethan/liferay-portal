@@ -15,7 +15,7 @@
 package com.liferay.dynamic.data.mapping.form.renderer.internal;
 
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionFactory;
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionRegistry;
 import com.liferay.dynamic.data.mapping.expression.internal.DDMExpressionFactoryImpl;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluator;
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.DDMFormEvaluatorImpl;
@@ -23,7 +23,7 @@ import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.HasGoog
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.JumpPageFunction;
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.function.SetVisibleFunction;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.renderer.DDMFormRenderingContext;
@@ -49,7 +49,6 @@ import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoaderUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -65,9 +64,7 @@ import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.language.LanguageResources;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
-import com.liferay.portal.util.CalendarFactoryImpl;
 import com.liferay.portal.util.FastDateFormatFactoryImpl;
 import com.liferay.portal.util.HtmlImpl;
 
@@ -103,14 +100,12 @@ public class DDMFormPagesTemplateContextFactoryTest {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_setUpCalendarFactoryUtil();
-		_setUpDDMFormFieldTypeServicesTracker();
+		_setUpDDMFormFieldTypeServicesRegistry();
 		_setUpFastDateFormatFactoryUtil();
 		_setUpGooglePlacesUtil();
 		_setUpHtmlParser();
 		_setUpHtmlUtil();
 		_setUpHttpServletRequest();
-		_setUpLanguageResources();
 		setUpLanguageUtil();
 		_setUpLocaleThreadLocal();
 		_setUpPortalUtil();
@@ -135,7 +130,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 				"Field1", formFieldLabel, "checkbox-multiple", "string", false,
 				false, true, formFieldTip, formFieldOption));
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"checkbox-multiple",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createCheckboxMultipleDDMFormFieldTemplateContextContributor());
@@ -181,7 +176,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 				"Field1", formFieldLabel, "date", "string", false, false, true,
 				formFieldTip));
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"date",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createDateDDMFormFieldTemplateContextContributor());
@@ -260,7 +255,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 						new String[] {"Field3"})),
 				ddmFormValues, false, false, false);
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"text",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createTextDDMFormFieldTemplateContextContributor());
@@ -303,7 +298,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 				"Field1", formFieldLabel, "grid", "string", false, false, true,
 				formFieldTip, formFieldOption));
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"grid",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createGridDDMFormFieldTemplateContextContributor());
@@ -404,7 +399,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 			StringPool.BLANK
 		);
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"numeric", ddmFormFieldTemplateContextContributor);
 
 		// Template context
@@ -566,7 +561,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 				"Field1", formFieldLabel, "radio", "string", false, false, true,
 				formFieldTip, formFieldPredefinedValue, formFieldOption));
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"radio",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createRadioDDMFormFieldTemplateContextContributor());
@@ -728,7 +723,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 				"Field1", formFieldLabel, "select", "string", false, false,
 				true, formFieldTip, formFieldOption));
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"select",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createSelectDDMFormFieldTemplateContextContributor());
@@ -781,7 +776,7 @@ public class DDMFormPagesTemplateContextFactoryTest {
 				formFieldTip, formFieldPredefinedValue, formFieldPlaceholder,
 				formFieldTooltip, formFieldOption));
 
-		mockDDMFormFieldTypeServicesTracker(
+		mockDDMFormFieldTypeServicesRegistry(
 			"text",
 			_ddmFormFieldTemplateContextContributorTestHelper.
 				createTextDDMFormFieldTemplateContextContributor());
@@ -841,31 +836,25 @@ public class DDMFormPagesTemplateContextFactoryTest {
 		);
 	}
 
-	protected void mockDDMFormFieldTypeServicesTracker(
+	protected void mockDDMFormFieldTypeServicesRegistry(
 		String type,
 		DDMFormFieldTemplateContextContributor
 			ddmFormFieldTemplateContextContributor) {
 
 		Mockito.when(
-			_ddmFormFieldTypeServicesTracker.
+			_ddmFormFieldTypeServicesRegistry.
 				getDDMFormFieldTemplateContextContributor(Mockito.eq(type))
 		).thenReturn(
 			ddmFormFieldTemplateContextContributor
 		);
 	}
 
-	private static void _setUpCalendarFactoryUtil() {
-		CalendarFactoryUtil calendarFactoryUtil = new CalendarFactoryUtil();
-
-		calendarFactoryUtil.setCalendarFactory(new CalendarFactoryImpl());
-	}
-
-	private static void _setUpDDMFormFieldTypeServicesTracker() {
+	private static void _setUpDDMFormFieldTypeServicesRegistry() {
 		DDMFormFieldValueAccessor<?> ddmFormFieldValueAccessor =
 			new DefaultDDMFormFieldValueAccessor();
 
 		Mockito.when(
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldValueAccessor(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueAccessor(
 				Mockito.anyString())
 		).thenReturn(
 			(DDMFormFieldValueAccessor<Object>)ddmFormFieldValueAccessor
@@ -962,12 +951,6 @@ public class DDMFormPagesTemplateContextFactoryTest {
 		).thenReturn(
 			themeDisplay
 		);
-	}
-
-	private static void _setUpLanguageResources() {
-		LanguageResources languageResources = new LanguageResources();
-
-		languageResources.setConfig(StringPool.BLANK);
 	}
 
 	private static void _setUpLocaleThreadLocal() {
@@ -1067,8 +1050,8 @@ public class DDMFormPagesTemplateContextFactoryTest {
 
 		ddmFormPagesTemplateContextFactory.setDDMFormEvaluator(
 			_getDDMFormEvaluator());
-		ddmFormPagesTemplateContextFactory.setDDMFormFieldTypeServicesTracker(
-			_ddmFormFieldTypeServicesTracker);
+		ddmFormPagesTemplateContextFactory.setDDMFormFieldTypeServicesRegistry(
+			_ddmFormFieldTypeServicesRegistry);
 
 		return ddmFormPagesTemplateContextFactory;
 	}
@@ -1082,8 +1065,8 @@ public class DDMFormPagesTemplateContextFactoryTest {
 		ReflectionTestUtil.setFieldValue(
 			ddmFormEvaluator, "ddmExpressionFactory", ddmExpressionFactoryImpl);
 		ReflectionTestUtil.setFieldValue(
-			ddmFormEvaluator, "ddmFormFieldTypeServicesTracker",
-			_ddmFormFieldTypeServicesTracker);
+			ddmFormEvaluator, "ddmFormFieldTypeServicesRegistry",
+			_ddmFormFieldTypeServicesRegistry);
 
 		Map<String, DDMExpressionFunctionFactory>
 			ddmExpressionFunctionFactoryMap =
@@ -1096,19 +1079,19 @@ public class DDMFormPagesTemplateContextFactoryTest {
 					"setVisible", () -> new SetVisibleFunction()
 				).build();
 
-		DDMExpressionFunctionTracker ddmExpressionFunctionTracker =
-			Mockito.mock(DDMExpressionFunctionTracker.class);
+		DDMExpressionFunctionRegistry ddmExpressionFunctionRegistry =
+			Mockito.mock(DDMExpressionFunctionRegistry.class);
 
 		Mockito.when(
-			ddmExpressionFunctionTracker.getDDMExpressionFunctionFactories(
+			ddmExpressionFunctionRegistry.getDDMExpressionFunctionFactories(
 				Mockito.any())
 		).thenReturn(
 			ddmExpressionFunctionFactoryMap
 		);
 
 		ReflectionTestUtil.setFieldValue(
-			ddmExpressionFactoryImpl, "ddmExpressionFunctionTracker",
-			ddmExpressionFunctionTracker);
+			ddmExpressionFactoryImpl, "ddmExpressionFunctionRegistry",
+			ddmExpressionFunctionRegistry);
 
 		return ddmFormEvaluator;
 	}
@@ -1137,9 +1120,9 @@ public class DDMFormPagesTemplateContextFactoryTest {
 
 	private static final String _PORTLET_NAMESPACE = StringUtil.randomString();
 
-	private static final DDMFormFieldTypeServicesTracker
-		_ddmFormFieldTypeServicesTracker = Mockito.mock(
-			DDMFormFieldTypeServicesTracker.class);
+	private static final DDMFormFieldTypeServicesRegistry
+		_ddmFormFieldTypeServicesRegistry = Mockito.mock(
+			DDMFormFieldTypeServicesRegistry.class);
 	private static final GroupLocalService _groupLocalService = Mockito.mock(
 		GroupLocalService.class);
 	private static final HtmlParser _htmlParser = Mockito.mock(

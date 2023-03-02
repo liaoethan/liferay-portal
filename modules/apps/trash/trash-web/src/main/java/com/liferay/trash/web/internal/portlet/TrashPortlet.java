@@ -33,7 +33,7 @@ import com.liferay.portal.model.adapter.ModelAdapterUtil;
 import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashEntryConstants;
 import com.liferay.trash.constants.TrashPortletKeys;
-import com.liferay.trash.kernel.exception.RestoreEntryException;
+import com.liferay.trash.exception.RestoreEntryException;
 import com.liferay.trash.model.TrashEntry;
 import com.liferay.trash.service.TrashEntryLocalService;
 import com.liferay.trash.service.TrashEntryService;
@@ -65,7 +65,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.css-class-wrapper=portlet-trash",
 		"com.liferay.portlet.display-category=category.hidden",
@@ -195,12 +194,9 @@ public class TrashPortlet extends MVCPortlet {
 						new ObjectValuePair<>(
 							entry.getClassName(), entry.getClassPK()));
 				}
-				catch (com.liferay.trash.exception.RestoreEntryException
-							restoreEntryException) {
-
+				catch (RestoreEntryException restoreEntryException) {
 					if (restoreEntryException.getType() !=
-							com.liferay.trash.exception.RestoreEntryException.
-								NOT_RESTORABLE) {
+							RestoreEntryException.NOT_RESTORABLE) {
 
 						throw restoreEntryException;
 					}
@@ -283,9 +279,7 @@ public class TrashPortlet extends MVCPortlet {
 
 	@Override
 	protected boolean isSessionErrorException(Throwable throwable) {
-		if (throwable instanceof
-				com.liferay.trash.exception.RestoreEntryException ||
-			throwable instanceof RestoreEntryException ||
+		if (throwable instanceof RestoreEntryException ||
 			throwable instanceof TrashPermissionException) {
 
 			return true;
@@ -338,7 +332,7 @@ public class TrashPortlet extends MVCPortlet {
 
 			sendRedirect(actionRequest, actionResponse);
 
-			throw new com.liferay.trash.exception.RestoreEntryException(
+			throw new RestoreEntryException(
 				restoreEntryException.getType(),
 				restoreEntryException.getCause());
 		}

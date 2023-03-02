@@ -21,7 +21,7 @@ String backURL = ParamUtil.getString(request, "backURL", String.valueOf(renderRe
 
 ObjectEntryDisplayContext objectEntryDisplayContext = (ObjectEntryDisplayContext)request.getAttribute(WebKeys.PORTLET_DISPLAY_CONTEXT);
 
-ObjectDefinition objectDefinition = objectEntryDisplayContext.getObjectDefinition();
+ObjectDefinition objectDefinition = objectEntryDisplayContext.getObjectDefinition1();
 ObjectEntry objectEntry = objectEntryDisplayContext.getObjectEntry();
 
 portletDisplay.setShowBackIcon(true);
@@ -40,26 +40,25 @@ portletDisplay.setURLBack(backURL);
 		<aui:input name="objectDefinitionId" type="hidden" value="<%= objectDefinition.getObjectDefinitionId() %>" />
 		<aui:input name="ddmFormValues" type="hidden" value="" />
 
-		<liferay-frontend:fieldset-group>
-			<clay:sheet-section>
-				<clay:row>
-					<clay:col
-						md="12"
-					>
-						<%= objectEntryDisplayContext.renderDDMForm(pageContext) %>
-					</clay:col>
-				</clay:row>
-			</clay:sheet-section>
-		</liferay-frontend:fieldset-group>
+		<clay:sheet-section>
+			<clay:row>
+				<clay:col
+					md="12"
+				>
+					<%= objectEntryDisplayContext.renderDDMForm(pageContext) %>
+				</clay:col>
+			</clay:row>
+		</clay:sheet-section>
 
 		<%@ include file="/object_entries/object_entry/categorization.jspf" %>
 	</liferay-frontend:edit-form-body>
 
 	<c:if test="<%= !objectEntryDisplayContext.isReadOnly() %>">
 		<liferay-frontend:edit-form-footer>
-			<aui:button name="save" onClick='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "submitObjectEntry();" %>' type="submit" value="save" />
-
-			<aui:button href="<%= backURL %>" type="cancel" />
+			<liferay-frontend:edit-form-buttons
+				redirect="<%= backURL %>"
+				submitOnClick='<%= "event.preventDefault(); " + liferayPortletResponse.getNamespace() + "submitObjectEntry();" %>'
+			/>
 		</liferay-frontend:edit-form-footer>
 	</c:if>
 </liferay-frontend:edit-form>
@@ -87,14 +86,14 @@ portletDisplay.setURLBack(backURL);
 
 			const postPath = scope === 'site' ? pathScopedBySite : contextPath;
 
-			let putPath = scope === 'site' ? pathScopedBySite : contextPath;
+			let patchPath = scope === 'site' ? pathScopedBySite : contextPath;
 
-			putPath = putPath.concat(
+			patchPath = patchPath.concat(
 				'/by-external-reference-code/',
 				`\${externalReferenceCode}`
 			);
 
-			return externalReferenceCode ? putPath : postPath;
+			return externalReferenceCode ? patchPath : postPath;
 		}
 
 		function <portlet:namespace />getValues(fields) {
@@ -172,13 +171,27 @@ portletDisplay.setURLBack(backURL);
 								);
 							}
 
+							const autoRelatedValue = {
+								['relationshipField']:
+									'<%= objectEntryDisplayContext.getObjectRelationshipERCObjectFieldName() %>',
+								['parentObjectEntryERC']:
+									'<%= objectEntryDisplayContext.getParentObjectEntryId() %>',
+							};
+
+							if (autoRelatedValue['relationshipField'] !== 'null') {
+								values = Object.assign(values, {
+									[autoRelatedValue['relationshipField']]:
+										autoRelatedValue['parentObjectEntryERC'],
+								});
+							}
+
 							Liferay.Util.fetch(path, {
 								body: JSON.stringify(values),
 								headers: new Headers({
 									'Accept': 'application/json',
 									'Content-Type': 'application/json',
 								}),
-								method: externalReferenceCode ? 'PUT' : 'POST',
+								method: externalReferenceCode ? 'PATCH' : 'POST',
 							})
 								.then((response) => {
 									if (response.status === 401) {

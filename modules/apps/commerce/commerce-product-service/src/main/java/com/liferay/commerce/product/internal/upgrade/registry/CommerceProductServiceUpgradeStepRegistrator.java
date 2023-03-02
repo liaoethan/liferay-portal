@@ -38,12 +38,14 @@ import com.liferay.commerce.product.internal.upgrade.v2_3_0.CommerceChannelUpgra
 import com.liferay.commerce.product.internal.upgrade.v2_5_0.FriendlyURLEntryUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v3_9_2.MiniumSiteInitializerUpgradeProcess;
 import com.liferay.commerce.product.internal.upgrade.v4_0_0.util.CommerceChannelAccountEntryRelTable;
+import com.liferay.commerce.product.internal.upgrade.v4_0_2.CommerceRepositoryUpgradeProcess;
 import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.settings.SettingsFactory;
@@ -65,9 +67,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  * @author Igor Beslic
  */
-@Component(
-	enabled = false, immediate = true, service = UpgradeStepRegistrator.class
-)
+@Component(service = UpgradeStepRegistrator.class)
 public class CommerceProductServiceUpgradeStepRegistrator
 	implements UpgradeStepRegistrator {
 
@@ -206,8 +206,7 @@ public class CommerceProductServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.6.1", "3.0.0",
-			new com.liferay.commerce.product.internal.upgrade.v3_0_0.
-				CPFriendlyURLEntryUpgradeProcess());
+			UpgradeProcessFactory.dropTables("CPFriendlyURLEntry"));
 
 		registry.register(
 			"3.0.0", "3.1.0",
@@ -239,7 +238,7 @@ public class CommerceProductServiceUpgradeStepRegistrator
 			new MVCCVersionUpgradeProcess() {
 
 				@Override
-				protected String[] getModuleTableNames() {
+				protected String[] getTableNames() {
 					return new String[] {
 						"CPAttachmentFileEntry", "CPDSpecificationOptionValue",
 						"CPDefinition", "CPDefinitionLink",
@@ -333,6 +332,10 @@ public class CommerceProductServiceUpgradeStepRegistrator
 			new com.liferay.commerce.product.internal.upgrade.v4_0_1.
 				CommerceChannelUpgradeProcess(_groupLocalService));
 
+		registry.register(
+			"4.0.1", "4.0.2",
+			new CommerceRepositoryUpgradeProcess(_companyLocalService));
+
 		if (_log.isInfoEnabled()) {
 			_log.info("Commerce product upgrade step registrator finished");
 		}
@@ -349,6 +352,9 @@ public class CommerceProductServiceUpgradeStepRegistrator
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
+
+	@Reference
+	private CompanyLocalService _companyLocalService;
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;

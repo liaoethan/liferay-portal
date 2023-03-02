@@ -43,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 
 	public static final String CLASS_NAME = CPOptionValue.class.getName();
@@ -136,8 +136,7 @@ public class CPOptionValueIndexer extends BaseIndexer<CPOptionValue> {
 	@Override
 	protected void doReindex(CPOptionValue cpOptionValue) throws Exception {
 		_indexWriterHelper.updateDocument(
-			cpOptionValue.getCompanyId(), getDocument(cpOptionValue),
-			isCommitImmediately());
+			cpOptionValue.getCompanyId(), getDocument(cpOptionValue));
 	}
 
 	@Override

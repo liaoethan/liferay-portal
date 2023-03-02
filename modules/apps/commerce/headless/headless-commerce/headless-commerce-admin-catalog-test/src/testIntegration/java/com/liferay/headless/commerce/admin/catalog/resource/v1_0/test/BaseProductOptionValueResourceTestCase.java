@@ -226,7 +226,10 @@ public abstract class BaseProductOptionValueResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantProductOptionValue),
 				(List<ProductOptionValue>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetProductOptionIdProductOptionValuesPage_getExpectedActions(
+					irrelevantId));
 		}
 
 		ProductOptionValue productOptionValue1 =
@@ -247,7 +250,20 @@ public abstract class BaseProductOptionValueResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(productOptionValue1, productOptionValue2),
 			(List<ProductOptionValue>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetProductOptionIdProductOptionValuesPage_getExpectedActions(
+				id));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetProductOptionIdProductOptionValuesPage_getExpectedActions(
+				Long id)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -629,6 +645,13 @@ public abstract class BaseProductOptionValueResourceTestCase {
 	}
 
 	protected void assertValid(Page<ProductOptionValue> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<ProductOptionValue> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<ProductOptionValue> productOptionValues =
@@ -644,6 +667,20 @@ public abstract class BaseProductOptionValueResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -819,6 +856,10 @@ public abstract class BaseProductOptionValueResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

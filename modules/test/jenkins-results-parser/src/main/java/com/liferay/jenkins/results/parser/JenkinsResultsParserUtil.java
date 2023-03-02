@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -118,6 +119,10 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Node;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -217,7 +222,7 @@ public class JenkinsResultsParserUtil {
 	}
 
 	public static void cancelQueuedItem(
-		int itemID, JenkinsMaster jenkinsMaster) {
+		long itemID, JenkinsMaster jenkinsMaster) {
 
 		StringBuilder sb = new StringBuilder();
 
@@ -655,6 +660,8 @@ public class JenkinsResultsParserUtil {
 				duration = System.currentTimeMillis() - start;
 
 				if (duration >= timeout) {
+					process.destroy();
+
 					throw new TimeoutException(
 						"Timeout occurred while executing Bash commands: " +
 							Arrays.toString(commands));
@@ -718,7 +725,7 @@ public class JenkinsResultsParserUtil {
 			command, baseDir, environments, maxLogSize, true);
 	}
 
-	public static void executeJenkinsScript(
+	public static String executeJenkinsScript(
 		String jenkinsMasterName, String script) {
 
 		try {
@@ -778,13 +785,26 @@ public class JenkinsResultsParserUtil {
 
 			if (responseCode >= 400) {
 				System.out.println(script);
+
+				return null;
 			}
+
+			String responseText = readInputStream(
+				httpURLConnection.getInputStream());
+
+			return combine(
+				jenkinsMasterName, ":\n",
+				responseText.substring(
+					responseText.lastIndexOf("<pre>") + 5,
+					responseText.lastIndexOf("</pre>")));
 		}
 		catch (IOException ioException) {
 			System.out.println("Unable to execute Jenkins script");
 
 			ioException.printStackTrace();
 		}
+
+		return null;
 	}
 
 	public static boolean exists(URL url) {
@@ -1251,7 +1271,7 @@ public class JenkinsResultsParserUtil {
 		Properties buildProperties = null;
 
 		try {
-			buildProperties = getBuildProperties();
+			buildProperties = getBuildProperties(false);
 		}
 		catch (IOException ioException) {
 			throw new RuntimeException(
@@ -2345,6 +2365,47 @@ public class JenkinsResultsParserUtil {
 		_jenkinsProperties = properties;
 
 		return properties;
+	}
+
+	public static Document getJobConfigDocument(
+			JenkinsMaster jenkinsMaster, String jobName)
+		throws DocumentException, IOException {
+
+		String url = combine(
+			jenkinsMaster.getURL(), "/job/", jobName, "/config.xml");
+
+		return Dom4JUtil.parse(toString(url));
+	}
+
+	public static int getJobTimeoutMinutes(
+		JenkinsMaster jenkinsMaster, String jobName) {
+
+		Document configDocument;
+
+		try {
+			configDocument = getJobConfigDocument(jenkinsMaster, jobName);
+
+			Node timeoutNode = Dom4JUtil.getNodeByXPath(
+				configDocument,
+				combine(
+					"/project/buildWrappers/",
+					"hudson.plugins.build__timeout.BuildTimeoutWrapper/",
+					"strategy[@class=\'hudson.plugins.build_timeout.impl.",
+					"AbsoluteTimeOutStrategy\']/timeoutMinutes"));
+
+			return Integer.valueOf(timeoutNode.getText()) + 15;
+		}
+		catch (Exception exception) {
+			System.out.println("Unable to get timeout of job " + jobName);
+
+			try {
+				return Integer.valueOf(
+					getBuildProperty("build.default.timeout.minutes"));
+			}
+			catch (IOException ioException) {
+				return 135;
+			}
+		}
 	}
 
 	public static String getJobVariant(JSONObject jsonObject) {
@@ -3555,7 +3616,7 @@ public class JenkinsResultsParserUtil {
 
 			toString(sb.toString());
 
-			cancelQueuedItem(itemJSONObject.getInt("id"), jenkinsMaster);
+			cancelQueuedItem(itemJSONObject.getLong("id"), jenkinsMaster);
 		}
 	}
 
@@ -3567,6 +3628,25 @@ public class JenkinsResultsParserUtil {
 		if (!delete(sourceFile)) {
 			throw new IOException("Unable to delete " + sourceFile);
 		}
+	}
+
+	public static FilenameFilter newFilenameFilter(String patternString) {
+		final Pattern pattern = Pattern.compile(patternString);
+
+		return new FilenameFilter() {
+
+			@Override
+			public boolean accept(File dir, String name) {
+				Matcher matcher = pattern.matcher(name);
+
+				if (matcher.matches()) {
+					return true;
+				}
+
+				return false;
+			}
+
+		};
 	}
 
 	public static <T> List<List<T>> partitionByCount(List<T> list, int count) {
@@ -4182,24 +4262,28 @@ public class JenkinsResultsParserUtil {
 						buildProperties.getProperty("spira.admin.user.name"));
 				}
 
-				if (url.matches("https://test-\\d+-\\d+.liferay.com/.+")) {
+				if ((httpAuthorizationHeader == null) &&
+					url.matches(
+						"https?:\\/\\/test-[135]-\\d+(?:\\.liferay\\.com)?.*?" +
+							"|http:\\/\\/localhost:8081.*?")) {
+
 					if (isCINode()) {
 						url = getLocalURL(url);
-
-						httpAuthorizationHeader = null;
 					}
-					else {
-						if (httpAuthorizationHeader == null) {
-							Properties buildProperties = getBuildProperties();
 
-							httpAuthorizationHeader =
-								new BasicHTTPAuthorization(
-									buildProperties.getProperty(
-										"jenkins.admin.user.password"),
-									buildProperties.getProperty(
-										"jenkins.admin.user.name"));
-						}
+					Properties buildProperties = getBuildProperties();
+
+					String jenkinsAdminUserToken = buildProperties.getProperty(
+						"jenkins.admin.user.token");
+
+					if (url.matches("https?:\\/\\/test-1-0.*")) {
+						jenkinsAdminUserToken = buildProperties.getProperty(
+							"jenkins.admin.user.token[test-1-0]");
 					}
+
+					httpAuthorizationHeader = new BasicHTTPAuthorization(
+						jenkinsAdminUserToken,
+						buildProperties.getProperty("jenkins.admin.user.name"));
 				}
 
 				boolean testrayRequest = false;
@@ -5898,6 +5982,11 @@ public class JenkinsResultsParserUtil {
 				else {
 					if (!redactToken.isEmpty()) {
 						_redactTokens.add(redactToken);
+
+						if (redactToken.contains("\\")) {
+							_redactTokens.add(
+								redactToken.replace("\\", "\\\\"));
+						}
 					}
 				}
 			}

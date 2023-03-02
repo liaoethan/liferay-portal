@@ -45,6 +45,12 @@
 	title="Warning"
 />
 
+<clay:alert
+	displayType="secondary"
+	message="This is a secondary message."
+	title="Secondary"
+/>
+
 <h3>STRIPE</h3>
 
 <blockquote>
@@ -52,26 +58,37 @@
 </blockquote>
 
 <clay:stripe
+	dismissible="<%= true %>"
 	displayType="danger"
 	message="This is an error message."
 	title="Error"
 />
 
 <clay:stripe
+	dismissible="<%= true %>"
 	displayType="success"
 	message="This is a success message."
 	title="Success"
 />
 
 <clay:stripe
+	dismissible="<%= true %>"
 	message="This is an info message."
 	title="Info"
 />
 
 <clay:stripe
+	dismissible="<%= true %>"
 	displayType="warning"
 	message="This is a warning message."
 	title="Warning"
+/>
+
+<clay:stripe
+	dismissible="<%= true %>"
+	displayType="secondary"
+	message="This is a secondary message."
+	title="Secondary"
 />
 
 <div>

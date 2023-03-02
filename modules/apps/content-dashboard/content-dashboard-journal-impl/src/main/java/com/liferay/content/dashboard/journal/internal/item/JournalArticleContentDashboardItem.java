@@ -19,9 +19,9 @@ import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.content.dashboard.item.ContentDashboardItemVersion;
 import com.liferay.content.dashboard.item.VersionableContentDashboardItem;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemAction;
-import com.liferay.content.dashboard.item.action.ContentDashboardItemActionProviderTracker;
+import com.liferay.content.dashboard.item.action.ContentDashboardItemActionProviderRegistry;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemVersionAction;
-import com.liferay.content.dashboard.item.action.ContentDashboardItemVersionActionProviderTracker;
+import com.liferay.content.dashboard.item.action.ContentDashboardItemVersionActionProviderRegistry;
 import com.liferay.content.dashboard.item.action.exception.ContentDashboardItemActionException;
 import com.liferay.content.dashboard.item.action.exception.ContentDashboardItemVersionActionException;
 import com.liferay.content.dashboard.item.action.provider.ContentDashboardItemActionProvider;
@@ -48,22 +48,20 @@ import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -82,10 +80,10 @@ public class JournalArticleContentDashboardItem
 
 	public JournalArticleContentDashboardItem(
 		List<AssetCategory> assetCategories, List<AssetTag> assetTags,
-		ContentDashboardItemActionProviderTracker
-			contentDashboardItemActionProviderTracker,
-		ContentDashboardItemVersionActionProviderTracker
-			contentDashboardItemVersionActionProviderTracker,
+		ContentDashboardItemActionProviderRegistry
+			contentDashboardItemActionProviderRegistry,
+		ContentDashboardItemVersionActionProviderRegistry
+			contentDashboardItemVersionActionProviderRegistry,
 		ContentDashboardItemSubtype contentDashboardItemSubtype, Group group,
 		InfoItemFieldValuesProvider<JournalArticle> infoItemFieldValuesProvider,
 		JournalArticle journalArticle,
@@ -106,10 +104,10 @@ public class JournalArticleContentDashboardItem
 			_assetTags = Collections.unmodifiableList(assetTags);
 		}
 
-		_contentDashboardItemActionProviderTracker =
-			contentDashboardItemActionProviderTracker;
-		_contentDashboardItemVersionActionProviderTracker =
-			contentDashboardItemVersionActionProviderTracker;
+		_contentDashboardItemActionProviderRegistry =
+			contentDashboardItemActionProviderRegistry;
+		_contentDashboardItemVersionActionProviderRegistry =
+			contentDashboardItemVersionActionProviderRegistry;
 		_contentDashboardItemSubtype = contentDashboardItemSubtype;
 		_group = group;
 		_infoItemFieldValuesProvider = infoItemFieldValuesProvider;
@@ -212,7 +210,7 @@ public class JournalArticleContentDashboardItem
 
 		List<ContentDashboardItemActionProvider>
 			contentDashboardItemActionProviders =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviders(
 						JournalArticle.class.getName(), types);
 
@@ -275,7 +273,7 @@ public class JournalArticleContentDashboardItem
 
 			Optional<ContentDashboardItemActionProvider>
 				contentDashboardItemActionProviderOptional =
-					_contentDashboardItemActionProviderTracker.
+					_contentDashboardItemActionProviderRegistry.
 						getContentDashboardItemActionProviderOptional(
 							JournalArticle.class.getName(),
 							ContentDashboardItemAction.Type.EDIT);
@@ -291,7 +289,7 @@ public class JournalArticleContentDashboardItem
 
 		Optional<ContentDashboardItemActionProvider>
 			viewContentDashboardItemActionProviderOptional =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviderOptional(
 						JournalArticle.class.getName(),
 						ContentDashboardItemAction.Type.VIEW);
@@ -303,7 +301,7 @@ public class JournalArticleContentDashboardItem
 			() -> {
 				Optional<ContentDashboardItemActionProvider>
 					editContentDashboardItemActionProviderOptional =
-						_contentDashboardItemActionProviderTracker.
+						_contentDashboardItemActionProviderRegistry.
 							getContentDashboardItemActionProviderOptional(
 								JournalArticle.class.getName(),
 								ContentDashboardItemAction.Type.EDIT);
@@ -386,14 +384,19 @@ public class JournalArticleContentDashboardItem
 	}
 
 	@Override
-	public Map<String, Object> getSpecificInformation(Locale locale) {
-		return HashMapBuilder.<String, Object>put(
-			"display-date", _journalArticle.getDisplayDate()
-		).put(
-			"expiration-date", _journalArticle.getExpirationDate()
-		).put(
-			"review-date", _journalArticle.getReviewDate()
-		).build();
+	public List<SpecificInformation<?>> getSpecificInformationList(
+		Locale locale) {
+
+		return Arrays.asList(
+			new SpecificInformation<>(
+				"display-date", SpecificInformation.Type.DATE,
+				_journalArticle.getDisplayDate()),
+			new SpecificInformation<>(
+				"expiration-date", SpecificInformation.Type.DATE,
+				_journalArticle.getExpirationDate()),
+			new SpecificInformation<>(
+				"review-date", SpecificInformation.Type.DATE,
+				_journalArticle.getReviewDate()));
 	}
 
 	@Override
@@ -430,7 +433,7 @@ public class JournalArticleContentDashboardItem
 	@Override
 	public String getViewVersionsURL(HttpServletRequest httpServletRequest) {
 		return PortletURLBuilder.create(
-			PortalUtil.getControlPanelPortletURL(
+			_portal.getControlPanelPortletURL(
 				httpServletRequest,
 				GroupLocalServiceUtil.fetchGroup(_journalArticle.getGroupId()),
 				JournalPortletKeys.JOURNAL, 0, 0, PortletRequest.RENDER_PHASE)
@@ -439,7 +442,7 @@ public class JournalArticleContentDashboardItem
 		).setBackURL(
 			() -> {
 				LiferayPortletResponse liferayPortletResponse =
-					PortalUtil.getLiferayPortletResponse(
+					_portal.getLiferayPortletResponse(
 						(PortletResponse)httpServletRequest.getAttribute(
 							JavaConstants.JAVAX_PORTLET_RESPONSE));
 
@@ -458,7 +461,7 @@ public class JournalArticleContentDashboardItem
 
 		Optional<ContentDashboardItemActionProvider>
 			contentDashboardItemActionProviderOptional =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviderOptional(
 						JournalArticle.class.getName(),
 						ContentDashboardItemAction.Type.VIEW);
@@ -482,7 +485,7 @@ public class JournalArticleContentDashboardItem
 
 		List<ContentDashboardItemVersionActionProvider>
 			contentDashboardItemVersionActionProviders =
-				_contentDashboardItemVersionActionProviderTracker.
+				_contentDashboardItemVersionActionProviderRegistry.
 					getContentDashboardItemVersionActionProviders(
 						JournalArticle.class.getName());
 
@@ -584,11 +587,11 @@ public class JournalArticleContentDashboardItem
 
 	private final List<AssetCategory> _assetCategories;
 	private final List<AssetTag> _assetTags;
-	private final ContentDashboardItemActionProviderTracker
-		_contentDashboardItemActionProviderTracker;
+	private final ContentDashboardItemActionProviderRegistry
+		_contentDashboardItemActionProviderRegistry;
 	private final ContentDashboardItemSubtype _contentDashboardItemSubtype;
-	private final ContentDashboardItemVersionActionProviderTracker
-		_contentDashboardItemVersionActionProviderTracker;
+	private final ContentDashboardItemVersionActionProviderRegistry
+		_contentDashboardItemVersionActionProviderRegistry;
 	private final Group _group;
 	private final InfoItemFieldValuesProvider<JournalArticle>
 		_infoItemFieldValuesProvider;

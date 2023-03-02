@@ -17,6 +17,8 @@ package com.liferay.product.navigation.control.menu.web.internal;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -37,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"product.navigation.control.menu.category.key=" + ProductNavigationControlMenuCategoryKeys.SITES,
 		"product.navigation.control.menu.entry.order:Integer=200"
@@ -60,6 +61,20 @@ public class LayoutBackLinkProductNavigationControlMenuEntry
 
 	@Override
 	public String getLabel(Locale locale) {
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		if ((serviceContext == null) || (serviceContext.getRequest() == null)) {
+			return _language.get(locale, "back");
+		}
+
+		String backURLTitle = ParamUtil.getString(
+			serviceContext.getRequest(), "p_l_back_url_title");
+
+		if (Validator.isNull(backURLTitle)) {
+			return backURLTitle;
+		}
+
 		return _language.get(locale, "back");
 	}
 

@@ -24,7 +24,7 @@ import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.info.test.util.MockInfoServiceRegistrationHolder;
 import com.liferay.info.test.util.model.MockObject;
 import com.liferay.layout.page.template.info.item.capability.EditPageInfoItemCapability;
-import com.liferay.layout.page.template.util.LayoutStructureUtil;
+import com.liferay.layout.provider.LayoutStructureProvider;
 import com.liferay.layout.taglib.servlet.taglib.RenderLayoutStructureTag;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
+import com.liferay.portal.kernel.model.LayoutTypePortletConstants;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
@@ -56,6 +57,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -115,15 +117,22 @@ public class RenderLayoutStructureTagTest {
 
 	@Test
 	public void testRemovedLayoutTemplateId() throws Exception {
-		LayoutTypePortlet layoutTypePortlet =
-			(LayoutTypePortlet)_layout.getLayoutType();
+		UnicodeProperties typeSettingsUnicodeProperties =
+			_layout.getTypeSettingsProperties();
 
-		layoutTypePortlet.setLayoutTemplateId(
-			_layout.getUserId(), "removed-template-id");
+		typeSettingsUnicodeProperties.setProperty(
+			LayoutTypePortletConstants.LAYOUT_TEMPLATE_ID,
+			"removed-template-id");
 
 		_layout = LayoutLocalServiceUtil.updateLayout(
 			_layout.getGroupId(), _layout.isPrivateLayout(),
-			_layout.getLayoutId(), _layout.getTypeSettings());
+			_layout.getLayoutId(), typeSettingsUnicodeProperties.toString());
+
+		LayoutTypePortlet layoutTypePortlet =
+			(LayoutTypePortlet)_layout.getLayoutType();
+
+		Assert.assertEquals(
+			"removed-template-id", layoutTypePortlet.getLayoutTemplateId());
 
 		RenderLayoutStructureTag renderLayoutStructureTag =
 			new RenderLayoutStructureTag();
@@ -134,13 +143,16 @@ public class RenderLayoutStructureTagTest {
 		renderLayoutStructureTag.doTag(
 			_getMockHttpServletRequest(), new MockHttpServletResponse());
 
+		Assert.assertEquals(
+			PropsValues.DEFAULT_LAYOUT_TEMPLATE_ID,
+			layoutTypePortlet.getLayoutTemplateId());
+
 		_layout = _layoutLocalService.fetchLayout(_layout.getPlid());
 
 		layoutTypePortlet = (LayoutTypePortlet)_layout.getLayoutType();
 
 		Assert.assertEquals(
-			layoutTypePortlet.getLayoutTemplateId(),
-			PropsValues.DEFAULT_LAYOUT_TEMPLATE_ID);
+			"removed-template-id", layoutTypePortlet.getLayoutTemplateId());
 	}
 
 	@Test
@@ -162,10 +174,10 @@ public class RenderLayoutStructureTagTest {
 				_getMockHttpServletRequest(layout);
 
 			String formItemId = ContentLayoutTestUtil.addFormToPublishedLayout(
-				layout, false,
+				false,
 				String.valueOf(
 					_portal.getClassNameId(MockObject.class.getName())),
-				"0", infoField);
+				"0", layout, _layoutStructureProvider, infoField);
 
 			InfoFormException infoFormException = new InfoFormException();
 
@@ -217,10 +229,10 @@ public class RenderLayoutStructureTagTest {
 				_getMockHttpServletRequest(layout);
 
 			String formItemId = ContentLayoutTestUtil.addFormToPublishedLayout(
-				layout, false,
+				false,
 				String.valueOf(
 					_portal.getClassNameId(MockObject.class.getName())),
-				"0", infoField);
+				"0", layout, _layoutStructureProvider, infoField);
 
 			InfoFormValidationException infoFormValidationException =
 				new InfoFormValidationException(infoField.getUniqueId());
@@ -277,10 +289,10 @@ public class RenderLayoutStructureTagTest {
 			Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
 
 			ContentLayoutTestUtil.addFormToPublishedLayout(
-				layout, false,
+				false,
 				String.valueOf(
 					_portal.getClassNameId(MockObject.class.getName())),
-				"0", infoField);
+				"0", layout, _layoutStructureProvider, infoField);
 
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(layout);
@@ -321,10 +333,10 @@ public class RenderLayoutStructureTagTest {
 			Layout layout = LayoutTestUtil.addTypeContentLayout(_group);
 
 			String formItemId = ContentLayoutTestUtil.addFormToPublishedLayout(
-				layout, false,
+				false,
 				String.valueOf(
 					_portal.getClassNameId(MockObject.class.getName())),
-				"0", infoField);
+				"0", layout, _layoutStructureProvider, infoField);
 
 			MockHttpServletRequest mockHttpServletRequest =
 				_getMockHttpServletRequest(layout);
@@ -419,6 +431,8 @@ public class RenderLayoutStructureTagTest {
 		MockHttpServletRequest mockHttpServletRequest =
 			new MockHttpServletRequest();
 
+		mockHttpServletRequest.setAttribute(WebKeys.LAYOUT, _layout);
+
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
 		themeDisplay.setCompany(
@@ -475,6 +489,8 @@ public class RenderLayoutStructureTagTest {
 
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
+		themeDisplay.setLayout(_layout);
+
 		LayoutSet layoutSet = _layout.getLayoutSet();
 
 		themeDisplay.setLayoutSet(layoutSet);
@@ -487,6 +503,7 @@ public class RenderLayoutStructureTagTest {
 		themeDisplay.setRequest(mockHttpServletRequest);
 		themeDisplay.setUser(TestPropsValues.getUser());
 
+		mockHttpServletRequest.setAttribute(WebKeys.LAYOUT, _layout);
 		mockHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
@@ -503,7 +520,7 @@ public class RenderLayoutStructureTagTest {
 			new RenderLayoutStructureTag();
 
 		renderLayoutStructureTag.setLayoutStructure(
-			LayoutStructureUtil.getLayoutStructure(
+			_layoutStructureProvider.getLayoutStructure(
 				layout.getPlid(),
 				_segmentsExperienceLocalService.
 					fetchDefaultSegmentsExperienceId(layout.getPlid())));
@@ -527,6 +544,9 @@ public class RenderLayoutStructureTagTest {
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
+
+	@Inject
+	private LayoutStructureProvider _layoutStructureProvider;
 
 	@Inject
 	private Portal _portal;

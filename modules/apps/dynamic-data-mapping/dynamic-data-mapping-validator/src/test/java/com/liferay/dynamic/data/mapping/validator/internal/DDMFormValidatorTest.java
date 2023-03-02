@@ -14,9 +14,9 @@
 
 package com.liferay.dynamic.data.mapping.validator.internal;
 
-import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionTracker;
+import com.liferay.dynamic.data.mapping.expression.DDMExpressionFunctionRegistry;
 import com.liferay.dynamic.data.mapping.expression.internal.DDMExpressionFactoryImpl;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
@@ -27,6 +27,7 @@ import com.liferay.dynamic.data.mapping.model.DDMFormRule;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldName;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldReference;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetAvailableLocales;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocale;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocaleAsAvailableLocale;
@@ -74,7 +75,7 @@ public class DDMFormValidatorTest {
 	@Before
 	public void setUp() {
 		_setUpBeanPropertiesUtil();
-		_setUpDDMFormFieldTypeServicesTracker();
+		_setUpDDMFormFieldTypeServicesRegistry();
 		_setUpDDMFormValidator();
 
 		ReflectionTestUtil.setFieldValue(
@@ -159,15 +160,38 @@ public class DDMFormValidatorTest {
 			createAvailableLocales(LocaleUtil.US), LocaleUtil.US);
 
 		ddmForm.addDDMFormField(
-			new DDMFormField("Name1", DDMFormFieldType.TEXT));
+			_createDDMFormField(
+				"FieldReference1", "Name1", DDMFormFieldType.TEXT));
 
-		DDMFormField name2DDMFormField = new DDMFormField(
-			"Name2", DDMFormFieldType.TEXT);
+		DDMFormField ddmFormField = _createDDMFormField(
+			"FieldReference2", "Name2", DDMFormFieldType.TEXT);
 
-		name2DDMFormField.addNestedDDMFormField(
-			new DDMFormField("Name1", DDMFormFieldType.TEXT));
+		ddmFormField.addNestedDDMFormField(
+			_createDDMFormField(
+				"FieldReference3", "Name1", DDMFormFieldType.TEXT));
 
-		ddmForm.addDDMFormField(name2DDMFormField);
+		ddmForm.addDDMFormField(ddmFormField);
+
+		_ddmFormValidatorImpl.validate(ddmForm);
+	}
+
+	@Test(expected = MustNotDuplicateFieldReference.class)
+	public void testDuplicateFieldReference() throws Exception {
+		DDMForm ddmForm = DDMFormTestUtil.createDDMForm(
+			createAvailableLocales(LocaleUtil.US), LocaleUtil.US);
+
+		ddmForm.addDDMFormField(
+			_createDDMFormField(
+				"FieldReference1", "Name1", DDMFormFieldType.TEXT));
+
+		DDMFormField ddmFormField = _createDDMFormField(
+			"FieldReference2", "Name2", DDMFormFieldType.TEXT);
+
+		ddmFormField.addNestedDDMFormField(
+			_createDDMFormField(
+				"fieldReference1", "Name3", DDMFormFieldType.TEXT));
+
+		ddmForm.addDDMFormField(ddmFormField);
 
 		_ddmFormValidatorImpl.validate(ddmForm);
 	}
@@ -569,25 +593,35 @@ public class DDMFormValidatorTest {
 		return DDMFormTestUtil.createAvailableLocales(locales);
 	}
 
+	private DDMFormField _createDDMFormField(
+		String fieldReference, String name, String type) {
+
+		DDMFormField ddmFormField = new DDMFormField(name, type);
+
+		ddmFormField.setFieldReference(fieldReference);
+
+		return ddmFormField;
+	}
+
 	private void _setUpBeanPropertiesUtil() {
 		BeanPropertiesUtil beanPropertiesUtil = new BeanPropertiesUtil();
 
 		beanPropertiesUtil.setBeanProperties(new BeanPropertiesImpl());
 	}
 
-	private void _setUpDDMFormFieldTypeServicesTracker() {
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker =
-			Mockito.mock(DDMFormFieldTypeServicesTracker.class);
+	private void _setUpDDMFormFieldTypeServicesRegistry() {
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry =
+			Mockito.mock(DDMFormFieldTypeServicesRegistry.class);
 
 		Mockito.when(
-			ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeNames()
+			ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeNames()
 		).thenReturn(
 			SetUtil.fromArray("date", "html-çê的Ü", "html-text_*", "html-text_@")
 		);
 
 		ReflectionTestUtil.setFieldValue(
-			_ddmFormValidatorImpl, "_ddmFormFieldTypeServicesTracker",
-			ddmFormFieldTypeServicesTracker);
+			_ddmFormValidatorImpl, "_ddmFormFieldTypeServicesRegistry",
+			ddmFormFieldTypeServicesRegistry);
 	}
 
 	private void _setUpDDMFormValidator() {
@@ -595,8 +629,8 @@ public class DDMFormValidatorTest {
 			new DDMExpressionFactoryImpl();
 
 		ReflectionTestUtil.setFieldValue(
-			ddmExpressionFactoryImpl, "ddmExpressionFunctionTracker",
-			Mockito.mock(DDMExpressionFunctionTracker.class));
+			ddmExpressionFactoryImpl, "ddmExpressionFunctionRegistry",
+			Mockito.mock(DDMExpressionFunctionRegistry.class));
 
 		ReflectionTestUtil.setFieldValue(
 			_ddmFormValidatorImpl, "_ddmExpressionFactory",

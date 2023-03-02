@@ -39,10 +39,14 @@ public class ListTypeDefinitionServiceWrapper
 
 	@Override
 	public com.liferay.list.type.model.ListTypeDefinition addListTypeDefinition(
-			java.util.Map<java.util.Locale, String> nameMap)
+			String externalReferenceCode,
+			java.util.Map<java.util.Locale, String> nameMap,
+			java.util.List<com.liferay.list.type.model.ListTypeEntry>
+				listTypeEntries)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
-		return _listTypeDefinitionService.addListTypeDefinition(nameMap);
+		return _listTypeDefinitionService.addListTypeDefinition(
+			externalReferenceCode, nameMap, listTypeEntries);
 	}
 
 	@Override
@@ -66,12 +70,34 @@ public class ListTypeDefinitionServiceWrapper
 	}
 
 	@Override
+	public com.liferay.list.type.model.ListTypeDefinition
+			fetchListTypeDefinitionByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _listTypeDefinitionService.
+			fetchListTypeDefinitionByExternalReferenceCode(
+				externalReferenceCode, companyId);
+	}
+
+	@Override
 	public com.liferay.list.type.model.ListTypeDefinition getListTypeDefinition(
 			long listTypeDefinitionId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _listTypeDefinitionService.getListTypeDefinition(
 			listTypeDefinitionId);
+	}
+
+	@Override
+	public com.liferay.list.type.model.ListTypeDefinition
+			getListTypeDefinitionByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _listTypeDefinitionService.
+			getListTypeDefinitionByExternalReferenceCode(
+				externalReferenceCode, companyId);
 	}
 
 	@Override
@@ -99,12 +125,15 @@ public class ListTypeDefinitionServiceWrapper
 	@Override
 	public com.liferay.list.type.model.ListTypeDefinition
 			updateListTypeDefinition(
-				long listTypeDefinitionId,
-				java.util.Map<java.util.Locale, String> nameMap)
+				String externalReferenceCode, long listTypeDefinitionId,
+				java.util.Map<java.util.Locale, String> nameMap,
+				java.util.List<com.liferay.list.type.model.ListTypeEntry>
+					listTypeEntries)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _listTypeDefinitionService.updateListTypeDefinition(
-			listTypeDefinitionId, nameMap);
+			externalReferenceCode, listTypeDefinitionId, nameMap,
+			listTypeEntries);
 	}
 
 	@Override

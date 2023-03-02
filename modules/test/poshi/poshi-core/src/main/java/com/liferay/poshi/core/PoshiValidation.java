@@ -18,8 +18,10 @@ import com.liferay.poshi.core.elements.PoshiElement;
 import com.liferay.poshi.core.elements.PoshiElementException;
 import com.liferay.poshi.core.script.PoshiScriptParserUtil;
 import com.liferay.poshi.core.selenium.LiferaySeleniumMethod;
+import com.liferay.poshi.core.util.Dom4JUtil;
 import com.liferay.poshi.core.util.OSDetector;
 import com.liferay.poshi.core.util.PropsUtil;
+import com.liferay.poshi.core.util.PropsValues;
 import com.liferay.poshi.core.util.StringUtil;
 import com.liferay.poshi.core.util.Validator;
 
@@ -37,6 +39,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +50,10 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 
 import org.dom4j.Attribute;
+import org.dom4j.CDATA;
 import org.dom4j.Element;
+import org.dom4j.Node;
+import org.dom4j.Text;
 
 /**
  * @author Karen Dang
@@ -71,41 +80,64 @@ public class PoshiValidation {
 
 		long start = System.currentTimeMillis();
 
-		for (String filePath : PoshiContext.getFilePaths()) {
-			if (OSDetector.isWindows()) {
-				filePath = StringUtil.replace(filePath, "/", "\\");
-			}
+		ExecutorService executorService = Executors.newFixedThreadPool(
+			PropsValues.POSHI_FILE_READ_THREAD_POOL);
 
-			String className = PoshiGetterUtil.getClassNameFromFilePath(
-				filePath);
-			String classType = PoshiGetterUtil.getClassTypeFromFilePath(
-				filePath);
-			String namespace = PoshiContext.getNamespaceFromFilePath(filePath);
+		for (final String finalFilePath : PoshiContext.getFilePaths()) {
+			executorService.execute(
+				new Runnable() {
 
-			if (classType.equals("function")) {
-				Element element = PoshiContext.getFunctionRootElement(
-					className, namespace);
+					@Override
+					public void run() {
+						String filePath = finalFilePath;
 
-				validateFunctionFile((PoshiElement)element);
-			}
-			else if (classType.equals("macro")) {
-				Element element = PoshiContext.getMacroRootElement(
-					className, namespace);
+						if (OSDetector.isWindows()) {
+							filePath = StringUtil.replace(filePath, "/", "\\");
+						}
 
-				validateMacroFile((PoshiElement)element);
-			}
-			else if (classType.equals("path")) {
-				Element element = PoshiContext.getPathRootElement(
-					className, namespace);
+						String className =
+							PoshiGetterUtil.getClassNameFromFilePath(filePath);
+						String classType =
+							PoshiGetterUtil.getClassTypeFromFilePath(filePath);
+						String namespace =
+							PoshiContext.getNamespaceFromFilePath(filePath);
 
-				validatePathFile(element, filePath);
-			}
-			else if (classType.equals("test-case")) {
-				Element element = PoshiContext.getTestCaseRootElement(
-					className, namespace);
+						if (classType.equals("function")) {
+							Element element =
+								PoshiContext.getFunctionRootElement(
+									className, namespace);
 
-				validateTestCaseFile((PoshiElement)element);
-			}
+							validateFunctionFile((PoshiElement)element);
+						}
+						else if (classType.equals("macro")) {
+							Element element = PoshiContext.getMacroRootElement(
+								className, namespace);
+
+							validateMacroFile((PoshiElement)element);
+						}
+						else if (classType.equals("path")) {
+							Element element = PoshiContext.getPathRootElement(
+								className, namespace);
+
+							validatePathFile(element, filePath);
+						}
+						else if (classType.equals("test-case")) {
+							Element element =
+								PoshiContext.getTestCaseRootElement(
+									className, namespace);
+
+							validateTestCaseFile((PoshiElement)element);
+						}
+					}
+
+				});
+		}
+
+		executorService.shutdown();
+
+		if (!executorService.awaitTermination(2, TimeUnit.MINUTES)) {
+			throw new TimeoutException(
+				"Timed out while validating Poshi files");
 		}
 
 		if (!_exceptions.isEmpty()) {
@@ -119,6 +151,10 @@ public class PoshiValidation {
 
 	public static void validate(String testName) throws Exception {
 		validateTestName(testName);
+
+		if (!_exceptions.isEmpty()) {
+			_throwExceptions();
+		}
 	}
 
 	protected static String getPrimaryAttributeName(
@@ -151,8 +187,9 @@ public class PoshiValidation {
 			poshiElement.elements());
 
 		List<String> possiblePoshiElementNames = Arrays.asList(
-			"description", "echo", "execute", "fail", "for", "if", "property",
-			"return", "take-screenshot", "task", "var", "while");
+			"break", "continue", "description", "echo", "execute", "fail",
+			"for", "if", "property", "return", "take-screenshot", "task", "var",
+			"while");
 
 		String filePath = _getFilePath(poshiElement);
 
@@ -633,8 +670,19 @@ public class PoshiValidation {
 				"argument1", "argument2", "argument3", "line-number",
 				"selenium");
 
-			validateDeprecatedFunction(
-				poshiElement, poshiElement.attributeValue("selenium"));
+			String seleniumAttributeValue = poshiElement.attributeValue(
+				"selenium");
+
+			LiferaySeleniumMethod liferaySeleniumMethod =
+				PoshiContext.getLiferaySeleniumMethod(seleniumAttributeValue);
+
+			if (liferaySeleniumMethod == null) {
+				_exceptions.add(
+					new PoshiElementException(
+						poshiElement, "Nonexistent Selenium method"));
+			}
+
+			validateDeprecatedFunction(poshiElement, seleniumAttributeValue);
 
 			validatePossibleAttributeNames(
 				poshiElement, possibleAttributeNames);
@@ -1467,8 +1515,28 @@ public class PoshiValidation {
 	protected static void validatePropertyElement(PoshiElement poshiElement) {
 		String filePath = _getFilePath(poshiElement);
 
-		List<String> attributeNames = Arrays.asList(
-			"line-number", "name", "value");
+		List<String> attributeNames = new ArrayList<>(
+			Arrays.asList("line-number", "name"));
+
+		if (Validator.isNotNull(poshiElement.attributeValue("value"))) {
+			attributeNames.add("value");
+		}
+		else {
+			boolean hasValue = false;
+
+			for (Node node : Dom4JUtil.toNodeList(poshiElement.content())) {
+				if (node instanceof CDATA || node instanceof Text) {
+					hasValue = true;
+				}
+			}
+
+			if (!hasValue) {
+				_addException(
+					poshiElement,
+					poshiElement.attributeValue("name") + " has no value",
+					filePath);
+			}
+		}
 
 		validateHasNoChildElements(poshiElement);
 		validatePossibleAttributeNames(poshiElement, attributeNames);
@@ -1968,14 +2036,20 @@ public class PoshiValidation {
 	private static final Map<String, String> _deprecatedMethodNames =
 		new Hashtable<String, String>() {
 			{
+				put("antCommand", "\"AntCommands.runCommand\"");
 				put("assertAlert", "\"selenium.assertAlertText\"");
 				put("copyText", "\"selenium.getText\" (stored as a variable)");
 				put(
 					"copyValue",
 					"\"selenium.getElementValue\" (stored as a variable)");
+				put("getAttribute", "\"selenium.getWebElementAttribute\"");
 				put("getEval", "\"selenium.getJavaScriptResult\"");
-				put("runScript", "\"selenium.executeJavaScript\"");
 				put("paste", "a variable storing the desired value");
+				put("robotType", "\"selenium.type\"");
+				put(
+					"robotTypeShortcut",
+					"\"selenium.typeKeys/selenium.sendKeys\"");
+				put("runScript", "\"selenium.executeJavaScript\"");
 				put("typeAlloyEditor", "\"selenium.typeEditor\"");
 				put("typeCKEditor", "\"selenium.typeEditor\"");
 			}

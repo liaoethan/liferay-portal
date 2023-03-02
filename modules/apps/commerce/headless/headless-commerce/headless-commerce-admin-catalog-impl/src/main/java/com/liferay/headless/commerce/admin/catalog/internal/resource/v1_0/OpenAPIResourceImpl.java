@@ -46,13 +46,12 @@ import org.osgi.service.component.annotations.Reference;
  * @generated
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/openapi.properties",
 	service = OpenAPIResourceImpl.class
 )
 @Generated("")
 @OpenAPIDefinition(
-	info = @Info(description = "Liferay Commerce Admin Catalog API. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.commerce.admin.catalog.client', and version '4.0.22'.", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.html"), title = "Liferay Commerce Admin Catalog API", version = "v1.0")
+	info = @Info(description = "Liferay Commerce Admin Catalog API. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.commerce.admin.catalog.client', and version '4.0.29'.", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.html"), title = "Liferay Commerce Admin Catalog API", version = "v1.0")
 )
 @Path("/v1.0")
 public class OpenAPIResourceImpl {
@@ -60,7 +59,9 @@ public class OpenAPIResourceImpl {
 	@GET
 	@Path("/openapi.{type:json|yaml}")
 	@Produces({MediaType.APPLICATION_JSON, "application/yaml"})
-	public Response getOpenAPI(@PathParam("type") String type)
+	public Response getOpenAPI(
+			@Context HttpServletRequest httpServletRequest,
+			@PathParam("type") String type, @Context UriInfo uriInfo)
 		throws Exception {
 
 		Class<? extends OpenAPIResource> clazz = _openAPIResource.getClass();
@@ -71,8 +72,8 @@ public class OpenAPIResourceImpl {
 				UriInfo.class);
 
 			return (Response)method.invoke(
-				_openAPIResource, _httpServletRequest, _resourceClasses, type,
-				_uriInfo);
+				_openAPIResource, httpServletRequest, _resourceClasses, type,
+				uriInfo);
 		}
 		catch (NoSuchMethodException noSuchMethodException1) {
 			try {
@@ -80,7 +81,7 @@ public class OpenAPIResourceImpl {
 					"getOpenAPI", Set.class, String.class, UriInfo.class);
 
 				return (Response)method.invoke(
-					_openAPIResource, _resourceClasses, type, _uriInfo);
+					_openAPIResource, _resourceClasses, type, uriInfo);
 			}
 			catch (NoSuchMethodException noSuchMethodException2) {
 				return _openAPIResource.getOpenAPI(_resourceClasses, type);
@@ -88,14 +89,8 @@ public class OpenAPIResourceImpl {
 		}
 	}
 
-	@Context
-	private HttpServletRequest _httpServletRequest;
-
 	@Reference
 	private OpenAPIResource _openAPIResource;
-
-	@Context
-	private UriInfo _uriInfo;
 
 	private final Set<Class<?>> _resourceClasses = new HashSet<Class<?>>() {
 		{
@@ -106,6 +101,12 @@ public class OpenAPIResourceImpl {
 			add(CategoryResourceImpl.class);
 
 			add(DiagramResourceImpl.class);
+
+			add(GroupedProductResourceImpl.class);
+
+			add(LinkedProductResourceImpl.class);
+
+			add(LowStockActionResourceImpl.class);
 
 			add(MappedProductResourceImpl.class);
 

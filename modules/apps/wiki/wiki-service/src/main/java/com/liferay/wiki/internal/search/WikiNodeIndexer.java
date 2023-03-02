@@ -47,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Eudaldo Alonso
  */
-@Component(immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 
 	public static final String CLASS_NAME = WikiNode.class.getName();
@@ -132,8 +132,7 @@ public class WikiNodeIndexer extends BaseIndexer<WikiNode> {
 			return;
 		}
 
-		_indexWriterHelper.updateDocument(
-			wikiNode.getCompanyId(), document, isCommitImmediately());
+		_indexWriterHelper.updateDocument(wikiNode.getCompanyId(), document);
 	}
 
 	@Reference

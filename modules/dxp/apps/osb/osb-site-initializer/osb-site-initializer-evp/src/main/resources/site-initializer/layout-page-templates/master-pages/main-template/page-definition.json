@@ -39,15 +39,7 @@
 					],
 					"indexed": true,
 					"layout": {
-						"borderWidth": 0,
-						"marginBottom": 0,
-						"marginLeft": 0,
-						"marginRight": 0,
-						"marginTop": 0,
-						"paddingBottom": 0,
-						"paddingLeft": 0,
-						"paddingRight": 0,
-						"paddingTop": 0,
+						"opacity": 100,
 						"widthType": "Fluid"
 					},
 					"name": "Container-navbar"
@@ -81,23 +73,23 @@
 							"fragmentStyle": {
 								"borderWidth": "0",
 								"paddingBottom": "2",
-								"paddingTop": "2",
-								"textAlign": ""
+								"paddingTop": "2"
 							},
+							"fragmentViewports": [
+								{
+									"fragmentViewportStyle": {
+										"paddingBottom": "2",
+										"paddingRight": "3"
+									},
+									"id": "landscapeMobile"
+								}
+							],
 							"indexed": true,
 							"layout": {
 								"align": "Center",
-								"borderWidth": 0,
 								"contentDisplay": "FlexRow",
 								"justify": "SpaceBetween",
-								"marginBottom": 0,
-								"marginLeft": 0,
-								"marginRight": 0,
-								"marginTop": 0,
-								"paddingBottom": 0,
-								"paddingLeft": 0,
-								"paddingRight": 0,
-								"paddingTop": 0,
+								"opacity": 100,
 								"widthType": "Fixed"
 							}
 						},
@@ -147,6 +139,15 @@
 											}
 										}
 									],
+									"fragmentViewports": [
+										{
+											"fragmentViewportStyle": {
+												"maxWidth": "55px",
+												"width": "55px"
+											},
+											"id": "landscapeMobile"
+										}
+									],
 									"indexed": true
 								},
 								"type": "Fragment"
@@ -162,14 +163,7 @@
 										"borderWidth": 0,
 										"contentDisplay": "FlexRow",
 										"justify": "SpaceBetween",
-										"marginBottom": 0,
-										"marginLeft": 0,
-										"marginRight": 0,
-										"marginTop": 0,
-										"paddingBottom": 0,
-										"paddingLeft": 0,
-										"paddingRight": 0,
-										"paddingTop": 0,
+										"opacity": 100,
 										"widthType": "Fluid"
 									}
 								},
@@ -185,24 +179,15 @@
 												"target": "Self"
 											},
 											"fragmentStyle": {
-												"borderWidth": "0",
-												"textAlign": ""
+												"borderWidth": "0"
 											},
 											"indexed": true,
 											"layout": {
 												"align": "Center",
-												"borderWidth": 0,
 												"contentDisplay": "FlexRow",
 												"flexWrap": "WrapReverse",
 												"justify": "End",
-												"marginBottom": 0,
-												"marginLeft": 0,
-												"marginRight": 0,
-												"marginTop": 0,
-												"paddingBottom": 0,
-												"paddingLeft": 0,
-												"paddingRight": 0,
-												"paddingTop": 0,
+												"opacity": 100,
 												"widthType": "Fluid"
 											}
 										},
@@ -220,9 +205,28 @@
 													"fragmentFields": [
 													],
 													"fragmentStyle": {
-														"paddingRight": "1",
-														"textAlign": ""
+														"paddingRight": "1"
 													},
+													"fragmentViewports": [
+														{
+															"fragmentViewportStyle": {
+																"marginTop": "3"
+															},
+															"id": "landscapeMobile"
+														},
+														{
+															"fragmentViewportStyle": {
+																"width": "90px"
+															},
+															"id": "portraitMobile"
+														},
+														{
+															"fragmentViewportStyle": {
+																"paddingRight": "2"
+															},
+															"id": "tablet"
+														}
+													],
 													"indexed": true,
 													"widgetInstances": [
 														{
@@ -233,50 +237,38 @@
 													]
 												},
 												"type": "Fragment"
+											},
+											{
+												"definition": {
+													"fragment": {
+														"key": "login-button",
+														"siteKey": "[$GROUP_KEY$]"
+													},
+													"fragmentConfig": {
+													},
+													"fragmentFields": [
+													],
+													"fragmentViewports": [
+														{
+															"fragmentViewportStyle": {
+																"marginTop": "2",
+																"paddingTop": "0"
+															},
+															"id": "landscapeMobile"
+														},
+														{
+															"fragmentViewportStyle": {
+																"paddingRight": "1"
+															},
+															"id": "tablet"
+														}
+													],
+													"indexed": true
+												},
+												"type": "Fragment"
 											}
 										],
 										"type": "Section"
-									},
-									{
-										"definition": {
-											"cssClasses": [
-												"justify-content-center",
-												"evp-login-button",
-												"align-items-end",
-												"d-flex"
-											],
-											"customCSS": ".evp-login-button :hover {\n  border-color: transparent !important;\n  color: #0053f0;\n}\n\n.evp-login-button:hover::after {\n    background-color: #0053f0;\n    content: \"\";\n    display: block;\n  \theight: 2px;\n  \twidth: 53px;\n  \tposition: absolute;\n}\n    ",
-											"fragment": {
-												"key": "DIALECT-dialect-button"
-											},
-											"fragmentConfig": {
-												"buttonSize": "",
-												"inverted": false,
-												"style": "neutral",
-												"type": "borderless",
-												"uppercase": false
-											},
-											"fragmentFields": [
-												{
-													"id": "link",
-													"value": {
-														"fragmentLink": {
-														},
-														"text": {
-															"value_i18n": {
-																"en_US": "Sign Out"
-															}
-														}
-													}
-												}
-											],
-											"fragmentStyle": {
-												"marginLeft": "1",
-												"textAlign": ""
-											},
-											"indexed": true
-										},
-										"type": "Fragment"
 									}
 								],
 								"type": "Section"
@@ -326,14 +318,8 @@
 					],
 					"indexed": true,
 					"layout": {
-						"borderWidth": 0,
-						"marginBottom": 0,
-						"marginLeft": 0,
-						"marginRight": 0,
-						"marginTop": 0,
+						"opacity": 100,
 						"paddingBottom": 4,
-						"paddingLeft": 0,
-						"paddingRight": 0,
 						"paddingTop": 4,
 						"widthType": "Fixed"
 					}
@@ -353,23 +339,23 @@
 			},
 			{
 				"definition": {
+					"cssClasses": [
+						"w-100",
+						"position-absolute"
+					],
+					"customCSS": ".[$FRAGMENT_CLASS$] {\nbottom:0;\n}",
 					"fragmentStyle": {
 						"backgroundColor": "colorBrandPrimaryLighten6",
 						"borderWidth": "0",
 						"paddingBottom": "2",
-						"paddingTop": "4",
-						"textAlign": ""
+						"paddingTop": "4"
+					},
+					"htmlProperties": {
+						"htmlTag": "Footer"
 					},
 					"indexed": true,
 					"layout": {
-						"borderWidth": 0,
-						"marginBottom": 0,
-						"marginLeft": 0,
-						"marginRight": 0,
-						"marginTop": 0,
-						"paddingBottom": 0,
-						"paddingLeft": 0,
-						"paddingRight": 0,
+						"opacity": 100,
 						"paddingTop": 2,
 						"widthType": "Fluid"
 					},
@@ -384,15 +370,7 @@
 							},
 							"indexed": true,
 							"layout": {
-								"borderWidth": 0,
-								"marginBottom": 0,
-								"marginLeft": 0,
-								"marginRight": 0,
-								"marginTop": 0,
-								"paddingBottom": 0,
-								"paddingLeft": 0,
-								"paddingRight": 0,
-								"paddingTop": 0,
+								"opacity": 100,
 								"widthType": "Fixed"
 							}
 						},
@@ -400,8 +378,7 @@
 							{
 								"definition": {
 									"fragmentStyle": {
-										"marginBottom": "3",
-										"textAlign": ""
+										"marginBottom": "3"
 									},
 									"gutters": true,
 									"indexed": true,
@@ -412,12 +389,13 @@
 										{
 											"id": "landscapeMobile",
 											"rowViewportDefinition": {
-												"modulesPerRow": 1
+												"modulesPerRow": 3
 											}
 										},
 										{
 											"id": "portraitMobile",
 											"rowViewportDefinition": {
+												"verticalAlignment": "middle"
 											}
 										},
 										{
@@ -434,7 +412,7 @@
 											"columnViewports": [
 												{
 													"columnViewportDefinition": {
-														"size": 12
+														"size": 4
 													},
 													"id": "landscapeMobile"
 												},
@@ -464,14 +442,7 @@
 														"borderWidth": 0,
 														"contentDisplay": "FlexColumn",
 														"justify": "Center",
-														"marginBottom": 0,
-														"marginLeft": 0,
-														"marginRight": 0,
-														"marginTop": 0,
-														"paddingBottom": 0,
-														"paddingLeft": 0,
-														"paddingRight": 0,
-														"paddingTop": 0,
+														"opacity": 100,
 														"widthType": "Fluid"
 													}
 												},
@@ -523,7 +494,8 @@
 																"key": "DIALECT-dialect-text"
 															},
 															"fragmentConfig": {
-																"textType": "h6"
+																"textType": "h6",
+																"truncateText": false
 															},
 															"fragmentFields": [
 																{
@@ -533,7 +505,7 @@
 																		},
 																		"text": {
 																			"value_i18n": {
-																				"en_US": "Handmade on Liferay in Diamond Bar, CA"
+																				"en_US": "Handmade on Liferay in Recife, BR"
 																			}
 																		}
 																	}
@@ -541,8 +513,7 @@
 															],
 															"fragmentStyle": {
 																"fontFamily": "fontFamilySansSerif",
-																"fontWeight": "fontWeightBold",
-																"textAlign": ""
+																"fontWeight": "fontWeightBold"
 															},
 															"indexed": true
 														},
@@ -559,7 +530,7 @@
 											"columnViewports": [
 												{
 													"columnViewportDefinition": {
-														"size": 12
+														"size": 4
 													},
 													"id": "landscapeMobile"
 												},
@@ -585,15 +556,7 @@
 													},
 													"indexed": true,
 													"layout": {
-														"borderWidth": 0,
-														"marginBottom": 0,
-														"marginLeft": 0,
-														"marginRight": 0,
-														"marginTop": 0,
-														"paddingBottom": 0,
-														"paddingLeft": 0,
-														"paddingRight": 0,
-														"paddingTop": 0,
+														"opacity": 100,
 														"widthType": "Fluid"
 													}
 												},
@@ -637,7 +600,6 @@
 															],
 															"fragmentStyle": {
 																"height": "56",
-																"textAlign": "",
 																"width": "70"
 															},
 															"indexed": true
@@ -655,7 +617,7 @@
 											"columnViewports": [
 												{
 													"columnViewportDefinition": {
-														"size": 12
+														"size": 4
 													},
 													"id": "landscapeMobile"
 												},
@@ -689,6 +651,7 @@
 														"marginLeft": 0,
 														"marginRight": 0,
 														"marginTop": 0,
+														"opacity": 100,
 														"paddingBottom": 0,
 														"paddingLeft": 0,
 														"paddingRight": 0,
@@ -764,7 +727,8 @@
 										"key": "DIALECT-dialect-text"
 									},
 									"fragmentConfig": {
-										"textType": "h6"
+										"textType": "h6",
+										"truncateText": false
 									},
 									"fragmentFields": [
 										{
@@ -774,7 +738,7 @@
 												},
 												"text": {
 													"value_i18n": {
-														"en_US": "© 2022 Liferay Inc. All Rights Reserved"
+														"en_US": "© 2023 Liferay Inc. All Rights Reserved"
 													}
 												}
 											}

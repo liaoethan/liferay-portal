@@ -770,14 +770,6 @@
 		},
 		{
 			"genericTypeCount": 1,
-			"name": "com.liferay.portal.kernel.process.ProcessCallable"
-		},
-		{
-			"genericTypeCount": 1,
-			"name": "com.liferay.portal.kernel.process.ProcessChannel"
-		},
-		{
-			"genericTypeCount": 1,
 			"name": "com.liferay.portal.kernel.repository.capabilities.BulkOperationCapability.Filter"
 		},
 		{
@@ -1047,6 +1039,14 @@
 		{
 			"genericTypeCount": 1,
 			"name": "com.liferay.portal.search.query.function.score.ScoreFunctionTranslator"
+		},
+		{
+			"genericTypeCount": 1,
+			"name": "com.liferay.portal.search.solr7.internal.facet.FacetProcessor"
+		},
+		{
+			"genericTypeCount": 1,
+			"name": "com.liferay.portal.search.solr7.internal.filter.FilterTranslator"
 		},
 		{
 			"genericTypeCount": 1,
@@ -1771,6 +1771,10 @@
 		{
 			"genericTypeCount": 1,
 			"name": "org.apache.shindig.protocol.RestfulCollection"
+		},
+		{
+			"genericTypeCount": 1,
+			"name": "org.apache.solr.common.util.NamedList"
 		},
 		{
 			"genericTypeCount": 1,

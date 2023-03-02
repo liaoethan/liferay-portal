@@ -20,6 +20,7 @@ import com.liferay.adaptive.media.content.transformer.ContentTransformerContentT
 import com.liferay.adaptive.media.content.transformer.constants.ContentTransformerContentTypes;
 import com.liferay.adaptive.media.image.html.AMImageHTMLTagFactory;
 import com.liferay.adaptive.media.image.html.constants.AMImageHTMLConstants;
+import com.liferay.adaptive.media.image.mime.type.AMImageMimeTypeProvider;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.petra.string.StringPool;
@@ -37,7 +38,6 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ServiceProxyFactory;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,7 +53,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true, property = "content.transformer.content.type=html",
+	property = "content.transformer.content.type=html",
 	service = ContentTransformer.class
 )
 public class AMBackwardsCompatibilityHtmlContentTransformer
@@ -98,13 +98,15 @@ public class AMBackwardsCompatibilityHtmlContentTransformer
 				FriendlyURLResolverConstants.URL_SEPARATOR_Y_FILE_ENTRY,
 				matcher.group(7))) {
 
-			Optional<FileEntry> fileEntryOptional = _resolveFileEntry(
+			FileEntry fileEntry = _resolveFileEntry(
 				matcher.group(9), matcher.group(8));
 
-			return fileEntryOptional.orElseThrow(
-				() -> new PortalException(
-					"No file entry found for friendly URL " +
-						matcher.group(0)));
+			if (fileEntry == null) {
+				throw new PortalException(
+					"No file entry found for friendly URL " + matcher.group(0));
+			}
+
+			return fileEntry;
 		}
 
 		if (matcher.group(5) != null) {
@@ -142,7 +144,10 @@ public class AMBackwardsCompatibilityHtmlContentTransformer
 	protected String getReplacement(String originalImgTag, FileEntry fileEntry)
 		throws PortalException {
 
-		if (fileEntry == null) {
+		if ((fileEntry == null) ||
+			!_amImageMimeTypeProvider.isMimeTypeSupported(
+				fileEntry.getMimeType())) {
+
 			return originalImgTag;
 		}
 
@@ -185,12 +190,11 @@ public class AMBackwardsCompatibilityHtmlContentTransformer
 		return bodyNode.childNode(0);
 	}
 
-	private Optional<FileEntry> _resolveFileEntry(
-			String friendlyURL, String groupName)
+	private FileEntry _resolveFileEntry(String friendlyURL, String groupName)
 		throws PortalException {
 
 		if (_fileEntryFriendlyURLResolver == null) {
-			return Optional.empty();
+			return null;
 		}
 
 		Group group = _getGroup(CompanyThreadLocal.getCompanyId(), groupName);
@@ -273,6 +277,9 @@ public class AMBackwardsCompatibilityHtmlContentTransformer
 
 	@Reference
 	private AMImageHTMLTagFactory _amImageHTMLTagFactory;
+
+	@Reference
+	private AMImageMimeTypeProvider _amImageMimeTypeProvider;
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;

@@ -14,7 +14,6 @@
 
 package com.liferay.layout.page.template.admin.web.internal.portlet.action;
 
-import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
@@ -22,7 +21,7 @@ import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
-import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -40,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES,
 		"mvc.command.name=/layout_page_template_admin/update_layout_page_template_entry_preview"
@@ -63,14 +61,13 @@ public class UpdateLayoutPageTemplateEntryPreviewMVCActionCommand
 
 		long fileEntryId = ParamUtil.getLong(actionRequest, "fileEntryId");
 
-		FileEntry fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
+		FileEntry fileEntry = _portletFileRepository.getPortletFileEntry(
+			fileEntryId);
 
 		FileEntry tempFileEntry = fileEntry;
 
-		Repository repository =
-			PortletFileRepositoryUtil.fetchPortletRepository(
-				themeDisplay.getScopeGroupId(),
-				LayoutAdminPortletKeys.GROUP_PAGES);
+		Repository repository = _portletFileRepository.fetchPortletRepository(
+			themeDisplay.getScopeGroupId(), LayoutAdminPortletKeys.GROUP_PAGES);
 
 		if (repository == null) {
 			ServiceContext serviceContext = new ServiceContext();
@@ -78,7 +75,7 @@ public class UpdateLayoutPageTemplateEntryPreviewMVCActionCommand
 			serviceContext.setAddGroupPermissions(true);
 			serviceContext.setAddGuestPermissions(true);
 
-			repository = PortletFileRepositoryUtil.addPortletRepository(
+			repository = _portletFileRepository.addPortletRepository(
 				themeDisplay.getScopeGroupId(),
 				LayoutAdminPortletKeys.GROUP_PAGES, serviceContext);
 		}
@@ -86,17 +83,16 @@ public class UpdateLayoutPageTemplateEntryPreviewMVCActionCommand
 		String fileName =
 			layoutPageTemplateEntryId + "_preview." + fileEntry.getExtension();
 
-		FileEntry oldFileEntry =
-			PortletFileRepositoryUtil.fetchPortletFileEntry(
-				themeDisplay.getScopeGroupId(), repository.getDlFolderId(),
-				fileName);
+		FileEntry oldFileEntry = _portletFileRepository.fetchPortletFileEntry(
+			themeDisplay.getScopeGroupId(), repository.getDlFolderId(),
+			fileName);
 
 		if (oldFileEntry != null) {
-			PortletFileRepositoryUtil.deletePortletFileEntry(
+			_portletFileRepository.deletePortletFileEntry(
 				oldFileEntry.getFileEntryId());
 		}
 
-		fileEntry = PortletFileRepositoryUtil.addPortletFileEntry(
+		fileEntry = _portletFileRepository.addPortletFileEntry(
 			null, themeDisplay.getScopeGroupId(), themeDisplay.getUserId(),
 			LayoutPageTemplateEntry.class.getName(), layoutPageTemplateEntryId,
 			LayoutAdminPortletKeys.GROUP_PAGES, repository.getDlFolderId(),
@@ -112,9 +108,9 @@ public class UpdateLayoutPageTemplateEntryPreviewMVCActionCommand
 	}
 
 	@Reference
-	private DLAppLocalService _dlAppLocalService;
+	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
 
 	@Reference
-	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;
+	private PortletFileRepository _portletFileRepository;
 
 }

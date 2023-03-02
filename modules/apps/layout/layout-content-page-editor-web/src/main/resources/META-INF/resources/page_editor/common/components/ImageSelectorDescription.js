@@ -17,7 +17,7 @@ import ClayIcon from '@clayui/icon';
 import PropTypes from 'prop-types';
 import React, {useEffect, useState} from 'react';
 
-import {useId} from '../../core/hooks/useId';
+import {useId} from '../hooks/useId';
 import CurrentLanguageFlag from './CurrentLanguageFlag';
 import {PopoverTooltip} from './PopoverTooltip';
 
@@ -30,7 +30,6 @@ export function ImageSelectorDescription({
 		setImageDescriptionInputElement,
 	] = useState();
 
-	const helpTextId = useId();
 	const imageDescriptionInputId = useId();
 	const tooltipId = useId();
 
@@ -42,10 +41,7 @@ export function ImageSelectorDescription({
 
 	return (
 		<ClayForm.Group>
-			<label
-				aria-describedby={tooltipId}
-				htmlFor={imageDescriptionInputId}
-			>
+			<label htmlFor={imageDescriptionInputId}>
 				<span>{Liferay.Language.get('image-description')}</span>
 
 				<PopoverTooltip
@@ -67,7 +63,6 @@ export function ImageSelectorDescription({
 			<ClayInput.Group small>
 				<ClayInput.GroupItem>
 					<ClayInput
-						aria-describedby={helpTextId}
 						id={imageDescriptionInputId}
 						onBlur={(event) => {
 							onImageDescriptionChanged(event.target.value);

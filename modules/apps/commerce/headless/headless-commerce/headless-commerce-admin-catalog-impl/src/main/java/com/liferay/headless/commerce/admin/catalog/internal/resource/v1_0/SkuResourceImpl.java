@@ -67,7 +67,7 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, properties = "OSGI-INF/liferay/rest/v1_0/sku.properties",
+	properties = "OSGI-INF/liferay/rest/v1_0/sku.properties",
 	scope = ServiceScope.PROTOTYPE,
 	service = {NestedFieldSupport.class, SkuResource.class}
 )
@@ -186,16 +186,14 @@ public class SkuResourceImpl
 	}
 
 	@Override
-	public Response patchSku(Long id, Sku sku) throws Exception {
+	public Sku patchSku(Long id, Sku sku) throws Exception {
 		_updateSKU(_cpInstanceService.getCPInstance(id), sku);
 
-		Response.ResponseBuilder responseBuilder = Response.ok();
-
-		return responseBuilder.build();
+		return _toSku(id);
 	}
 
 	@Override
-	public Response patchSkuByExternalReferenceCode(
+	public Sku patchSkuByExternalReferenceCode(
 			String externalReferenceCode, Sku sku)
 		throws Exception {
 
@@ -210,9 +208,7 @@ public class SkuResourceImpl
 
 		_updateSKU(cpInstance, sku);
 
-		Response.ResponseBuilder responseBuilder = Response.ok();
-
-		return responseBuilder.build();
+		return _toSku(cpInstance.getCPInstanceId());
 	}
 
 	@Override
@@ -280,7 +276,7 @@ public class SkuResourceImpl
 		long replacementCProductId = 0;
 		String replacementCPInstanceUuid = null;
 
-		if (sku.getDiscontinued()) {
+		if (GetterUtil.getBoolean(sku.getDiscontinued())) {
 			CPInstance discontinuedCPInstance = null;
 
 			if (Validator.isNotNull(
@@ -293,7 +289,7 @@ public class SkuResourceImpl
 			}
 
 			if ((discontinuedCPInstance == null) &&
-				(sku.getReplacementSkuId() > 0)) {
+				(GetterUtil.getLong(sku.getReplacementSkuId()) > 0)) {
 
 				discontinuedCPInstance = _cpInstanceService.fetchCPInstance(
 					sku.getReplacementSkuId());

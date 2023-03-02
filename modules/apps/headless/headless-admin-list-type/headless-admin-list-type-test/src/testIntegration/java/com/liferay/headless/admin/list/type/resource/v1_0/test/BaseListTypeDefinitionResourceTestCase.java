@@ -188,6 +188,7 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 
 		ListTypeDefinition listTypeDefinition = randomListTypeDefinition();
 
+		listTypeDefinition.setExternalReferenceCode(regex);
 		listTypeDefinition.setName(regex);
 
 		String json = ListTypeDefinitionSerDes.toJSON(listTypeDefinition);
@@ -196,6 +197,8 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 
 		listTypeDefinition = ListTypeDefinitionSerDes.toDTO(json);
 
+		Assert.assertEquals(
+			regex, listTypeDefinition.getExternalReferenceCode());
 		Assert.assertEquals(regex, listTypeDefinition.getName());
 	}
 
@@ -224,13 +227,22 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 			listTypeDefinition1, (List<ListTypeDefinition>)page.getItems());
 		assertContains(
 			listTypeDefinition2, (List<ListTypeDefinition>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetListTypeDefinitionsPage_getExpectedActions());
 
 		listTypeDefinitionResource.deleteListTypeDefinition(
 			listTypeDefinition1.getId());
 
 		listTypeDefinitionResource.deleteListTypeDefinition(
 			listTypeDefinition2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetListTypeDefinitionsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -615,6 +627,158 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 	}
 
 	@Test
+	public void testGetListTypeDefinitionByExternalReferenceCode()
+		throws Exception {
+
+		ListTypeDefinition postListTypeDefinition =
+			testGetListTypeDefinitionByExternalReferenceCode_addListTypeDefinition();
+
+		ListTypeDefinition getListTypeDefinition =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					postListTypeDefinition.getExternalReferenceCode());
+
+		assertEquals(postListTypeDefinition, getListTypeDefinition);
+		assertValid(getListTypeDefinition);
+	}
+
+	protected ListTypeDefinition
+			testGetListTypeDefinitionByExternalReferenceCode_addListTypeDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGraphQLGetListTypeDefinitionByExternalReferenceCode()
+		throws Exception {
+
+		ListTypeDefinition listTypeDefinition =
+			testGraphQLGetListTypeDefinitionByExternalReferenceCode_addListTypeDefinition();
+
+		Assert.assertTrue(
+			equals(
+				listTypeDefinition,
+				ListTypeDefinitionSerDes.toDTO(
+					JSONUtil.getValueAsString(
+						invokeGraphQLQuery(
+							new GraphQLField(
+								"listTypeDefinitionByExternalReferenceCode",
+								new HashMap<String, Object>() {
+									{
+										put(
+											"externalReferenceCode",
+											"\"" +
+												listTypeDefinition.
+													getExternalReferenceCode() +
+														"\"");
+									}
+								},
+								getGraphQLFields())),
+						"JSONObject/data",
+						"Object/listTypeDefinitionByExternalReferenceCode"))));
+	}
+
+	@Test
+	public void testGraphQLGetListTypeDefinitionByExternalReferenceCodeNotFound()
+		throws Exception {
+
+		String irrelevantExternalReferenceCode =
+			"\"" + RandomTestUtil.randomString() + "\"";
+
+		Assert.assertEquals(
+			"Not Found",
+			JSONUtil.getValueAsString(
+				invokeGraphQLQuery(
+					new GraphQLField(
+						"listTypeDefinitionByExternalReferenceCode",
+						new HashMap<String, Object>() {
+							{
+								put(
+									"externalReferenceCode",
+									irrelevantExternalReferenceCode);
+							}
+						},
+						getGraphQLFields())),
+				"JSONArray/errors", "Object/0", "JSONObject/extensions",
+				"Object/code"));
+	}
+
+	protected ListTypeDefinition
+			testGraphQLGetListTypeDefinitionByExternalReferenceCode_addListTypeDefinition()
+		throws Exception {
+
+		return testGraphQLListTypeDefinition_addListTypeDefinition();
+	}
+
+	@Test
+	public void testPutListTypeDefinitionByExternalReferenceCode()
+		throws Exception {
+
+		ListTypeDefinition postListTypeDefinition =
+			testPutListTypeDefinitionByExternalReferenceCode_addListTypeDefinition();
+
+		ListTypeDefinition randomListTypeDefinition =
+			randomListTypeDefinition();
+
+		ListTypeDefinition putListTypeDefinition =
+			listTypeDefinitionResource.
+				putListTypeDefinitionByExternalReferenceCode(
+					postListTypeDefinition.getExternalReferenceCode(),
+					randomListTypeDefinition);
+
+		assertEquals(randomListTypeDefinition, putListTypeDefinition);
+		assertValid(putListTypeDefinition);
+
+		ListTypeDefinition getListTypeDefinition =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					putListTypeDefinition.getExternalReferenceCode());
+
+		assertEquals(randomListTypeDefinition, getListTypeDefinition);
+		assertValid(getListTypeDefinition);
+
+		ListTypeDefinition newListTypeDefinition =
+			testPutListTypeDefinitionByExternalReferenceCode_createListTypeDefinition();
+
+		putListTypeDefinition =
+			listTypeDefinitionResource.
+				putListTypeDefinitionByExternalReferenceCode(
+					newListTypeDefinition.getExternalReferenceCode(),
+					newListTypeDefinition);
+
+		assertEquals(newListTypeDefinition, putListTypeDefinition);
+		assertValid(putListTypeDefinition);
+
+		getListTypeDefinition =
+			listTypeDefinitionResource.
+				getListTypeDefinitionByExternalReferenceCode(
+					putListTypeDefinition.getExternalReferenceCode());
+
+		assertEquals(newListTypeDefinition, getListTypeDefinition);
+
+		Assert.assertEquals(
+			newListTypeDefinition.getExternalReferenceCode(),
+			putListTypeDefinition.getExternalReferenceCode());
+	}
+
+	protected ListTypeDefinition
+			testPutListTypeDefinitionByExternalReferenceCode_createListTypeDefinition()
+		throws Exception {
+
+		return randomListTypeDefinition();
+	}
+
+	protected ListTypeDefinition
+			testPutListTypeDefinitionByExternalReferenceCode_addListTypeDefinition()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
 	public void testDeleteListTypeDefinition() throws Exception {
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		ListTypeDefinition listTypeDefinition =
@@ -944,6 +1108,16 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (listTypeDefinition.getExternalReferenceCode() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("listTypeEntries", additionalAssertFieldName)) {
 				if (listTypeDefinition.getListTypeEntries() == null) {
 					valid = false;
@@ -977,6 +1151,13 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 	}
 
 	protected void assertValid(Page<ListTypeDefinition> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<ListTypeDefinition> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<ListTypeDefinition> listTypeDefinitions =
@@ -992,6 +1173,20 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1089,6 +1284,19 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 				if (!Objects.deepEquals(
 						listTypeDefinition1.getDateModified(),
 						listTypeDefinition2.getDateModified())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						listTypeDefinition1.getExternalReferenceCode(),
+						listTypeDefinition2.getExternalReferenceCode())) {
 
 					return false;
 				}
@@ -1201,6 +1409,10 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -1311,6 +1523,15 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("externalReferenceCode")) {
+			sb.append("'");
+			sb.append(
+				String.valueOf(listTypeDefinition.getExternalReferenceCode()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("id")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
@@ -1380,6 +1601,8 @@ public abstract class BaseListTypeDefinitionResourceTestCase {
 			{
 				dateCreated = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
+				externalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
 			}

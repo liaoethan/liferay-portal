@@ -23,7 +23,7 @@ import com.eatthepath.pushy.apns.util.SimpleApnsPushNotification;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -81,14 +80,11 @@ public class ApplePushNotificationsSender implements PushNotificationsSender {
 
 		String payload = _buildPayload(payloadJSONObject);
 
-		Stream<String> tokensStream = tokens.stream();
-
-		tokensStream.map(
-			token -> new SimpleApnsPushNotification(token, _topic, payload)
-		).forEach(
-			simpleApnsPushNotification -> _handleNotificationResponse(
-				_apnsClient.sendNotification(simpleApnsPushNotification))
-		);
+		for (String token : tokens) {
+			_handleNotificationResponse(
+				_apnsClient.sendNotification(
+					new SimpleApnsPushNotification(token, _topic, payload)));
+		}
 	}
 
 	@Activate
@@ -161,7 +157,7 @@ public class ApplePushNotificationsSender implements PushNotificationsSender {
 		SimpleApnsPayloadBuilder simpleApnsPayloadBuilder =
 			new SimpleApnsPayloadBuilder();
 
-		JSONObject newPayloadJSONObject = JSONFactoryUtil.createJSONObject();
+		JSONObject newPayloadJSONObject = _jsonFactory.createJSONObject();
 
 		Iterator<String> iterator = payloadJSONObject.keys();
 
@@ -348,6 +344,9 @@ public class ApplePushNotificationsSender implements PushNotificationsSender {
 		ApplePushNotificationsSender.class);
 
 	private volatile ApnsClient _apnsClient;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private MessageBus _messageBus;

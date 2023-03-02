@@ -16,25 +16,27 @@ import useGetMDFRequests from '../../../common/services/liferay/object/mdf-reque
 import getMDFActivityPeriod from '../utils/getMDFActivityPeriod';
 import getMDFBudgetInfos from '../utils/getMDFBudgetInfos';
 import getMDFDates from '../utils/getMDFDates';
+import getSummaryMDFClaims from '../utils/getSummaryMDFClaims';
 
 export default function useGetListItemsFromMDFRequests(
 	page: number,
-	pageSize: number
+	pageSize: number,
+	filtersTerm: string
 ) {
-	const swrResponse = useGetMDFRequests(page, pageSize);
+	const swrResponse = useGetMDFRequests(page, pageSize, filtersTerm);
 
 	const listItems = useMemo(
 		() =>
 			swrResponse.data?.items.map((item) => ({
+				...getSummaryMDFClaims(item.mdfReqToMDFClms),
 				[MDFColumnKey.ID]: String(item.id),
-				[MDFColumnKey.NAME]: item.campaignName,
+				[MDFColumnKey.NAME]: item.overallCampaignName,
 				...getMDFActivityPeriod(
 					item.minDateActivity,
 					item.maxDateActivity
 				),
-				[MDFColumnKey.STATUS]: item.requestStatus,
-				[MDFColumnKey.PARTNER]:
-					item.r_accountToMDFRequests_accountEntry?.name,
+				[MDFColumnKey.STATUS]: item.mdfRequestStatus?.name,
+				[MDFColumnKey.PARTNER]: item.companyName,
 				...getMDFDates(item.dateCreated, item.dateModified),
 				...getMDFBudgetInfos(
 					item.totalCostOfExpense,

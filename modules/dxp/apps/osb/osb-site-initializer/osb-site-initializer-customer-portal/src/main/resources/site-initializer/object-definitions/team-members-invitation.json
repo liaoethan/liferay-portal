@@ -25,9 +25,11 @@
 			"required": false
 		}
 	],
+	"panelCategoryKey": "control_panel.object",
 	"pluralLabel": {
 		"en_US": "Team Members Invitation"
 	},
-	"scope": "site",
+	"portlet": true,
+	"scope": "company",
 	"system": false
 }

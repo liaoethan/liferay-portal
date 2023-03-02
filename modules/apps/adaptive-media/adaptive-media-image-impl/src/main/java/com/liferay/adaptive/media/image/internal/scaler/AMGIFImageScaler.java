@@ -30,7 +30,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.repository.model.FileVersion;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 
 import java.awt.image.RenderedImage;
@@ -46,14 +45,14 @@ import java.util.concurrent.Future;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Sergio González
  */
 @Component(
 	configurationPid = "com.liferay.adaptive.media.image.internal.configuration.AMImageConfiguration",
-	immediate = true, property = "mime.type=image/gif",
-	service = AMImageScaler.class
+	property = "mime.type=image/gif", service = AMImageScaler.class
 )
 public class AMGIFImageScaler implements AMImageScaler {
 
@@ -119,7 +118,7 @@ public class AMGIFImageScaler implements AMImageScaler {
 		throws IOException, PortalException {
 
 		try (InputStream inputStream = fileVersion.getContentStream(false)) {
-			return FileUtil.createTempFile(inputStream);
+			return _file.createTempFile(inputStream);
 		}
 	}
 
@@ -149,5 +148,8 @@ public class AMGIFImageScaler implements AMImageScaler {
 	}
 
 	private volatile AMImageConfiguration _amImageConfiguration;
+
+	@Reference
+	private com.liferay.portal.kernel.util.File _file;
 
 }

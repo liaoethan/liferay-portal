@@ -12,7 +12,6 @@
  * details.
  */
 
-type Locale = Liferay.Language.Locale;
 type LocalizedValue<T> = Liferay.Language.LocalizedValue<T>;
 
 type NotificationTemplate = {
@@ -21,6 +20,7 @@ type NotificationTemplate = {
 	body: LocalizedValue<string>;
 	cc: string;
 	description: string;
+	externalReferenceCode: string;
 	from: string;
 	fromName: LocalizedValue<string>;
 	id: number;
@@ -28,24 +28,30 @@ type NotificationTemplate = {
 	objectDefinitionId: number | null;
 	subject: LocalizedValue<string>;
 	to: LocalizedValue<string>;
+	type: 'email' | 'userNotification';
 };
 
 interface ObjectAction {
 	active: boolean;
 	conditionExpression?: string;
 	description?: string;
+	errorMessage: LocalizedValue<string>;
 	id?: number;
+	label: LocalizedValue<string>;
 	name: string;
 	objectActionExecutorKey: string;
 	objectActionTriggerKey: string;
+	objectDefinitionId?: number;
 	objectDefinitionsRelationshipsURL: string;
-	parameters?: ObjectActionParameters;
+	parameters: ObjectActionParameters;
 	script?: string;
 }
 
 interface ObjectActionParameters {
 	lineCount?: number;
+	notificationTemplateExternalReferenceCode?: string;
 	notificationTemplateId?: number;
+	objectDefinitionExternalReferenceCode?: string;
 	objectDefinitionId?: number;
 	predefinedValues?: PredefinedValue[];
 	relatedObjectEntries?: boolean;
@@ -59,9 +65,11 @@ type ObjectFieldBusinessType =
 	| 'Attachment'
 	| 'Date'
 	| 'Decimal'
+	| 'Formula'
 	| 'Integer'
 	| 'LongInteger'
 	| 'LongText'
+	| 'MultiselectPicklist'
 	| 'Picklist'
 	| 'PrecisionDecimal'
 	| 'Relationship'
@@ -75,15 +83,16 @@ interface ObjectFieldType {
 }
 interface ObjectField {
 	DBType: string;
-	businessType: ObjectFieldBusinessType | string;
+	businessType: ObjectFieldBusinessType;
 	defaultValue?: string;
 	externalReferenceCode?: string;
 	id: number;
 	indexed: boolean;
 	indexedAsKeyword: boolean;
-	indexedLanguageId: Locale | null;
+	indexedLanguageId: Liferay.Language.Locale | null;
 	label: LocalizedValue<string>;
-	listTypeDefinitionId: number;
+	listTypeDefinitionExternalReferenceCode: string;
+	listTypeDefinitionId?: number;
 	name: string;
 	objectFieldSettings?: ObjectFieldSetting[];
 	relationshipId?: number;
@@ -101,16 +110,25 @@ interface ObjectFieldView extends ObjectField {
 }
 
 interface ObjectDefinition {
+	accountEntryRestricted: boolean;
+	accountEntryRestrictedObjectFieldId: string;
+	accountEntryRestrictedObjectFieldName: string;
 	active: boolean;
 	dateCreated: string;
 	dateModified: string;
-	enabledCategorization: boolean;
+	dbTableName?: string;
+	defaultLanguageId: Liferay.Language.Locale;
+	enableCategorization: boolean;
+	enableComments: boolean;
+	enableObjectEntryHistory: boolean;
+	externalReferenceCode: string;
 	id: number;
 	label: LocalizedValue<string>;
 	name: string;
 	objectActions: [];
 	objectFields: ObjectField[];
 	objectLayouts: [];
+	objectRelationships: [];
 	objectViews: [];
 	panelCategoryKey: string;
 	parameterRequired?: boolean;
@@ -125,6 +143,7 @@ interface ObjectDefinition {
 	};
 	storageType?: string;
 	system: boolean;
+	titleObjectFieldId: number | string;
 	titleObjectFieldName: string;
 }
 
@@ -214,8 +233,13 @@ type ObjectFieldSettingName =
 	| 'function'
 	| 'maxLength'
 	| 'maximumFileSize'
+	| 'objectDefinition1ShortName'
 	| 'objectFieldName'
 	| 'objectRelationshipName'
+	| 'output'
+	| 'readOnly'
+	| 'readOnlyScript'
+	| 'script'
 	| 'showCounter'
 	| 'showFilesInDocumentsAndMedia'
 	| 'stateFlow'
@@ -238,16 +262,19 @@ interface ObjectRelationship {
 	id: number;
 	label: LocalizedValue<string>;
 	name: string;
+	objectDefinitionExternalReferenceCode1: string;
+	objectDefinitionExternalReferenceCode2: string;
 	objectDefinitionId1: number;
 	objectDefinitionId2: number;
 	readonly objectDefinitionName2: string;
 	objectRelationshipId: number;
-	parameterObjectFieldId?: number;
-	reverse?: boolean;
+	parameterObjectFieldName?: string;
+	reverse: boolean;
 	type: ObjectRelationshipType;
 }
 
 interface ObjectDefinitionsRelationship {
+	externalReferenceCode: string;
 	id: number;
 	label: string;
 	related?: boolean;
@@ -262,13 +289,16 @@ type ObjectValidationType = {
 
 interface PickList {
 	actions: Actions;
+	externalReferenceCode: string;
 	id: number;
+	key: string;
 	listTypeEntries: PickListItem[];
 	name: string;
 	name_i18n: LocalizedValue<string>;
 }
 
 interface PickListItem {
+	externalReferenceCode: string;
 	id: number;
 	key: string;
 	name: string;
@@ -289,6 +319,7 @@ interface HTTPMethod {
 
 interface PredefinedValue {
 	inputAsValue: boolean;
+	label: LocalizedValue<string>;
 	name: string;
 	value: string;
 }
@@ -296,6 +327,11 @@ interface PredefinedValue {
 interface LabelValueObject {
 	label: string;
 	value: string;
+}
+
+interface LabelNameObject {
+	label: string;
+	name: string;
 }
 
 interface NameValueObject {

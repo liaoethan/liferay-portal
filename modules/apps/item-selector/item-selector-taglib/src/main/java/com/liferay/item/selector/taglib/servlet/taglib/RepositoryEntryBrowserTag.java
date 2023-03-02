@@ -24,7 +24,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.repository.model.RepositoryEntry;
-import com.liferay.portal.kernel.upload.UploadServletRequestConfigurationHelperUtil;
+import com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -66,6 +66,10 @@ public class RepositoryEntryBrowserTag extends IncludeTag {
 
 	public List<String> getExtensions() {
 		return _extensions;
+	}
+
+	public long getFolderId() {
+		return _folderId;
 	}
 
 	public String getItemSelectedEventName() {
@@ -160,6 +164,10 @@ public class RepositoryEntryBrowserTag extends IncludeTag {
 		_extensions = extensions;
 	}
 
+	public void setFolderId(long folderId) {
+		_folderId = folderId;
+	}
+
 	public void setItemSelectedEventName(String itemSelectedEventName) {
 		_itemSelectedEventName = itemSelectedEventName;
 	}
@@ -228,9 +236,11 @@ public class RepositoryEntryBrowserTag extends IncludeTag {
 		_editImageURL = null;
 		_emptyResultsMessage = null;
 		_extensions = new ArrayList<>();
+		_folderId = 0;
 		_itemSelectedEventName = null;
 		_itemSelectorReturnTypeResolver = null;
-		_maxFileSize = UploadServletRequestConfigurationHelperUtil.getMaxSize();
+		_maxFileSize =
+			UploadServletRequestConfigurationProviderUtil.getMaxSize();
 		_mimeTypeRestriction = null;
 		_portletURL = null;
 		_repositoryEntries = new ArrayList<>();
@@ -326,6 +336,9 @@ public class RepositoryEntryBrowserTag extends IncludeTag {
 		}
 
 		httpServletRequest.setAttribute(
+			"liferay-item-selector:repository-entry-browser:folderId",
+			_folderId);
+		httpServletRequest.setAttribute(
 			"liferay-item-selector:repository-entry-browser:" +
 				"itemSelectedEventName",
 			_itemSelectedEventName);
@@ -388,11 +401,12 @@ public class RepositoryEntryBrowserTag extends IncludeTag {
 	private PortletURL _editImageURL;
 	private String _emptyResultsMessage;
 	private List<String> _extensions = new ArrayList<>();
+	private long _folderId;
 	private String _itemSelectedEventName;
 	private ItemSelectorReturnTypeResolver<?, ?>
 		_itemSelectorReturnTypeResolver;
 	private long _maxFileSize =
-		UploadServletRequestConfigurationHelperUtil.getMaxSize();
+		UploadServletRequestConfigurationProviderUtil.getMaxSize();
 	private String _mimeTypeRestriction;
 	private PortletURL _portletURL;
 	private List<RepositoryEntry> _repositoryEntries = new ArrayList<>();

@@ -20,7 +20,7 @@ import com.liferay.adaptive.media.image.configuration.AMImageConfigurationHelper
 import com.liferay.adaptive.media.image.service.AMImageEntryLocalService;
 import com.liferay.adaptive.media.web.internal.constants.AMPortletKeys;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -37,7 +37,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 import java.io.IOException;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.portlet.ActionRequest;
@@ -50,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sergio González
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + AMPortletKeys.ADAPTIVE_MEDIA,
 		"mvc.command.name=/adaptive_media/edit_image_configuration_entry"
@@ -80,7 +78,7 @@ public class EditImageConfigurationEntryMVCActionCommand
 			"max-width", ParamUtil.getString(actionRequest, "maxWidth")
 		).build();
 
-		Optional<AMImageConfigurationEntry> amImageConfigurationEntryOptional =
+		AMImageConfigurationEntry amImageConfigurationEntry =
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				themeDisplay.getCompanyId(), uuid);
 
@@ -106,20 +104,17 @@ public class EditImageConfigurationEntryMVCActionCommand
 			newUuid = ParamUtil.getString(actionRequest, "newUuid");
 		}
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
 			"content.Language", themeDisplay.getLocale(), getClass());
 
 		try {
 			String message = "";
 
-			if (amImageConfigurationEntryOptional.isPresent()) {
-				AMImageConfigurationEntry amImageConfigurationEntry =
-					amImageConfigurationEntryOptional.get();
-
+			if (amImageConfigurationEntry != null) {
 				if (!_isConfigurationEntryEditable(
 						themeDisplay.getCompanyId(),
-						amImageConfigurationEntryOptional.get())) {
+						amImageConfigurationEntry)) {
 
 					newUuid = amImageConfigurationEntry.getUUID();
 
@@ -151,7 +146,7 @@ public class EditImageConfigurationEntryMVCActionCommand
 				}
 			}
 			else {
-				AMImageConfigurationEntry amImageConfigurationEntry =
+				amImageConfigurationEntry =
 					_amImageConfigurationHelper.addAMImageConfigurationEntry(
 						themeDisplay.getCompanyId(), name, description, newUuid,
 						properties);
@@ -254,12 +249,11 @@ public class EditImageConfigurationEntryMVCActionCommand
 				break;
 			}
 
-			Optional<AMImageConfigurationEntry>
-				amImageConfigurationEntryOptional =
-					_amImageConfigurationHelper.getAMImageConfigurationEntry(
-						companyId, curUuid);
+			AMImageConfigurationEntry amImageConfigurationEntry =
+				_amImageConfigurationHelper.getAMImageConfigurationEntry(
+					companyId, curUuid);
 
-			if (!amImageConfigurationEntryOptional.isPresent()) {
+			if (amImageConfigurationEntry == null) {
 				break;
 			}
 
@@ -320,6 +314,9 @@ public class EditImageConfigurationEntryMVCActionCommand
 
 	@Reference
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

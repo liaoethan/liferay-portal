@@ -160,8 +160,8 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-template"));
 	</clay:row>
 </clay:container-fluid>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
-	var delegate = delegateModule.default;
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
 
 	var layoutPageTemplateEntries = document.getElementById(
 		'<portlet:namespace />layoutPageTemplateEntries'
@@ -175,7 +175,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-template"));
 			Liferay.Util.openModal({
 				disableAutoClose: true,
 				height: '60vh',
-				id: '<portlet:namespace />addLayoutDialog',
+				id: 'addLayoutDialog',
 				size: 'md',
 				title: '<liferay-ui:message key="add-page" />',
 				url: event.delegateTarget.dataset.addLayoutUrl,

@@ -30,6 +30,7 @@ import com.liferay.commerce.account.service.CommerceAccountGroupCommerceAccountR
 import com.liferay.commerce.account.service.CommerceAccountGroupRelLocalService;
 import com.liferay.commerce.account.service.base.CommerceAccountGroupLocalServiceBaseImpl;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.petra.string.StringPool;
@@ -54,11 +55,9 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.OrderByComparatorFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -68,7 +67,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.account.model.CommerceAccountGroup",
 	service = AopService.class
 )
@@ -188,7 +186,7 @@ public class CommerceAccountGroupLocalServiceImpl
 
 		return CommerceAccountGroupImpl.fromAccountGroup(
 			_accountGroupLocalService.fetchAccountGroupByExternalReferenceCode(
-				companyId, externalReferenceCode));
+				externalReferenceCode, companyId));
 	}
 
 	@Override
@@ -250,16 +248,12 @@ public class CommerceAccountGroupLocalServiceImpl
 			return new ArrayList<>();
 		}
 
-		Stream<CommerceAccountGroupCommerceAccountRel> stream =
-			commerceAccountGroupCommerceAccountRels.stream();
-
-		long[] commerceAccountGroupIds = stream.mapToLong(
-			CommerceAccountGroupCommerceAccountRel::getCommerceAccountGroupId
-		).toArray();
-
 		return TransformUtil.transform(
 			_accountGroupLocalService.getAccountGroupsByAccountGroupId(
-				commerceAccountGroupIds),
+				TransformUtil.transformToLongArray(
+					commerceAccountGroupCommerceAccountRels,
+					CommerceAccountGroupCommerceAccountRel::
+						getCommerceAccountGroupId)),
 			CommerceAccountGroupImpl::fromAccountGroup);
 	}
 
@@ -385,7 +379,7 @@ public class CommerceAccountGroupLocalServiceImpl
 			CommerceAccountGroupImpl.fromAccountGroup(
 				_accountGroupLocalService.
 					fetchAccountGroupByExternalReferenceCode(
-						companyId, externalReferenceCode));
+						externalReferenceCode, companyId));
 
 		if ((commerceAccountGroup != null) &&
 			(commerceAccountGroup.getCommerceAccountGroupId() !=

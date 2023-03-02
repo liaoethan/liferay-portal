@@ -29,8 +29,6 @@ import com.liferay.document.library.kernel.util.PDFProcessor;
 import com.liferay.document.library.kernel.util.PDFProcessorUtil;
 import com.liferay.document.library.kernel.util.VideoProcessor;
 import com.liferay.document.library.kernel.util.VideoProcessorUtil;
-import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
-import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -41,6 +39,9 @@ import com.liferay.portal.kernel.image.ImageBag;
 import com.liferay.portal.kernel.image.ImageToolUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.messaging.DestinationNames;
+import com.liferay.portal.kernel.messaging.Message;
+import com.liferay.portal.kernel.messaging.MessageBus;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
@@ -51,7 +52,6 @@ import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationTable;
 import com.liferay.portal.kernel.model.User;
-import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.constants.FriendlyURLResolverConstants;
@@ -73,6 +73,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionRegistryUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.ImageLocalServiceUtil;
@@ -120,7 +121,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.impl.ImageImpl;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.trash.kernel.model.TrashEntry;
 import com.liferay.users.admin.kernel.file.uploads.UserFileUploadsSettings;
 
 import java.awt.image.RenderedImage;
@@ -137,7 +137,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -188,10 +187,10 @@ public class WebServerServlet extends HttpServlet {
 				_checkFileEntry(pathArray);
 			}
 			else if (_PATH_SEPARATOR_FILE_ENTRY.equals(pathArray[0])) {
-				Optional<FileEntry> fileEntryOptional = _resolveFileEntry(
+				FileEntry fileEntry = _resolveFileEntry(
 					httpServletRequest, pathArray);
 
-				if (!fileEntryOptional.isPresent()) {
+				if (fileEntry == null) {
 					return false;
 				}
 			}
@@ -239,6 +238,27 @@ public class WebServerServlet extends HttpServlet {
 						_checkFileEntry(pathArray);
 					}
 				}
+			}
+
+			String objectDefinitionExternalReferenceCode = ParamUtil.getString(
+				httpServletRequest, "objectDefinitionExternalReferenceCode");
+
+			if (Validator.isNotNull(objectDefinitionExternalReferenceCode)) {
+				Message message = new Message();
+
+				message.put("companyId", user.getCompanyId());
+				message.put(
+					"objectDefinitionExternalReferenceCode",
+					objectDefinitionExternalReferenceCode);
+				message.put(
+					"objectEntryExternalReferenceCode",
+					ParamUtil.getString(
+						httpServletRequest,
+						"objectEntryExternalReferenceCode"));
+				message.put("userId", user.getUserId());
+
+				_messageBus.sendMessage(
+					DestinationNames.OBJECT_ENTRY_ATTACHMENT_DOWNLOAD, message);
 			}
 		}
 		catch (Exception exception) {
@@ -1156,11 +1176,18 @@ public class WebServerServlet extends HttpServlet {
 
 		// Send file
 
+		String cacheControlValue = HttpHeaders.CACHE_CONTROL_PRIVATE_VALUE;
+
+		boolean download = ParamUtil.getBoolean(httpServletRequest, "download");
+
+		if (download) {
+			cacheControlValue = HttpHeaders.CACHE_CONTROL_NO_CACHE_VALUE;
+		}
+
 		httpServletResponse.addHeader(
 			HttpHeaders.CACHE_CONTROL,
 			FileEntryHttpHeaderCustomizerUtil.getHttpHeaderValue(
-				fileEntry, HttpHeaders.CACHE_CONTROL,
-				HttpHeaders.CACHE_CONTROL_PRIVATE_VALUE));
+				fileEntry, HttpHeaders.CACHE_CONTROL, cacheControlValue));
 
 		if (isSupportsRangeHeader(contentType)) {
 			ServletResponseUtil.sendFileWithRangeHeader(
@@ -1168,9 +1195,6 @@ public class WebServerServlet extends HttpServlet {
 				contentLength, contentType);
 		}
 		else {
-			boolean download = ParamUtil.getBoolean(
-				httpServletRequest, "download");
-
 			if (download) {
 				ServletResponseUtil.sendFile(
 					httpServletRequest, httpServletResponse, fileName,
@@ -1273,8 +1297,7 @@ public class WebServerServlet extends HttpServlet {
 			return;
 		}
 
-		String fileName = HttpComponentsUtil.decodeURL(
-			HtmlUtil.escape(pathArray[2]));
+		String fileName = HtmlUtil.escape(pathArray[2]);
 
 		if (Validator.isNull(fileName)) {
 			throw new NoSuchFileEntryException("Invalid path " + path);
@@ -1371,14 +1394,13 @@ public class WebServerServlet extends HttpServlet {
 			DLAppLocalServiceUtil.getFileEntry(fileShortcut.getToFileEntryId());
 		}
 		else if (pathArray.length == 2) {
-
-			// Unable to check with UUID because of multiple repositories
-
+			DLAppLocalServiceUtil.getFileEntryByUuidAndGroupId(
+				pathArray[1], GetterUtil.getLong(pathArray[0]));
 		}
 		else if (pathArray.length == 3) {
 			long groupId = GetterUtil.getLong(pathArray[0]);
 			long folderId = GetterUtil.getLong(pathArray[1]);
-			String fileName = HttpComponentsUtil.decodeURL(pathArray[2]);
+			String fileName = pathArray[2];
 
 			try {
 				try {
@@ -1478,12 +1500,12 @@ public class WebServerServlet extends HttpServlet {
 			PropsValues.WEB_SERVER_SERVLET_DIRECTORY_INDEXING_ENABLED);
 	}
 
-	private static Optional<FileEntry> _resolveFileEntry(
+	private static FileEntry _resolveFileEntry(
 			HttpServletRequest httpServletRequest, String[] pathArray)
 		throws Exception {
 
 		if (_fileEntryFriendlyURLResolver == null) {
-			return Optional.empty();
+			return null;
 		}
 
 		User user = _getUser(httpServletRequest);
@@ -1506,7 +1528,7 @@ public class WebServerServlet extends HttpServlet {
 			httpServletRequest);
 
 		ModelResourcePermission<?> fileEntryModelResourcePermission =
-			_modelResourcePermissionServiceTrackerMap.getService(
+			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
 				FileEntry.class.getName());
 
 		fileEntryModelResourcePermission.check(
@@ -1691,13 +1713,14 @@ public class WebServerServlet extends HttpServlet {
 			return fileEntry;
 		}
 		else if (_PATH_SEPARATOR_FILE_ENTRY.equals(pathArray[0])) {
-			Optional<FileEntry> fileEntryOptional = _resolveFileEntry(
+			FileEntry fileEntry = _resolveFileEntry(
 				httpServletRequest, pathArray);
 
-			FileEntry fileEntry = fileEntryOptional.orElseThrow(
-				() -> new NoSuchFileEntryException(
+			if (fileEntry == null) {
+				throw new NoSuchFileEntryException(
 					"No file entry found for friendly URL " +
-						Arrays.toString(pathArray)));
+						Arrays.toString(pathArray));
+			}
 
 			_checkFileEntry(fileEntry, httpServletRequest);
 
@@ -1707,7 +1730,7 @@ public class WebServerServlet extends HttpServlet {
 			long groupId = GetterUtil.getLong(pathArray[0]);
 			long folderId = GetterUtil.getLong(pathArray[1]);
 
-			String fileName = HttpComponentsUtil.decodeURL(pathArray[2]);
+			String fileName = pathArray[2];
 
 			if (fileName.contains(StringPool.QUESTION)) {
 				fileName = fileName.substring(
@@ -1777,7 +1800,8 @@ public class WebServerServlet extends HttpServlet {
 			}
 
 			return PortletProviderUtil.getPortletId(
-				TrashEntry.class.getName(), PortletProvider.Action.VIEW);
+				"com.liferay.trash.model.TrashEntry",
+				PortletProvider.Action.VIEW);
 		}
 
 		Group group = GroupLocalServiceUtil.getGroup(fileEntry.getGroupId());
@@ -1838,13 +1862,9 @@ public class WebServerServlet extends HttpServlet {
 		ServiceProxyFactory.newServiceTrackedInstance(
 			InactiveRequestHandler.class, WebServerServlet.class,
 			"_inactiveRequestHandler", false);
-	private static final ServiceTrackerMap<String, ModelResourcePermission<?>>
-		_modelResourcePermissionServiceTrackerMap =
-			ServiceTrackerMapFactory.openSingleValueMap(
-				SystemBundleUtil.getBundleContext(),
-				(Class<ModelResourcePermission<?>>)
-					(Class<?>)ModelResourcePermission.class,
-				"model.class.name");
+	private static volatile MessageBus _messageBus =
+		ServiceProxyFactory.newServiceTrackedInstance(
+			MessageBus.class, WebServerServlet.class, "_messageBus", false);
 	private static volatile TrashHelper _trashTitleResolver =
 		ServiceProxyFactory.newServiceTrackedInstance(
 			TrashHelper.class, WebServerServlet.class, "_trashTitleResolver",

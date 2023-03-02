@@ -16,7 +16,7 @@ package com.liferay.document.library.video.internal.util;
 
 import com.liferay.document.library.display.context.DLUIItemKeys;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
-import com.liferay.portal.kernel.servlet.taglib.ui.UIItem;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 
 import java.util.Iterator;
@@ -39,17 +39,12 @@ public class DLVideoExternalShortcutUIItemsUtil {
 				DLUIItemKeys.OPEN_IN_MS_OFFICE));
 	}
 
-	public static void processUIItems(List<? extends UIItem> uiItems) {
-		_removeUIItems(
-			uiItems, UIItem::getKey,
-			SetUtil.fromArray(
-				DLUIItemKeys.CANCEL_CHECKOUT, DLUIItemKeys.CHECKIN,
-				DLUIItemKeys.CHECKOUT, DLUIItemKeys.DOWNLOAD,
-				DLUIItemKeys.OPEN_IN_MS_OFFICE));
-	}
-
 	private static <T> void _removeUIItems(
 		List<T> items, Function<T, String> function, Set<String> keys) {
+
+		if (ListUtil.isEmpty(items)) {
+			return;
+		}
 
 		Iterator<T> iterator = items.iterator();
 

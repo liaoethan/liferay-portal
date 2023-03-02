@@ -31,7 +31,6 @@ import com.liferay.message.boards.service.MBMessageLocalService;
 import com.liferay.message.boards.test.util.MBTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.convert.ConvertProcess;
-import com.liferay.portal.convert.documentlibrary.DocumentLibraryConvertProcess;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.model.User;
@@ -49,7 +48,6 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.InstancePool;
 import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -57,7 +55,7 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
+import com.liferay.portlet.documentlibrary.store.DLStoreImpl;
 
 import java.io.InputStream;
 
@@ -67,7 +65,6 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -88,29 +85,19 @@ public class DocumentLibraryConvertProcessTest {
 			new LiferayIntegrationTestRule(),
 			PermissionCheckerMethodTestRule.INSTANCE);
 
-	@BeforeClass
-	public static void setUpClass() {
-		_storeFactory = StoreFactory.getInstance();
-	}
-
 	@Before
 	public void setUp() throws Exception {
-		_sourceStore = _storeFactory.getStore(_CLASS_NAME_FILE_SYSTEM_STORE);
-
-		_setStore(_CLASS_NAME_FILE_SYSTEM_STORE);
-
-		_group = GroupTestUtil.addGroup();
-
-		_convertProcess = (ConvertProcess)InstancePool.get(
-			DocumentLibraryConvertProcess.class.getName());
-
 		_convertProcess.setParameterValues(
 			new String[] {_CLASS_NAME_DB_STORE, Boolean.TRUE.toString()});
+
+		_defaultStore = ReflectionTestUtil.getAndSetFieldValue(
+			DLStoreImpl.class, "_store", _fileSystemStore);
+		_group = GroupTestUtil.addGroup();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_setStore(_CLASS_NAME_DB_STORE);
+		ReflectionTestUtil.setFieldValue(DLStoreImpl.class, "_store", _dbStore);
 
 		_convertProcess.setParameterValues(
 			new String[] {
@@ -123,7 +110,8 @@ public class DocumentLibraryConvertProcessTest {
 		finally {
 			PropsValues.DL_STORE_IMPL = PropsUtil.get(PropsKeys.DL_STORE_IMPL);
 
-			_setStore(PropsValues.DL_STORE_IMPL);
+			ReflectionTestUtil.setFieldValue(
+				DLStoreImpl.class, "_store", _defaultStore);
 		}
 	}
 
@@ -163,7 +151,8 @@ public class DocumentLibraryConvertProcessTest {
 	@Test
 	public void testMigrateDLWhenFileEntryInFolder() throws Exception {
 		Folder folder = _dlAppService.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId()));
@@ -297,7 +286,8 @@ public class DocumentLibraryConvertProcessTest {
 			TestDataConstants.TEST_BYTE_ARRAY);
 
 		Folder folder = _dlAppService.addFolder(
-			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			null, _group.getGroupId(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId()));
@@ -315,7 +305,7 @@ public class DocumentLibraryConvertProcessTest {
 
 		Assert.assertNotEquals(
 			delete,
-			_sourceStore.hasFile(
+			_fileSystemStore.hasFile(
 				rootDLFileEntry.getCompanyId(),
 				rootDLFileEntry.getDataRepositoryId(),
 				rootDLFileEntry.getName(), Store.VERSION_DEFAULT));
@@ -324,7 +314,7 @@ public class DocumentLibraryConvertProcessTest {
 
 		Assert.assertNotEquals(
 			delete,
-			_sourceStore.hasFile(
+			_fileSystemStore.hasFile(
 				folderDLFileEntry.getCompanyId(),
 				folderDLFileEntry.getDataRepositoryId(),
 				folderDLFileEntry.getName(), Store.VERSION_DEFAULT));
@@ -344,11 +334,6 @@ public class DocumentLibraryConvertProcessTest {
 			rootDLFileEntry.getName(), Store.VERSION_DEFAULT);
 	}
 
-	private void _setStore(String key) {
-		ReflectionTestUtil.setFieldValue(
-			StoreFactory.class, "_defaultStore", _storeFactory.getStore(key));
-	}
-
 	private static final String _CLASS_NAME_DB_STORE =
 		"com.liferay.portal.store.db.DBStore";
 
@@ -357,12 +342,18 @@ public class DocumentLibraryConvertProcessTest {
 
 	private static final long _REPOSITORY_ID = 0;
 
-	private static StoreFactory _storeFactory;
-
+	@Inject(
+		filter = "component.name=com.liferay.document.library.internal.convert.document.library.DocumentLibraryConvertProcess"
+	)
 	private ConvertProcess _convertProcess;
 
 	@Inject
 	private CounterLocalService _counterLocalService;
+
+	@Inject(filter = "store.type=" + _CLASS_NAME_DB_STORE)
+	private Store _dbStore;
+
+	private Store _defaultStore;
 
 	@Inject
 	private DLAppLocalService _dlAppLocalService;
@@ -376,6 +367,9 @@ public class DocumentLibraryConvertProcessTest {
 	@Inject
 	private DLFileEntryLocalService _dlFileEntryLocalService;
 
+	@Inject(filter = "store.type=" + _CLASS_NAME_FILE_SYSTEM_STORE)
+	private Store _fileSystemStore;
+
 	@DeleteAfterTestRun
 	private Group _group;
 
@@ -387,7 +381,5 @@ public class DocumentLibraryConvertProcessTest {
 
 	@Inject
 	private MBMessageLocalService _mbMessageLocalService;
-
-	private Store _sourceStore;
 
 }

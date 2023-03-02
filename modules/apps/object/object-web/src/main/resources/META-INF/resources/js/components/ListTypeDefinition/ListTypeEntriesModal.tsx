@@ -12,29 +12,32 @@
  * details.
  */
 
+import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 import ClayModal, {useModal} from '@clayui/modal';
 import {
 	API,
 	Input,
 	InputLocalized,
+	REQUIRED_MSG,
 	invalidateRequired,
 } from '@liferay/object-js-components-web';
 import {openToast} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
-import {toCamelCase} from '../../utils/string';
+import {specialCharactersInString, toCamelCase} from '../../utils/string';
 import {ObjectValidationErrors} from './ListTypeFormBase';
 import {fixLocaleKeys} from './utils';
 
-const REQUIRED_MSG = Liferay.Language.get('required');
 const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 export interface IModalState extends Partial<PickListItem> {
 	header?: string;
+	itemExternalReferenceCode?: string;
 	itemId?: number;
 	itemKey?: string;
 	modalType?: 'add' | 'edit';
 	pickListId?: number;
+	readOnly?: boolean;
 	reloadIframeWindow?: () => void;
 }
 
@@ -42,11 +45,13 @@ function ListTypeEntriesModal() {
 	const [
 		{
 			header,
+			itemExternalReferenceCode,
 			itemId,
 			itemKey,
 			modalType,
 			name_i18n,
 			pickListId,
+			readOnly,
 			reloadIframeWindow,
 		},
 		setState,
@@ -54,6 +59,13 @@ function ListTypeEntriesModal() {
 
 	const [keyChanged, setKeyChanged] = useState(false);
 	const [APIError, setAPIError] = useState<string>('');
+
+	const handleExternalReferenceCodeChange = (value: string) => {
+		setState((previousValues) => ({
+			...previousValues,
+			itemExternalReferenceCode: value,
+		}));
+	};
 
 	const handleKeyChange = (value: string) => {
 		if (keyChanged === false) {
@@ -65,19 +77,28 @@ function ListTypeEntriesModal() {
 		}));
 	};
 
-	const handleNameChange = (name_i18n: LocalizedValue<string>) => {
+	const handleNameChange = (newName_i18n: LocalizedValue<string>) => {
+		let newItemKey = itemKey;
+
+		if (modalType !== 'edit' && keyChanged === false) {
+			newItemKey = toCamelCase(newName_i18n[defaultLanguageId] as string);
+		}
+
 		setState((previousValues) => ({
 			...previousValues,
-			...(modalType !== 'edit' &&
-				keyChanged === false &&
-				name_i18n?.[defaultLanguageId] && {
-					itemKey: toCamelCase(name_i18n[defaultLanguageId]!),
-				}),
-			name_i18n: {...name_i18n},
+			itemKey: newItemKey,
+			name_i18n: newName_i18n,
 		}));
 	};
 
-	const [errors, setErrors] = useState<{name?: string; name_i18n?: string}>({
+	const [errors, setErrors] = useState<{
+		externalReferenceCode?: string;
+		key?: string;
+		name?: string;
+		name_i18n?: string;
+	}>({
+		externalReferenceCode: '',
+		key: '',
 		name: '',
 		name_i18n: '',
 	});
@@ -124,8 +145,9 @@ function ListTypeEntriesModal() {
 
 	const validate = (entry: Partial<PickListItem>): ObjectValidationErrors => {
 		const errors: ObjectValidationErrors = {};
-		const name_i18n = entry.name_i18n?.[defaultLanguageId];
+		const externalReferenceCode = entry.externalReferenceCode;
 		const key = entry.key;
+		const name_i18n = entry.name_i18n?.[defaultLanguageId];
 
 		if (invalidateRequired(name_i18n)) {
 			errors.name_i18n = REQUIRED_MSG;
@@ -135,11 +157,22 @@ function ListTypeEntriesModal() {
 			errors.name = REQUIRED_MSG;
 		}
 
+		if (specialCharactersInString(key as string)) {
+			errors.key = Liferay.Language.get(
+				'key-must-only-contain-letters-and-digits'
+			);
+		}
+
+		if (modalType === 'edit' && invalidateRequired(externalReferenceCode)) {
+			errors.externalReferenceCode = REQUIRED_MSG;
+		}
+
 		return errors;
 	};
 
 	const handleSave = async () => {
 		const errors: ObjectValidationErrors = validate({
+			externalReferenceCode: itemExternalReferenceCode,
 			key: itemKey,
 			name_i18n,
 		});
@@ -164,7 +197,11 @@ function ListTypeEntriesModal() {
 					});
 				}
 				else if (modalType === 'edit') {
-					await API.updatePickListItem({id: itemId, name_i18n});
+					await API.updatePickListItem({
+						externalReferenceCode: itemExternalReferenceCode,
+						id: itemId,
+						name_i18n,
+					});
 					openToast({
 						message: Liferay.Language.get(
 							'the-picklist-item-was-updated-successfully'
@@ -188,11 +225,16 @@ function ListTypeEntriesModal() {
 			<ClayModal.Header>{header}</ClayModal.Header>
 
 			<ClayModal.Body>
+				{errors.key && (
+					<ClayAlert displayType="danger">{errors.key}</ClayAlert>
+				)}
+
 				<InputLocalized
+					disabled={readOnly}
 					error={errors.name_i18n}
 					id="locale"
 					label={Liferay.Language.get('name')}
-					onChange={(name_i18n) => handleNameChange(name_i18n)}
+					onChange={handleNameChange}
 					required
 					translations={name_i18n ?? {[defaultLanguageId]: ''}}
 				/>
@@ -206,6 +248,19 @@ function ListTypeEntriesModal() {
 					required
 					value={itemKey ?? ''}
 				/>
+
+				{modalType === 'edit' && (
+					<Input
+						error={errors.externalReferenceCode}
+						label={Liferay.Language.get('external-reference-code')}
+						name="externalReferenceCode"
+						onChange={({target}) =>
+							handleExternalReferenceCodeChange(target.value)
+						}
+						required
+						value={itemExternalReferenceCode ?? ''}
+					/>
+				)}
 			</ClayModal.Body>
 
 			<ClayModal.Footer
@@ -219,6 +274,7 @@ function ListTypeEntriesModal() {
 						</ClayButton>
 
 						<ClayButton
+							disabled={readOnly}
 							displayType="primary"
 							onClick={handleSave}
 							type="submit"

@@ -15,13 +15,17 @@
 package com.liferay.jenkins.results.parser;
 
 import java.io.CharArrayWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.Writer;
 
+import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -289,23 +293,39 @@ public class Dom4JUtil {
 	}
 
 	public static Document parse(String xml) throws DocumentException {
+		if (xml != null) {
+			xml = xml.trim();
+		}
+
 		try {
 			SAXReader saxReader = new SAXReader();
 
 			return saxReader.read(new StringReader(xml));
 		}
 		catch (Exception exception1) {
-			DocumentBuilderFactory documentBuilderFactory =
-				DocumentBuilderFactory.newInstance();
-
 			try {
+				DOMReader domReader = new DOMReader();
+
+				DocumentBuilderFactory documentBuilderFactory =
+					DocumentBuilderFactory.newInstance();
+
 				DocumentBuilder documentBuilder =
 					documentBuilderFactory.newDocumentBuilder();
 
-				org.w3c.dom.Document orgW3CDomDocument = documentBuilder.parse(
-					new InputSource(new StringReader(xml)));
+				org.w3c.dom.Document orgW3CDomDocument = null;
 
-				DOMReader domReader = new DOMReader();
+				try {
+					String documentTypeDefinition =
+						"<!DOCTYPE definition [" + _getEntities() + "]>\n";
+
+					orgW3CDomDocument = documentBuilder.parse(
+						new InputSource(
+							new StringReader(documentTypeDefinition + xml)));
+				}
+				catch (Exception exception2) {
+					orgW3CDomDocument = documentBuilder.parse(
+						new InputSource(new StringReader(xml)));
+				}
 
 				return domReader.read(orgW3CDomDocument);
 			}
@@ -391,6 +411,27 @@ public class Dom4JUtil {
 
 			truncateElement(iterator.next(), size);
 		}
+	}
+
+	private static String _getEntities() throws IOException, TimeoutException {
+		URL url = new URL(
+			"http://mirrors.lax.liferay.com/www.w3.org/TR/html5-author" +
+				"/entities.json");
+
+		File entitiesFile = new File("entities.html");
+
+		JenkinsResultsParserUtil.toFile(url, entitiesFile);
+
+		String entities = JenkinsResultsParserUtil.read(entitiesFile);
+
+		entities = entities.replaceAll(
+			"\\\"\\&([\\w]+);?\\\": \\{ \\\"[\\w]+\\\": \\[(\\d+)(, " +
+				"\\d+)?\\], \\\"[\\w]+\\\": \\\"[\\\\\\w\\d]+\\\" },?",
+			"<!ENTITY $1 \"\\&#$2;\">");
+
+		entities = entities.replaceAll("([{|}])", "");
+
+		return entities;
 	}
 
 }

@@ -33,7 +33,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -54,6 +54,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SortedArrayList;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.sort.FieldSort;
 import com.liferay.portal.search.sort.NestedSort;
@@ -86,7 +87,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.dynamic.data.mapping.configuration.DDMIndexerConfiguration",
-	immediate = true, service = DDMIndexer.class
+	service = DDMIndexer.class
 )
 public class DDMIndexerImpl implements DDMIndexer {
 
@@ -333,7 +334,7 @@ public class DDMIndexerImpl implements DDMIndexer {
 				catch (PortalException portalException) {
 					throw new IllegalArgumentException(
 						StringBundler.concat(
-							"Unable to obtain index tpe for field ",
+							"Unable to obtain index type for field ",
 							fieldReference, " and DDM structure ID ",
 							ddmStructureId),
 						portalException);
@@ -371,7 +372,9 @@ public class DDMIndexerImpl implements DDMIndexer {
 
 				Serializable value = field.getValue(locale);
 
-				if (value == null) {
+				if ((value == null) ||
+					Validator.isBlank(String.valueOf(value))) {
+
 					continue;
 				}
 
@@ -399,6 +402,10 @@ public class DDMIndexerImpl implements DDMIndexer {
 						String valueString = _getSortableValue(
 							ddmStructure.getDDMFormField(field.getName()),
 							locale, values[i].toString());
+
+						if (Validator.isBlank(valueString)) {
+							continue;
+						}
 
 						_addFieldValue(sb, field.getType(), valueString);
 
@@ -456,6 +463,10 @@ public class DDMIndexerImpl implements DDMIndexer {
 
 	@Override
 	public boolean isLegacyDDMIndexFieldsEnabled() {
+		if (Objects.equals(searchEngineInformation.getVendorString(), "Solr")) {
+			return true;
+		}
+
 		return _ddmIndexerConfiguration.enableLegacyDDMIndexFields();
 	}
 
@@ -580,6 +591,9 @@ public class DDMIndexerImpl implements DDMIndexer {
 	protected Queries queries;
 
 	@Reference
+	protected SearchEngineInformation searchEngineInformation;
+
+	@Reference
 	protected SortBuilderFactory sortBuilderFactory;
 
 	@Reference
@@ -593,16 +607,14 @@ public class DDMIndexerImpl implements DDMIndexer {
 			type.equals(DDMFormFieldTypeConstants.JOURNAL_ARTICLE) ||
 			type.equals(DDMFormFieldTypeConstants.LINK_TO_LAYOUT)) {
 
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				valueString);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(valueString);
 
 			if ((jsonObject != null) && jsonObject.has("title")) {
 				sb.append(jsonObject.getString("title"));
 			}
 		}
 		else if (type.equals(DDMFormFieldTypeConstants.IMAGE)) {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				valueString);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(valueString);
 
 			if (jsonObject == null) {
 				return;
@@ -626,7 +638,7 @@ public class DDMIndexerImpl implements DDMIndexer {
 			sb.append(_htmlParser.extractText(valueString));
 		}
 		else if (type.equals(DDMFormFieldTypeConstants.SELECT)) {
-			JSONArray jsonArray = JSONFactoryUtil.createJSONArray(valueString);
+			JSONArray jsonArray = _jsonFactory.createJSONArray(valueString);
 
 			sb.append(ArrayUtil.toStringArray(jsonArray));
 		}
@@ -741,7 +753,7 @@ public class DDMIndexerImpl implements DDMIndexer {
 			String type = field.getType();
 
 			if (type.equals(DDMFormFieldTypeConstants.GEOLOCATION)) {
-				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+				JSONObject jsonObject = _jsonFactory.createJSONObject(
 					valueString);
 
 				double latitude = jsonObject.getDouble("lat", 0);
@@ -754,11 +766,11 @@ public class DDMIndexerImpl implements DDMIndexer {
 				document.addKeyword(
 					_getSortableFieldName(name),
 					ArrayUtil.toStringArray(
-						JSONFactoryUtil.createJSONArray(sortableValueString)));
+						_jsonFactory.createJSONArray(sortableValueString)));
 				document.addKeyword(
 					name,
 					ArrayUtil.toStringArray(
-						JSONFactoryUtil.createJSONArray(valueString)));
+						_jsonFactory.createJSONArray(valueString)));
 			}
 			else {
 				if (type.equals(DDMFormFieldTypeConstants.RICH_TEXT)) {
@@ -804,7 +816,7 @@ public class DDMIndexerImpl implements DDMIndexer {
 	private String _getSortableValue(
 		DDMFormField ddmFormField, Locale locale, Serializable value) {
 
-		if (Validator.isNull(value)) {
+		if (value == null) {
 			return null;
 		}
 
@@ -861,5 +873,8 @@ public class DDMIndexerImpl implements DDMIndexer {
 
 	@Reference
 	private HtmlParser _htmlParser;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

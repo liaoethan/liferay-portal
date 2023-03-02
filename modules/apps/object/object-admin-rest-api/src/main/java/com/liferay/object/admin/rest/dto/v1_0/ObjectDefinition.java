@@ -92,25 +92,25 @@ public class ObjectDefinition implements Serializable {
 	protected Boolean accountEntryRestricted;
 
 	@Schema
-	public Long getAccountEntryRestrictedObjectFieldId() {
-		return accountEntryRestrictedObjectFieldId;
+	public String getAccountEntryRestrictedObjectFieldName() {
+		return accountEntryRestrictedObjectFieldName;
 	}
 
-	public void setAccountEntryRestrictedObjectFieldId(
-		Long accountEntryRestrictedObjectFieldId) {
+	public void setAccountEntryRestrictedObjectFieldName(
+		String accountEntryRestrictedObjectFieldName) {
 
-		this.accountEntryRestrictedObjectFieldId =
-			accountEntryRestrictedObjectFieldId;
+		this.accountEntryRestrictedObjectFieldName =
+			accountEntryRestrictedObjectFieldName;
 	}
 
 	@JsonIgnore
-	public void setAccountEntryRestrictedObjectFieldId(
-		UnsafeSupplier<Long, Exception>
-			accountEntryRestrictedObjectFieldIdUnsafeSupplier) {
+	public void setAccountEntryRestrictedObjectFieldName(
+		UnsafeSupplier<String, Exception>
+			accountEntryRestrictedObjectFieldNameUnsafeSupplier) {
 
 		try {
-			accountEntryRestrictedObjectFieldId =
-				accountEntryRestrictedObjectFieldIdUnsafeSupplier.get();
+			accountEntryRestrictedObjectFieldName =
+				accountEntryRestrictedObjectFieldNameUnsafeSupplier.get();
 		}
 		catch (RuntimeException re) {
 			throw re;
@@ -122,7 +122,7 @@ public class ObjectDefinition implements Serializable {
 
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Long accountEntryRestrictedObjectFieldId;
+	protected String accountEntryRestrictedObjectFieldName;
 
 	@Schema
 	@Valid
@@ -237,6 +237,34 @@ public class ObjectDefinition implements Serializable {
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	protected Date dateModified;
+
+	@Schema
+	public String getDefaultLanguageId() {
+		return defaultLanguageId;
+	}
+
+	public void setDefaultLanguageId(String defaultLanguageId) {
+		this.defaultLanguageId = defaultLanguageId;
+	}
+
+	@JsonIgnore
+	public void setDefaultLanguageId(
+		UnsafeSupplier<String, Exception> defaultLanguageIdUnsafeSupplier) {
+
+		try {
+			defaultLanguageId = defaultLanguageIdUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String defaultLanguageId;
 
 	@Schema
 	public Boolean getEnableCategorization() {
@@ -932,14 +960,18 @@ public class ObjectDefinition implements Serializable {
 			sb.append(accountEntryRestricted);
 		}
 
-		if (accountEntryRestrictedObjectFieldId != null) {
+		if (accountEntryRestrictedObjectFieldName != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"accountEntryRestrictedObjectFieldId\": ");
+			sb.append("\"accountEntryRestrictedObjectFieldName\": ");
 
-			sb.append(accountEntryRestrictedObjectFieldId);
+			sb.append("\"");
+
+			sb.append(_escape(accountEntryRestrictedObjectFieldName));
+
+			sb.append("\"");
 		}
 
 		if (actions != null) {
@@ -986,6 +1018,20 @@ public class ObjectDefinition implements Serializable {
 			sb.append("\"");
 
 			sb.append(liferayToJSONDateFormat.format(dateModified));
+
+			sb.append("\"");
+		}
+
+		if (defaultLanguageId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"defaultLanguageId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(defaultLanguageId));
 
 			sb.append("\"");
 		}

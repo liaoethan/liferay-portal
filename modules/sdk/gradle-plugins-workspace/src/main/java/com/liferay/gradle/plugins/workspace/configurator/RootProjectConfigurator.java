@@ -31,6 +31,8 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile;
 import com.liferay.gradle.plugins.LiferayBasePlugin;
 import com.liferay.gradle.plugins.node.NodeExtension;
 import com.liferay.gradle.plugins.node.task.NpmInstallTask;
+import com.liferay.gradle.plugins.source.formatter.FormatSourceTask;
+import com.liferay.gradle.plugins.source.formatter.SourceFormatterPlugin;
 import com.liferay.gradle.plugins.workspace.LiferayWorkspaceYarnPlugin;
 import com.liferay.gradle.plugins.workspace.WorkspaceExtension;
 import com.liferay.gradle.plugins.workspace.WorkspacePlugin;
@@ -80,6 +82,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
+import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.DuplicatesStrategy;
@@ -87,6 +90,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileCopyDetails;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.provider.ListProperty;
@@ -108,6 +112,7 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin;
  * @author David Truong
  * @author Simon Jiang
  * @author Seiphon Wang
+ * @author Kevin Lee
  */
 @SuppressWarnings("deprecation")
 public class RootProjectConfigurator implements Plugin<Project> {
@@ -155,6 +160,9 @@ public class RootProjectConfigurator implements Plugin<Project> {
 	public static final String DOCKER_GROUP = "docker";
 
 	public static final String DOWNLOAD_BUNDLE_TASK_NAME = "downloadBundle";
+
+	public static final String FORMAT_SOURCE_UPGRADE_TASK_NAME =
+		"formatSourceUpgrade";
 
 	public static final String INIT_BUNDLE_TASK_NAME = "initBundle";
 
@@ -215,6 +223,7 @@ public class RootProjectConfigurator implements Plugin<Project> {
 
 		GradleUtil.applyPlugin(project, DockerRemoteApiPlugin.class);
 		GradleUtil.applyPlugin(project, LifecycleBasePlugin.class);
+		GradleUtil.applyPlugin(project, SourceFormatterPlugin.class);
 
 		String nodePackageManager = workspaceExtension.getNodePackageManager();
 
@@ -266,6 +275,8 @@ public class RootProjectConfigurator implements Plugin<Project> {
 		_addDockerTasks(
 			project, workspaceExtension, providedModulesConfiguration,
 			verifyProductTask);
+
+		_addTaskFormatSourceUpgrade(project);
 	}
 
 	public boolean isDefaultRepositoryEnabled() {
@@ -644,6 +655,9 @@ public class RootProjectConfigurator implements Plugin<Project> {
 			"ENV LIFERAY_WORKSPACE_ENVIRONMENT=" +
 				workspaceExtension.getEnvironment());
 
+		dockerfile.instruction(
+			"COPY --chown=liferay:liferay client-extensions /home/liferay" +
+				"/osgi/client-extensions");
 		dockerfile.instruction(
 			"COPY --chown=liferay:liferay deploy /mnt/liferay/deploy");
 		dockerfile.instruction(
@@ -1097,6 +1111,19 @@ public class RootProjectConfigurator implements Plugin<Project> {
 			});
 
 		return download;
+	}
+
+	private FormatSourceTask _addTaskFormatSourceUpgrade(Project project) {
+		FormatSourceTask formatSourceTask = GradleUtil.addTask(
+			project, FORMAT_SOURCE_UPGRADE_TASK_NAME, FormatSourceTask.class);
+
+		formatSourceTask.onlyIf(_skipIfExecutingParentTaskSpec);
+		formatSourceTask.setCheckCategoryNames("Upgrade");
+		formatSourceTask.setDescription(
+			"Runs Liferay Source Formatter to perform Upgrade SF checks.");
+		formatSourceTask.setGroup("formatting");
+
+		return formatSourceTask;
 	}
 
 	private InitBundleTask _addTaskInitBundle(
@@ -2040,6 +2067,38 @@ public class RootProjectConfigurator implements Plugin<Project> {
 
 	private static final String _LIFERAY_IMAGE_SETUP_SCRIPT =
 		"100_liferay_image_setup.sh";
+
+	private static final Spec<Task> _skipIfExecutingParentTaskSpec =
+		new Spec<Task>() {
+
+			@Override
+			public boolean isSatisfiedBy(Task task) {
+				Project project = task.getProject();
+
+				Gradle gradle = project.getGradle();
+
+				TaskExecutionGraph taskExecutionGraph = gradle.getTaskGraph();
+
+				Project parentProject = project;
+
+				while ((parentProject = parentProject.getParent()) != null) {
+					TaskContainer parentProjectTaskContainer =
+						parentProject.getTasks();
+
+					Task parentProjectTask =
+						parentProjectTaskContainer.findByName(task.getName());
+
+					if ((parentProjectTask != null) &&
+						taskExecutionGraph.hasTask(parentProjectTask)) {
+
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+		};
 
 	private String _bundleCheckSumMD5;
 	private boolean _defaultRepositoryEnabled;

@@ -120,24 +120,6 @@ public class CommerceAddressRestrictionModelImpl
 	public static final String TX_MANAGER = "liferayTransactionManager";
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
-
-	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
@@ -162,9 +144,19 @@ public class CommerceAddressRestrictionModelImpl
 	@Deprecated
 	public static final long CREATEDATE_COLUMN_BITMASK = 8L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.model.CommerceAddressRestriction"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CommerceAddressRestrictionModelImpl() {
 	}
@@ -244,104 +236,120 @@ public class CommerceAddressRestrictionModelImpl
 	public Map<String, Function<CommerceAddressRestriction, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<CommerceAddressRestriction, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map
-		<String, Function<CommerceAddressRestriction, Object>>
-			_attributeGetterFunctions;
-	private static final Map
-		<String, BiConsumer<CommerceAddressRestriction, Object>>
-			_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<CommerceAddressRestriction, Object>>
-			attributeGetterFunctions =
-				new LinkedHashMap
-					<String, Function<CommerceAddressRestriction, Object>>();
-		Map<String, BiConsumer<CommerceAddressRestriction, ?>>
-			attributeSetterBiConsumers =
-				new LinkedHashMap
-					<String, BiConsumer<CommerceAddressRestriction, ?>>();
+		private static final Map
+			<String, Function<CommerceAddressRestriction, Object>>
+				_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", CommerceAddressRestriction::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setMvccVersion);
-		attributeGetterFunctions.put(
-			"commerceAddressRestrictionId",
-			CommerceAddressRestriction::getCommerceAddressRestrictionId);
-		attributeSetterBiConsumers.put(
-			"commerceAddressRestrictionId",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setCommerceAddressRestrictionId);
-		attributeGetterFunctions.put(
-			"groupId", CommerceAddressRestriction::getGroupId);
-		attributeSetterBiConsumers.put(
-			"groupId",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setGroupId);
-		attributeGetterFunctions.put(
-			"companyId", CommerceAddressRestriction::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setCompanyId);
-		attributeGetterFunctions.put(
-			"userId", CommerceAddressRestriction::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setUserId);
-		attributeGetterFunctions.put(
-			"userName", CommerceAddressRestriction::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<CommerceAddressRestriction, String>)
-				CommerceAddressRestriction::setUserName);
-		attributeGetterFunctions.put(
-			"createDate", CommerceAddressRestriction::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<CommerceAddressRestriction, Date>)
-				CommerceAddressRestriction::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", CommerceAddressRestriction::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<CommerceAddressRestriction, Date>)
-				CommerceAddressRestriction::setModifiedDate);
-		attributeGetterFunctions.put(
-			"classNameId", CommerceAddressRestriction::getClassNameId);
-		attributeSetterBiConsumers.put(
-			"classNameId",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setClassNameId);
-		attributeGetterFunctions.put(
-			"classPK", CommerceAddressRestriction::getClassPK);
-		attributeSetterBiConsumers.put(
-			"classPK",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setClassPK);
-		attributeGetterFunctions.put(
-			"countryId", CommerceAddressRestriction::getCountryId);
-		attributeSetterBiConsumers.put(
-			"countryId",
-			(BiConsumer<CommerceAddressRestriction, Long>)
-				CommerceAddressRestriction::setCountryId);
+		static {
+			Map<String, Function<CommerceAddressRestriction, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap
+						<String,
+						 Function<CommerceAddressRestriction, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", CommerceAddressRestriction::getMvccVersion);
+			attributeGetterFunctions.put(
+				"commerceAddressRestrictionId",
+				CommerceAddressRestriction::getCommerceAddressRestrictionId);
+			attributeGetterFunctions.put(
+				"groupId", CommerceAddressRestriction::getGroupId);
+			attributeGetterFunctions.put(
+				"companyId", CommerceAddressRestriction::getCompanyId);
+			attributeGetterFunctions.put(
+				"userId", CommerceAddressRestriction::getUserId);
+			attributeGetterFunctions.put(
+				"userName", CommerceAddressRestriction::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", CommerceAddressRestriction::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", CommerceAddressRestriction::getModifiedDate);
+			attributeGetterFunctions.put(
+				"classNameId", CommerceAddressRestriction::getClassNameId);
+			attributeGetterFunctions.put(
+				"classPK", CommerceAddressRestriction::getClassPK);
+			attributeGetterFunctions.put(
+				"countryId", CommerceAddressRestriction::getCountryId);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map
+			<String, BiConsumer<CommerceAddressRestriction, Object>>
+				_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<CommerceAddressRestriction, ?>>
+				attributeSetterBiConsumers =
+					new LinkedHashMap
+						<String, BiConsumer<CommerceAddressRestriction, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"commerceAddressRestrictionId",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::
+						setCommerceAddressRestrictionId);
+			attributeSetterBiConsumers.put(
+				"groupId",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setGroupId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<CommerceAddressRestriction, String>)
+					CommerceAddressRestriction::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<CommerceAddressRestriction, Date>)
+					CommerceAddressRestriction::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<CommerceAddressRestriction, Date>)
+					CommerceAddressRestriction::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"classNameId",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setClassNameId);
+			attributeSetterBiConsumers.put(
+				"classPK",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setClassPK);
+			attributeSetterBiConsumers.put(
+				"countryId",
+				(BiConsumer<CommerceAddressRestriction, Long>)
+					CommerceAddressRestriction::setCountryId);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -746,7 +754,7 @@ public class CommerceAddressRestrictionModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -755,7 +763,7 @@ public class CommerceAddressRestrictionModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -896,7 +904,8 @@ public class CommerceAddressRestrictionModelImpl
 
 	public <T> T getColumnValue(String columnName) {
 		Function<CommerceAddressRestriction, Object> function =
-			_attributeGetterFunctions.get(columnName);
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(

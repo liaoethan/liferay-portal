@@ -58,8 +58,8 @@ import com.liferay.portlet.documentlibrary.util.ImageProcessorImpl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -326,8 +326,8 @@ public class AMThumbnailsOSGiCommandsTest {
 			null, _user.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString() + ".pdf",
-			ContentTypes.APPLICATION_PDF, _read("sample.pdf"), null, null,
-			_serviceContext);
+			ContentTypes.APPLICATION_PDF, _read("dependencies/sample.pdf"),
+			null, null, _serviceContext);
 	}
 
 	private FileEntry _addPNGFileEntry() throws Exception {
@@ -335,7 +335,7 @@ public class AMThumbnailsOSGiCommandsTest {
 			null, _user.getUserId(), _group.getGroupId(),
 			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			RandomTestUtil.randomString() + ".png", ContentTypes.IMAGE_PNG,
-			_read("sample.png"), null, null, _serviceContext);
+			_read("dependencies/sample.png"), null, null, _serviceContext);
 
 		return _pngFileEntry;
 	}
@@ -345,13 +345,13 @@ public class AMThumbnailsOSGiCommandsTest {
 	}
 
 	private long _getAdaptiveMediaCount(FileEntry fileEntry) throws Exception {
-		Stream<AdaptiveMedia<AMImageProcessor>> adaptiveMediaStream =
-			_amImageFinder.getAdaptiveMediaStream(
+		List<AdaptiveMedia<AMImageProcessor>> adaptiveMedias =
+			_amImageFinder.getAdaptiveMedias(
 				amImageQueryBuilder -> amImageQueryBuilder.forFileEntry(
 					fileEntry
 				).done());
 
-		return adaptiveMediaStream.count();
+		return adaptiveMedias.size();
 	}
 
 	private int _getThumbnailCount() throws Exception {

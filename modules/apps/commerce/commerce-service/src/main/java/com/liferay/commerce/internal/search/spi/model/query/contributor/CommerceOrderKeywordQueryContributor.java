@@ -36,7 +36,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Danny Situ
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "indexer.class.name=com.liferay.commerce.model.CommerceOrder",
 	service = KeywordQueryContributor.class
 )
@@ -59,8 +58,10 @@ public class CommerceOrderKeywordQueryContributor
 			booleanQuery, searchContext, "externalReferenceCode", false);
 		_queryHelper.addSearchTerm(
 			booleanQuery, searchContext, "orderCreatorEmailAddress", false);
+		_queryHelper.addSearchTerm(booleanQuery, searchContext, "name", false);
 		_queryHelper.addSearchTerm(
 			booleanQuery, searchContext, "purchaseOrderNumber", false);
+		_queryHelper.addSearchTerm(booleanQuery, searchContext, "sku", false);
 
 		if (Validator.isNotNull(keywords)) {
 			try {

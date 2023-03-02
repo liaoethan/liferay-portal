@@ -14,14 +14,15 @@
 
 package com.liferay.portal.workflow.metrics.internal.search.index.creation.helper;
 
-import com.liferay.portal.background.task.constants.BackgroundTaskContextMapConstants;
 import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
+import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskContextMapConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.search.capabilities.SearchCapabilities;
 import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.engine.adapter.search.CountSearchRequest;
 import com.liferay.portal.search.engine.adapter.search.CountSearchResponse;
@@ -58,6 +59,10 @@ public class WorkflowMetricsIndexCreator {
 	}
 
 	public void reindex(Company company) {
+		if (!_searchCapabilities.isWorkflowMetricsSupported()) {
+			return;
+		}
+
 		TransactionCommitCallbackUtil.registerCallback(
 			() -> {
 				CountSearchRequest countSearchRequest =
@@ -133,8 +138,11 @@ public class WorkflowMetricsIndexCreator {
 	@Reference
 	private Queries _queries;
 
-	@Reference(target = "(search.engine.impl=Elasticsearch)")
-	private volatile SearchEngineAdapter _searchEngineAdapter;
+	@Reference
+	private SearchCapabilities _searchCapabilities;
+
+	@Reference
+	private SearchEngineAdapter _searchEngineAdapter;
 
 	@Reference(
 		target = "(workflow.metrics.index.entity.name=sla-instance-result)"

@@ -14,6 +14,9 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializer;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -54,7 +57,7 @@ import com.liferay.headless.delivery.resource.v1_0.StructuredContentResource;
 import com.liferay.headless.delivery.search.aggregation.AggregationUtil;
 import com.liferay.headless.delivery.search.filter.FilterUtil;
 import com.liferay.headless.delivery.search.sort.SortUtil;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.journal.constants.JournalConstants;
 import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.exception.NoSuchFolderException;
@@ -65,11 +68,12 @@ import com.liferay.journal.service.JournalArticleService;
 import com.liferay.journal.service.JournalFolderService;
 import com.liferay.journal.util.JournalContent;
 import com.liferay.journal.util.JournalConverter;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -111,7 +115,6 @@ import com.liferay.portal.vulcan.util.ContentLanguageUtil;
 import com.liferay.portal.vulcan.util.LocalDateTimeUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
 
 import java.io.Serializable;
@@ -119,16 +122,12 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MultivaluedMap;
@@ -144,6 +143,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/structured-content.properties",
 	scope = ServiceScope.PROTOTYPE, service = StructuredContentResource.class
 )
+@CTAware
 public class StructuredContentResourceImpl
 	extends BaseStructuredContentResourceImpl {
 
@@ -406,6 +406,13 @@ public class StructuredContentResourceImpl
 					journalFolder.getUserId(), JournalConstants.RESOURCE_NAME,
 					journalFolder.getGroupId())
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_ARTICLE, journalFolder.getFolderId(),
+					"postStructuredContentFolderStructuredContentBatch",
+					journalFolder.getUserId(), JournalConstants.RESOURCE_NAME,
+					journalFolder.getGroupId())
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, journalFolder.getFolderId(),
@@ -455,8 +462,8 @@ public class StructuredContentResourceImpl
 			JournalArticle.class.getName(), ddmStructure.getStructureId(),
 			displayPageKey, journalArticle.getGroupId(),
 			contextHttpServletRequest, contextHttpServletResponse,
-			journalArticle, _infoItemServiceTracker,
-			_layoutDisplayPageProviderTracker, _layoutLocalService,
+			journalArticle, _infoItemServiceRegistry,
+			_layoutDisplayPageProviderRegistry, _layoutLocalService,
 			_layoutPageTemplateEntryService);
 	}
 
@@ -509,17 +516,17 @@ public class StructuredContentResourceImpl
 			_journalArticleService.updateArticle(
 				journalArticle.getGroupId(), journalArticle.getFolderId(),
 				journalArticle.getArticleId(), journalArticle.getVersion(),
-				LocalizedMapUtil.patch(
+				LocalizedMapUtil.patchLocalizedMap(
 					journalArticle.getTitleMap(),
 					contextAcceptLanguage.getPreferredLocale(),
 					structuredContent.getTitle(),
 					structuredContent.getTitle_i18n()),
-				LocalizedMapUtil.patch(
+				LocalizedMapUtil.patchLocalizedMap(
 					journalArticle.getDescriptionMap(),
 					contextAcceptLanguage.getPreferredLocale(),
 					structuredContent.getDescription(),
 					structuredContent.getDescription_i18n()),
-				LocalizedMapUtil.patch(
+				LocalizedMapUtil.patchLocalizedMap(
 					journalArticle.getFriendlyURLMap(),
 					contextAcceptLanguage.getPreferredLocale(),
 					structuredContent.getFriendlyUrlPath(),
@@ -538,6 +545,9 @@ public class StructuredContentResourceImpl
 				0, true, 0, 0, 0, 0, 0, true, true, false, null, null, null,
 				null,
 				_createServiceContext(
+					_getAssetCategoryIds(journalArticle, structuredContent),
+					_getAssetPriority(journalArticle, structuredContent),
+					_getAssetTagNames(journalArticle, structuredContent),
 					journalArticle.getGroupId(), structuredContent)));
 	}
 
@@ -693,15 +703,6 @@ public class StructuredContentResourceImpl
 			StructuredContent structuredContent)
 		throws Exception {
 
-		if ((structuredContent.getStructuredContentFolderId() != null) &&
-			!Objects.equals(
-				parentStructuredContentFolderId,
-				structuredContent.getStructuredContentFolderId())) {
-
-			parentStructuredContentFolderId =
-				structuredContent.getStructuredContentFolderId();
-		}
-
 		DDMStructure ddmStructure = _ddmStructureService.getStructure(
 			structuredContent.getContentStructureId());
 
@@ -733,6 +734,12 @@ public class StructuredContentResourceImpl
 		_validateContentFields(
 			structuredContent.getContentFields(), ddmStructure);
 
+		Double priority = structuredContent.getPriority();
+
+		if (priority == null) {
+			priority = 0.0;
+		}
+
 		return _toStructuredContent(
 			_journalArticleService.addArticle(
 				externalReferenceCode, groupId, parentStructuredContentFolderId,
@@ -753,25 +760,25 @@ public class StructuredContentResourceImpl
 				localDateTime.getDayOfMonth(), localDateTime.getYear(),
 				localDateTime.getHour(), localDateTime.getMinute(), 0, 0, 0, 0,
 				0, true, 0, 0, 0, 0, 0, true, true, false, null, null, null,
-				null, _createServiceContext(groupId, structuredContent)));
+				null,
+				_createServiceContext(
+					structuredContent.getTaxonomyCategoryIds(), priority,
+					structuredContent.getKeywords(), groupId,
+					structuredContent)));
 	}
 
 	private ServiceContext _createServiceContext(
+		Long[] assetCategoryIds, double assetPriority, String[] assetTagNames,
 		long groupId, StructuredContent structuredContent) {
 
 		ServiceContext serviceContext =
 			ServiceContextRequestUtil.createServiceContext(
-				structuredContent.getTaxonomyCategoryIds(),
-				structuredContent.getKeywords(),
+				assetCategoryIds, assetTagNames,
 				_getExpandoBridgeAttributes(structuredContent), groupId,
 				contextHttpServletRequest,
 				structuredContent.getViewableByAsString());
 
-		Optional.ofNullable(
-			structuredContent.getPriority()
-		).ifPresent(
-			serviceContext::setAssetPriority
-		);
+		serviceContext.setAssetPriority(assetPriority);
 
 		return serviceContext;
 	}
@@ -793,6 +800,69 @@ public class StructuredContentResourceImpl
 					BooleanClauseOccur.MUST);
 			}
 		};
+	}
+
+	private Long[] _getAssetCategoryIds(
+			JournalArticle journalArticle, StructuredContent structuredContent)
+		throws Exception {
+
+		if ((journalArticle == null) ||
+			(structuredContent.getTaxonomyCategoryIds() != null)) {
+
+			return structuredContent.getTaxonomyCategoryIds();
+		}
+
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				JournalArticle.class);
+
+		AssetEntry assetEntry = assetRendererFactory.getAssetEntry(
+			JournalArticle.class.getName(),
+			journalArticle.getResourcePrimKey());
+
+		return ArrayUtil.toLongArray(assetEntry.getCategoryIds());
+	}
+
+	private double _getAssetPriority(
+			JournalArticle journalArticle, StructuredContent structuredContent)
+		throws Exception {
+
+		Double priority = structuredContent.getPriority();
+
+		if (priority != null) {
+			return priority;
+		}
+
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				JournalArticle.class);
+
+		AssetEntry assetEntry = assetRendererFactory.getAssetEntry(
+			JournalArticle.class.getName(),
+			journalArticle.getResourcePrimKey());
+
+		return assetEntry.getPriority();
+	}
+
+	private String[] _getAssetTagNames(
+			JournalArticle journalArticle, StructuredContent structuredContent)
+		throws Exception {
+
+		if ((journalArticle == null) ||
+			(structuredContent.getKeywords() != null)) {
+
+			return structuredContent.getKeywords();
+		}
+
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				JournalArticle.class);
+
+		AssetEntry assetEntry = assetRendererFactory.getAssetEntry(
+			JournalArticle.class.getName(),
+			journalArticle.getResourcePrimKey());
+
+		return ArrayUtil.toStringArray(assetEntry.getTagNames());
 	}
 
 	private String _getDDMTemplateKey(DDMStructure ddmStructure) {
@@ -819,7 +889,7 @@ public class StructuredContentResourceImpl
 	private List<DDMFormField> _getRootDDMFormFields(
 		DDMStructure ddmStructure) {
 
-		return TransformUtil.transform(
+		return transform(
 			ddmStructure.getRootFieldNames(),
 			fieldName -> DDMFormFieldUtil.getDDMFormField(
 				_ddmStructureService, ddmStructure, fieldName));
@@ -982,14 +1052,14 @@ public class StructuredContentResourceImpl
 			_layoutLocalService, contextAcceptLanguage.getPreferredLocale(),
 			_getRootDDMFormFields(ddmStructure));
 
-		List<DDMFormFieldValue> ddmFormFieldValues =
-			ddmFormValues.getDDMFormFieldValues();
+		Map<String, DDMFormFieldValue> ddmFormFieldValuesMap = new HashMap<>();
 
-		Stream<DDMFormFieldValue> stream = ddmFormFieldValues.stream();
+		for (DDMFormFieldValue ddmFormFieldValue :
+				ddmFormValues.getDDMFormFieldValues()) {
 
-		Map<String, DDMFormFieldValue> ddmFormFieldValuesMap = stream.collect(
-			Collectors.toMap(
-				DDMFormFieldValue::getFieldReference, Function.identity()));
+			ddmFormFieldValuesMap.put(
+				ddmFormFieldValue.getFieldReference(), ddmFormFieldValue);
+		}
 
 		for (ContentField contentField : contentFields) {
 			DDMFormFieldValue ddmFormFieldValue = ddmFormFieldValuesMap.get(
@@ -1192,6 +1262,9 @@ public class StructuredContentResourceImpl
 				0, true, 0, 0, 0, 0, 0, true, true, false, null, null, null,
 				null,
 				_createServiceContext(
+					_getAssetCategoryIds(journalArticle, structuredContent),
+					_getAssetPriority(journalArticle, structuredContent),
+					_getAssetTagNames(journalArticle, structuredContent),
 					journalArticle.getGroupId(), structuredContent)));
 	}
 
@@ -1271,7 +1344,7 @@ public class StructuredContentResourceImpl
 	private GroupLocalService _groupLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
@@ -1298,7 +1371,8 @@ public class StructuredContentResourceImpl
 	private DDMFormValuesSerializer _jsonDDMFormValuesSerializer;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

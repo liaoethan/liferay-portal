@@ -20,6 +20,7 @@ import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.service.GroupLocalService;
 
@@ -30,13 +31,18 @@ import org.osgi.service.component.annotations.Reference;
  * @author André de Oliveira
  * @author Lino Alves
  */
-@Component(immediate = true, service = PortalInstanceLifecycleListener.class)
+@Component(service = PortalInstanceLifecycleListener.class)
 public class AddLayoutPrototypePortalInstanceLifecycleListener
 	extends BasePortalInstanceLifecycleListener {
 
 	@Override
 	public void portalInstanceRegistered(Company company) throws Exception {
-		searchLayoutFactory.createSearchLayoutPrototype(company);
+		Layout layout = searchLayoutFactory.createSearchLayoutPrototype(
+			company);
+
+		if (layout == null) {
+			return;
+		}
 
 		Group guestGroup = groupLocalService.getGroup(
 			company.getCompanyId(), GroupConstants.GUEST);

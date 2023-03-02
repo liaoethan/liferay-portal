@@ -24,7 +24,10 @@ import classNames from 'classnames';
 import {useContext, useEffect, useState} from 'react';
 
 import {useLocation} from '../../../../../common/hooks/useLocation';
-import {CONSTANTS} from '../../../../../common/utils/constants';
+import {
+	CONSTANTS,
+	ConstantListType,
+} from '../../../../../common/utils/constants';
 import {
 	ACTIONS,
 	NewApplicationAutoContext,
@@ -190,7 +193,7 @@ const ContactInfo = () => {
 	};
 
 	return (
-		<div className="mx-8">
+		<div className="mx-1 mx-md-8">
 			<div className="font-weight-bolder text-paragraph-sm text-uppercase">
 				Contact Information
 			</div>
@@ -198,7 +201,7 @@ const ContactInfo = () => {
 			<hr></hr>
 
 			<ClayForm>
-				<div className="d-flex flex-row">
+				<div className="d-flex flex-column flex-md-row">
 					<div
 						className={classNames(
 							'col filled form-condensed form-group',
@@ -284,10 +287,10 @@ const ContactInfo = () => {
 					</div>
 				</div>
 
-				<div className="d-flex flex-row">
+				<div className="d-flex flex-column flex-md-row">
 					<div
 						className={classNames(
-							'col filled form-condensed form-group position-relative"',
+							'col filled form-condensed form-group position-relative',
 							{
 								'has-error': hasError.dateOfBirth,
 							}
@@ -459,7 +462,7 @@ const ContactInfo = () => {
 			<hr></hr>
 
 			<ClayForm>
-				<div className="d-flex flex-row">
+				<div className="d-flex flex-column flex-md-row">
 					<div
 						className={classNames(
 							'col filled form-condensed form-group',
@@ -527,7 +530,7 @@ const ContactInfo = () => {
 					</div>
 				</div>
 
-				<div className="d-flex flex-row">
+				<div className="d-flex flex-column flex-md-row">
 					<div
 						className={classNames(
 							'col filled form-condensed form-group',
@@ -613,13 +616,15 @@ const ContactInfo = () => {
 							}}
 							value={form.state}
 						>
-							{CONSTANTS.US_STATES.map((us_state) => (
-								<ClaySelect.Option
-									key={us_state.value}
-									label={us_state.label}
-									value={us_state.label}
-								/>
-							))}
+							{CONSTANTS.US_STATES.map(
+								(us_state: ConstantListType) => (
+									<ClaySelect.Option
+										key={us_state.value}
+										label={us_state.label}
+										value={us_state.label}
+									/>
+								)
+							)}
 						</ClaySelect>
 
 						<label htmlFor="state">

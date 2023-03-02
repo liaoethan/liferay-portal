@@ -31,7 +31,7 @@ interface IModal extends IProps {
 
 interface IProps {
 	apiURL: string;
-	objectDefinitionId: number;
+	objectDefinitionExternalReferenceCode: string;
 	objectFieldTypes: ObjectFieldType[];
 	objectName: string;
 }
@@ -40,7 +40,7 @@ const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
 
 function ModalAddObjectField({
 	apiURL,
-	objectDefinitionId,
+	objectDefinitionExternalReferenceCode,
 	objectFieldTypes,
 	objectName,
 	observer,
@@ -52,28 +52,31 @@ function ModalAddObjectField({
 		indexed: true,
 		indexedAsKeyword: false,
 		indexedLanguageId: null,
+		listTypeDefinitionExternalReferenceCode: '',
 		listTypeDefinitionId: 0,
 		required: false,
 	};
 
-	const onSubmit = async (field: ObjectField) => {
-		try {
-			await API.save(
-				apiURL,
-				{
-					...field,
-					name:
-						field.name ||
-						toCamelCase(field.label[defaultLanguageId] as string),
-				},
-				'POST'
-			);
+	const onSubmit = async (field: Partial<ObjectField>) => {
+		if (field.label) {
+			field = {
+				...field,
+				name:
+					field.name ||
+					toCamelCase(field.label[defaultLanguageId] as string, true),
+			};
 
-			onClose();
-			window.location.reload();
-		}
-		catch (error) {
-			setError((error as Error).message);
+			delete field.listTypeDefinitionId;
+
+			try {
+				await API.save(apiURL, field, 'POST');
+
+				onClose();
+				window.location.reload();
+			}
+			catch (error) {
+				setError((error as Error).message);
+			}
 		}
 	};
 
@@ -114,7 +117,9 @@ function ModalAddObjectField({
 					<ObjectFieldFormBase
 						errors={errors}
 						handleChange={handleChange}
-						objectDefinitionId={objectDefinitionId}
+						objectDefinitionExternalReferenceCode={
+							objectDefinitionExternalReferenceCode
+						}
 						objectField={values}
 						objectFieldTypes={objectFieldTypes}
 						objectName={objectName}
@@ -145,7 +150,7 @@ function ModalAddObjectField({
 
 export default function AddObjectField({
 	apiURL,
-	objectDefinitionId,
+	objectDefinitionExternalReferenceCode,
 	objectFieldTypes,
 	objectName,
 }: IProps) {
@@ -158,13 +163,27 @@ export default function AddObjectField({
 		return () => Liferay.detach('addObjectField');
 	}, []);
 
+	const applyFeatureFlag = () => {
+		return objectFieldTypes.filter((objectFieldType) => {
+			if (!Liferay.FeatureFlags['LPS-164948']) {
+				return objectFieldType.businessType !== 'Formula';
+			}
+		});
+	};
+
 	return (
 		<ClayModalProvider>
 			{isVisible && (
 				<ModalAddObjectField
 					apiURL={apiURL}
-					objectDefinitionId={objectDefinitionId}
-					objectFieldTypes={objectFieldTypes}
+					objectDefinitionExternalReferenceCode={
+						objectDefinitionExternalReferenceCode
+					}
+					objectFieldTypes={
+						!Liferay.FeatureFlags['LPS-164948']
+							? applyFeatureFlag()
+							: objectFieldTypes
+					}
 					objectName={objectName}
 					observer={observer}
 					onClose={onClose}

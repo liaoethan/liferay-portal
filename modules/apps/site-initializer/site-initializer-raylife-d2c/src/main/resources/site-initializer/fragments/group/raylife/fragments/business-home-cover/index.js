@@ -29,6 +29,10 @@ const fetchHeadless = async (url, options) => {
 };
 
 const fetchHeadlessWithToken = async (url, options) => {
+	if (Liferay.ThemeDisplay.getUserName()) {
+		return fetchHeadless(url);
+	}
+
 	const token = sessionStorage.getItem('raylife-guest-permission-token');
 
 	const response = await fetch(`${window.location.origin}/${url}`, {
@@ -59,7 +63,6 @@ const getQuoteForm = fragmentElement.querySelector('#get-quote-form');
 const newQuoteButton = fragmentElement.querySelector('#new-quote-button');
 const newQuoteContainer = fragmentElement.querySelector('#new-quote');
 const newQuoteFormContainer = fragmentElement.querySelector('.new-quote-form');
-const pathContext = Liferay.ThemeDisplay.getPathContext();
 const retrieveQuoteButton = fragmentElement.querySelector(
 	'#retrieve-quote-button'
 );
@@ -110,8 +113,7 @@ continueQuoteButton.onclick = async function () {
 	}
 
 	const raylifeApplicationResponse = await fetchHeadless(
-		pathContext +
-			`/o/c/raylifeapplications/?filter=email eq '${emailInput.value}'`
+		`o/c/raylifeapplications/?filter=email eq '${emailInput.value}'`
 	);
 
 	if (!raylifeApplicationResponse.items.length) {

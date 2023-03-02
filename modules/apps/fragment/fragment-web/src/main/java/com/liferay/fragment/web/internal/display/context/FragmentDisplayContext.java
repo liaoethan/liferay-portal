@@ -17,7 +17,7 @@ package com.liferay.fragment.web.internal.display.context;
 import com.liferay.fragment.constants.FragmentActionKeys;
 import com.liferay.fragment.constants.FragmentPortletKeys;
 import com.liferay.fragment.contributor.FragmentCollectionContributor;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentCollectionLocalServiceUtil;
@@ -33,9 +33,13 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuil
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.NavigationItemListBuilder;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
@@ -61,7 +65,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.PortletURL;
@@ -83,8 +86,8 @@ public class FragmentDisplayContext {
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
 
-		_fragmentCollectionContributorTracker =
-			(FragmentCollectionContributorTracker)
+		_fragmentCollectionContributorRegistry =
+			(FragmentCollectionContributorRegistry)
 				_httpServletRequest.getAttribute(
 					FragmentWebKeys.FRAGMENT_COLLECTION_CONTRIBUTOR_TRACKER);
 		_themeDisplay = (ThemeDisplay)_httpServletRequest.getAttribute(
@@ -113,6 +116,44 @@ public class FragmentDisplayContext {
 						"viewImportURL"));
 				dropdownItem.setLabel(
 					LanguageUtil.get(_httpServletRequest, "import"));
+			}
+		).build();
+	}
+
+	public Map<String, Object> getAdditionalProps() {
+		return HashMapBuilder.<String, Object>put(
+			"addFragmentCollectionURL",
+			() -> {
+				LiferayPortletURL addFragmentCollectionURL =
+					(LiferayPortletURL)_renderResponse.createResourceURL();
+
+				addFragmentCollectionURL.setCopyCurrentRenderParameters(false);
+				addFragmentCollectionURL.setResourceID(
+					"/fragment/add_fragment_collection");
+
+				return addFragmentCollectionURL.toString();
+			}
+		).put(
+			"fragmentCollections",
+			() -> {
+				JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+
+				for (FragmentCollection fragmentCollection :
+						FragmentCollectionLocalServiceUtil.
+							getFragmentCollections(
+								_themeDisplay.getScopeGroupId(),
+								QueryUtil.ALL_POS, QueryUtil.ALL_POS)) {
+
+					jsonArray.put(
+						JSONUtil.put(
+							"fragmentCollectionId",
+							fragmentCollection.getFragmentCollectionId()
+						).put(
+							"name", fragmentCollection.getName()
+						));
+				}
+
+				return jsonArray;
 			}
 		).build();
 	}
@@ -240,7 +281,7 @@ public class FragmentDisplayContext {
 	}
 
 	public FragmentCollectionContributor getFragmentCollectionContributor() {
-		return _fragmentCollectionContributorTracker.
+		return _fragmentCollectionContributorRegistry.
 			getFragmentCollectionContributor(getFragmentCollectionKey());
 	}
 
@@ -248,7 +289,7 @@ public class FragmentDisplayContext {
 		getFragmentCollectionContributors(Locale locale) {
 
 		List<FragmentCollectionContributor> fragmentCollectionContributors =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributors();
 
 		Collections.sort(
@@ -658,28 +699,26 @@ public class FragmentDisplayContext {
 		}
 
 		List<FragmentCollectionContributor> fragmentCollectionContributors =
-			_fragmentCollectionContributorTracker.
+			_fragmentCollectionContributorRegistry.
 				getFragmentCollectionContributors();
 
 		if (ListUtil.isEmpty(fragmentCollectionContributors)) {
 			return StringPool.BLANK;
 		}
 
-		Stream<FragmentCollectionContributor> stream =
-			fragmentCollectionContributors.stream();
+		fragmentCollectionContributors = ListUtil.sort(
+			fragmentCollectionContributors,
+			new FragmentCollectionContributorNameComparator(
+				_themeDisplay.getLocale()));
 
 		FragmentCollectionContributor fragmentCollectionContributor =
-			stream.sorted(
-				new FragmentCollectionContributorNameComparator(
-					_themeDisplay.getLocale())
-			).findFirst(
-			).get();
+			fragmentCollectionContributors.get(0);
 
 		return fragmentCollectionContributor.getFragmentCollectionKey();
 	}
 
 	private FragmentCollectionContributor _getFragmentCollectionContributor() {
-		return _fragmentCollectionContributorTracker.
+		return _fragmentCollectionContributorRegistry.
 			getFragmentCollectionContributor(getFragmentCollectionKey());
 	}
 
@@ -806,8 +845,8 @@ public class FragmentDisplayContext {
 
 	private SearchContainer<Object> _contributedEntriesSearchContainer;
 	private FragmentCollection _fragmentCollection;
-	private final FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private final FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 	private Long _fragmentCollectionId;
 	private String _fragmentCollectionKey;
 	private SearchContainer<Object> _fragmentEntriesSearchContainer;

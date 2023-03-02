@@ -18,6 +18,7 @@ import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -34,7 +35,6 @@ import com.liferay.sharing.service.SharingEntryLocalService;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.stream.Stream;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.annotations.Activate;
@@ -45,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Adolfo Pérez
  */
-@Component(immediate = true, service = SharingPermission.class)
+@Component(service = SharingPermission.class)
 public class SharingPermissionImpl implements SharingPermission {
 
 	@Override
@@ -67,16 +67,11 @@ public class SharingPermissionImpl implements SharingPermission {
 				resourceName = className.getClassName();
 			}
 
-			Stream<SharingEntryAction> sharingEntryActionsStream =
-				sharingEntryActions.stream();
-
 			throw new PrincipalException.MustHavePermission(
 				permissionChecker.getUserId(), resourceName, classPK,
-				sharingEntryActionsStream.map(
-					SharingEntryAction::getActionId
-				).toArray(
-					String[]::new
-				));
+				TransformUtil.transformToArray(
+					sharingEntryActions, SharingEntryAction::getActionId,
+					String.class));
 		}
 	}
 
@@ -121,11 +116,8 @@ public class SharingPermissionImpl implements SharingPermission {
 			long groupId, Collection<SharingEntryAction> sharingEntryActions)
 		throws PortalException {
 
-		ServiceTrackerMap<Long, SharingPermissionChecker> serviceTrackerMap =
-			_getServiceTrackerMap();
-
 		SharingPermissionChecker sharingPermissionChecker =
-			serviceTrackerMap.getService(classNameId);
+			_serviceTrackerMap.getService(classNameId);
 
 		if (sharingPermissionChecker == null) {
 			throw new PrincipalException(
@@ -139,19 +131,16 @@ public class SharingPermissionImpl implements SharingPermission {
 			return true;
 		}
 
-		Stream<SharingEntryAction> sharingEntryActionsStream =
-			sharingEntryActions.stream();
+		for (SharingEntryAction sharingEntryAction : sharingEntryActions) {
+			if (!_sharingEntryLocalService.hasShareableSharingPermission(
+					permissionChecker.getUserId(), classNameId, classPK,
+					sharingEntryAction)) {
 
-		if (sharingEntryActionsStream.allMatch(
-				sharingEntryAction ->
-					_sharingEntryLocalService.hasShareableSharingPermission(
-						permissionChecker.getUserId(), classNameId, classPK,
-						sharingEntryAction))) {
-
-			return true;
+				return false;
+			}
 		}
 
-		return false;
+		return true;
 	}
 
 	@Override
@@ -224,55 +213,26 @@ public class SharingPermissionImpl implements SharingPermission {
 
 	@Activate
 	protected void activate(BundleContext bundleContext) {
-		_bundleContext = bundleContext;
+		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+			bundleContext, SharingPermissionChecker.class,
+			"(model.class.name=*)",
+			(serviceReference, emitter) -> emitter.emit(
+				_classNameLocalService.getClassNameId(
+					(String)serviceReference.getProperty("model.class.name"))));
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		ServiceTrackerMap<Long, SharingPermissionChecker> serviceTrackerMap =
-			_serviceTrackerMap;
-
-		if (serviceTrackerMap != null) {
-			serviceTrackerMap.close();
-		}
-	}
-
-	private ServiceTrackerMap<Long, SharingPermissionChecker>
-		_getServiceTrackerMap() {
-
-		ServiceTrackerMap<Long, SharingPermissionChecker> serviceTrackerMap =
-			_serviceTrackerMap;
-
-		if (serviceTrackerMap == null) {
-			synchronized (this) {
-				if (_serviceTrackerMap != null) {
-					return _serviceTrackerMap;
-				}
-
-				serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-					_bundleContext, SharingPermissionChecker.class,
-					"(model.class.name=*)",
-					(serviceReference, emitter) -> emitter.emit(
-						_classNameLocalService.getClassNameId(
-							(String)serviceReference.getProperty(
-								"model.class.name"))));
-
-				_serviceTrackerMap = serviceTrackerMap;
-			}
-		}
-
-		return serviceTrackerMap;
+		_serviceTrackerMap.close();
 	}
 
 	@Reference
 	private AssetEntryLocalService _assetEntryLocalService;
 
-	private BundleContext _bundleContext;
-
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
-	private volatile ServiceTrackerMap<Long, SharingPermissionChecker>
+	private ServiceTrackerMap<Long, SharingPermissionChecker>
 		_serviceTrackerMap;
 
 	@Reference

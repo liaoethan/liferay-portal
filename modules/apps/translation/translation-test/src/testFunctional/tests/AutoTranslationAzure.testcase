@@ -22,7 +22,7 @@ definition {
 	}
 
 	@description = "This ensures that Azure translation can be used to auto-translate a content page."
-	@priority = "5"
+	@priority = 5
 	test CanTranslateContentPage {
 		property test.name.skip.portal.instance = "AutoTranslationAzure#CanTranslateContentPage";
 
@@ -55,7 +55,7 @@ definition {
 	}
 
 	@description = "This ensures that the fragment filed on content page can be translated independently."
-	@priority = "5"
+	@priority = 5
 	test CanTranslateContentPageFieldIndependently {
 		property test.name.skip.portal.instance = "AutoTranslationAzure#CanTranslateContentPageFieldIndependently";
 
@@ -110,7 +110,7 @@ definition {
 	}
 
 	@description = "This ensures that Azure translation can be used to auto-translate a web content."
-	@priority = "5"
+	@priority = 5
 	test CanTranslateWC {
 		property test.name.skip.portal.instance = "AutoTranslationAzure#CanTranslateWC";
 
@@ -130,7 +130,7 @@ definition {
 		Translations.autoTranslate();
 
 		Translations.viewTargetFields(
-			webContentContent = "Contenido de WC",
+			webContentContent = "Contenido del WC",
 			webContentDescription = "",
 			webContentTitle = "Título WC");
 
@@ -144,13 +144,13 @@ definition {
 			webContentTitle = "WC title");
 
 		Translations.viewTargetFields(
-			webContentContent = "Contenido de WC",
+			webContentContent = "Contenido del WC",
 			webContentDescription = "",
 			webContentTitle = "Título WC");
 	}
 
 	@description = "This ensures that the web content title and content filed can be translated independently"
-	@priority = "5"
+	@priority = 5
 	test CanTranslateWCFieldIndependently {
 		property test.name.skip.portal.instance = "AutoTranslationAzure#CanTranslateWCFieldIndependently";
 

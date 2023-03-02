@@ -23,7 +23,6 @@ import com.liferay.portal.settings.portlet.action.PortalSettingsFormContributor;
 
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -38,10 +37,7 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
 /**
  * @author Michael C. Han
  */
-@Component(
-	immediate = true,
-	service = PortalSettingsContributorServiceTrackerCustomizer.class
-)
+@Component(service = {})
 public class PortalSettingsContributorServiceTrackerCustomizer
 	implements ServiceTrackerCustomizer
 		<PortalSettingsFormContributor, PortalSettingsFormContributor> {
@@ -57,41 +53,26 @@ public class PortalSettingsContributorServiceTrackerCustomizer
 			mvcActionCommandServiceRegistrationHolder =
 				new MVCActionCommandServiceRegistrationHolder();
 
-		Optional<String> deleteMVCActionCommandNameOptional =
-			portalSettingsFormContributor.
-				getDeleteMVCActionCommandNameOptional();
+		DeletePortalSettingsFormMVCActionCommand
+			deletePortalSettingsFormMVCActionCommand =
+				new DeletePortalSettingsFormMVCActionCommand(
+					_portletPreferencesLocalService,
+					portalSettingsFormContributor);
 
-		deleteMVCActionCommandNameOptional.ifPresent(
-			mvcActionName -> {
-				DeletePortalSettingsFormMVCActionCommand
-					deletePortalSettingsFormMVCActionCommand =
-						new DeletePortalSettingsFormMVCActionCommand(
-							_portletPreferencesLocalService,
-							portalSettingsFormContributor);
+		mvcActionCommandServiceRegistrationHolder.
+			_deleteMVCActionCommandServiceReference = _registerMVCActionCommand(
+				portalSettingsFormContributor.getDeleteMVCActionCommandName(),
+				deletePortalSettingsFormMVCActionCommand);
 
-				mvcActionCommandServiceRegistrationHolder.
-					_deleteMVCActionCommandServiceReference =
-						_registerMVCActionCommand(
-							mvcActionName,
-							deletePortalSettingsFormMVCActionCommand);
-			});
+		SavePortalSettingsFormMVCActionCommand
+			savePortalSettingsFormMVCActionCommand =
+				new SavePortalSettingsFormMVCActionCommand(
+					portalSettingsFormContributor);
 
-		Optional<String> saveMVCActionCommandNameOptional =
-			portalSettingsFormContributor.getSaveMVCActionCommandNameOptional();
-
-		saveMVCActionCommandNameOptional.ifPresent(
-			mvcActionName -> {
-				SavePortalSettingsFormMVCActionCommand
-					savePortalSettingsFormMVCActionCommand =
-						new SavePortalSettingsFormMVCActionCommand(
-							portalSettingsFormContributor);
-
-				mvcActionCommandServiceRegistrationHolder.
-					_saveMVCActionCommandServiceReference =
-						_registerMVCActionCommand(
-							mvcActionName,
-							savePortalSettingsFormMVCActionCommand);
-			});
+		mvcActionCommandServiceRegistrationHolder.
+			_saveMVCActionCommandServiceReference = _registerMVCActionCommand(
+				portalSettingsFormContributor.getSaveMVCActionCommandName(),
+				savePortalSettingsFormMVCActionCommand);
 
 		_serviceRegistrationHolders.put(
 			portalSettingsFormContributor.getSettingsId(),

@@ -14,10 +14,11 @@ import {useMemo} from 'react';
 import {LiferayPicklistName} from '../../../../../common/enums/liferayPicklistName';
 import useGetListTypeDefinitions from '../../../../../common/services/liferay/list-type-definitions/useGetListTypeDefinitions';
 import useGetMyUserAccount from '../../../../../common/services/liferay/user-account/useGetMyUserAccount';
-import getEntriesByListTypeDefinitions from '../../../utils/getEntriesByListTypeDefinitions';
+import getEntriesByListTypeDefinitions from '../../../../../common/utils/getEntriesByListTypeDefinitions';
 
 export default function useDynamicFieldEntries() {
 	const {data: userAccount} = useGetMyUserAccount();
+
 	const {data: listTypeDefinitions} = useGetListTypeDefinitions([
 		LiferayPicklistName.ADDITIONAL_OPTIONS,
 		LiferayPicklistName.REGIONS,
@@ -35,6 +36,15 @@ export default function useDynamicFieldEntries() {
 		[userAccount?.accountBriefs]
 	);
 
+	const userAccountRoles = useMemo(
+		() =>
+			userAccount?.roleBriefs.map((roleBrief) => ({
+				label: roleBrief.name,
+				value: roleBrief.id,
+			})) as React.OptionHTMLAttributes<HTMLOptionElement>[],
+		[userAccount?.roleBriefs]
+	);
+
 	const fieldEntries = useMemo(
 		() => getEntriesByListTypeDefinitions(listTypeDefinitions?.items),
 		[listTypeDefinitions?.items]
@@ -43,5 +53,6 @@ export default function useDynamicFieldEntries() {
 	return {
 		companiesEntries,
 		fieldEntries,
+		userAccountRoles,
 	};
 }

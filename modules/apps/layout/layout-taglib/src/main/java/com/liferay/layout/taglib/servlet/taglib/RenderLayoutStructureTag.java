@@ -28,16 +28,22 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.RowTag;
 import com.liferay.frontend.taglib.servlet.taglib.ComponentTag;
 import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.form.InfoForm;
+import com.liferay.info.item.InfoItemDetails;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemDetailsProvider;
 import com.liferay.info.list.renderer.DefaultInfoListRendererContext;
 import com.liferay.info.list.renderer.InfoListRenderer;
+import com.liferay.info.permission.provider.InfoPermissionProvider;
 import com.liferay.layout.constants.LayoutWebKeys;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
 import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
 import com.liferay.layout.helper.CollectionPaginationHelper;
-import com.liferay.layout.page.template.util.LayoutStructureUtil;
+import com.liferay.layout.provider.LayoutStructureProvider;
 import com.liferay.layout.responsive.ResponsiveLayoutStructureUtil;
 import com.liferay.layout.taglib.internal.display.context.RenderCollectionLayoutStructureItemDisplayContext;
 import com.liferay.layout.taglib.internal.display.context.RenderLayoutStructureDisplayContext;
+import com.liferay.layout.taglib.internal.info.search.InfoSearchClassMapperRegistryUtil;
 import com.liferay.layout.taglib.internal.servlet.ServletContextUtil;
 import com.liferay.layout.taglib.internal.util.SegmentsExperienceUtil;
 import com.liferay.layout.util.constants.LayoutStructureConstants;
@@ -53,6 +59,8 @@ import com.liferay.layout.util.structure.RowStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.collection.EmptyCollectionOptions;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.petra.string.StringUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.layoutconfiguration.util.RuntimePageUtil;
@@ -61,12 +69,10 @@ import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutTemplate;
 import com.liferay.portal.kernel.model.LayoutTemplateConstants;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
-import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutTemplateLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
-import com.liferay.portal.kernel.template.StringTemplateResource;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -184,9 +190,64 @@ public class RenderLayoutStructureTag extends IncludeTag {
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		return LayoutStructureUtil.getLayoutStructure(
+		LayoutStructureProvider layoutStructureProvider =
+			ServletContextUtil.getLayoutStructureHelper();
+
+		return layoutStructureProvider.getLayoutStructure(
 			themeDisplay.getPlid(),
 			SegmentsExperienceUtil.getSegmentsExperienceId(httpServletRequest));
+	}
+
+	private LayoutTypePortlet _getLayoutTypePortlet(
+		Layout layout, LayoutTypePortlet layoutTypePortlet, String themeId) {
+
+		String layoutTemplateId = layoutTypePortlet.getLayoutTemplateId();
+
+		if (Validator.isNull(layoutTemplateId)) {
+			return layoutTypePortlet;
+		}
+
+		LayoutTemplate layoutTemplate =
+			LayoutTemplateLocalServiceUtil.getLayoutTemplate(
+				layoutTemplateId, false, themeId);
+
+		if (layoutTemplate != null) {
+			return layoutTypePortlet;
+		}
+
+		layoutTypePortlet.setLayoutTemplateId(
+			layout.getUserId(), PropsValues.DEFAULT_LAYOUT_TEMPLATE_ID);
+
+		return layoutTypePortlet;
+	}
+
+	private boolean _hasAddPermission(String className) {
+		InfoItemServiceRegistry infoItemServiceRegistry =
+			ServletContextUtil.getInfoItemServiceRegistry();
+
+		InfoPermissionProvider infoPermissionProvider =
+			infoItemServiceRegistry.getFirstInfoItemService(
+				InfoPermissionProvider.class, className);
+
+		if (infoPermissionProvider == null) {
+			return true;
+		}
+
+		HttpServletRequest httpServletRequest = getRequest();
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		if ((themeDisplay != null) &&
+			infoPermissionProvider.hasAddPermission(
+				themeDisplay.getScopeGroupId(),
+				themeDisplay.getPermissionChecker())) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _renderCollectionStyledLayoutStructureItem(
@@ -197,6 +258,19 @@ public class RenderLayoutStructureTag extends IncludeTag {
 				renderLayoutStructureDisplayContext)
 		throws Exception {
 
+		HttpServletRequest httpServletRequest = getRequest();
+
+		RenderCollectionLayoutStructureItemDisplayContext
+			renderCollectionLayoutStructureItemDisplayContext =
+				new RenderCollectionLayoutStructureItemDisplayContext(
+					collectionStyledLayoutStructureItem, httpServletRequest);
+
+		if (!renderCollectionLayoutStructureItemDisplayContext.
+				hasViewPermission()) {
+
+			return;
+		}
+
 		JspWriter jspWriter = pageContext.getOut();
 
 		jspWriter.write("<div class=\"");
@@ -205,18 +279,9 @@ public class RenderLayoutStructureTag extends IncludeTag {
 		jspWriter.write(StringPool.SPACE);
 		jspWriter.write(collectionStyledLayoutStructureItem.getCssClass());
 		jspWriter.write("\" style=\"");
-
-		HttpServletRequest httpServletRequest = getRequest();
-
-		RenderCollectionLayoutStructureItemDisplayContext
-			renderCollectionLayoutStructureItemDisplayContext =
-				new RenderCollectionLayoutStructureItemDisplayContext(
-					collectionStyledLayoutStructureItem, httpServletRequest);
-
 		jspWriter.write(
 			renderLayoutStructureDisplayContext.getStyle(
 				collectionStyledLayoutStructureItem));
-
 		jspWriter.write("\">");
 
 		List<String> collectionStyledLayoutStructureItemIds =
@@ -269,6 +334,9 @@ public class RenderLayoutStructureTag extends IncludeTag {
 			jspWriter.write(unsyncStringWriter.toString());
 		}
 		else {
+			InfoItemReference currentInfoItemReference =
+				(InfoItemReference)httpServletRequest.getAttribute(
+					InfoDisplayWebKeys.INFO_ITEM_REFERENCE);
 			LayoutDisplayPageProvider<?> currentLayoutDisplayPageProvider =
 				(LayoutDisplayPageProvider<?>)httpServletRequest.getAttribute(
 					LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_PROVIDER);
@@ -331,6 +399,16 @@ public class RenderLayoutStructureTag extends IncludeTag {
 
 				containerTag.doStartTag();
 
+				InfoItemServiceRegistry infoItemServiceRegistry =
+					ServletContextUtil.getInfoItemServiceRegistry();
+
+				InfoItemDetailsProvider infoItemDetailsProvider =
+					infoItemServiceRegistry.getFirstInfoItemService(
+						InfoItemDetailsProvider.class,
+						InfoSearchClassMapperRegistryUtil.getClassName(
+							renderCollectionLayoutStructureItemDisplayContext.
+								getCollectionItemType()));
+
 				for (int i = 0; i < numberOfRows; i++) {
 					RowTag rowTag = new RowTag();
 
@@ -368,14 +446,13 @@ public class RenderLayoutStructureTag extends IncludeTag {
 							break;
 						}
 
+						InfoItemDetails infoItemDetails =
+							infoItemDetailsProvider.getInfoItemDetails(
+								collection.get(index));
+
 						httpServletRequest.setAttribute(
-							InfoDisplayWebKeys.INFO_LIST_DISPLAY_OBJECT,
-							collection.get(index));
-						httpServletRequest.setAttribute(
-							InfoDisplayWebKeys.
-								INFO_LIST_DISPLAY_OBJECT_ITEM_TYPE,
-							renderCollectionLayoutStructureItemDisplayContext.
-								getCollectionItemType());
+							InfoDisplayWebKeys.INFO_ITEM_REFERENCE,
+							infoItemDetails.getInfoItemReference());
 
 						ColTag colTag = new ColTag();
 
@@ -402,11 +479,9 @@ public class RenderLayoutStructureTag extends IncludeTag {
 				containerTag.doEndTag();
 			}
 			finally {
-				httpServletRequest.removeAttribute(
-					InfoDisplayWebKeys.INFO_LIST_DISPLAY_OBJECT);
-				httpServletRequest.removeAttribute(
-					InfoDisplayWebKeys.INFO_LIST_DISPLAY_OBJECT_ITEM_TYPE);
-
+				httpServletRequest.setAttribute(
+					InfoDisplayWebKeys.INFO_ITEM_REFERENCE,
+					currentInfoItemReference);
 				httpServletRequest.setAttribute(
 					LayoutDisplayPageWebKeys.LAYOUT_DISPLAY_PAGE_PROVIDER,
 					currentLayoutDisplayPageProvider);
@@ -675,8 +750,42 @@ public class RenderLayoutStructureTag extends IncludeTag {
 
 		Layout layout = themeDisplay.getLayout();
 
-		if (Objects.equals(layout.getType(), LayoutConstants.TYPE_PORTLET)) {
-			LayoutTypePortlet layoutTypePortlet = _updateLayoutTemplate(
+		LayoutTypePortlet layoutTypePortlet =
+			themeDisplay.getLayoutTypePortlet();
+
+		String ppid = ParamUtil.getString(httpServletRequest, "p_p_id");
+
+		if (layoutTypePortlet.hasStateMax() && Validator.isNotNull(ppid)) {
+			String templateContent = LayoutTemplateLocalServiceUtil.getContent(
+				"max", true, themeDisplay.getThemeId());
+
+			if (Validator.isNotNull(templateContent)) {
+				HttpServletRequest originalHttpServletRequest =
+					(HttpServletRequest)httpServletRequest.getAttribute(
+						"ORIGINAL_HTTP_SERVLET_REQUEST");
+
+				if (originalHttpServletRequest == null) {
+					originalHttpServletRequest = httpServletRequest;
+				}
+
+				List<String> ppids = StringUtil.split(
+					layoutTypePortlet.getStateMax());
+				String templateId =
+					themeDisplay.getThemeId() +
+						LayoutTemplateConstants.STANDARD_SEPARATOR + "max";
+
+				RuntimePageUtil.processTemplate(
+					originalHttpServletRequest,
+					(HttpServletResponse)pageContext.getResponse(),
+					ppids.get(0), templateId, templateContent,
+					LayoutTemplateLocalServiceUtil.getLangType(
+						"max", true, themeDisplay.getThemeId()));
+			}
+		}
+		else if (Objects.equals(
+					layout.getType(), LayoutConstants.TYPE_PORTLET)) {
+
+			layoutTypePortlet = _getLayoutTypePortlet(
 				layout, themeDisplay.getLayoutTypePortlet(),
 				themeDisplay.getThemeId());
 
@@ -711,8 +820,8 @@ public class RenderLayoutStructureTag extends IncludeTag {
 
 				RuntimePageUtil.processTemplate(
 					originalHttpServletRequest,
-					(HttpServletResponse)pageContext.getResponse(),
-					new StringTemplateResource(templateId, templateContent),
+					(HttpServletResponse)pageContext.getResponse(), null,
+					templateId, templateContent,
 					LayoutTemplateLocalServiceUtil.getLangType(
 						layoutTypePortlet.getLayoutTemplateId(), false,
 						themeDisplay.getThemeId()));
@@ -773,7 +882,12 @@ public class RenderLayoutStructureTag extends IncludeTag {
 				renderLayoutStructureDisplayContext)
 		throws Exception {
 
-		if (infoForm == null) {
+		if ((infoForm == null) ||
+			(FeatureFlagManagerUtil.isEnabled("LPS-169923") &&
+			 !_hasAddPermission(
+				 PortalUtil.getClassName(
+					 formStyledLayoutStructureItem.getClassNameId())))) {
+
 			return;
 		}
 
@@ -973,6 +1087,12 @@ public class RenderLayoutStructureTag extends IncludeTag {
 				HttpServletResponse httpServletResponse =
 					(HttpServletResponse)pageContext.getResponse();
 
+				// LPS-164462 Call render before getting attribute value
+
+				String html = fragmentRendererController.render(
+					defaultFragmentRendererContext, httpServletRequest,
+					httpServletResponse);
+
 				if (GetterUtil.getBoolean(
 						httpServletRequest.getAttribute(
 							FragmentWebKeys.
@@ -988,10 +1108,7 @@ public class RenderLayoutStructureTag extends IncludeTag {
 					jspWriter.write("<div>");
 				}
 
-				jspWriter.write(
-					fragmentRendererController.render(
-						defaultFragmentRendererContext, httpServletRequest,
-						httpServletResponse));
+				jspWriter.write(html);
 				jspWriter.write("</div>");
 			}
 		}
@@ -1207,34 +1324,6 @@ public class RenderLayoutStructureTag extends IncludeTag {
 		}
 
 		jspWriter.write("</div>");
-	}
-
-	private LayoutTypePortlet _updateLayoutTemplate(
-			Layout layout, LayoutTypePortlet layoutTypePortlet, String themeId)
-		throws Exception {
-
-		String layoutTemplateId = layoutTypePortlet.getLayoutTemplateId();
-
-		if (Validator.isNull(layoutTemplateId)) {
-			return layoutTypePortlet;
-		}
-
-		LayoutTemplate layoutTemplate =
-			LayoutTemplateLocalServiceUtil.getLayoutTemplate(
-				layoutTemplateId, false, themeId);
-
-		if (layoutTemplate != null) {
-			return layoutTypePortlet;
-		}
-
-		layoutTypePortlet.setLayoutTemplateId(
-			layout.getUserId(), PropsValues.DEFAULT_LAYOUT_TEMPLATE_ID);
-
-		layout = LayoutLocalServiceUtil.updateLayout(
-			layout.getGroupId(), layout.isPrivateLayout(), layout.getLayoutId(),
-			layout.getTypeSettings());
-
-		return (LayoutTypePortlet)layout.getLayoutType();
 	}
 
 	private void _write(

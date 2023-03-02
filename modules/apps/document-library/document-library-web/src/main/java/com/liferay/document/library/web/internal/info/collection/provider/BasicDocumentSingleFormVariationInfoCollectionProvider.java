@@ -63,7 +63,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -71,9 +70,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Jürgen Kappler
  */
-@Component(
-	enabled = false, immediate = true, service = InfoCollectionProvider.class
-)
+@Component(enabled = false, service = InfoCollectionProvider.class)
 public class BasicDocumentSingleFormVariationInfoCollectionProvider
 	implements ConfigurableInfoCollectionProvider<FileEntry>,
 			   FilteredInfoCollectionProvider<FileEntry>,
@@ -124,13 +121,10 @@ public class BasicDocumentSingleFormVariationInfoCollectionProvider
 				"latest", true
 			).build());
 
-		Optional<CategoriesInfoFilter> categoriesInfoFilterOptional =
-			collectionQuery.getInfoFilterOptional(CategoriesInfoFilter.class);
+		CategoriesInfoFilter categoriesInfoFilter =
+			collectionQuery.getInfoFilter(CategoriesInfoFilter.class);
 
-		if (categoriesInfoFilterOptional.isPresent()) {
-			CategoriesInfoFilter categoriesInfoFilter =
-				categoriesInfoFilterOptional.get();
-
+		if (categoriesInfoFilter != null) {
 			long[] categoryIds = ArrayUtil.append(
 				categoriesInfoFilter.getCategoryIds());
 
@@ -139,11 +133,12 @@ public class BasicDocumentSingleFormVariationInfoCollectionProvider
 			searchContext.setAssetCategoryIds(categoryIds);
 		}
 
-		Optional<Map<String, String[]>> configurationOptional =
-			collectionQuery.getConfigurationOptional();
+		Map<String, String[]> configuration =
+			collectionQuery.getConfiguration();
 
-		Map<String, String[]> configuration = configurationOptional.orElse(
-			Collections.emptyMap());
+		if (configuration == null) {
+			configuration = Collections.emptyMap();
+		}
 
 		String[] assetTagNames = configuration.get(Field.ASSET_TAG_NAMES);
 
@@ -170,11 +165,9 @@ public class BasicDocumentSingleFormVariationInfoCollectionProvider
 		searchContext.setGroupIds(
 			new long[] {serviceContext.getScopeGroupId()});
 
-		Optional<Sort> sortOptional = collectionQuery.getSortOptional();
+		Sort sort = collectionQuery.getSort();
 
-		if (sortOptional.isPresent()) {
-			Sort sort = sortOptional.get();
-
+		if (sort != null) {
 			searchContext.setSorts(
 				new com.liferay.portal.kernel.search.Sort(
 					sort.getFieldName(),

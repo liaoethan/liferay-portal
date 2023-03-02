@@ -1463,6 +1463,11 @@ components:
                     description:
                         The folder's description.
                     type: string
+                externalReferenceCode:
+                    # @review
+                    description:
+                        The document folder's external reference code.
+                    type: string
                 id:
                     description:
                         The folder's ID.
@@ -1559,6 +1564,12 @@ components:
                     # @review
                     description:
                         The fragment's name.
+                    type: string
+                siteKey:
+                    # @review
+                    description:
+                        The key of the site to which this fragment is scoped.
+                    readOnly: true
                     type: string
             type: object
         FragmentField:
@@ -2550,6 +2561,16 @@ components:
             description:
                 A binary file attached to a message on a message board (`MessageBoardMessage`).
             properties:
+                actions:
+                    additionalProperties:
+                        additionalProperties:
+                            type: string
+                        type: object
+                    # @review
+                    description:
+                        Block of actions allowed by the user making the request.
+                    readOnly: true
+                    type: object
                 contentUrl:
                     description:
                         The file's relative URL.
@@ -2565,6 +2586,11 @@ components:
                     description:
                         The file's media format (e.g., application/pdf, etc.).
                     readOnly: true
+                    type: string
+                externalReferenceCode:
+                    # @review
+                    description:
+                        The message board's external reference code.
                     type: string
                 fileExtension:
                     description:
@@ -2689,6 +2715,8 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
+                modified:
+                    type: boolean
                 numberOfMessageBoardAttachments:
                     description:
                         The number of the message's attachments.
@@ -2915,6 +2943,10 @@ components:
                     items:
                         type: string
                     type: array
+                lastPostDate:
+                    format: date-time
+                    readOnly: true
+                    type: string
                 locked:
                     # @review
                     description:
@@ -3490,6 +3522,7 @@ components:
                         - $ref: "#/components/schemas/PageColumnDefinition"
                         - $ref: "#/components/schemas/PageDropZoneDefinition"
                         - $ref: "#/components/schemas/PageFormDefinition"
+                        - $ref: "#/components/schemas/PageFragmentDropZoneDefinition"
                         - $ref: "#/components/schemas/PageFragmentInstanceDefinition"
                         - $ref: "#/components/schemas/PageRootDefinition"
                         - $ref: "#/components/schemas/PageRowDefinition"
@@ -3602,6 +3635,17 @@ components:
                     # @review
                     description:
                         The custom name of of a Page form.
+                    type: string
+            type: object
+        PageFragmentDropZoneDefinition:
+            # @review
+            description:
+                Represents a definition of a Page Fragment DropZone.
+            properties:
+                fragmentDropZoneId:
+                    # @review
+                    description:
+                        The id of the fragment dropzone
                     type: string
             type: object
         PageFragmentInstanceDefinition:
@@ -4817,6 +4861,7 @@ components:
                     description:
                         The ID of the folder where structured content is stored.
                     format: int64
+                    readOnly: true
                     type: integer
                 subscribed:
                     # @review
@@ -5007,6 +5052,32 @@ components:
                     # @review
                     description:
                         The localized submission of URL type.
+            type: object
+        UtilityPageTemplate:
+            description:
+                Represents a Utility Page Template.
+            properties:
+                defaultTemplate:
+                    # @review
+                    description:
+                        Specifies if the utility page template should be the default for the given type.
+                    type: boolean
+                externalReferenceCode:
+                    # @review
+                    description:
+                        The utility page template external reference code.
+                    type: string
+                name:
+                    # @review
+                    description:
+                        The utility page template name.
+                    type: string
+                type:
+                    # @review
+                    description:
+                        The utility page template type.
+                    enum: [Error, ErrorCode404, TermsOfUse]
+                    type: string
             type: object
         WidgetInstance:
             # @review
@@ -5275,6 +5346,16 @@ components:
             description:
                 A binary file attached to a wiki page.
             properties:
+                actions:
+                    additionalProperties:
+                        additionalProperties:
+                            type: string
+                        type: object
+                    # @review
+                    description:
+                        Block of actions allowed by the user making the request.
+                    readOnly: true
+                    type: object
                 contentUrl:
                     description:
                         The file's relative URL.
@@ -5318,7 +5399,7 @@ components:
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID
-        'com.liferay.headless.delivery.client', and version '4.0.41'."
+        'com.liferay.headless.delivery.client', and version '4.0.49'."
     license:
         name: "Apache 2.0"
         url: "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -11746,6 +11827,93 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/Document"
             tags: ["Document"]
+    "/sites/{siteId}/documents-folder/by-external-reference-code/{externalReferenceCode}":
+        delete:
+            # @review
+            description:
+                Deletes the site's document folder by external reference code returns a 204 if the operation succeeds.
+            operationId: deleteSiteDocumentsFolderByExternalReferenceCode
+            parameters:
+                - in: path
+                  name: siteId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DocumentFolder"]
+        get:
+            # @review
+            description:
+                Retrieves the site's document folder by external reference code.
+            operationId: getSiteDocumentsFolderByExternalReferenceCode
+            parameters:
+                - in: path
+                  name: siteId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DocumentFolder"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DocumentFolder"
+            tags: ["DocumentFolder"]
+        put:
+            # @review
+            description:
+                Replaces the document folder by external reference code with the information sent in the request body,
+                or replaces it if it not exists.
+            operationId: putSiteDocumentsFolderByExternalReferenceCode
+            parameters:
+                - in: path
+                  name: siteId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/DocumentFolder"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/DocumentFolder"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DocumentFolder"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DocumentFolder"
+            tags: ["DocumentFolder"]
     "/sites/{siteId}/documents/by-external-reference-code/{documentExternalReferenceCode}/comments/by-external-reference-code/{externalReferenceCode}":
         delete:
             # @review
@@ -12711,6 +12879,77 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/MessageBoardMessage"
             tags: ["MessageBoardMessage"]
+    "/sites/{siteId}/message-board-messages/by-external-reference-code/{messageBoardMessageExternalReferenceCode}/message-board-attachments/by-external-reference-code/{externalReferenceCode}":
+        delete:
+            # @review
+            description:
+                Delete the message board attachment by message board message's and message board attachment's external
+                reference codes.
+            operationId: deleteSiteMessageBoardMessageByExternalReferenceCodeMessageBoardMessageExternalReferenceCodeMessageBoardAttachmentByExternalReferenceCode
+            parameters:
+                - in: path
+                  name: siteId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: messageBoardMessageExternalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["MessageBoardAttachment"]
+        get:
+            # @review
+            description:
+                Retrieves the message board attachment by message board message's and message board attachment's
+                external reference codes.
+            operationId: getSiteMessageBoardMessageByExternalReferenceCodeMessageBoardMessageExternalReferenceCodeMessageBoardAttachmentByExternalReferenceCode
+            parameters:
+                - in: path
+                  name: siteId
+                  required: true
+                  schema:
+                      format: int64
+                      type: integer
+                - in: path
+                  name: messageBoardMessageExternalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+                - in: path
+                  name: externalReferenceCode
+                  required: true
+                  schema:
+                      type: string
+                - in: query
+                  name: fields
+                  schema:
+                      type: string
+                - in: query
+                  name: restrictFields
+                  schema:
+                      type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/MessageBoardAttachment"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/MessageBoardAttachment"
+            tags: ["MessageBoardAttachment"]
     "/sites/{siteId}/message-board-messages/by-friendly-url-path/{friendlyUrlPath}":
         get:
             operationId: getSiteMessageBoardMessageByFriendlyUrlPath

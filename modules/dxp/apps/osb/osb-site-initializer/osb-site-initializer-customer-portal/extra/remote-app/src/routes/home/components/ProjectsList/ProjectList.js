@@ -13,10 +13,10 @@ import ClayLoadingIndicator from '@clayui/loading-indicator';
 import classNames from 'classnames';
 import {useEffect} from 'react';
 import i18n from '../../../../common/I18n';
-import useRouterPath from '../../../../common/hooks/useRouterPath';
+import useIntersectionObserver from '../../../../common/hooks/useIntersectionObserver';
 import {Liferay} from '../../../../common/services/liferay';
+import routerPath from '../../../../common/utils/routerPath';
 import ProjectCard from './components/ProjectCard';
-import useIntersectionObserver from './hooks/useIntersectionObserver';
 
 const ProjectList = ({
 	compressed,
@@ -27,7 +27,7 @@ const ProjectList = ({
 	onIntersect,
 }) => {
 	const [setTrackedRefCurrent, isIntersecting] = useIntersectionObserver();
-	const pageRoutes = useRouterPath();
+	const pageRoutes = routerPath();
 
 	const isLastPage = koroneikiAccounts?.page === koroneikiAccounts?.lastPage;
 	const allowFetching = !isLastPage && !fetching;

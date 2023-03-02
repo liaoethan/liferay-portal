@@ -16,14 +16,16 @@ package com.liferay.headless.commerce.machine.learning.internal.dto.v1_0.convert
 
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.service.CommerceOrderLocalService;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.headless.commerce.machine.learning.dto.v1_0.Order;
 import com.liferay.headless.commerce.machine.learning.dto.v1_0.OrderItem;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -32,7 +34,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Riccardo Ferrari
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.model.CommerceOrder",
 	service = {DTOConverter.class, OrderDTOConverter.class}
 )
@@ -61,6 +62,10 @@ public class OrderDTOConverter implements DTOConverter<CommerceOrder, Order> {
 			return null;
 		}
 
+		CommerceChannel commerceChannel =
+			_commerceChannelLocalService.fetchCommerceChannelByGroupClassPK(
+				commerceOrder.getGroupId());
+
 		CommerceCurrency commerceCurrency = commerceOrder.getCommerceCurrency();
 
 		ExpandoBridge expandoBridge = commerceOrder.getExpandoBridge();
@@ -68,7 +73,7 @@ public class OrderDTOConverter implements DTOConverter<CommerceOrder, Order> {
 		return new Order() {
 			{
 				accountId = commerceOrder.getCommerceAccountId();
-				channelId = commerceOrder.getGroupId();
+				channelId = commerceChannel.getCommerceChannelId();
 				createDate = commerceOrder.getCreateDate();
 				currencyCode = commerceCurrency.getCode();
 				customFields = expandoBridge.getAttributes();
@@ -92,6 +97,9 @@ public class OrderDTOConverter implements DTOConverter<CommerceOrder, Order> {
 			}
 		};
 	}
+
+	@Reference
+	private CommerceChannelLocalService _commerceChannelLocalService;
 
 	@Reference
 	private CommerceOrderLocalService _commerceOrderLocalService;

@@ -137,6 +137,8 @@ public interface AssetListEntryUsageLocalService
 			long assetListEntryUsageId)
 		throws PortalException;
 
+	public void deleteAssetListEntryUsages(long containerType, long plid);
+
 	public void deleteAssetListEntryUsages(
 		String containerKey, long containerType, long plid);
 
@@ -241,6 +243,10 @@ public interface AssetListEntryUsageLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public List<AssetListEntryUsage> getAssetEntryListUsages(
+		long containerType, long plid);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<AssetListEntryUsage> getAssetEntryListUsagesByPlid(long plid);
@@ -348,6 +354,10 @@ public interface AssetListEntryUsageLocalService
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getAssetListEntryUsagesCount(
 		long groupId, long classNameId, String key, int type);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getCompanyAssetListEntryUsagesCount(
+		long companyId, long classNameId, String key);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ExportActionableDynamicQuery getExportActionableDynamicQuery(

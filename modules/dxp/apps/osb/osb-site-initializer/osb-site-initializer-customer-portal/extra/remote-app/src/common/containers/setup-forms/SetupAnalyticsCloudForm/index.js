@@ -113,7 +113,6 @@ const SetupAnalyticsCloudPage = ({
 				query: getAnalyticsCloudWorkspace,
 				variables: {
 					filter: `accountKey eq '${accountKey}'`,
-					scopeKey: Liferay.ThemeDisplay.getScopeGroupId(),
 				},
 			});
 
@@ -138,6 +137,7 @@ const SetupAnalyticsCloudPage = ({
 			const {data} = await client.mutate({
 				context: {
 					displaySuccess: false,
+					type: 'liferay-rest',
 				},
 				mutation: addAnalyticsCloudWorkspace,
 				variables: {
@@ -145,26 +145,29 @@ const SetupAnalyticsCloudPage = ({
 						accountKey: project.accountKey,
 						dataCenterLocation: analyticsCloud.dataCenterLocation,
 						ownerEmailAddress: analyticsCloud.ownerEmailAddress,
+						r_accountEntryToAnalyticsCloudWorkspace_accountEntryId:
+							project?.id,
 						workspaceName: analyticsCloud.workspaceName,
 					},
-					scopeKey: Liferay.ThemeDisplay.getScopeGroupId(),
 				},
 			});
 
 			if (data) {
 				const analyticsCloudWorkspaceId =
-					data.c?.createAnalyticsCloudWorkspace
-						?.analyticsCloudWorkspaceId;
+					data?.createAnalyticsCloudWorkspace?.id;
 
 				await client.mutate({
 					context: {
 						displaySuccess: false,
+						type: 'liferay-rest',
 					},
 					mutation: updateAccountSubscriptionGroups,
 					variables: {
 						accountSubscriptionGroup: {
 							accountKey: project.accountKey,
 							activationStatus: STATUS_TAG_TYPE_NAMES.inProgress,
+							r_accountEntryToAccountSubscriptionGroup_accountEntryId:
+								project?.id,
 						},
 						id: subscriptionGroupId,
 					},
@@ -173,13 +176,18 @@ const SetupAnalyticsCloudPage = ({
 				await Promise.all(
 					analyticsCloud?.incidentReportContact?.map(({email}) => {
 						return client.mutate({
+							context: {
+								displaySuccess: false,
+								type: 'liferay-rest',
+							},
 							mutation: addIncidentReportAnalyticsCloud,
 							variables: {
 								IncidentReportContactAnalyticsCloud: {
 									analyticsCloudWorkspaceId,
 									emailAddress: email,
+									r_accountEntryToIncidentReportContactAC_accountEntryId:
+										project.id,
 								},
-								scopeKey: Liferay.ThemeDisplay.getScopeGroupId(),
 							},
 						});
 					})

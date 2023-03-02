@@ -44,9 +44,10 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashRenderer;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.constants.TrashActionKeys;
 import com.liferay.trash.constants.TrashEntryConstants;
-import com.liferay.trash.kernel.exception.RestoreEntryException;
+import com.liferay.trash.exception.RestoreEntryException;
 import com.liferay.trash.kernel.model.TrashEntry;
 
 import javax.portlet.PortletRequest;
@@ -158,7 +159,8 @@ public class DLFolderTrashHandler extends BaseDLTrashHandler {
 		DLFolder dlFolder = getDLFolder(classPK);
 
 		return DLUtil.getAbsolutePath(
-			portletRequest, dlFolder.getParentFolderId());
+			portletRequest, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			dlFolder.getParentFolderId());
 	}
 
 	@Override
@@ -250,7 +252,7 @@ public class DLFolderTrashHandler extends BaseDLTrashHandler {
 			return false;
 		}
 
-		return !dlFolder.isInTrashContainer();
+		return !_trashHelper.isInTrashContainer(dlFolder);
 	}
 
 	@Override
@@ -411,5 +413,8 @@ public class DLFolderTrashHandler extends BaseDLTrashHandler {
 		target = "(model.class.name=com.liferay.portal.kernel.repository.model.Folder)"
 	)
 	private ModelResourcePermission<Folder> _folderModelResourcePermission;
+
+	@Reference
+	private TrashHelper _trashHelper;
 
 }

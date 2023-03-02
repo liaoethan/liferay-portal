@@ -127,24 +127,6 @@ public class CPOptionCategoryModelImpl
 	public static final String TX_MANAGER = "liferayTransactionManager";
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
-
-	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
@@ -176,9 +158,19 @@ public class CPOptionCategoryModelImpl
 	@Deprecated
 	public static final long PRIORITY_COLUMN_BITMASK = 16L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.product.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.product.model.CPOptionCategory"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CPOptionCategoryModelImpl() {
 	}
@@ -256,106 +248,128 @@ public class CPOptionCategoryModelImpl
 	public Map<String, Function<CPOptionCategory, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<CPOptionCategory, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<CPOptionCategory, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<CPOptionCategory, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<CPOptionCategory, Object>>
-			attributeGetterFunctions =
-				new LinkedHashMap<String, Function<CPOptionCategory, Object>>();
-		Map<String, BiConsumer<CPOptionCategory, ?>>
-			attributeSetterBiConsumers =
-				new LinkedHashMap<String, BiConsumer<CPOptionCategory, ?>>();
+		private static final Map<String, Function<CPOptionCategory, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", CPOptionCategory::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<CPOptionCategory, Long>)
-				CPOptionCategory::setMvccVersion);
-		attributeGetterFunctions.put(
-			"ctCollectionId", CPOptionCategory::getCtCollectionId);
-		attributeSetterBiConsumers.put(
-			"ctCollectionId",
-			(BiConsumer<CPOptionCategory, Long>)
-				CPOptionCategory::setCtCollectionId);
-		attributeGetterFunctions.put("uuid", CPOptionCategory::getUuid);
-		attributeSetterBiConsumers.put(
-			"uuid",
-			(BiConsumer<CPOptionCategory, String>)CPOptionCategory::setUuid);
-		attributeGetterFunctions.put(
-			"CPOptionCategoryId", CPOptionCategory::getCPOptionCategoryId);
-		attributeSetterBiConsumers.put(
-			"CPOptionCategoryId",
-			(BiConsumer<CPOptionCategory, Long>)
-				CPOptionCategory::setCPOptionCategoryId);
-		attributeGetterFunctions.put(
-			"companyId", CPOptionCategory::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<CPOptionCategory, Long>)CPOptionCategory::setCompanyId);
-		attributeGetterFunctions.put("userId", CPOptionCategory::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId",
-			(BiConsumer<CPOptionCategory, Long>)CPOptionCategory::setUserId);
-		attributeGetterFunctions.put("userName", CPOptionCategory::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<CPOptionCategory, String>)
-				CPOptionCategory::setUserName);
-		attributeGetterFunctions.put(
-			"createDate", CPOptionCategory::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<CPOptionCategory, Date>)
-				CPOptionCategory::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", CPOptionCategory::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<CPOptionCategory, Date>)
-				CPOptionCategory::setModifiedDate);
-		attributeGetterFunctions.put("title", CPOptionCategory::getTitle);
-		attributeSetterBiConsumers.put(
-			"title",
-			(BiConsumer<CPOptionCategory, String>)CPOptionCategory::setTitle);
-		attributeGetterFunctions.put(
-			"description", CPOptionCategory::getDescription);
-		attributeSetterBiConsumers.put(
-			"description",
-			(BiConsumer<CPOptionCategory, String>)
-				CPOptionCategory::setDescription);
-		attributeGetterFunctions.put("priority", CPOptionCategory::getPriority);
-		attributeSetterBiConsumers.put(
-			"priority",
-			(BiConsumer<CPOptionCategory, Double>)
-				CPOptionCategory::setPriority);
-		attributeGetterFunctions.put("key", CPOptionCategory::getKey);
-		attributeSetterBiConsumers.put(
-			"key",
-			(BiConsumer<CPOptionCategory, String>)CPOptionCategory::setKey);
-		attributeGetterFunctions.put(
-			"lastPublishDate", CPOptionCategory::getLastPublishDate);
-		attributeSetterBiConsumers.put(
-			"lastPublishDate",
-			(BiConsumer<CPOptionCategory, Date>)
-				CPOptionCategory::setLastPublishDate);
+		static {
+			Map<String, Function<CPOptionCategory, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap
+						<String, Function<CPOptionCategory, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", CPOptionCategory::getMvccVersion);
+			attributeGetterFunctions.put(
+				"ctCollectionId", CPOptionCategory::getCtCollectionId);
+			attributeGetterFunctions.put("uuid", CPOptionCategory::getUuid);
+			attributeGetterFunctions.put(
+				"CPOptionCategoryId", CPOptionCategory::getCPOptionCategoryId);
+			attributeGetterFunctions.put(
+				"companyId", CPOptionCategory::getCompanyId);
+			attributeGetterFunctions.put("userId", CPOptionCategory::getUserId);
+			attributeGetterFunctions.put(
+				"userName", CPOptionCategory::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", CPOptionCategory::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", CPOptionCategory::getModifiedDate);
+			attributeGetterFunctions.put("title", CPOptionCategory::getTitle);
+			attributeGetterFunctions.put(
+				"description", CPOptionCategory::getDescription);
+			attributeGetterFunctions.put(
+				"priority", CPOptionCategory::getPriority);
+			attributeGetterFunctions.put("key", CPOptionCategory::getKey);
+			attributeGetterFunctions.put(
+				"lastPublishDate", CPOptionCategory::getLastPublishDate);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<CPOptionCategory, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<CPOptionCategory, ?>>
+				attributeSetterBiConsumers =
+					new LinkedHashMap
+						<String, BiConsumer<CPOptionCategory, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<CPOptionCategory, Long>)
+					CPOptionCategory::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"ctCollectionId",
+				(BiConsumer<CPOptionCategory, Long>)
+					CPOptionCategory::setCtCollectionId);
+			attributeSetterBiConsumers.put(
+				"uuid",
+				(BiConsumer<CPOptionCategory, String>)
+					CPOptionCategory::setUuid);
+			attributeSetterBiConsumers.put(
+				"CPOptionCategoryId",
+				(BiConsumer<CPOptionCategory, Long>)
+					CPOptionCategory::setCPOptionCategoryId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<CPOptionCategory, Long>)
+					CPOptionCategory::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<CPOptionCategory, Long>)
+					CPOptionCategory::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<CPOptionCategory, String>)
+					CPOptionCategory::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<CPOptionCategory, Date>)
+					CPOptionCategory::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<CPOptionCategory, Date>)
+					CPOptionCategory::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"title",
+				(BiConsumer<CPOptionCategory, String>)
+					CPOptionCategory::setTitle);
+			attributeSetterBiConsumers.put(
+				"description",
+				(BiConsumer<CPOptionCategory, String>)
+					CPOptionCategory::setDescription);
+			attributeSetterBiConsumers.put(
+				"priority",
+				(BiConsumer<CPOptionCategory, Double>)
+					CPOptionCategory::setPriority);
+			attributeSetterBiConsumers.put(
+				"key",
+				(BiConsumer<CPOptionCategory, String>)CPOptionCategory::setKey);
+			attributeSetterBiConsumers.put(
+				"lastPublishDate",
+				(BiConsumer<CPOptionCategory, Date>)
+					CPOptionCategory::setLastPublishDate);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -1090,7 +1104,7 @@ public class CPOptionCategoryModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -1099,7 +1113,7 @@ public class CPOptionCategoryModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -1280,7 +1294,8 @@ public class CPOptionCategoryModelImpl
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
 
 		Function<CPOptionCategory, Object> function =
-			_attributeGetterFunctions.get(columnName);
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(

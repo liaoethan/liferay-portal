@@ -70,7 +70,7 @@ public class OrgLaborModelImpl
 	public static final Object[][] TABLE_COLUMNS = {
 		{"mvccVersion", Types.BIGINT}, {"orgLaborId", Types.BIGINT},
 		{"companyId", Types.BIGINT}, {"organizationId", Types.BIGINT},
-		{"typeId", Types.BIGINT}, {"sunOpen", Types.INTEGER},
+		{"listTypeId", Types.BIGINT}, {"sunOpen", Types.INTEGER},
 		{"sunClose", Types.INTEGER}, {"monOpen", Types.INTEGER},
 		{"monClose", Types.INTEGER}, {"tueOpen", Types.INTEGER},
 		{"tueClose", Types.INTEGER}, {"wedOpen", Types.INTEGER},
@@ -88,7 +88,7 @@ public class OrgLaborModelImpl
 		TABLE_COLUMNS_MAP.put("orgLaborId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("organizationId", Types.BIGINT);
-		TABLE_COLUMNS_MAP.put("typeId", Types.BIGINT);
+		TABLE_COLUMNS_MAP.put("listTypeId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("sunOpen", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("sunClose", Types.INTEGER);
 		TABLE_COLUMNS_MAP.put("monOpen", Types.INTEGER);
@@ -106,15 +106,15 @@ public class OrgLaborModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table OrgLabor (mvccVersion LONG default 0 not null,orgLaborId LONG not null primary key,companyId LONG,organizationId LONG,typeId LONG,sunOpen INTEGER,sunClose INTEGER,monOpen INTEGER,monClose INTEGER,tueOpen INTEGER,tueClose INTEGER,wedOpen INTEGER,wedClose INTEGER,thuOpen INTEGER,thuClose INTEGER,friOpen INTEGER,friClose INTEGER,satOpen INTEGER,satClose INTEGER)";
+		"create table OrgLabor (mvccVersion LONG default 0 not null,orgLaborId LONG not null primary key,companyId LONG,organizationId LONG,listTypeId LONG,sunOpen INTEGER,sunClose INTEGER,monOpen INTEGER,monClose INTEGER,tueOpen INTEGER,tueClose INTEGER,wedOpen INTEGER,wedClose INTEGER,thuOpen INTEGER,thuClose INTEGER,friOpen INTEGER,friClose INTEGER,satOpen INTEGER,satClose INTEGER)";
 
 	public static final String TABLE_SQL_DROP = "drop table OrgLabor";
 
 	public static final String ORDER_BY_JPQL =
-		" ORDER BY orgLabor.organizationId ASC, orgLabor.typeId ASC";
+		" ORDER BY orgLabor.organizationId ASC, orgLabor.listTypeId ASC";
 
 	public static final String ORDER_BY_SQL =
-		" ORDER BY OrgLabor.organizationId ASC, OrgLabor.typeId ASC";
+		" ORDER BY OrgLabor.organizationId ASC, OrgLabor.listTypeId ASC";
 
 	public static final String DATA_SOURCE = "liferayDataSource";
 
@@ -151,7 +151,7 @@ public class OrgLaborModelImpl
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long TYPEID_COLUMN_BITMASK = 2L;
+	public static final long LISTTYPEID_COLUMN_BITMASK = 2L;
 
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
 		com.liferay.portal.util.PropsUtil.get(
@@ -232,91 +232,116 @@ public class OrgLaborModelImpl
 	public Map<String, Function<OrgLabor, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<OrgLabor, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<OrgLabor, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<OrgLabor, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<OrgLabor, Object>> attributeGetterFunctions =
-			new LinkedHashMap<String, Function<OrgLabor, Object>>();
-		Map<String, BiConsumer<OrgLabor, ?>> attributeSetterBiConsumers =
-			new LinkedHashMap<String, BiConsumer<OrgLabor, ?>>();
+		private static final Map<String, Function<OrgLabor, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put("mvccVersion", OrgLabor::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<OrgLabor, Long>)OrgLabor::setMvccVersion);
-		attributeGetterFunctions.put("orgLaborId", OrgLabor::getOrgLaborId);
-		attributeSetterBiConsumers.put(
-			"orgLaborId", (BiConsumer<OrgLabor, Long>)OrgLabor::setOrgLaborId);
-		attributeGetterFunctions.put("companyId", OrgLabor::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId", (BiConsumer<OrgLabor, Long>)OrgLabor::setCompanyId);
-		attributeGetterFunctions.put(
-			"organizationId", OrgLabor::getOrganizationId);
-		attributeSetterBiConsumers.put(
-			"organizationId",
-			(BiConsumer<OrgLabor, Long>)OrgLabor::setOrganizationId);
-		attributeGetterFunctions.put("typeId", OrgLabor::getTypeId);
-		attributeSetterBiConsumers.put(
-			"typeId", (BiConsumer<OrgLabor, Long>)OrgLabor::setTypeId);
-		attributeGetterFunctions.put("sunOpen", OrgLabor::getSunOpen);
-		attributeSetterBiConsumers.put(
-			"sunOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setSunOpen);
-		attributeGetterFunctions.put("sunClose", OrgLabor::getSunClose);
-		attributeSetterBiConsumers.put(
-			"sunClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setSunClose);
-		attributeGetterFunctions.put("monOpen", OrgLabor::getMonOpen);
-		attributeSetterBiConsumers.put(
-			"monOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setMonOpen);
-		attributeGetterFunctions.put("monClose", OrgLabor::getMonClose);
-		attributeSetterBiConsumers.put(
-			"monClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setMonClose);
-		attributeGetterFunctions.put("tueOpen", OrgLabor::getTueOpen);
-		attributeSetterBiConsumers.put(
-			"tueOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setTueOpen);
-		attributeGetterFunctions.put("tueClose", OrgLabor::getTueClose);
-		attributeSetterBiConsumers.put(
-			"tueClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setTueClose);
-		attributeGetterFunctions.put("wedOpen", OrgLabor::getWedOpen);
-		attributeSetterBiConsumers.put(
-			"wedOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setWedOpen);
-		attributeGetterFunctions.put("wedClose", OrgLabor::getWedClose);
-		attributeSetterBiConsumers.put(
-			"wedClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setWedClose);
-		attributeGetterFunctions.put("thuOpen", OrgLabor::getThuOpen);
-		attributeSetterBiConsumers.put(
-			"thuOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setThuOpen);
-		attributeGetterFunctions.put("thuClose", OrgLabor::getThuClose);
-		attributeSetterBiConsumers.put(
-			"thuClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setThuClose);
-		attributeGetterFunctions.put("friOpen", OrgLabor::getFriOpen);
-		attributeSetterBiConsumers.put(
-			"friOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setFriOpen);
-		attributeGetterFunctions.put("friClose", OrgLabor::getFriClose);
-		attributeSetterBiConsumers.put(
-			"friClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setFriClose);
-		attributeGetterFunctions.put("satOpen", OrgLabor::getSatOpen);
-		attributeSetterBiConsumers.put(
-			"satOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setSatOpen);
-		attributeGetterFunctions.put("satClose", OrgLabor::getSatClose);
-		attributeSetterBiConsumers.put(
-			"satClose", (BiConsumer<OrgLabor, Integer>)OrgLabor::setSatClose);
+		static {
+			Map<String, Function<OrgLabor, Object>> attributeGetterFunctions =
+				new LinkedHashMap<String, Function<OrgLabor, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", OrgLabor::getMvccVersion);
+			attributeGetterFunctions.put("orgLaborId", OrgLabor::getOrgLaborId);
+			attributeGetterFunctions.put("companyId", OrgLabor::getCompanyId);
+			attributeGetterFunctions.put(
+				"organizationId", OrgLabor::getOrganizationId);
+			attributeGetterFunctions.put("listTypeId", OrgLabor::getListTypeId);
+			attributeGetterFunctions.put("sunOpen", OrgLabor::getSunOpen);
+			attributeGetterFunctions.put("sunClose", OrgLabor::getSunClose);
+			attributeGetterFunctions.put("monOpen", OrgLabor::getMonOpen);
+			attributeGetterFunctions.put("monClose", OrgLabor::getMonClose);
+			attributeGetterFunctions.put("tueOpen", OrgLabor::getTueOpen);
+			attributeGetterFunctions.put("tueClose", OrgLabor::getTueClose);
+			attributeGetterFunctions.put("wedOpen", OrgLabor::getWedOpen);
+			attributeGetterFunctions.put("wedClose", OrgLabor::getWedClose);
+			attributeGetterFunctions.put("thuOpen", OrgLabor::getThuOpen);
+			attributeGetterFunctions.put("thuClose", OrgLabor::getThuClose);
+			attributeGetterFunctions.put("friOpen", OrgLabor::getFriOpen);
+			attributeGetterFunctions.put("friClose", OrgLabor::getFriClose);
+			attributeGetterFunctions.put("satOpen", OrgLabor::getSatOpen);
+			attributeGetterFunctions.put("satClose", OrgLabor::getSatClose);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<OrgLabor, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<OrgLabor, ?>> attributeSetterBiConsumers =
+				new LinkedHashMap<String, BiConsumer<OrgLabor, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<OrgLabor, Long>)OrgLabor::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"orgLaborId",
+				(BiConsumer<OrgLabor, Long>)OrgLabor::setOrgLaborId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<OrgLabor, Long>)OrgLabor::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"organizationId",
+				(BiConsumer<OrgLabor, Long>)OrgLabor::setOrganizationId);
+			attributeSetterBiConsumers.put(
+				"listTypeId",
+				(BiConsumer<OrgLabor, Long>)OrgLabor::setListTypeId);
+			attributeSetterBiConsumers.put(
+				"sunOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setSunOpen);
+			attributeSetterBiConsumers.put(
+				"sunClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setSunClose);
+			attributeSetterBiConsumers.put(
+				"monOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setMonOpen);
+			attributeSetterBiConsumers.put(
+				"monClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setMonClose);
+			attributeSetterBiConsumers.put(
+				"tueOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setTueOpen);
+			attributeSetterBiConsumers.put(
+				"tueClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setTueClose);
+			attributeSetterBiConsumers.put(
+				"wedOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setWedOpen);
+			attributeSetterBiConsumers.put(
+				"wedClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setWedClose);
+			attributeSetterBiConsumers.put(
+				"thuOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setThuOpen);
+			attributeSetterBiConsumers.put(
+				"thuClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setThuClose);
+			attributeSetterBiConsumers.put(
+				"friOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setFriOpen);
+			attributeSetterBiConsumers.put(
+				"friClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setFriClose);
+			attributeSetterBiConsumers.put(
+				"satOpen", (BiConsumer<OrgLabor, Integer>)OrgLabor::setSatOpen);
+			attributeSetterBiConsumers.put(
+				"satClose",
+				(BiConsumer<OrgLabor, Integer>)OrgLabor::setSatClose);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -391,17 +416,17 @@ public class OrgLaborModelImpl
 
 	@JSON
 	@Override
-	public long getTypeId() {
-		return _typeId;
+	public long getListTypeId() {
+		return _listTypeId;
 	}
 
 	@Override
-	public void setTypeId(long typeId) {
+	public void setListTypeId(long listTypeId) {
 		if (_columnOriginalValues == Collections.EMPTY_MAP) {
 			_setColumnOriginalValues();
 		}
 
-		_typeId = typeId;
+		_listTypeId = listTypeId;
 	}
 
 	@JSON
@@ -674,7 +699,7 @@ public class OrgLaborModelImpl
 		orgLaborImpl.setOrgLaborId(getOrgLaborId());
 		orgLaborImpl.setCompanyId(getCompanyId());
 		orgLaborImpl.setOrganizationId(getOrganizationId());
-		orgLaborImpl.setTypeId(getTypeId());
+		orgLaborImpl.setListTypeId(getListTypeId());
 		orgLaborImpl.setSunOpen(getSunOpen());
 		orgLaborImpl.setSunClose(getSunClose());
 		orgLaborImpl.setMonOpen(getMonOpen());
@@ -707,7 +732,8 @@ public class OrgLaborModelImpl
 			this.<Long>getColumnOriginalValue("companyId"));
 		orgLaborImpl.setOrganizationId(
 			this.<Long>getColumnOriginalValue("organizationId"));
-		orgLaborImpl.setTypeId(this.<Long>getColumnOriginalValue("typeId"));
+		orgLaborImpl.setListTypeId(
+			this.<Long>getColumnOriginalValue("listTypeId"));
 		orgLaborImpl.setSunOpen(
 			this.<Integer>getColumnOriginalValue("sunOpen"));
 		orgLaborImpl.setSunClose(
@@ -758,10 +784,10 @@ public class OrgLaborModelImpl
 			return value;
 		}
 
-		if (getTypeId() < orgLabor.getTypeId()) {
+		if (getListTypeId() < orgLabor.getListTypeId()) {
 			value = -1;
 		}
-		else if (getTypeId() > orgLabor.getTypeId()) {
+		else if (getListTypeId() > orgLabor.getListTypeId()) {
 			value = 1;
 		}
 		else {
@@ -839,7 +865,7 @@ public class OrgLaborModelImpl
 
 		orgLaborCacheModel.organizationId = getOrganizationId();
 
-		orgLaborCacheModel.typeId = getTypeId();
+		orgLaborCacheModel.listTypeId = getListTypeId();
 
 		orgLaborCacheModel.sunOpen = getSunOpen();
 
@@ -934,7 +960,7 @@ public class OrgLaborModelImpl
 	private long _orgLaborId;
 	private long _companyId;
 	private long _organizationId;
-	private long _typeId;
+	private long _listTypeId;
 	private int _sunOpen;
 	private int _sunClose;
 	private int _monOpen;
@@ -951,8 +977,9 @@ public class OrgLaborModelImpl
 	private int _satClose;
 
 	public <T> T getColumnValue(String columnName) {
-		Function<OrgLabor, Object> function = _attributeGetterFunctions.get(
-			columnName);
+		Function<OrgLabor, Object> function =
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(
@@ -981,7 +1008,7 @@ public class OrgLaborModelImpl
 		_columnOriginalValues.put("orgLaborId", _orgLaborId);
 		_columnOriginalValues.put("companyId", _companyId);
 		_columnOriginalValues.put("organizationId", _organizationId);
-		_columnOriginalValues.put("typeId", _typeId);
+		_columnOriginalValues.put("listTypeId", _listTypeId);
 		_columnOriginalValues.put("sunOpen", _sunOpen);
 		_columnOriginalValues.put("sunClose", _sunClose);
 		_columnOriginalValues.put("monOpen", _monOpen);
@@ -1017,7 +1044,7 @@ public class OrgLaborModelImpl
 
 		columnBitmasks.put("organizationId", 8L);
 
-		columnBitmasks.put("typeId", 16L);
+		columnBitmasks.put("listTypeId", 16L);
 
 		columnBitmasks.put("sunOpen", 32L);
 

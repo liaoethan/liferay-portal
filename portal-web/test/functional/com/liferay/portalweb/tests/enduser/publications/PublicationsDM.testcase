@@ -3,7 +3,7 @@ definition {
 
 	property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
 	property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
-	property osgi.module.configurations = "enabled=B&quot;true&quot;";
+	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Publications";
@@ -17,7 +17,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -25,7 +25,7 @@ definition {
 		}
 	}
 
-	@priority = "4"
+	@priority = 4
 	test CheckoutAndCheckinDocumentInPublication {
 		property test.assert.warning.exceptions = "true";
 
@@ -60,10 +60,6 @@ definition {
 			key_dmDocumentTitle = "Check in as major version",
 			locator1 = "DocumentsAndMedia#ICON_DOCUMENT_ICON_LOCKED");
 
-		// Workaround LPS-160420
-
-		LexiconEntry.changeDisplayStyle(displayStyle = "list");
-
 		DMDocument.checkDocumentCheckboxCP(dmDocumentTitle = "DM Document Title");
 
 		DMDocument.viewDocumentVersionNumberCmdPG(dmDocumentVersionNumber = "2.0");
@@ -74,17 +70,15 @@ definition {
 
 		DMNavigator.openDocumentsAndMediaAdmin(siteURLKey = "site-name");
 
-		// Workaround LPS-160420
-
-		LexiconEntry.changeDisplayStyle(displayStyle = "list");
-
 		DMDocument.checkDocumentCheckboxCP(dmDocumentTitle = "DM Document Title");
 
 		DMDocument.viewDocumentVersionNumberCmdPG(dmDocumentVersionNumber = "2.0");
 	}
 
-	@priority = "4"
+	@priority = 4
 	test DeleteDMFolderWithMultipleFiles {
+		property test.assert.warning.exceptions = "true";
+
 		JSONGroup.addGroup(groupName = "Site Name");
 
 		JSONFolder.addFolder(
@@ -142,7 +136,7 @@ definition {
 			changeUser = "Test Test");
 	}
 
-	@priority = "4"
+	@priority = 4
 	test PublishDocumentFolderWithEditedDocument {
 		JSONGroup.addGroup(groupName = "Site Name");
 
@@ -209,7 +203,7 @@ definition {
 		DMDocument.viewCP(dmDocumentTitle = "DM Document Title Edit");
 	}
 
-	@priority = "4"
+	@priority = 4
 	test PublishDocumentWithNewDocumentType {
 		JSONPublications.addPublication(publicationName = "Publication Name");
 
@@ -271,8 +265,9 @@ definition {
 	}
 
 	@description = "Assert Shortcut can add within Publications and publish to production."
-	@priority = "4"
+	@priority = 4
 	test PublishWithShortcut {
+		property app.server.types = "tomcat";
 		property test.name.skip.portal.instance = "PublicationsDM#PublishWithShortcut";
 
 		JSONPublications.addPublication(publicationName = "Publication Name");
@@ -331,7 +326,7 @@ definition {
 		DMDocument.viewCP(dmDocumentTitle = "Document_1.jpg");
 	}
 
-	@priority = "4"
+	@priority = 4
 	test ResolveConflictingPublicationsByDiscarding {
 
 		// Workaround LPS-148148
@@ -396,7 +391,7 @@ definition {
 			columnName = "Title",
 			columnValueInProduction = "DM Document 2 Title Edit",
 			columnValueInPublication = "DM Document Title Edit",
-			diffRemovedValue = "2",
+			diffRemovedValue = 2,
 			modificationConflict = "true",
 			publicationName = "Publication Name");
 
@@ -415,7 +410,7 @@ definition {
 			dmDocumentVersionNumber = "1.1");
 	}
 
-	@priority = "4"
+	@priority = 4
 	test ViewPublicationsPreviewForAddedDocuments {
 		JSONPublications.addPublication(publicationName = "Publication Name");
 

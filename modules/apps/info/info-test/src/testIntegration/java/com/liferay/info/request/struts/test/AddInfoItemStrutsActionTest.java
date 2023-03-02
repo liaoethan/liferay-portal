@@ -21,14 +21,13 @@ import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.object.util.LocalizedMapUtil;
-import com.liferay.object.util.ObjectFieldUtil;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.portal.events.EventsProcessorUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -59,6 +58,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upload.UploadPortletRequestImpl;
 import com.liferay.portal.upload.UploadServletRequestImpl;
 import com.liferay.portal.util.PropsValues;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.io.Serializable;
@@ -103,7 +103,7 @@ public class AddInfoItemStrutsActionTest {
 
 		_classNameId = String.valueOf(
 			_portal.getClassNameId(
-				"com.liferay.object.model.ObjectDefinition#" +
+				ObjectDefinition.class.getName() + "#" +
 					_objectDefinition.getObjectDefinitionId()));
 
 		_layout = _addLayout();
@@ -142,15 +142,15 @@ public class AddInfoItemStrutsActionTest {
 	@Test
 	public void testAddInfoItemMaxValues() throws Exception {
 		_testAddInfoItem(
-			"99999999999999.9999999999999999", "9999999999", "999999999",
+			"99999999999999.9999999999999999", "9999999999999998", "999999999",
 			"9007199254740991", RandomTestUtil.randomString());
 	}
 
 	@Test
 	public void testAddInfoItemMinValues() throws Exception {
 		_testAddInfoItem(
-			"-99999999999999.9999999999999999", "-9999999999", "-999999999",
-			"-9007199254740991", RandomTestUtil.randomString());
+			"-99999999999999.9999999999999999", "-9999999999999998",
+			"-999999999", "-9007199254740991", RandomTestUtil.randomString());
 	}
 
 	@Test
@@ -226,7 +226,7 @@ public class AddInfoItemStrutsActionTest {
 
 		ObjectDefinition objectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
-				_user.getUserId(),
+				_user.getUserId(), false,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"A" + RandomTestUtil.randomString(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -234,7 +234,8 @@ public class AddInfoItemStrutsActionTest {
 				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT, objectFields);
 
 		ObjectField objectField = _objectFieldLocalService.addCustomObjectField(
-			_user.getUserId(), 0, objectDefinition.getObjectDefinitionId(),
+			null, _user.getUserId(), 0,
+			objectDefinition.getObjectDefinitionId(),
 			ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 			ObjectFieldConstants.DB_TYPE_STRING, null, true, true, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),

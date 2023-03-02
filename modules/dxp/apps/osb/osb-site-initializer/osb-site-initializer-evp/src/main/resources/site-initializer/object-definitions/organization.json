@@ -1,6 +1,6 @@
 {
 	"accountEntryRestricted": false,
-	"accountEntryRestrictedObjectFieldId": 0,
+	"accountEntryRestrictedObjectFieldName": "",
 	"actions": {
 		"delete": {
 		},
@@ -13,7 +13,8 @@
 		"update": {
 		}
 	},
-	"active": false,
+	"active": true,
+	"externalReferenceCode": "OBJECT-EVP-ORGANIZATION",
 	"label": {
 		"en_US": "EVP Organization"
 	},
@@ -176,6 +177,24 @@
 			"state": false,
 			"system": true,
 			"type": "String"
+		},
+		{
+			"DBType": "Integer",
+			"businessType": "Integer",
+			"defaultValue": "",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "ID Number"
+			},
+			"name": "idNumber",
+			"objectFieldSettings": [
+			],
+			"required": false,
+			"state": false,
+			"system": false,
+			"type": "Integer"
 		},
 		{
 			"DBType": "Long",
@@ -371,6 +390,76 @@
 			"indexedAsKeyword": false,
 			"indexedLanguageId": "en_US",
 			"label": {
+				"en_US": "Account Owner Name"
+			},
+			"name": "accountOwnerName",
+			"objectFieldSettings": [
+				{
+					"name": "showCounter",
+					"value": "false"
+				}
+			],
+			"required": false,
+			"state": false,
+			"system": false,
+			"type": "String"
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"defaultValue": "",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "en_US",
+			"label": {
+				"en_US": "Banking Info"
+			},
+			"name": "bankingInfo",
+			"objectFieldSettings": [
+				{
+					"name": "showCounter",
+					"value": "true"
+				},
+				{
+					"name": "maxLength",
+					"value": "200"
+				}
+			],
+			"required": false,
+			"state": false,
+			"system": false,
+			"type": "String"
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"defaultValue": "",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "en_US",
+			"label": {
+				"en_US": "Tax Id"
+			},
+			"name": "taxId",
+			"objectFieldSettings": [
+				{
+					"name": "showCounter",
+					"value": "false"
+				}
+			],
+			"required": false,
+			"state": false,
+			"system": false,
+			"type": "String"
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"defaultValue": "",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "en_US",
+			"label": {
 				"en_US": "Country"
 			},
 			"name": "country",
@@ -384,13 +473,26 @@
 			"state": false,
 			"system": false,
 			"type": "String"
+		},
+		{
+			"DBType": "String",
+			"businessType": "Picklist",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"label": {
+				"en_US": "Organization Status"
+			},
+			"listTypeDefinitionId": "[$LIST_TYPE_DEFINITION_ID:Organization: Organization Status$]",
+			"name": "organizationStatus",
+			"required": false,
+			"type": "String"
 		}
 	],
 	"objectLayouts": [
 	],
 	"objectViews": [
 	],
-	"panelCategoryKey": "",
+	"panelCategoryKey": "control_panel.object",
 	"parameterRequired": false,
 	"pluralLabel": {
 		"en_US": "EVP Organization"

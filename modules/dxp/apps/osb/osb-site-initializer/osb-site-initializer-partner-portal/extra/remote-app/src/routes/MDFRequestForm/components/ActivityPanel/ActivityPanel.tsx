@@ -18,22 +18,29 @@ import getIntlNumberFormat from '../../../../common/utils/getIntlNumberFormat';
 
 interface IProps {
 	activity: MDFRequestActivity;
-	campaignName: string;
 	children?: React.ReactNode;
 	detail?: boolean;
+	hasErrors?: boolean;
+	onEdit?: () => void;
 	onRemove?: () => void;
+	overallCampaignName: string;
 }
 
 const ActivityPanel = ({
 	activity,
-	campaignName,
 	children,
 	detail,
+	hasErrors,
+	onEdit,
 	onRemove,
+	overallCampaignName,
 }: IProps) => {
 	return (
 		<ClayPanel
-			className="border-brand-primary-lighten-4"
+			className={classNames({
+				'border-brand-primary-lighten-4': !hasErrors,
+				'border-danger': hasErrors,
+			})}
 			collapsable={detail}
 			displayTitle={
 				<ClayPanel.Title
@@ -43,22 +50,35 @@ const ActivityPanel = ({
 					})}
 				>
 					<div className="d-flex justify-content-between">
-						<div>
+						<div className="text-truncate">
 							<div className="mb-1 text-neutral-7 text-paragraph-sm">
-								{campaignName}
+								{overallCampaignName}
 							</div>
 
-							<h5 className="mb-1">{activity.name}</h5>
+							<h5 className="mb-1 text-truncate">
+								{activity.name}
+							</h5>
 						</div>
 
-						{!detail && (
-							<ClayButtonWithIcon
-								displayType={null}
-								onClick={onRemove}
-								small
-								symbol="trash"
-							/>
-						)}
+						<div className="ml-5">
+							{!detail && (
+								<div className="d-flex">
+									<ClayButtonWithIcon
+										displayType={null}
+										onClick={onEdit}
+										small
+										symbol="pencil"
+									/>
+
+									<ClayButtonWithIcon
+										displayType={null}
+										onClick={onRemove}
+										small
+										symbol="trash"
+									/>
+								</div>
+							)}
+						</div>
 					</div>
 
 					<div className="align-items-center d-flex justify-content-between">

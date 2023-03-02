@@ -41,7 +41,9 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.vulcan.jaxrs.exception.mapper.BaseExceptionMapper;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.Response;
 
@@ -253,6 +255,14 @@ public class RegionResourceTest extends BaseRegionResourceTestCase {
 	}
 
 	@Override
+	protected Map<String, Map<String, String>>
+			testGetCountryRegionsPage_getExpectedActions(Long countryId)
+		throws Exception {
+
+		return Collections.emptyMap();
+	}
+
+	@Override
 	protected Long testGetCountryRegionsPage_getIrrelevantCountryId()
 		throws Exception {
 
@@ -332,7 +342,7 @@ public class RegionResourceTest extends BaseRegionResourceTestCase {
 	protected Region testGraphQLRegion_addRegion() throws Exception {
 		Region region = randomRegion();
 
-		region.setPosition(Double.MAX_VALUE);
+		region.setPosition((double)Integer.MAX_VALUE);
 
 		return _addRegion(region);
 	}

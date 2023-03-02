@@ -55,7 +55,6 @@ import com.liferay.trash.model.TrashEntry;
 import com.liferay.trash.service.TrashEntryLocalService;
 import com.liferay.wiki.configuration.WikiGroupServiceConfiguration;
 import com.liferay.wiki.constants.WikiConstants;
-import com.liferay.wiki.exception.DuplicateNodeExternalReferenceCodeException;
 import com.liferay.wiki.exception.DuplicateNodeNameException;
 import com.liferay.wiki.exception.NodeNameException;
 import com.liferay.wiki.importer.WikiImporter;
@@ -102,8 +101,8 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 	}
 
 	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
-	 * #addNode(String, long, String, String, ServiceContext)}
+	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #addNode(String,
+	 *             long, String, String, ServiceContext)}
 	 */
 	@Deprecated
 	@Indexable(type = IndexableType.REINDEX)
@@ -132,8 +131,6 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		_validate(groupId, name);
 
 		long nodeId = counterLocalService.increment();
-
-		_validateExternalReferenceCode(externalReferenceCode, groupId);
 
 		WikiNode node = wikiNodePersistence.create(nodeId);
 
@@ -616,7 +613,7 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 		List<WikiPage> pages = _wikiPagePersistence.findByN_H(nodeId, true);
 
 		for (WikiPage page : pages) {
-			if (!page.isInTrashImplicitly()) {
+			if (!_trashHelper.isInTrashImplicitly(page)) {
 				continue;
 			}
 
@@ -648,25 +645,6 @@ public class WikiNodeLocalServiceImpl extends WikiNodeLocalServiceBaseImpl {
 
 	private void _validate(long groupId, String name) throws PortalException {
 		_validate(0, groupId, name);
-	}
-
-	private void _validateExternalReferenceCode(
-			String externalReferenceCode, long groupId)
-		throws PortalException {
-
-		if (Validator.isNull(externalReferenceCode)) {
-			return;
-		}
-
-		WikiNode wikiNode = wikiNodePersistence.fetchByG_ERC(
-			groupId, externalReferenceCode);
-
-		if (wikiNode != null) {
-			throw new DuplicateNodeExternalReferenceCodeException(
-				StringBundler.concat(
-					"Duplicate node external reference code ",
-					externalReferenceCode, " in group ", groupId));
-		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

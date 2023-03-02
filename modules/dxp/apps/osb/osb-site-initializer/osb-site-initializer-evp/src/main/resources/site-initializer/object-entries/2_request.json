@@ -5,15 +5,14 @@
 			"endDate": "2022-09-30T00:00:00Z",
 			"fullName": "John Doe",
 			"grantAmount": 0,
-			"grantRequestType": "noGrant",
 			"liferayBranch": "liferayLatam",
 			"managerEmailAddress": "manager@liferay.com",
 			"phoneNumber": "888888888",
-			"r_organization_c_evpOrganizationId": "[$EVPOrganization#EVPORG-02$]",
+			"r_organization_c_evpOrganizationId": "[$EVPOrganization#EVPORG-01$]",
 			"requestBehalf": "displacedDistressed",
 			"requestDescription": "Request Description",
 			"requestPurposes": "disasterRelief",
-			"requestStatus": "pendingEVPApproval",
+			"requestStatus": "awaitingPaymentConfirmation",
 			"requestType": "service",
 			"startDate": "2022-09-29T00:00:00Z",
 			"totalHoursRequested": 11
@@ -30,7 +29,7 @@
 			"requestBehalf": "displacedDistressed",
 			"requestDescription": "Request Description",
 			"requestPurposes": "disasterRelief",
-			"requestStatus": "pendingEVPApproval",
+			"requestStatus": "awaitingPaymentConfirmation",
 			"requestType": "grant",
 			"totalHoursRequested": 0
 		},
@@ -46,7 +45,7 @@
 			"requestBehalf": "globalLocalPoor",
 			"requestDescription": "Grant Request Description",
 			"requestPurposes": "basicHealth",
-			"requestStatus": "approved",
+			"requestStatus": "closed",
 			"requestType": "grant",
 			"totalHoursRequested": 0
 		}

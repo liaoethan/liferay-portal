@@ -81,6 +81,7 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.Constants;
@@ -115,7 +116,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.discount.model.CommerceDiscount",
 	service = AopService.class
 )
@@ -295,9 +295,6 @@ public class CommerceDiscountLocalServiceImpl
 			externalReferenceCode = null;
 		}
 
-		_validateExternalReferenceCode(
-			externalReferenceCode, serviceContext.getCompanyId());
-
 		// Commerce discount
 
 		User user = _userLocalService.getUser(userId);
@@ -390,6 +387,14 @@ public class CommerceDiscountLocalServiceImpl
 
 		// Workflow
 
+		if (_isWorkflowEnabled(
+				serviceContext.getCompanyId(), serviceContext.getScopeGroupId(),
+				CommerceDiscount.class.getName())) {
+
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
 		return _startWorkflowInstance(
 			user.getUserId(), commerceDiscount, serviceContext);
 	}
@@ -464,8 +469,8 @@ public class CommerceDiscountLocalServiceImpl
 
 		if (!Validator.isBlank(externalReferenceCode)) {
 			CommerceDiscount commerceDiscount =
-				commerceDiscountPersistence.fetchByC_ERC(
-					serviceContext.getCompanyId(), externalReferenceCode);
+				commerceDiscountPersistence.fetchByERC_C(
+					externalReferenceCode, serviceContext.getCompanyId());
 
 			if (commerceDiscount != null) {
 				return commerceDiscountLocalService.updateCommerceDiscount(
@@ -538,8 +543,8 @@ public class CommerceDiscountLocalServiceImpl
 
 		if (!Validator.isBlank(externalReferenceCode)) {
 			CommerceDiscount commerceDiscount =
-				commerceDiscountPersistence.fetchByC_ERC(
-					serviceContext.getCompanyId(), externalReferenceCode);
+				commerceDiscountPersistence.fetchByERC_C(
+					externalReferenceCode, serviceContext.getCompanyId());
 
 			if (commerceDiscount != null) {
 				return commerceDiscountLocalService.updateCommerceDiscount(
@@ -657,8 +662,8 @@ public class CommerceDiscountLocalServiceImpl
 			return null;
 		}
 
-		return commerceDiscountPersistence.fetchByC_ERC(
-			companyId, externalReferenceCode);
+		return commerceDiscountPersistence.fetchByERC_C(
+			externalReferenceCode, companyId);
 	}
 
 	@Override
@@ -669,8 +674,8 @@ public class CommerceDiscountLocalServiceImpl
 			return null;
 		}
 
-		return commerceDiscountPersistence.fetchByC_ERC(
-			companyId, externalReferenceCode);
+		return commerceDiscountPersistence.fetchByERC_C(
+			externalReferenceCode, companyId);
 	}
 
 	@Override
@@ -1838,6 +1843,18 @@ public class CommerceDiscountLocalServiceImpl
 			predicate.and(_toTargetPredicate(cpDefinitionId, cpInstanceId)));
 	}
 
+	private boolean _isWorkflowEnabled(
+		long companyId, long groupId, String className) {
+
+		if (_workflowDefinitionLinkLocalService.hasWorkflowDefinitionLink(
+				companyId, groupId, className, 0)) {
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private CommerceDiscount _startWorkflowInstance(
 			long userId, CommerceDiscount commerceDiscount,
 			ServiceContext serviceContext)
@@ -1988,25 +2005,6 @@ public class CommerceDiscountLocalServiceImpl
 		}
 	}
 
-	private void _validateExternalReferenceCode(
-			String externalReferenceCode, long companyId)
-		throws PortalException {
-
-		if (Validator.isNull(externalReferenceCode)) {
-			return;
-		}
-
-		CommerceDiscount commerceDiscount =
-			commerceDiscountPersistence.fetchByC_ERC(
-				companyId, externalReferenceCode);
-
-		if (commerceDiscount != null) {
-			throw new DuplicateCommerceDiscountException(
-				"There is another commerce discount with external reference " +
-					"code " + externalReferenceCode);
-		}
-	}
-
 	private static final String[] _SELECTED_FIELD_NAMES = {
 		Field.ENTRY_CLASS_PK, Field.COMPANY_ID, Field.UID
 	};
@@ -2059,6 +2057,10 @@ public class CommerceDiscountLocalServiceImpl
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 	@Reference
 	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;

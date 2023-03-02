@@ -24,6 +24,11 @@ import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.FragmentEntryProcessor;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
+import com.liferay.info.exception.NoSuchInfoItemException;
+import com.liferay.info.item.InfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.petra.io.DummyWriter;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
@@ -51,7 +56,6 @@ import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
@@ -64,7 +68,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true, property = "fragment.entry.processor.priority:Integer=1",
+	property = "fragment.entry.processor.priority:Integer=1",
 	service = FragmentEntryProcessor.class
 )
 public class FreeMarkerFragmentEntryProcessor
@@ -135,11 +139,6 @@ public class FreeMarkerFragmentEntryProcessor
 				fragmentEntryLink.getEditableValues(),
 				fragmentEntryProcessorContext.getLocale());
 
-		Optional<Object> displayObjectOptional =
-			fragmentEntryProcessorContext.getDisplayObjectOptional();
-
-		Object displayObject = displayObjectOptional.orElse(null);
-
 		template.putAll(
 			HashMapBuilder.<String, Object>put(
 				"configuration", configurationValuesJSONObject
@@ -155,7 +154,10 @@ public class FreeMarkerFragmentEntryProcessor
 			).putAll(
 				_fragmentEntryConfigurationParser.getContextObjects(
 					configurationValuesJSONObject,
-					fragmentEntryLink.getConfiguration(), displayObject,
+					fragmentEntryLink.getConfiguration(),
+					_getInfoItem(
+						fragmentEntryProcessorContext.
+							getContextInfoItemReference()),
 					fragmentEntryProcessorContext.getSegmentsEntryIds())
 			).build());
 
@@ -174,7 +176,7 @@ public class FreeMarkerFragmentEntryProcessor
 				fragmentEntryInputTemplateNodeContextHelper.toInputTemplateNode(
 					fragmentEntryLink,
 					fragmentEntryProcessorContext.getHttpServletRequest(),
-					fragmentEntryProcessorContext.getInfoFormOptional(),
+					fragmentEntryProcessorContext.getInfoForm(),
 					fragmentEntryProcessorContext.getLocale()));
 		}
 
@@ -273,6 +275,31 @@ public class FreeMarkerFragmentEntryProcessor
 		}
 	}
 
+	private Object _getInfoItem(InfoItemReference infoItemReference) {
+		if (infoItemReference == null) {
+			return null;
+		}
+
+		InfoItemIdentifier infoItemIdentifier =
+			infoItemReference.getInfoItemIdentifier();
+
+		InfoItemObjectProvider<Object> infoItemObjectProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemObjectProvider.class, infoItemReference.getClassName(),
+				infoItemIdentifier.getInfoItemServiceFilter());
+
+		try {
+			return infoItemObjectProvider.getInfoItem(infoItemIdentifier);
+		}
+		catch (NoSuchInfoItemException noSuchInfoItemException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchInfoItemException);
+			}
+		}
+
+		return null;
+	}
+
 	private String _getLayoutMode(HttpServletRequest httpServletRequest) {
 		return ParamUtil.getString(
 			_portal.getOriginalServletRequest(httpServletRequest), "p_l_mode",
@@ -319,6 +346,9 @@ public class FreeMarkerFragmentEntryProcessor
 
 	@Reference
 	private FragmentEntryLinkHelper _fragmentEntryLinkHelper;
+
+	@Reference
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private ItemSelector _itemSelector;

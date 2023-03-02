@@ -16,7 +16,7 @@ import {Align} from '@clayui/drop-down';
 import classNames from 'classnames';
 import {useContext} from 'react';
 
-import {AccountContext} from '../../context/AccountContext';
+import {TestrayContext} from '../../context/TestrayContext';
 import i18n from '../../i18n';
 import {ForwardIcon} from '../../images';
 import {Liferay} from '../../services/liferay';
@@ -32,7 +32,7 @@ type SidebarProps = {
 };
 
 const SidebarFooter: React.FC<SidebarProps> = ({expanded, onClick}) => {
-	const [{myUserAccount}] = useContext(AccountContext);
+	const [{myUserAccount}] = useContext(TestrayContext);
 	const MANAGE_DROPDOWN = useSidebarActions();
 
 	const loggedUserName = myUserAccount
@@ -67,7 +67,12 @@ const SidebarFooter: React.FC<SidebarProps> = ({expanded, onClick}) => {
 								expanded ? undefined : i18n.translate('manage')
 							}
 						>
-							<div className="testray-sidebar-item">
+							<div
+								className={classNames('testray-sidebar-item', {
+									'testray-sidebar-item-expand': expanded,
+									'testray-sidebar-item-normal': !expanded,
+								})}
+							>
 								<TestrayIcons
 									className="testray-icon"
 									fill="#8b8db2"
@@ -121,6 +126,7 @@ const SidebarFooter: React.FC<SidebarProps> = ({expanded, onClick}) => {
 							<div className="testray-avatar-dropdown testray-sidebar-item">
 								<Avatar
 									displayName
+									displayTooltip={false}
 									expanded={expanded}
 									name={loggedUserName}
 									url={myUserAccount?.image}

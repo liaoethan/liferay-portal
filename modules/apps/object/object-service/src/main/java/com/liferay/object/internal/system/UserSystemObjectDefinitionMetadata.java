@@ -15,12 +15,15 @@
 package com.liferay.object.internal.system;
 
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
+import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserTable;
@@ -50,8 +53,28 @@ public class UserSystemObjectDefinitionMetadata
 	}
 
 	@Override
-	public String getJaxRsApplicationName() {
-		return "Liferay.Headless.Admin.User";
+	public BaseModel<?> getBaseModelByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return _userLocalService.getUserByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
+	@Override
+	public String getExternalReferenceCode(long primaryKey)
+		throws PortalException {
+
+		User user = _userLocalService.getUser(primaryKey);
+
+		return user.getExternalReferenceCode();
+	}
+
+	@Override
+	public JaxRsApplicationDescriptor getJaxRsApplicationDescriptor() {
+		return new JaxRsApplicationDescriptor(
+			"Liferay.Headless.Admin.User", "headless-admin-user",
+			"user-accounts", "v1.0");
 	}
 
 	@Override
@@ -90,11 +113,6 @@ public class UserSystemObjectDefinitionMetadata
 	}
 
 	@Override
-	public String getRESTContextPath() {
-		return "headless-admin-user/v1.0/user-accounts";
-	}
-
-	@Override
 	public String getScope() {
 		return ObjectDefinitionConstants.SCOPE_COMPANY;
 	}
@@ -102,6 +120,30 @@ public class UserSystemObjectDefinitionMetadata
 	@Override
 	public Table getTable() {
 		return UserTable.INSTANCE;
+	}
+
+	@Override
+	public String getTitleObjectFieldName() {
+		return "givenName";
+	}
+
+	@Override
+	public Map<String, Object> getVariables(
+		String contentType, ObjectDefinition objectDefinition,
+		boolean oldValues, JSONObject payloadJSONObject) {
+
+		Map<String, Object> variables = super.getVariables(
+			contentType, objectDefinition, oldValues, payloadJSONObject);
+
+		if (variables.containsKey("firstName")) {
+			variables.put("givenName", variables.get("firstName"));
+		}
+
+		if (variables.containsKey("middleName")) {
+			variables.put("additionalName", variables.get("middleName"));
+		}
+
+		return variables;
 	}
 
 	@Override

@@ -14,7 +14,6 @@
 
 package com.liferay.portal.search.web.internal.layout.prototype;
 
-import com.liferay.layout.page.template.util.LayoutPrototypeHelperUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
@@ -24,11 +23,13 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.LayoutPrototype;
+import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutPrototypeLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -52,7 +53,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author André de Oliveira
  * @author Lino Alves
  */
-@Component(immediate = true, service = SearchLayoutFactory.class)
+@Component(service = SearchLayoutFactory.class)
 public class SearchLayoutFactoryImpl implements SearchLayoutFactory {
 
 	@Override
@@ -69,14 +70,12 @@ public class SearchLayoutFactoryImpl implements SearchLayoutFactory {
 	}
 
 	@Override
-	public void createSearchLayoutPrototype(Company company) {
+	public Layout createSearchLayoutPrototype(Company company) {
 		long companyId = company.getCompanyId();
 
 		try {
-			createSearchLayoutPrototype(
-				companyId, userLocalService.getDefaultUserId(companyId),
-				_getSearchTitleLocalizationMap(),
-				_getSearchDescriptionLocalizationMap());
+			return createSearchLayoutPrototype(
+				companyId, userLocalService.getDefaultUserId(companyId));
 		}
 		catch (RuntimeException runtimeException) {
 			throw runtimeException;
@@ -138,30 +137,48 @@ public class SearchLayoutFactoryImpl implements SearchLayoutFactory {
 		}
 	}
 
-	protected void createSearchLayoutPrototype(
-			long companyId, long defaultUserId, Map<Locale, String> nameMap,
-			Map<Locale, String> descriptionMap)
+	protected Layout createSearchLayoutPrototype(
+			long companyId, long defaultUserId)
 		throws Exception {
 
-		String layoutTemplateId = getLayoutTemplateId();
+		for (LayoutPrototype layoutPrototype :
+				layoutPrototypeLocalService.search(
+					companyId, null, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
+					null)) {
 
-		List<LayoutPrototype> layoutPrototypes =
-			layoutPrototypeLocalService.search(
-				companyId, null, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
+			Locale defaultLocale = LocaleUtil.fromLanguageId(
+				_localization.getDefaultLanguageId(layoutPrototype.getName()));
 
-		Layout layout = LayoutPrototypeHelperUtil.addLayoutPrototype(
-			layoutPrototypeLocalService, companyId, defaultUserId, nameMap,
-			descriptionMap, layoutTemplateId, layoutPrototypes);
+			String name = LanguageResources.getMessage(
+				defaultLocale, "layout-prototype-search-title");
 
-		if (layout == null) {
-			return;
+			if ((name == null) ||
+				name.equals(layoutPrototype.getName(defaultLocale))) {
+
+				return null;
+			}
 		}
+
+		LayoutPrototype layoutPrototype =
+			layoutPrototypeLocalService.addLayoutPrototype(
+				defaultUserId, companyId, _getSearchTitleLocalizationMap(),
+				_getSearchDescriptionLocalizationMap(), true,
+				new ServiceContext());
+
+		Layout layout = layoutPrototype.getLayout();
+
+		LayoutTypePortlet layoutTypePortlet =
+			(LayoutTypePortlet)layout.getLayoutType();
+
+		layoutTypePortlet.setLayoutTemplateId(0, getLayoutTemplateId(), false);
 
 		customize(layout);
 
 		if (_log.isInfoEnabled()) {
 			_log.info("Search Page Template created");
 		}
+
+		return layout;
 	}
 
 	protected void customize(Layout layout) throws Exception {

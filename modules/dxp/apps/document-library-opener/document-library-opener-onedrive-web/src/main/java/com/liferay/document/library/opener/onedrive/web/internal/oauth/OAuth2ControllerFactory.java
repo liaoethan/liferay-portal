@@ -17,7 +17,7 @@ package com.liferay.document.library.opener.onedrive.web.internal.oauth;
 import com.liferay.document.library.opener.oauth.OAuth2State;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -36,7 +36,6 @@ import java.io.IOException;
 
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 import javax.portlet.PortletRequest;
@@ -124,6 +123,9 @@ public class OAuth2ControllerFactory {
 		OAuth2ControllerFactory.class);
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private Language _language;
 
 	@Reference
@@ -134,55 +136,6 @@ public class OAuth2ControllerFactory {
 
 	@Reference
 	private PortletURLFactory _portletURLFactory;
-
-	private static class OAuth2Result {
-
-		public OAuth2Result(JSONObject responseJSONObject) {
-			_responseJSONObject = responseJSONObject;
-
-			_portalException = null;
-			_redirectURL = null;
-		}
-
-		public OAuth2Result(PortalException portalException) {
-			_portalException = portalException;
-
-			_responseJSONObject = null;
-			_redirectURL = null;
-		}
-
-		public OAuth2Result(String redirectURL) {
-			_redirectURL = redirectURL;
-
-			_portalException = null;
-			_responseJSONObject = null;
-		}
-
-		public PortalException getPortalException() {
-			return _portalException;
-		}
-
-		public String getRedirectURL() {
-			return _redirectURL;
-		}
-
-		public JSONObject getResponseJSONObject() {
-			if (_redirectURL != null) {
-				return JSONUtil.put("redirectURL", _redirectURL);
-			}
-
-			return Optional.ofNullable(
-				_responseJSONObject
-			).orElseGet(
-				JSONFactoryUtil::createJSONObject
-			);
-		}
-
-		private final PortalException _portalException;
-		private final String _redirectURL;
-		private final JSONObject _responseJSONObject;
-
-	}
 
 	private class JSONOAuth2Controller implements OAuth2Controller {
 
@@ -230,6 +183,55 @@ public class OAuth2ControllerFactory {
 
 	}
 
+	private class OAuth2Result {
+
+		public OAuth2Result(JSONObject responseJSONObject) {
+			_responseJSONObject = responseJSONObject;
+
+			_portalException = null;
+			_redirectURL = null;
+		}
+
+		public OAuth2Result(PortalException portalException) {
+			_portalException = portalException;
+
+			_responseJSONObject = null;
+			_redirectURL = null;
+		}
+
+		public OAuth2Result(String redirectURL) {
+			_redirectURL = redirectURL;
+
+			_portalException = null;
+			_responseJSONObject = null;
+		}
+
+		public PortalException getPortalException() {
+			return _portalException;
+		}
+
+		public String getRedirectURL() {
+			return _redirectURL;
+		}
+
+		public JSONObject getResponseJSONObject() {
+			if (_redirectURL != null) {
+				return JSONUtil.put("redirectURL", _redirectURL);
+			}
+
+			if (_responseJSONObject == null) {
+				return _jsonFactory.createJSONObject();
+			}
+
+			return _responseJSONObject;
+		}
+
+		private final PortalException _portalException;
+		private final String _redirectURL;
+		private final JSONObject _responseJSONObject;
+
+	}
+
 	private class RedirectingOAuth2Controller implements OAuth2Controller {
 
 		public RedirectingOAuth2Controller() {
@@ -262,13 +264,13 @@ public class OAuth2ControllerFactory {
 					fieldName, jsonObject.getString(fieldName));
 			}
 
-			portletRequest.setAttribute(
-				WebKeys.REDIRECT,
-				Optional.ofNullable(
-					oAuth2Result.getRedirectURL()
-				).orElseGet(
-					() -> _getRenderURL(portletRequest)
-				));
+			String url = oAuth2Result.getRedirectURL();
+
+			if (url == null) {
+				url = _getRenderURL(portletRequest);
+			}
+
+			portletRequest.setAttribute(WebKeys.REDIRECT, url);
 		}
 
 		private final Function<PortletRequest, String> _function;

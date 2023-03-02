@@ -26,14 +26,13 @@ import org.osgi.service.component.annotations.Component;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.display-category=category.hidden",
 		"javax.portlet.name=" + CommerceAccountPortletKeys.COMMERCE_ACCOUNT,
 		"javax.portlet.version=3.0"
 	},
-	service = {CommerceAccountPortlet.class, Portlet.class}
+	service = Portlet.class
 )
 public class CommerceAccountPortlet extends MVCPortlet {
 }

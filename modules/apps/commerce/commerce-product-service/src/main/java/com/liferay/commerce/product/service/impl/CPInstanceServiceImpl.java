@@ -24,7 +24,8 @@ import com.liferay.commerce.product.service.CProductLocalService;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
 import com.liferay.commerce.product.service.CommerceCatalogService;
 import com.liferay.commerce.product.service.base.CPInstanceServiceBaseImpl;
-import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
@@ -32,7 +33,6 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -41,13 +41,21 @@ import java.math.BigDecimal;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CPInstance"
+	},
+	service = AopService.class
+)
 public class CPInstanceServiceImpl extends CPInstanceServiceBaseImpl {
 
 	@Override
@@ -319,18 +327,13 @@ public class CPInstanceServiceImpl extends CPInstanceServiceBaseImpl {
 			Sort sort)
 		throws PortalException {
 
-		List<CommerceCatalog> commerceCatalogs =
-			_commerceCatalogService.getCommerceCatalogs(
-				companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
-		Stream<CommerceCatalog> stream = commerceCatalogs.stream();
-
-		LongStream longStream = stream.mapToLong(CommerceCatalog::getGroupId);
-
-		long[] groupIds = longStream.toArray();
-
 		return cpInstanceLocalService.searchCPInstances(
-			companyId, groupIds, keywords, status, start, end, sort);
+			companyId,
+			TransformUtil.transformToLongArray(
+				_commerceCatalogService.getCommerceCatalogs(
+					companyId, QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+				CommerceCatalog::getGroupId),
+			keywords, status, start, end, sort);
 	}
 
 	@Override
@@ -465,23 +468,22 @@ public class CPInstanceServiceImpl extends CPInstanceServiceBaseImpl {
 			getPermissionChecker(), commerceCatalog, actionId);
 	}
 
-	private static volatile ModelResourcePermission<CommerceCatalog>
-		_commerceCatalogModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CPInstanceServiceImpl.class,
-				"_commerceCatalogModelResourcePermission",
-				CommerceCatalog.class);
-
-	@BeanReference(type = CommerceCatalogLocalService.class)
+	@Reference
 	private CommerceCatalogLocalService _commerceCatalogLocalService;
 
-	@BeanReference(type = CommerceCatalogService.class)
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.product.model.CommerceCatalog)"
+	)
+	private ModelResourcePermission<CommerceCatalog>
+		_commerceCatalogModelResourcePermission;
+
+	@Reference
 	private CommerceCatalogService _commerceCatalogService;
 
-	@BeanReference(type = CPDefinitionLocalService.class)
+	@Reference
 	private CPDefinitionLocalService _cpDefinitionLocalService;
 
-	@BeanReference(type = CProductLocalService.class)
+	@Reference
 	private CProductLocalService _cProductLocalService;
 
 }

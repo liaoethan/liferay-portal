@@ -17,9 +17,15 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<ThemeFaviconCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<ThemeFaviconCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-ThemeFaviconCET themeFaviconCET = editClientExtensionEntryPartDisplayContext.getCET();
+ThemeFaviconCET themeFaviconCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input label="url" name="url" type="text" value="<%= themeFaviconCET.getURL() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="url" name="url" required="<%= true %>" type="text" value="<%= themeFaviconCET.getURL() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="this-favicon-replaces-the-one-from-the-theme" />
+	</div>
+</aui:field-wrapper>

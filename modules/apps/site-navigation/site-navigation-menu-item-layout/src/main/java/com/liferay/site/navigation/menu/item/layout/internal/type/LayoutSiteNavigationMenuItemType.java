@@ -48,7 +48,6 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -68,7 +67,6 @@ import java.io.IOException;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
@@ -85,7 +83,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = {
 		"service.ranking:Integer=400",
 		"site.navigation.menu.item.type=" + SiteNavigationMenuItemTypeConstants.LAYOUT
@@ -195,8 +192,6 @@ public class LayoutSiteNavigationMenuItemType
 				RequestBackedPortletURLFactoryUtil.create(httpServletRequest),
 				renderResponse.getNamespace() + "selectItem",
 				layoutItemSelectorCriterion)
-		).setParameter(
-			"multipleSelection", isMultiSelection()
 		).buildString();
 	}
 
@@ -403,16 +398,9 @@ public class LayoutSiteNavigationMenuItemType
 	public boolean isAvailable(
 		SiteNavigationMenuItemTypeContext siteNavigationMenuItemTypeContext) {
 
-		Optional<Group> groupOptional =
-			siteNavigationMenuItemTypeContext.getGroupOptional();
+		Group group = siteNavigationMenuItemTypeContext.getGroup();
 
-		if (!groupOptional.isPresent()) {
-			return false;
-		}
-
-		Group group = groupOptional.get();
-
-		if (group.isCompany()) {
+		if ((group == null) || group.isCompany()) {
 			return false;
 		}
 
@@ -647,9 +635,6 @@ public class LayoutSiteNavigationMenuItemType
 
 	@Reference
 	private LayoutStaging _layoutStaging;
-
-	@Reference
-	private Portal _portal;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.site.navigation.menu.item.layout)",

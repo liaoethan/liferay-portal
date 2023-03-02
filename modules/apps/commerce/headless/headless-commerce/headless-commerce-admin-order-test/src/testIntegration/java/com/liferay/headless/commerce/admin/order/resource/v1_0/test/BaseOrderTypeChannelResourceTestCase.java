@@ -241,7 +241,10 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantOrderTypeChannel),
 				(List<OrderTypeChannel>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetOrderTypeByExternalReferenceCodeOrderTypeChannelsPage_getExpectedActions(
+					irrelevantExternalReferenceCode));
 		}
 
 		OrderTypeChannel orderTypeChannel1 =
@@ -262,7 +265,20 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(orderTypeChannel1, orderTypeChannel2),
 			(List<OrderTypeChannel>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetOrderTypeByExternalReferenceCodeOrderTypeChannelsPage_getExpectedActions(
+				externalReferenceCode));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetOrderTypeByExternalReferenceCodeOrderTypeChannelsPage_getExpectedActions(
+				String externalReferenceCode)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -391,7 +407,10 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantOrderTypeChannel),
 				(List<OrderTypeChannel>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetOrderTypeIdOrderTypeChannelsPage_getExpectedActions(
+					irrelevantId));
 		}
 
 		OrderTypeChannel orderTypeChannel1 =
@@ -410,7 +429,18 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 		assertEqualsIgnoringOrder(
 			Arrays.asList(orderTypeChannel1, orderTypeChannel2),
 			(List<OrderTypeChannel>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetOrderTypeIdOrderTypeChannelsPage_getExpectedActions(id));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetOrderTypeIdOrderTypeChannelsPage_getExpectedActions(Long id)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -812,6 +842,13 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 	}
 
 	protected void assertValid(Page<OrderTypeChannel> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<OrderTypeChannel> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<OrderTypeChannel> orderTypeChannels =
@@ -827,6 +864,20 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1044,6 +1095,10 @@ public abstract class BaseOrderTypeChannelResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

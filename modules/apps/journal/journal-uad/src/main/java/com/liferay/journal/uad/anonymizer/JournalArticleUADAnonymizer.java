@@ -14,6 +14,8 @@
 
 package com.liferay.journal.uad.anonymizer;
 
+import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.journal.model.JournalArticle;
 import com.liferay.user.associated.data.anonymizer.UADAnonymizer;
 
 import org.osgi.service.component.annotations.Component;
@@ -21,7 +23,15 @@ import org.osgi.service.component.annotations.Component;
 /**
  * @author Brian Wing Shun Chan
  */
-@Component(immediate = true, service = UADAnonymizer.class)
+@Component(service = UADAnonymizer.class)
 public class JournalArticleUADAnonymizer
 	extends BaseJournalArticleUADAnonymizer {
+
+	@Override
+	protected AssetEntry fetchAssetEntry(JournalArticle journalArticle) {
+		return assetEntryLocalService.fetchEntry(
+			JournalArticle.class.getName(),
+			journalArticle.getResourcePrimKey());
+	}
+
 }

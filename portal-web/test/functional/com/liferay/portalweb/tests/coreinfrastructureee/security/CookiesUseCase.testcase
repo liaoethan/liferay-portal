@@ -1,8 +1,8 @@
 @component-name = "portal-security"
 definition {
 
-	property custom.properties = "feature.flag.LPS-142518=true";
-	property portal.release = "quarantine";
+	property ci.retries.disabled = "true";
+	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Cookies";
 
@@ -11,18 +11,18 @@ definition {
 			TestCase.setUpPortalInstance();
 
 			User.firstLoginPG();
+
+			CookiePreferenceHandlingAdmin.enablePreferenceHandlingInInstanceSettings();
 		}
 	}
 
 	@description = "This is a use case for LPS-142518. TC-1, TC-2 and TC-3: Verify that Cookie Banner is visible with the options configured by the site admin."
-	@priority = "5"
+	@priority = 5
 	test CookieBannerAndCookieConsentPanelElementsAreVisible {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "CookiesUseCase#CookieBannerAndCookieConsentPanelElementsAreVisible";
 
 		task ("Given: Cookie banner and Cookie Consent portlet are present") {
-			CookiePreferenceHandlingAdmin.enablePreferenceHandling();
-
 			CookieBanner.verifyAllElementsArePresent();
 		}
 
@@ -40,14 +40,12 @@ definition {
 	}
 
 	@description = "This is a use case for LRQA-75234. Verify that cookies are deleted when lifespan is over via simulated delete."
-	@priority = "5"
+	@priority = 5
 	test CookieBannerBecameVisibleWhenCookiesAreRemovedOrExpired {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "CookiesUseCase#CookieBannerBecameVisibleWhenCookiesAreRemovedOrExpired";
 
 		task ("Given: Cookie Banner is present on the Site.") {
-			CookiePreferenceHandlingAdmin.enablePreferenceHandling();
-
 			CookieBanner.cookiesBannerAcceptAll();
 		}
 
@@ -64,14 +62,12 @@ definition {
 
 	@description = "This is a use case for LPS-142518. TC-8 Verify that cookies will have 6 months of lifetime when they are accepted or declined. Blocked by LRCI-2917."
 	@ignore = "true"
-	@priority = "5"
+	@priority = 5
 	test CookiesLifetimeIsSixMonthsWhenTheyAreSaved {
 		property portal.acceptance = "quarantine";
 		property test.name.skip.portal.instance = "CookiesUseCase#CookiesLifetimeIsSixMonthsWhenTheyAreSaved";
 
 		task ("Given: Cookie Banner is present on the Site.") {
-			CookiePreferenceHandlingAdmin.enablePreferenceHandling();
-
 			CookieBanner.cookiesBannerAcceptAll();
 		}
 
@@ -84,8 +80,9 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-159221 TC-1. Verifying that Cookies are not saved until End-User sets them via Cookie Banner."
-	@priority = "5"
+	@description = "This is a use case for LPS-159221 TC-1. Verifying that Cookies are not saved until End-User sets them via Cookie Banner. Blocked by LPS-162952."
+	@ignore = "true"
+	@priority = 5
 	test VerifyingExplicitCookieWorfklow {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "CookiesUseCase#VerifyingExplicitCookieWorfklow";
@@ -103,8 +100,9 @@ definition {
 		}
 	}
 
-	@description = "This is a use case for LPS-159221 TC-2. Verifying that Cookies are saved beforehand with true as value, and we didn't show the Cookie Banner."
-	@priority = "5"
+	@description = "This is a use case for LPS-159221 TC-2. Verifying that Cookies are saved beforehand with true as value, and we didn't show the Cookie Banner. Blocked by LPS-162952."
+	@ignore = "true"
+	@priority = 5
 	test VerifyingImplicitCookieWorfklow {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "CookiesUseCase#VerifyingImplicitCookieWorfklow";
@@ -121,13 +119,9 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-156903. Verify the order of menu items after Cookie Preference Handling is enabled"
-	@priority = "3"
+	@priority = 3
 	test VerifyOrderOfMenuItemsInSiteSettings {
 		property test.name.skip.portal.instance = "CookiesUseCase#CookiesLifetimeIsSixMonthsWhenTheyAreSaved";
-
-		task ("Given: Cookie Banner is present on the Site.") {
-			CookiePreferenceHandlingAdmin.enablePreferenceHandling();
-		}
 
 		task ("Verify the order of menu items in Site Settings") {
 			AssertVisible(locator1 = "CookieBannerAdmin#MENU_ITEMS_IN_ORDER");

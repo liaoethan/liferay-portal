@@ -15,31 +15,25 @@
 package com.liferay.commerce.notification.internal.messaging;
 
 import com.liferay.commerce.notification.internal.configuration.CommerceNotificationQueueEntryConfiguration;
-import com.liferay.commerce.notification.internal.constants.CommerceNotificationQueueEntryConstants;
 import com.liferay.commerce.notification.service.CommerceNotificationQueueEntryLocalService;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.module.configuration.ConfigurationException;
-import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
 import com.liferay.portal.kernel.scheduler.Trigger;
 import com.liferay.portal.kernel.scheduler.TriggerFactory;
-import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.util.Time;
 
 import java.util.Date;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -47,29 +41,20 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.notification.internal.configuration.CommerceNotificationQueueConfiguration",
-	enabled = false, immediate = true,
-	service = CheckCommerceNotificationQueueEntryMessageListener.class
+	service = {}
 )
 public class CheckCommerceNotificationQueueEntryMessageListener
 	extends BaseMessageListener {
 
 	@Activate
-	@Modified
-	protected void activate() {
+	protected void activate(Map<String, Object> properties) {
 		Class<?> clazz = getClass();
 
 		String className = clazz.getName();
 
-		try {
-			_commerceNotificationQueueEntryConfiguration =
-				_configurationProvider.getConfiguration(
-					CommerceNotificationQueueEntryConfiguration.class,
-					new SystemSettingsLocator(
-						CommerceNotificationQueueEntryConstants.SERVICE_NAME));
-		}
-		catch (ConfigurationException configurationException) {
-			_log.error(configurationException);
-		}
+		_commerceNotificationQueueEntryConfiguration =
+			ConfigurableUtil.createConfigurable(
+				CommerceNotificationQueueEntryConfiguration.class, properties);
 
 		Trigger trigger = _triggerFactory.createTrigger(
 			className, className, null, null,
@@ -108,21 +93,12 @@ public class CheckCommerceNotificationQueueEntryMessageListener
 			deleteCommerceNotificationQueueEntries(date);
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		CheckCommerceNotificationQueueEntryMessageListener.class);
-
 	private volatile CommerceNotificationQueueEntryConfiguration
 		_commerceNotificationQueueEntryConfiguration;
 
 	@Reference
 	private CommerceNotificationQueueEntryLocalService
 		_commerceNotificationQueueEntryLocalService;
-
-	@Reference
-	private ConfigurationProvider _configurationProvider;
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
-	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

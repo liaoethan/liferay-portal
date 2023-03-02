@@ -15,10 +15,9 @@
 package com.liferay.fragment.renderer.collection.filter.internal.display.context;
 
 import com.liferay.fragment.collection.filter.FragmentCollectionFilter;
-import com.liferay.fragment.collection.filter.FragmentCollectionFilterTracker;
+import com.liferay.fragment.collection.filter.FragmentCollectionFilterRegistry;
 import com.liferay.fragment.collection.filter.constants.FragmentCollectionFilterConstants;
 import com.liferay.fragment.constants.FragmentConfigurationFieldDataType;
-import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
@@ -39,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -50,19 +48,18 @@ import javax.servlet.http.HttpServletRequest;
 public class CollectionAppliedFiltersFragmentRendererDisplayContext {
 
 	public CollectionAppliedFiltersFragmentRendererDisplayContext(
-		FragmentCollectionFilterTracker fragmentCollectionFilterTracker,
+		FragmentCollectionFilterRegistry fragmentCollectionFilterRegistry,
 		FragmentEntryConfigurationParser fragmentEntryConfigurationParser,
 		FragmentEntryLinkLocalService fragmentEntryLinkLocalService,
 		FragmentRendererContext fragmentRendererContext,
 		HttpServletRequest httpServletRequest) {
 
-		_fragmentCollectionFilterTracker = fragmentCollectionFilterTracker;
+		_fragmentCollectionFilterRegistry = fragmentCollectionFilterRegistry;
 		_fragmentEntryConfigurationParser = fragmentEntryConfigurationParser;
 		_fragmentEntryLinkLocalService = fragmentEntryLinkLocalService;
 		_httpServletRequest = httpServletRequest;
 
-		_editMode = Objects.equals(
-			fragmentRendererContext.getMode(), FragmentEntryLinkConstants.EDIT);
+		_editMode = fragmentRendererContext.isEditMode();
 		_fragmentEntryLink = fragmentRendererContext.getFragmentEntryLink();
 		_locale = fragmentRendererContext.getLocale();
 	}
@@ -118,7 +115,7 @@ public class CollectionAppliedFiltersFragmentRendererDisplayContext {
 			}
 
 			FragmentCollectionFilter fragmentCollectionFilter =
-				_fragmentCollectionFilterTracker.getFragmentCollectionFilter(
+				_fragmentCollectionFilterRegistry.getFragmentCollectionFilter(
 					parameterData.get(1));
 
 			if (fragmentCollectionFilter == null) {
@@ -169,10 +166,10 @@ public class CollectionAppliedFiltersFragmentRendererDisplayContext {
 	}
 
 	public boolean showClearFiltersButton() {
-		return (boolean)
+		return GetterUtil.getBoolean(
 			_fragmentEntryConfigurationParser.getConfigurationFieldValue(
 				_fragmentEntryLink.getEditableValues(), "showClearFilters",
-				FragmentConfigurationFieldDataType.BOOLEAN);
+				FragmentConfigurationFieldDataType.BOOLEAN));
 	}
 
 	private Set<String> _getTargetCollections() {
@@ -193,8 +190,8 @@ public class CollectionAppliedFiltersFragmentRendererDisplayContext {
 
 	private Map<String, Object> _collectionAppliedFiltersProps;
 	private final boolean _editMode;
-	private final FragmentCollectionFilterTracker
-		_fragmentCollectionFilterTracker;
+	private final FragmentCollectionFilterRegistry
+		_fragmentCollectionFilterRegistry;
 	private final FragmentEntryConfigurationParser
 		_fragmentEntryConfigurationParser;
 	private final FragmentEntryLink _fragmentEntryLink;

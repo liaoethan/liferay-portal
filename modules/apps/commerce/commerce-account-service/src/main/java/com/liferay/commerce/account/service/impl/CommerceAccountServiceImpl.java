@@ -39,15 +39,17 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marco Leo
  * @author Alessio Antonio Rendina
+ * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
+ *             com.liferay.account.service.AccountEntryService}
  */
 @Component(
-	enabled = false,
 	property = {
 		"json.web.service.context.name=commerce",
 		"json.web.service.context.path=CommerceAccount"
 	},
 	service = AopService.class
 )
+@Deprecated
 public class CommerceAccountServiceImpl extends CommerceAccountServiceBaseImpl {
 
 	@Override

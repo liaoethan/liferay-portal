@@ -18,8 +18,10 @@ import com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition;
 import com.liferay.object.admin.rest.resource.v1_0.ObjectDefinitionResource;
 import com.liferay.object.constants.ObjectPortletKeys;
 import com.liferay.object.exception.ObjectDefinitionNameException;
+import com.liferay.object.exception.ObjectViewColumnFieldNameException;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -32,12 +34,10 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.upload.UploadPortletRequestImpl;
-import com.liferay.portal.util.PropsUtil;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -79,25 +79,32 @@ public class ImportObjectDefinitionMVCActionCommand
 
 			httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 
+			JSONObject jsonObject = null;
+
 			if (exception instanceof ObjectDefinitionNameException) {
 				Class<?> clazz = exception.getClass();
 
-				JSONPortletResponseUtil.writeJSON(
-					actionRequest, actionResponse,
-					JSONUtil.put(
-						"type",
-						"ObjectDefinitionNameException." +
-							clazz.getSimpleName()));
+				jsonObject = JSONUtil.put(
+					"type",
+					"ObjectDefinitionNameException." + clazz.getSimpleName());
+			}
+			else if (exception instanceof ObjectViewColumnFieldNameException) {
+				jsonObject = JSONUtil.put(
+					"title",
+					_language.get(
+						_portal.getHttpServletRequest(actionRequest),
+						"the-structure-was-imported-without-a-custom-view"));
 			}
 			else {
-				JSONPortletResponseUtil.writeJSON(
-					actionRequest, actionResponse,
-					JSONUtil.put(
-						"title",
-						_language.get(
-							_portal.getHttpServletRequest(actionRequest),
-							"the-structure-was-not-successfully-imported")));
+				jsonObject = JSONUtil.put(
+					"title",
+					_language.get(
+						_portal.getHttpServletRequest(actionRequest),
+						"the-structure-failed-to-import"));
 			}
+
+			JSONPortletResponseUtil.writeJSON(
+				actionRequest, actionResponse, jsonObject);
 		}
 
 		hideDefaultSuccessMessage(actionRequest);
@@ -136,8 +143,11 @@ public class ImportObjectDefinitionMVCActionCommand
 		String objectDefinitionJSON = FileUtil.read(
 			uploadPortletRequest.getFile("objectDefinitionJSON"));
 
-		JSONObject objectDefinitionJSONObject =
-			JSONFactoryUtil.createJSONObject(objectDefinitionJSON);
+		JSONObject objectDefinitionJSONObject = _jsonFactory.createJSONObject(
+			objectDefinitionJSON);
+
+		objectDefinitionJSONObject.remove(
+			"accountEntryRestrictedObjectFieldId");
 
 		ObjectDefinition objectDefinition = ObjectDefinition.toDTO(
 			objectDefinitionJSONObject.toString());
@@ -151,7 +161,7 @@ public class ImportObjectDefinitionMVCActionCommand
 
 		putObjectDefinition.setPortlet(objectDefinition.getPortlet());
 
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-135430"))) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-135430")) {
 			putObjectDefinition.setStorageType(StringPool.BLANK);
 		}
 
@@ -161,6 +171,9 @@ public class ImportObjectDefinitionMVCActionCommand
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ImportObjectDefinitionMVCActionCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

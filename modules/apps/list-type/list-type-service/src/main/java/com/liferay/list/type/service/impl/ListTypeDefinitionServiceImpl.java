@@ -17,7 +17,7 @@ package com.liferay.list.type.service.impl;
 import com.liferay.list.type.constants.ListTypeActionKeys;
 import com.liferay.list.type.constants.ListTypeConstants;
 import com.liferay.list.type.model.ListTypeDefinition;
-import com.liferay.list.type.service.ListTypeDefinitionLocalService;
+import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.base.ListTypeDefinitionServiceBaseImpl;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -46,15 +46,17 @@ public class ListTypeDefinitionServiceImpl
 	extends ListTypeDefinitionServiceBaseImpl {
 
 	@Override
-	public ListTypeDefinition addListTypeDefinition(Map<Locale, String> nameMap)
+	public ListTypeDefinition addListTypeDefinition(
+			String externalReferenceCode, Map<Locale, String> nameMap,
+			List<ListTypeEntry> listTypeEntries)
 		throws PortalException {
 
 		_portletResourcePermission.check(
 			getPermissionChecker(), null,
 			ListTypeActionKeys.ADD_LIST_TYPE_DEFINITION);
 
-		return _listTypeDefinitionLocalService.addListTypeDefinition(
-			getUserId(), nameMap);
+		return listTypeDefinitionLocalService.addListTypeDefinition(
+			externalReferenceCode, getUserId(), nameMap, listTypeEntries);
 	}
 
 	@Override
@@ -66,7 +68,7 @@ public class ListTypeDefinitionServiceImpl
 			getPermissionChecker(),
 			listTypeDefinition.getListTypeDefinitionId(), ActionKeys.DELETE);
 
-		return _listTypeDefinitionLocalService.deleteListTypeDefinition(
+		return listTypeDefinitionLocalService.deleteListTypeDefinition(
 			listTypeDefinition);
 	}
 
@@ -78,8 +80,27 @@ public class ListTypeDefinitionServiceImpl
 		_listTypeDefinitionModelResourcePermission.check(
 			getPermissionChecker(), listTypeDefinitionId, ActionKeys.DELETE);
 
-		return _listTypeDefinitionLocalService.deleteListTypeDefinition(
+		return listTypeDefinitionLocalService.deleteListTypeDefinition(
 			listTypeDefinitionId);
+	}
+
+	@Override
+	public ListTypeDefinition fetchListTypeDefinitionByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		ListTypeDefinition listTypeDefinition =
+			listTypeDefinitionLocalService.
+				fetchListTypeDefinitionByExternalReferenceCode(
+					externalReferenceCode, companyId);
+
+		if (listTypeDefinition != null) {
+			_listTypeDefinitionModelResourcePermission.check(
+				getPermissionChecker(),
+				listTypeDefinition.getListTypeDefinitionId(), ActionKeys.VIEW);
+		}
+
+		return listTypeDefinition;
 	}
 
 	@Override
@@ -89,35 +110,51 @@ public class ListTypeDefinitionServiceImpl
 		_listTypeDefinitionModelResourcePermission.check(
 			getPermissionChecker(), listTypeDefinitionId, ActionKeys.VIEW);
 
-		return _listTypeDefinitionLocalService.getListTypeDefinition(
+		return listTypeDefinitionLocalService.getListTypeDefinition(
 			listTypeDefinitionId);
 	}
 
 	@Override
+	public ListTypeDefinition getListTypeDefinitionByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		ListTypeDefinition listTypeDefinition =
+			listTypeDefinitionLocalService.
+				getListTypeDefinitionByExternalReferenceCode(
+					externalReferenceCode, companyId);
+
+		_listTypeDefinitionModelResourcePermission.check(
+			getPermissionChecker(),
+			listTypeDefinition.getListTypeDefinitionId(), ActionKeys.VIEW);
+
+		return listTypeDefinition;
+	}
+
+	@Override
 	public List<ListTypeDefinition> getListTypeDefinitions(int start, int end) {
-		return _listTypeDefinitionLocalService.getListTypeDefinitions(
+		return listTypeDefinitionLocalService.getListTypeDefinitions(
 			start, end);
 	}
 
 	@Override
 	public int getListTypeDefinitionsCount() {
-		return _listTypeDefinitionLocalService.getListTypeDefinitionsCount();
+		return listTypeDefinitionLocalService.getListTypeDefinitionsCount();
 	}
 
 	@Override
 	public ListTypeDefinition updateListTypeDefinition(
-			long listTypeDefinitionId, Map<Locale, String> nameMap)
+			String externalReferenceCode, long listTypeDefinitionId,
+			Map<Locale, String> nameMap, List<ListTypeEntry> listTypeEntries)
 		throws PortalException {
 
 		_listTypeDefinitionModelResourcePermission.check(
 			getPermissionChecker(), listTypeDefinitionId, ActionKeys.UPDATE);
 
-		return _listTypeDefinitionLocalService.updateListTypeDefinition(
-			listTypeDefinitionId, nameMap);
+		return listTypeDefinitionLocalService.updateListTypeDefinition(
+			externalReferenceCode, listTypeDefinitionId, getUserId(), nameMap,
+			listTypeEntries);
 	}
-
-	@Reference
-	private ListTypeDefinitionLocalService _listTypeDefinitionLocalService;
 
 	@Reference(
 		target = "(model.class.name=com.liferay.list.type.model.ListTypeDefinition)"

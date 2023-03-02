@@ -15,9 +15,9 @@
 package com.liferay.dynamic.data.mapping.data.provider.instance.internal;
 
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProvider;
+import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRegistry;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderRequest;
 import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderResponse;
-import com.liferay.dynamic.data.mapping.data.provider.DDMDataProviderTracker;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormValuesDeserializerDeserializeResponse;
@@ -42,9 +42,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import org.junit.Assert;
@@ -81,7 +81,7 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 		_ddmDataProviderInstanceOutputParametersDataProvider.
 			ddmDataProviderInstanceService = _ddmDataProviderInstanceService;
 		_ddmDataProviderInstanceOutputParametersDataProvider.
-			ddmDataProviderTracker = _ddmDataProviderTracker;
+			ddmDataProviderRegistry = _ddmDataProviderRegistry;
 		_ddmDataProviderInstanceOutputParametersDataProvider.
 			jsonDDMFormValuesDeserializer = _ddmFormValuesDeserializer;
 	}
@@ -108,7 +108,7 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 		);
 
 		Mockito.when(
-			_ddmDataProviderTracker.getDDMDataProvider("rest")
+			_ddmDataProviderRegistry.getDDMDataProvider("rest")
 		).thenReturn(
 			_ddmDataProvider
 		);
@@ -193,24 +193,25 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 			_ddmDataProviderInstanceOutputParametersDataProvider.getData(
 				ddmDataProviderRequest);
 
-		Optional<List<KeyValuePair>> outputParameterNamesOptional =
-			ddmDataProviderResponse.getOutputOptional(
-				"outputParameterNames", List.class);
+		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
+			"outputParameterNames", List.class);
 
-		Assert.assertTrue(outputParameterNamesOptional.isPresent());
+		Assert.assertNotNull(keyValuePairs);
 
-		List<KeyValuePair> keyValuePairs = new ArrayList<KeyValuePair>() {
-			{
-				add(new KeyValuePair(countryIdOutputParameterId, "Country Id"));
-				add(
-					new KeyValuePair(
-						countryNameOutputParameterId, "Country Name"));
-			}
-		};
+		List<KeyValuePair> expectedKeyValuePairs =
+			new ArrayList<KeyValuePair>() {
+				{
+					add(
+						new KeyValuePair(
+							countryIdOutputParameterId, "Country Id"));
+					add(
+						new KeyValuePair(
+							countryNameOutputParameterId, "Country Name"));
+				}
+			};
 
 		Assert.assertEquals(
-			keyValuePairs.toString(), keyValuePairs,
-			outputParameterNamesOptional.get());
+			keyValuePairs.toString(), expectedKeyValuePairs, keyValuePairs);
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -237,13 +238,10 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 			_ddmDataProviderInstanceOutputParametersDataProvider.getData(
 				ddmDataProviderRequest);
 
-		Optional<List<KeyValuePair>> optional =
-			ddmDataProviderResponse.getOutputOptional(
-				"outputParameterNames", List.class);
+		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
+			"outputParameterNames", List.class);
 
-		Assert.assertTrue(optional.isPresent());
-
-		List<KeyValuePair> keyValuePairs = optional.get();
+		Assert.assertNotNull(keyValuePairs);
 
 		Assert.assertEquals(keyValuePairs.toString(), 0, keyValuePairs.size());
 	}
@@ -270,7 +268,7 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 		);
 
 		Mockito.when(
-			_ddmDataProviderTracker.getDDMDataProvider("rest")
+			_ddmDataProviderRegistry.getDDMDataProvider("rest")
 		).thenReturn(
 			_ddmDataProvider
 		);
@@ -285,17 +283,12 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 			_ddmDataProviderInstanceOutputParametersDataProvider.getData(
 				ddmDataProviderRequest);
 
-		Optional<List<KeyValuePair>> outputParameterNamesOptional =
-			ddmDataProviderResponse.getOutputOptional(
-				"outputParameterNames", List.class);
+		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
+			"outputParameterNames", List.class);
 
-		Assert.assertTrue(outputParameterNamesOptional.isPresent());
+		Assert.assertNotNull(keyValuePairs);
 
-		List<KeyValuePair> outputParameterNames =
-			outputParameterNamesOptional.get();
-
-		Assert.assertEquals(
-			outputParameterNames.toString(), 0, outputParameterNames.size());
+		Assert.assertEquals(keyValuePairs.toString(), 0, keyValuePairs.size());
 	}
 
 	@Test
@@ -312,17 +305,13 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 		Assert.assertTrue(
 			ddmDataProviderResponse.hasOutput("outputParameterNames"));
 
-		Optional<List<KeyValuePair>> outputParameterNamesOptional =
-			ddmDataProviderResponse.getOutputOptional(
-				"outputParameterNames", List.class);
+		List<KeyValuePair> keyValuePairs = ddmDataProviderResponse.getOutput(
+			"outputParameterNames", List.class);
 
-		Assert.assertTrue(outputParameterNamesOptional.isPresent());
-
-		List<KeyValuePair> keyValuePairs = new ArrayList<>();
+		Assert.assertNotNull(keyValuePairs);
 
 		Assert.assertEquals(
-			keyValuePairs.toString(), keyValuePairs,
-			outputParameterNamesOptional.get());
+			keyValuePairs.toString(), Collections.emptyList(), keyValuePairs);
 	}
 
 	private static void _setUpLanguageUtil() {
@@ -370,8 +359,8 @@ public class DDMDataProviderInstanceOutputParametersDataProviderTest {
 	private final DDMDataProviderInstanceService
 		_ddmDataProviderInstanceService = Mockito.mock(
 			DDMDataProviderInstanceService.class);
-	private final DDMDataProviderTracker _ddmDataProviderTracker = Mockito.mock(
-		DDMDataProviderTracker.class);
+	private final DDMDataProviderRegistry _ddmDataProviderRegistry =
+		Mockito.mock(DDMDataProviderRegistry.class);
 	private final DDMFormValuesDeserializer _ddmFormValuesDeserializer =
 		Mockito.mock(DDMFormValuesDeserializer.class);
 

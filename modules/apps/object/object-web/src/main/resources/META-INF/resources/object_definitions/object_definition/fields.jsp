@@ -35,7 +35,7 @@ renderResponse.setTitle(objectDefinition.getLabel(locale, true));
 	fdsActionDropdownItems="<%= objectDefinitionsFieldsDisplayContext.getFDSActionDropdownItems() %>"
 	formName="fm"
 	id="<%= ObjectDefinitionsFDSNames.OBJECT_FIELDS %>"
-	propsTransformer="js/ObjectFieldsFDSPropsTransformer"
+	propsTransformer="js/components/FDSPropsTransformer/ObjectFieldsFDSPropsTransformer"
 	style="fluid"
 />
 
@@ -52,11 +52,22 @@ renderResponse.setTitle(objectDefinition.getLabel(locale, true));
 			).put(
 				"forbiddenNames", PropsUtil.getArray(PropsKeys.DL_NAME_BLACKLIST)
 			).put(
-				"objectDefinitionId", objectDefinition.getObjectDefinitionId()
+				"objectDefinitionExternalReferenceCode", objectDefinition.getExternalReferenceCode()
 			).put(
 				"objectFieldTypes", objectDefinitionsFieldsDisplayContext.getObjectFieldBusinessTypeMaps(false, locale)
 			).put(
 				"objectName", objectDefinition.getShortName()
+			).build()
+		%>'
+	/>
+</div>
+
+<div>
+	<react:component
+		module="js/components/ExpressionBuilderModal"
+		props='<%=
+			HashMapBuilder.<String, Object>put(
+				"sidebarElements", objectDefinitionsFieldsDisplayContext.getObjectFieldCodeEditorElements()
 			).build()
 		%>'
 	/>

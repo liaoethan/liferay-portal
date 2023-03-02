@@ -51,6 +51,11 @@ public class FileEntryLayoutDisplayPageObjectProvider
 	}
 
 	@Override
+	public String getClassName() {
+		return FileEntry.class.getName();
+	}
+
+	@Override
 	public long getClassNameId() {
 		return PortalUtil.getClassNameId(FileEntry.class.getName());
 	}
@@ -102,9 +107,8 @@ public class FileEntryLayoutDisplayPageObjectProvider
 
 	private AssetEntry _getAssetEntry(FileEntry fileEntry) {
 		AssetRendererFactory<?> assetRendererFactory =
-			AssetRendererFactoryRegistryUtil.
-				getAssetRendererFactoryByClassNameId(
-					PortalUtil.getClassNameId(DLFileEntry.class));
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClass(
+				DLFileEntry.class);
 
 		if (assetRendererFactory == null) {
 			return null;

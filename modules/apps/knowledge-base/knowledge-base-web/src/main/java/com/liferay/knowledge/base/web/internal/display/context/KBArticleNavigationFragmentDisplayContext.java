@@ -74,10 +74,10 @@ public class KBArticleNavigationFragmentDisplayContext {
 		throws PortalException {
 
 		if (level == 0) {
-			return Collections.singletonList(
-				KBArticleServiceUtil.getLatestKBArticle(
-					getKBArticleRootResourcePrimKey(),
-					WorkflowConstants.STATUS_APPROVED));
+			return KBArticleServiceUtil.getKBArticles(
+				_kbArticle.getGroupId(), _kbArticle.getKbFolderId(),
+				WorkflowConstants.STATUS_APPROVED, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, new KBArticlePriorityComparator(true));
 		}
 
 		if (_isMaxNestingLevelReached(level)) {
@@ -153,7 +153,7 @@ public class KBArticleNavigationFragmentDisplayContext {
 	}
 
 	private boolean _isMaxNestingLevelReached(int level) {
-		if ((_maxNestingLevel - level) <= 1) {
+		if ((_maxNestingLevel - level) < 1) {
 			return true;
 		}
 

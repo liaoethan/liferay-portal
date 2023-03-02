@@ -15,14 +15,17 @@
 package com.liferay.saml.web.internal.struts;
 
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.saml.constants.SamlWebKeys;
 import com.liferay.saml.persistence.model.SamlSpIdpConnection;
@@ -33,8 +36,6 @@ import com.liferay.saml.runtime.servlet.profile.SamlSpIdpConnectionsProfile;
 import com.liferay.saml.util.JspUtil;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -48,10 +49,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 /**
  * @author Stian Sigvartsen
  */
-@Component(
-	immediate = true, property = "path=/portal/saml/login",
-	service = StrutsAction.class
-)
+@Component(property = "path=/portal/saml/login", service = StrutsAction.class)
 public class SamlLoginAction extends BaseSamlStrutsAction {
 
 	@Override
@@ -93,17 +91,10 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 			return null;
 		}
 
-		List<SamlSpIdpConnection> samlSpIdpConnections =
-			_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(companyId);
-
-		Stream<SamlSpIdpConnection> stream = samlSpIdpConnections.stream();
-
-		samlSpIdpConnections = stream.filter(
+		List<SamlSpIdpConnection> samlSpIdpConnections = ListUtil.filter(
+			_samlSpIdpConnectionLocalService.getSamlSpIdpConnections(companyId),
 			samlSpIdpConnection -> isEnabled(
-				samlSpIdpConnection, httpServletRequest)
-		).collect(
-			Collectors.toList()
-		);
+				samlSpIdpConnection, httpServletRequest));
 
 		if (samlSpIdpConnections.isEmpty()) {
 			SamlProviderConfiguration samlProviderConfiguration =
@@ -113,12 +104,16 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 				return null;
 			}
 		}
-		else if (samlSpIdpConnections.size() == 1) {
-			httpServletRequest.setAttribute(
-				SamlWebKeys.SAML_SP_IDP_CONNECTION,
-				samlSpIdpConnections.get(0));
 
-			return null;
+		boolean samlIdpRedirectMessageEnabled = GetterUtil.getBoolean(
+			_props.get("saml.idp.redirect.message.enabled"), true);
+
+		if (samlIdpRedirectMessageEnabled) {
+			httpServletRequest.setAttribute(
+				SamlWebKeys.SAML_IDP_REDIRECT_MESSAGE,
+				_language.get(
+					httpServletRequest,
+					"redirecting-to-your-identity-provider"));
 		}
 
 		httpServletRequest.setAttribute(
@@ -128,7 +123,8 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 		JspUtil.dispatch(
 			httpServletRequest, httpServletResponse,
 			"/portal/saml/select_idp.jsp",
-			"please-select-your-identity-provider", false);
+			"please-select-your-identity-provider",
+			!samlIdpRedirectMessageEnabled);
 
 		return null;
 	}
@@ -148,7 +144,7 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 	private JSONObject _toJSONObject(
 		List<SamlSpIdpConnection> samlSpIdpConnections) {
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (SamlSpIdpConnection samlSpIdpConnection : samlSpIdpConnections) {
 			jsonArray.put(
@@ -165,7 +161,16 @@ public class SamlLoginAction extends BaseSamlStrutsAction {
 	}
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
+	private Language _language;
+
+	@Reference
 	private Portal _portal;
+
+	@Reference
+	private Props _props;
 
 	@Reference
 	private SamlProviderConfigurationHelper _samlProviderConfigurationHelper;

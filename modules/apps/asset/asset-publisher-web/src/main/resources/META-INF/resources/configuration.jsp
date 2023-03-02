@@ -58,9 +58,9 @@ List<AssetRendererFactory<?>> classTypesAssetRendererFactories = new ArrayList<>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button onClick='<%= liferayPortletResponse.getNamespace() + "saveSelectBoxes();" %>' type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			submitOnClick='<%= liferayPortletResponse.getNamespace() + "saveSelectBoxes();" %>'
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 
@@ -69,8 +69,8 @@ List<AssetRendererFactory<?>> classTypesAssetRendererFactories = new ArrayList<>
 		var form = document.<portlet:namespace />fm;
 
 		<%
-		for (AssetRendererFactory<?> curRendererFactory : classTypesAssetRendererFactories) {
-			String className = assetPublisherWebHelper.getClassName(curRendererFactory);
+		for (AssetRendererFactory<?> curAssetRendererFactory : classTypesAssetRendererFactories) {
+			String className = assetPublisherWebHelper.getClassName(curAssetRendererFactory);
 		%>
 
 			Liferay.Util.setFormValues(form, {

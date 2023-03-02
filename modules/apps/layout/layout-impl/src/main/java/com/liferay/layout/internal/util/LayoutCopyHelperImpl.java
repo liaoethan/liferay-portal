@@ -54,7 +54,6 @@ import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.ImageLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
-import com.liferay.portal.kernel.service.PortletPreferenceValueLocalService;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -95,7 +94,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = LayoutCopyHelper.class)
+@Component(service = LayoutCopyHelper.class)
 public class LayoutCopyHelperImpl implements LayoutCopyHelper {
 
 	@Override
@@ -888,10 +887,6 @@ public class LayoutCopyHelperImpl implements LayoutCopyHelper {
 	private PortletPreferencesLocalService _portletPreferencesLocalService;
 
 	@Reference
-	private PortletPreferenceValueLocalService
-		_portletPreferenceValueLocalService;
-
-	@Reference
 	private PortletRegistry _portletRegistry;
 
 	@Reference
@@ -1007,7 +1002,8 @@ public class LayoutCopyHelperImpl implements LayoutCopyHelper {
 					classNameId, targetLayout.getPlid(),
 					clientExtensionEntryRel.getCETExternalReferenceCode(),
 					clientExtensionEntryRel.getType(),
-					clientExtensionEntryRel.getTypeSettings());
+					clientExtensionEntryRel.getTypeSettings(),
+					ServiceContextThreadLocal.getServiceContext());
 			}
 		}
 

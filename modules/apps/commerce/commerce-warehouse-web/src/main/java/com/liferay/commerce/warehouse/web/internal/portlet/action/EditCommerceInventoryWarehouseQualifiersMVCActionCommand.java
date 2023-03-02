@@ -36,7 +36,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Crescenzo Rega
  */
 @Component(
-	enabled = false, immediate = true,
 	property = {
 		"javax.portlet.name=" + CPPortletKeys.COMMERCE_INVENTORY_WAREHOUSE,
 		"mvc.command.name=/commerce_inventory_warehouse/edit_commerce_inventory_warehouse_qualifiers"
@@ -72,7 +71,7 @@ public class EditCommerceInventoryWarehouseQualifiersMVCActionCommand
 		String channelQualifiers = ParamUtil.getString(
 			actionRequest, "channelQualifiers");
 
-		if (Objects.equals(channelQualifiers, "all")) {
+		if (Objects.equals(channelQualifiers, "none")) {
 			long commerceInventoryWarehouseId = ParamUtil.getLong(
 				actionRequest, "commerceInventoryWarehouseId");
 

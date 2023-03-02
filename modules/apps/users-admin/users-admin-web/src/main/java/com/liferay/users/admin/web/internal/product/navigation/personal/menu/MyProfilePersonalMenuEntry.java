@@ -23,6 +23,8 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
+import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.util.PropsValues;
@@ -41,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = {
 		"product.navigation.personal.menu.entry.order:Integer=200",
 		"product.navigation.personal.menu.group:Integer=100"
@@ -98,17 +99,23 @@ public class MyProfilePersonalMenuEntry implements PersonalMenuEntry {
 			PortletRequest portletRequest, PermissionChecker permissionChecker)
 		throws PortalException {
 
-		if (!PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED) {
+		if (!PrefsPropsUtil.getBoolean(
+				_portal.getCompanyId(portletRequest),
+				PropsKeys.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED)) {
+
 			return false;
 		}
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		if (PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_POWER_USER_REQUIRED &&
-			!roleLocalService.hasUserRole(
-				themeDisplay.getUserId(), themeDisplay.getCompanyId(),
-				RoleConstants.POWER_USER, true)) {
+		User user = themeDisplay.getUser();
+
+		if (Validator.isNull(user.getDisplayURL(themeDisplay, false)) ||
+			(PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_POWER_USER_REQUIRED &&
+			 !roleLocalService.hasUserRole(
+				 themeDisplay.getUserId(), themeDisplay.getCompanyId(),
+				 RoleConstants.POWER_USER, true))) {
 
 			return false;
 		}

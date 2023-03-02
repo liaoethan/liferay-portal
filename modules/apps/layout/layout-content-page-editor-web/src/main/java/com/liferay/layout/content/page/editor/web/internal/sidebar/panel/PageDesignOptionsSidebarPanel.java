@@ -20,10 +20,8 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -32,7 +30,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Víctor Galán
  */
 @Component(
-	immediate = true, property = "service.ranking:Integer=600",
+	property = "service.ranking:Integer=600",
 	service = ContentPageEditorSidebarPanel.class
 )
 public class PageDesignOptionsSidebarPanel
@@ -45,15 +43,12 @@ public class PageDesignOptionsSidebarPanel
 
 	@Override
 	public String getId() {
-		return "page-design-options";
+		return "page_design_options";
 	}
 
 	@Override
 	public String getLabel(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, getClass());
-
-		return _language.get(resourceBundle, "page-design-options");
+		return _language.get(locale, "page-design-options");
 	}
 
 	@Override

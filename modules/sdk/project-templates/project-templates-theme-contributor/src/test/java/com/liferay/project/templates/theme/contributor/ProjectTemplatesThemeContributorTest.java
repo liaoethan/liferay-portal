@@ -49,7 +49,8 @@ public class ProjectTemplatesThemeContributorTest
 	public static Iterable<Object[]> data() {
 		return Arrays.asList(
 			new Object[][] {
-				{"7.0.6-2"}, {"7.1.3-1"}, {"7.2.1-1"}, {"7.3.7"}, {"7.4.1-1"}
+				{"7.0.10.17"}, {"7.1.10.7"}, {"7.2.10.7"}, {"7.3.7"},
+				{"7.4.3.36"}
 			});
 	}
 
@@ -82,12 +83,21 @@ public class ProjectTemplatesThemeContributorTest
 			temporaryFolder, "gradle", "gradleWS", _liferayVersion,
 			mavenExecutor);
 
+		String liferayWorkspaceProduct = getLiferayWorkspaceProduct(
+			_liferayVersion);
+
+		if (liferayWorkspaceProduct != null) {
+			writeGradlePropertiesInWorkspace(
+				gradleWorkspaceDir,
+				"liferay.workspace.product=" + liferayWorkspaceProduct);
+		}
+
 		File gradleWorkspaceModulesDir = new File(
 			gradleWorkspaceDir, "modules");
 
 		File gradleProjectDir = buildTemplateWithGradle(
-			gradleWorkspaceModulesDir, template, name, "--liferay-version",
-			_liferayVersion, "--contributor-type", "foo-bar");
+			gradleWorkspaceModulesDir, template, name, "--contributor-type",
+			"foo-bar", "--liferay-version", _liferayVersion);
 
 		testContains(
 			gradleProjectDir, "bnd.bnd",
@@ -113,8 +123,8 @@ public class ProjectTemplatesThemeContributorTest
 		File mavenProjectDir = buildTemplateWithMaven(
 			mavenModulesDir, mavenModulesDir, template, name, "com.test",
 			mavenExecutor, "-DcontributorType=foo-bar",
-			"-Dpackage=my.contributor.custom",
-			"-DliferayVersion=" + _liferayVersion);
+			"-DliferayVersion=" + _liferayVersion,
+			"-Dpackage=my.contributor.custom");
 
 		if (isBuildProjects()) {
 			File gradleOutputDir = new File(gradleProjectDir, "build/libs");

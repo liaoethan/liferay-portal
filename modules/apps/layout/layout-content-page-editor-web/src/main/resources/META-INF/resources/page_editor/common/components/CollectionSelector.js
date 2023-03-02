@@ -13,13 +13,12 @@
  */
 
 import ClayIcon from '@clayui/icon';
-import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React from 'react';
 
 import {config} from '../../app/config/index';
 import {useCustomCollectionSelectorURL} from '../../app/contexts/CollectionItemContext';
-import itemSelectorValueToCollection from '../../app/utils/item-selector-value/itemSelectorValueToCollection';
+import itemSelectorValueToCollection from '../../app/utils/item_selector_value/itemSelectorValueToCollection';
 import ItemSelector from './ItemSelector';
 
 const DEFAULT_OPTION_MENU_ITEMS = [];
@@ -28,8 +27,8 @@ export default function CollectionSelector({
 	collectionItem,
 	itemSelectorURL,
 	label,
+	onBeforeCollectionSelect,
 	onCollectionSelect,
-	onPreventCollectionSelect,
 	optionsMenuItems = DEFAULT_OPTION_MENU_ITEMS,
 }) {
 	const eventName = `${config.portletNamespace}selectInfoList`;
@@ -43,7 +42,7 @@ export default function CollectionSelector({
 	return (
 		<>
 			<ItemSelector
-				className={classNames({'mb-0': isPrefiltered})}
+				className="mb-0"
 				eventName={eventName}
 				itemSelectorURL={
 					customCollectionSelectorURL ||
@@ -51,8 +50,8 @@ export default function CollectionSelector({
 					config.infoListSelectorURL
 				}
 				label={label}
+				onBeforeItemSelect={onBeforeCollectionSelect}
 				onItemSelect={onCollectionSelect}
-				onPreventCollectionSelect={onPreventCollectionSelect}
 				optionsMenuItems={optionsMenuItems}
 				quickMappedInfoItems={
 					config.selectedMappingTypes?.linkedCollection
@@ -69,7 +68,9 @@ export default function CollectionSelector({
 					<ClayIcon className="mr-2 mt-0" symbol="info-panel-open" />
 
 					<span className="text-2">
-						{Liferay.Language.get('collection-prefiltered')}
+						{Liferay.FeatureFlags['LPS-166036']
+							? Liferay.Language.get('collection-filtered')
+							: Liferay.Language.get('collection-prefiltered')}
 					</span>
 				</p>
 			)}
@@ -80,6 +81,6 @@ export default function CollectionSelector({
 CollectionSelector.propTypes = {
 	collectionItem: PropTypes.shape({title: PropTypes.string}),
 	label: PropTypes.string,
+	onBeforeCollectionSelect: PropTypes.func,
 	onCollectionSelect: PropTypes.func.isRequired,
-	onPreventCollectionSelect: PropTypes.func,
 };

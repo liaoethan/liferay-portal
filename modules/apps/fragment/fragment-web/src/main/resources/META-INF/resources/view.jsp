@@ -24,6 +24,8 @@ List<FragmentCollection> systemFragmentCollections = (List<FragmentCollection>)r
 List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDisplayContext.getFragmentCollectionContributors(locale);
 %>
 
+<liferay-ui:success key="fragmentEntryCopied" message="the-fragment-was-copied-successfully" />
+
 <clay:container-fluid
 	cssClass="container-view"
 >
@@ -86,6 +88,7 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 															"viewImportURL", fragmentCollectionsViewContext.get("viewImportURL")
 														).build()
 													%>'
+													aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 													dropdownItems="<%= fragmentDisplayContext.getCollectionsDropdownItems() %>"
 													propsTransformer="js/FragmentCollectionViewDefaultPropsTransformer"
 												/>
@@ -117,11 +120,11 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 												>
 													<span class="text-truncate"><%= HtmlUtil.escape(fragmentCollectionContributor.getName(locale)) %></span>
 
-													<liferay-ui:icon
-														icon="lock"
-														iconCssClass="ml-1 text-muted"
-														markupView="lexicon"
-													/>
+													<span class="ml-1 text-muted">
+														<clay:icon
+															symbol="lock"
+														/>
+													</span>
 												</a>
 											</li>
 
@@ -145,11 +148,11 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 													<span class="text-truncate"><%= HtmlUtil.escape(fragmentCollection.getName()) %></span>
 
 													<c:if test="<%= fragmentDisplayContext.isLocked(fragmentCollection) %>">
-														<liferay-ui:icon
-															icon="lock"
-															iconCssClass="ml-1 text-muted"
-															markupView="lexicon"
-														/>
+														<span class="ml-1 text-muted">
+															<clay:icon
+																symbol="lock"
+															/>
+														</span>
 													</c:if>
 												</a>
 											</li>
@@ -186,11 +189,11 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 												>
 													<span class="text-truncate"><%= HtmlUtil.escape(fragmentCollection.getName()) %></span>
 
-													<liferay-ui:icon
-														icon="lock"
-														iconCssClass="ml-1 text-muted"
-														markupView="lexicon"
-													/>
+													<span class="ml-1 text-muted">
+														<clay:icon
+															symbol="lock"
+														/>
+													</span>
 												</a>
 											</li>
 
@@ -223,11 +226,11 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 													<span class="text-truncate"><%= HtmlUtil.escape(fragmentCollection.getName()) %></span>
 
 													<c:if test="<%= fragmentDisplayContext.isLocked(fragmentCollection) %>">
-														<liferay-ui:icon
-															icon="lock"
-															iconCssClass="ml-1 text-muted"
-															markupView="lexicon"
-														/>
+														<span class="ml-1 text-muted">
+															<clay:icon
+																symbol="lock"
+															/>
+														</span>
 													</c:if>
 												</a>
 											</li>
@@ -286,6 +289,7 @@ List<FragmentCollectionContributor> fragmentCollectionContributors = fragmentDis
 									%>
 
 									<clay:dropdown-actions
+										aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 										dropdownItems="<%= fragmentCollectionActionDropdownItemsProvider.getActionDropdownItems() %>"
 										propsTransformer="js/FragmentCollectionDropdownPropsTransformer"
 									/>

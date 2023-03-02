@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommerceOrderFDSNames.PLACED_ORDERS,
 	service = FDSView.class
 )
@@ -52,7 +51,8 @@ public class PlacedCommerceOrderTableFDSView extends BaseTableFDSView {
 		).add(
 			"purchaseOrderNumber", "purchase-order-number"
 		).add(
-			"date", "order-date"
+			"date", "order-date",
+			fdsTableSchemaField -> fdsTableSchemaField.setSortable(true)
 		).add(
 			"accountName", "account"
 		).add(

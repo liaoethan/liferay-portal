@@ -31,7 +31,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.client.extension.model.ClientExtensionEntryRel",
 	service = StagedModelRepository.class
 )
@@ -44,6 +43,9 @@ public class ClientExtensionEntryRelStagedModelRepository
 			ClientExtensionEntryRel clientExtensionEntryRel)
 		throws PortalException {
 
+		long userId = portletDataContext.getUserId(
+			clientExtensionEntryRel.getUserUuid());
+
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
 			clientExtensionEntryRel);
 
@@ -52,13 +54,12 @@ public class ClientExtensionEntryRelStagedModelRepository
 		}
 
 		return _clientExtensionEntryRelLocalService.addClientExtensionEntryRel(
-			clientExtensionEntryRel.getUserId(),
-			clientExtensionEntryRel.getGroupId(),
+			userId, clientExtensionEntryRel.getGroupId(),
 			clientExtensionEntryRel.getClassNameId(),
 			clientExtensionEntryRel.getClassPK(),
 			clientExtensionEntryRel.getCETExternalReferenceCode(),
 			clientExtensionEntryRel.getType(),
-			clientExtensionEntryRel.getTypeSettings());
+			clientExtensionEntryRel.getTypeSettings(), serviceContext);
 	}
 
 	@Override
@@ -113,6 +114,14 @@ public class ClientExtensionEntryRelStagedModelRepository
 	}
 
 	@Override
+	public ClientExtensionEntryRel getStagedModel(long id)
+		throws PortalException {
+
+		return _clientExtensionEntryRelLocalService.getClientExtensionEntryRel(
+			id);
+	}
+
+	@Override
 	public ClientExtensionEntryRel saveStagedModel(
 			ClientExtensionEntryRel clientExtensionEntryRel)
 		throws PortalException {
@@ -128,7 +137,13 @@ public class ClientExtensionEntryRelStagedModelRepository
 		throws PortalException {
 
 		return _clientExtensionEntryRelLocalService.
-			updateClientExtensionEntryRel(clientExtensionEntryRel);
+			updateClientExtensionEntryRel(
+				clientExtensionEntryRel.getClientExtensionEntryRelId(),
+				clientExtensionEntryRel.getClassNameId(),
+				clientExtensionEntryRel.getClassPK(),
+				clientExtensionEntryRel.getCETExternalReferenceCode(),
+				clientExtensionEntryRel.getType(),
+				clientExtensionEntryRel.getTypeSettings());
 	}
 
 	@Reference

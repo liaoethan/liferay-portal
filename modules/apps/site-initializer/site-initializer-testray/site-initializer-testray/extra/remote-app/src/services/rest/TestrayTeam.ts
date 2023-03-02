@@ -12,10 +12,12 @@
  * details.
  */
 
-import i18n from '../../i18n';
-import yupSchema from '../../schema/yup';
-import {SearchBuilder} from '../../util/search';
-import Rest from './Rest';
+import TestrayError from '~/TestrayError';
+import Rest from '~/core/Rest';
+import SearchBuilder from '~/core/SearchBuilder';
+import i18n from '~/i18n';
+import yupSchema from '~/schema/yup';
+
 import {testrayComponentImpl} from './TestrayComponent';
 import {APIResponse, TestrayTeam} from './types';
 
@@ -51,11 +53,13 @@ class TestrayTeamImpl extends Rest<Team, TestrayTeam> {
 			.build();
 
 		const response = await this.fetcher<APIResponse<TestrayTeam>>(
-			`/components?filter=${filter}`
+			`/teams?filter=${filter}`
 		);
 
 		if (response?.items?.length) {
-			throw new Error(i18n.sub('the-x-name-already-exists', 'team'));
+			throw new TestrayError(
+				i18n.sub('the-x-name-already-exists', 'team')
+			);
 		}
 	}
 
@@ -71,7 +75,7 @@ class TestrayTeamImpl extends Rest<Team, TestrayTeam> {
 		const response = await testrayComponentImpl.getComponentsByTeamId(id);
 
 		if (response?.totalCount) {
-			throw new Error(
+			throw new TestrayError(
 				i18n.translate(
 					'the-team-cannot-be-deleted-because-it-has-associated-components'
 				)

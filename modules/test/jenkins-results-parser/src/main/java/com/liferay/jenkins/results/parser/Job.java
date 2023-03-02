@@ -66,6 +66,8 @@ public interface Job {
 
 	public Set<String> getDistTypesExcludingTomcat();
 
+	public JobHistory getJobHistory();
+
 	public String getJobName();
 
 	public List<File> getJobPropertiesFiles();
@@ -82,11 +84,15 @@ public interface Job {
 
 	public String getTestPropertiesContent();
 
+	public int getTimeoutMinutes(JenkinsMaster jenkinsMaster);
+
 	public boolean isDownstreamEnabled();
 
 	public boolean isSegmentEnabled();
 
 	public boolean isValidationRequired();
+
+	public boolean testJaCoCoCodeCoverage();
 
 	public boolean testReleaseBundle();
 

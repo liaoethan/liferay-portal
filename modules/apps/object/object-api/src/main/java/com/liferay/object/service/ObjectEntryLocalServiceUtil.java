@@ -69,6 +69,15 @@ public class ObjectEntryLocalServiceUtil {
 		return getService().addObjectEntry(objectEntry);
 	}
 
+	public static ObjectEntry addObjectEntry(
+			String externalReferenceCode, long userId,
+			com.liferay.object.model.ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		return getService().addObjectEntry(
+			externalReferenceCode, userId, objectDefinition);
+	}
+
 	public static void addOrUpdateExtensionDynamicObjectDefinitionTableValues(
 			long userId,
 			com.liferay.object.model.ObjectDefinition objectDefinition,
@@ -267,6 +276,13 @@ public class ObjectEntryLocalServiceUtil {
 
 	public static ObjectEntry fetchObjectEntry(long objectEntryId) {
 		return getService().fetchObjectEntry(objectEntryId);
+	}
+
+	public static ObjectEntry fetchObjectEntry(
+		String externalReferenceCode, long objectDefinitionId) {
+
+		return getService().fetchObjectEntry(
+			externalReferenceCode, objectDefinitionId);
 	}
 
 	/**
@@ -509,6 +525,13 @@ public class ObjectEntryLocalServiceUtil {
 			objectDefinition, primaryKey);
 	}
 
+	public static Map<String, Serializable> getSystemValues(
+			ObjectEntry objectEntry)
+		throws PortalException {
+
+		return getService().getSystemValues(objectEntry);
+	}
+
 	public static String getTitleValue(long objectDefinitionId, long primaryKey)
 		throws PortalException {
 
@@ -528,7 +551,7 @@ public class ObjectEntryLocalServiceUtil {
 	}
 
 	public static List<Map<String, Serializable>> getValuesList(
-			long objectDefinitionId, long groupId, long[] accountEntryIds,
+			long groupId, long companyId, long userId, long objectDefinitionId,
 			com.liferay.petra.sql.dsl.expression.Predicate predicate,
 			String search, int start, int end,
 			com.liferay.petra.sql.dsl.query.sort.OrderByExpression[]
@@ -536,18 +559,18 @@ public class ObjectEntryLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getValuesList(
-			objectDefinitionId, groupId, accountEntryIds, predicate, search,
+			groupId, companyId, userId, objectDefinitionId, predicate, search,
 			start, end, orderByExpressions);
 	}
 
 	public static int getValuesListCount(
-			long objectDefinitionId, long groupId, long[] accountEntryIds,
+			long groupId, long companyId, long userId, long objectDefinitionId,
 			com.liferay.petra.sql.dsl.expression.Predicate predicate,
 			String search)
 		throws PortalException {
 
 		return getService().getValuesListCount(
-			objectDefinitionId, groupId, accountEntryIds, predicate, search);
+			groupId, companyId, userId, objectDefinitionId, predicate, search);
 	}
 
 	public static void insertIntoOrUpdateExtensionTable(

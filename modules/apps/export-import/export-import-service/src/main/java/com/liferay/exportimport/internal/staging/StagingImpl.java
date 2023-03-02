@@ -54,7 +54,6 @@ import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerRegistryUtil;
 import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService;
-import com.liferay.exportimport.kernel.service.StagingLocalService;
 import com.liferay.exportimport.kernel.staging.LayoutStagingUtil;
 import com.liferay.exportimport.kernel.staging.Staging;
 import com.liferay.exportimport.kernel.staging.StagingURLHelper;
@@ -76,11 +75,10 @@ import com.liferay.portal.kernel.exception.PortletIdException;
 import com.liferay.portal.kernel.exception.RemoteOptionsException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.lock.LockManager;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.DestinationNames;
@@ -103,7 +101,7 @@ import com.liferay.portal.kernel.model.WorkflowInstanceLink;
 import com.liferay.portal.kernel.model.WorkflowedModel;
 import com.liferay.portal.kernel.model.adapter.StagedTheme;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
-import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
+import com.liferay.portal.kernel.scheduler.CronTextUtil;
 import com.liferay.portal.kernel.scheduler.SchedulerException;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.HttpPrincipal;
@@ -132,7 +130,7 @@ import com.liferay.portal.kernel.service.permission.GroupPermission;
 import com.liferay.portal.kernel.servlet.ServletResponseConstants;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadRequestSizeException;
-import com.liferay.portal.kernel.upload.UploadServletRequestConfigurationHelperUtil;
+import com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -195,7 +193,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Wesley Gong
  * @author Zsolt Balogh
  */
-@Component(immediate = true, service = Staging.class)
+@Component(service = Staging.class)
 public class StagingImpl implements Staging {
 
 	@Override
@@ -511,7 +509,7 @@ public class StagingImpl implements Staging {
 	public JSONArray getErrorMessagesJSONArray(
 		Locale locale, Map<String, MissingReference> missingReferences) {
 
-		JSONArray errorMessagesJSONArray = JSONFactoryUtil.createJSONArray();
+		JSONArray errorMessagesJSONArray = _jsonFactory.createJSONArray();
 
 		for (Map.Entry<String, MissingReference> missingReferenceEntry :
 				missingReferences.entrySet()) {
@@ -519,8 +517,7 @@ public class StagingImpl implements Staging {
 			MissingReference missingReference =
 				missingReferenceEntry.getValue();
 
-			JSONObject errorMessageJSONObject =
-				JSONFactoryUtil.createJSONObject();
+			JSONObject errorMessageJSONObject = _jsonFactory.createJSONObject();
 
 			String className = missingReference.getClassName();
 			Map<String, String> referrers = missingReference.getReferrers();
@@ -716,6 +713,38 @@ public class StagingImpl implements Staging {
 							"cannot-be-found-with-the-following-parameters-x",
 						exportImportContentValidationException.
 							getDlReferenceParameters());
+				}
+			}
+			else if (exportImportContentValidationException.getType() ==
+						ExportImportContentValidationException.
+							JOURNAL_FEED_NOT_FOUND) {
+
+				if (Validator.isNotNull(
+						exportImportContentValidationException.
+							getStagedModelClassName())) {
+
+					errorMessage = _language.format(
+						resourceBundle,
+						"unable-to-validate-referenced-article-feed-because-" +
+							"it-cannot-be-found-with-url-x-within-the-" +
+								"content-of-x-with-primary-key-x",
+						new String[] {
+							exportImportContentValidationException.
+								getJournalArticleFeedURL(),
+							exportImportContentValidationException.
+								getStagedModelClassName(),
+							String.valueOf(
+								exportImportContentValidationException.
+									getStagedModelPrimaryKeyObj())
+						});
+				}
+				else {
+					errorMessage = _language.format(
+						resourceBundle,
+						"unable-to-validate-referenced-journal-feed-because-" +
+							"it-cannot-be-found-with-url-x",
+						exportImportContentValidationException.
+							getJournalArticleFeedURL());
 				}
 			}
 			else if (exportImportContentValidationException.getType() ==
@@ -1254,7 +1283,7 @@ public class StagingImpl implements Staging {
 					"page-templates-or-site-templates-that-could-not-be-",
 					"found.-please-import-the-following-templates-manually"));
 
-			errorMessagesJSONArray = JSONFactoryUtil.createJSONArray();
+			errorMessagesJSONArray = _jsonFactory.createJSONArray();
 
 			List<Tuple> missingLayoutPrototypes =
 				layoutPrototypeException.getMissingLayoutPrototypes();
@@ -1656,7 +1685,8 @@ public class StagingImpl implements Staging {
 				resourceBundle,
 				"upload-request-reached-the-maximum-permitted-size-of-x-bytes",
 				String.valueOf(
-					UploadServletRequestConfigurationHelperUtil.getMaxSize()));
+					UploadServletRequestConfigurationProviderUtil.
+						getMaxSize()));
 			errorType = ServletResponseConstants.SC_FILE_SIZE_EXCEPTION;
 		}
 		else {
@@ -1987,7 +2017,7 @@ public class StagingImpl implements Staging {
 	public JSONArray getWarningMessagesJSONArray(
 		Locale locale, Map<String, MissingReference> missingReferences) {
 
-		JSONArray warningMessagesJSONArray = JSONFactoryUtil.createJSONArray();
+		JSONArray warningMessagesJSONArray = _jsonFactory.createJSONArray();
 
 		for (Map.Entry<String, MissingReference> entry :
 				missingReferences.entrySet()) {
@@ -3903,7 +3933,7 @@ public class StagingImpl implements Staging {
 			portletRequest, "recurrenceType");
 
 		scheduleInformation.setCronText(
-			SchedulerEngineHelperUtil.getCronText(
+			CronTextUtil.getCronText(
 				portletRequest, startCalendar, false, recurrenceType));
 
 		String destinationName = DestinationNames.LAYOUTS_LOCAL_PUBLISHER;
@@ -4062,6 +4092,9 @@ public class StagingImpl implements Staging {
 	private GroupPermission _groupPermission;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private Language _language;
 
 	@Reference
@@ -4078,9 +4111,6 @@ public class StagingImpl implements Staging {
 
 	@Reference
 	private LayoutSetBranchLocalService _layoutSetBranchLocalService;
-
-	@Reference
-	private LockManager _lockManager;
 
 	@Reference
 	private Portal _portal;
@@ -4103,9 +4133,6 @@ public class StagingImpl implements Staging {
 
 	@Reference
 	private StagingGroupHelper _stagingGroupHelper;
-
-	@Reference
-	private StagingLocalService _stagingLocalService;
 
 	@Reference
 	private StagingURLHelper _stagingURLHelper;

@@ -60,16 +60,26 @@ JournalArticleItemSelectorViewDisplayContext journalArticleItemSelectorViewDispl
 				<c:when test="<%= curArticle != null %>">
 
 					<%
-					row.setCssClass("articles selector-button" + row.getCssClass());
+					row.setCssClass("articles " + row.getCssClass());
 
-					row.setData(journalArticleItemSelectorViewDisplayContext.getJournalArticleContext(curArticle));
+					if (!journalArticleItemSelectorViewDisplayContext.isRefererArticle(curArticle)) {
+						row.setCssClass("selector-button " + row.getCssClass());
+					}
+
+					row.setData(
+						HashMapBuilder.<String, Object>put(
+							"value", journalArticleItemSelectorViewDisplayContext.getPayload(curArticle)
+						).build());
+					row.setPrimaryKey(curArticle.getArticleId());
 					%>
 
 					<c:choose>
 						<c:when test='<%= Objects.equals(journalArticleItemSelectorViewDisplayContext.getDisplayStyle(), "descriptive") %>'>
 
 							<%
-							row.setCssClass("item-preview " + row.getCssClass());
+							if (!journalArticleItemSelectorViewDisplayContext.isRefererArticle(curArticle)) {
+								row.setCssClass("item-preview " + row.getCssClass());
+							}
 							%>
 
 							<liferay-ui:search-container-column-text>
@@ -118,14 +128,17 @@ JournalArticleItemSelectorViewDisplayContext journalArticleItemSelectorViewDispl
 
 							<liferay-ui:search-container-column-text>
 								<clay:vertical-card
-									verticalCard="<%= new JournalArticleItemSelectorVerticalCard(curArticle, renderRequest) %>"
+									disabled="<%= journalArticleItemSelectorViewDisplayContext.isRefererArticle(curArticle) %>"
+									verticalCard="<%= new JournalArticleItemSelectorVerticalCard(curArticle, renderRequest, journalArticleItemSelectorViewDisplayContext.isMultiSelection()) %>"
 								/>
 							</liferay-ui:search-container-column-text>
 						</c:when>
 						<c:otherwise>
 
 							<%
-							row.setCssClass("item-preview " + row.getCssClass());
+							if (!journalArticleItemSelectorViewDisplayContext.isRefererArticle(curArticle)) {
+								row.setCssClass("item-preview " + row.getCssClass());
+							}
 							%>
 
 							<c:if test="<%= journalArticleItemSelectorViewDisplayContext.showArticleId() %>">
@@ -349,3 +362,109 @@ JournalArticleItemSelectorViewDisplayContext journalArticleItemSelectorViewDispl
 		/>
 	</liferay-ui:search-container>
 </clay:container-fluid>
+
+<c:choose>
+	<c:when test="<%= journalArticleItemSelectorViewDisplayContext.isMultiSelection() %>">
+		<aui:script use="liferay-search-container">
+			var searchContainer = Liferay.SearchContainer.get(
+				'<portlet:namespace />articles'
+			);
+
+			searchContainer.on('rowToggled', (event) => {
+				var searchContainerItems = event.elements.allSelectedElements;
+
+				var arr = [];
+
+				searchContainerItems.each(function () {
+					var domElement = this.ancestor('li');
+
+					if (domElement == null) {
+						domElement = this.ancestor('tr');
+					}
+
+					if (domElement == null) {
+						domElement = this.ancestor('dd');
+					}
+
+					if (domElement != null) {
+						var itemValue = domElement.getDOM().dataset.value;
+
+						arr.push(itemValue);
+					}
+				});
+
+				Liferay.Util.getOpener().Liferay.fire(
+					'<%= journalArticleItemSelectorViewDisplayContext.getItemSelectedEventName() %>',
+					{
+						data: {
+							returnType:
+								'<%= journalArticleItemSelectorViewDisplayContext.getReturnType() %>',
+							value: arr,
+						},
+					}
+				);
+			});
+		</aui:script>
+	</c:when>
+	<c:otherwise>
+		<aui:script require="frontend-js-web/index as frontendJsWeb">
+			var {delegate} = frontendJsWeb;
+
+			var selectItemHandler = delegate(
+				document.querySelector('#<portlet:namespace />articlesContainer'),
+				'click',
+				'.entry',
+				(event) => {
+					var activeCards = document.querySelectorAll('.form-check-card.active');
+
+					if (activeCards.length) {
+						activeCards.forEach((card) => {
+							card.classList.remove('active');
+						});
+					}
+
+					var target = event.delegateTarget;
+
+					var newSelectedCard = target.closest('.form-check-card');
+
+					if (newSelectedCard) {
+						newSelectedCard.classList.add('active');
+					}
+
+					var domElement = target.closest('li');
+
+					if (domElement == null) {
+						domElement = target.closest('tr');
+					}
+
+					if (domElement == null) {
+						domElement = target.closest('dd');
+					}
+
+					var itemValue = '';
+
+					if (domElement != null) {
+						itemValue = domElement.dataset.value;
+					}
+
+					Liferay.Util.getOpener().Liferay.fire(
+						'<%= journalArticleItemSelectorViewDisplayContext.getItemSelectedEventName() %>',
+						{
+							data: {
+								returnType:
+									'<%= journalArticleItemSelectorViewDisplayContext.getReturnType() %>',
+								value: itemValue,
+							},
+						}
+					);
+				}
+			);
+
+			Liferay.on('destroyPortlet', function removeListener() {
+				selectItemHandler.dispose();
+
+				Liferay.detach('destroyPortlet', removeListener);
+			});
+		</aui:script>
+	</c:otherwise>
+</c:choose>

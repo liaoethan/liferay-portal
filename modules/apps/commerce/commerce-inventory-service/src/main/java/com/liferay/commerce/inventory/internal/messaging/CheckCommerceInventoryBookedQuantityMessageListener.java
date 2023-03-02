@@ -14,13 +14,12 @@
 
 package com.liferay.commerce.inventory.internal.messaging;
 
-import com.liferay.commerce.inventory.internal.configuration.CommerceInventorySystemConfiguration;
+import com.liferay.commerce.inventory.configuration.CommerceInventorySystemConfiguration;
 import com.liferay.commerce.inventory.service.CommerceInventoryBookedQuantityLocalService;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
@@ -40,8 +39,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.commerce.inventory.configuration.CommerceInventorySystemConfiguration",
-	enabled = false, immediate = true,
-	service = CheckCommerceInventoryBookedQuantityMessageListener.class
+	service = {}
 )
 public class CheckCommerceInventoryBookedQuantityMessageListener
 	extends BaseMessageListener {
@@ -84,9 +82,6 @@ public class CheckCommerceInventoryBookedQuantityMessageListener
 	@Reference
 	private CommerceInventoryBookedQuantityLocalService
 		_commerceInventoryBookedQuantityLocalService;
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
-	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

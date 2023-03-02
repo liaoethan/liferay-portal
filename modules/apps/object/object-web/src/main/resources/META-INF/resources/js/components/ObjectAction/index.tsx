@@ -20,40 +20,77 @@ import {
 	FormError,
 	SidePanelForm,
 	SidebarCategory,
-	invalidateRequired,
 	openToast,
 	saveAndReload,
-	useForm,
 } from '@liferay/object-js-components-web';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useState} from 'react';
 
 import ActionBuilder from './tabs/ActionBuilder';
 import BasicInfo from './tabs/BasicInfo';
-
-const REQUIRED_MSG = Liferay.Language.get('required');
+import {useObjectActionForm} from './useObjectActionForm';
 
 const TABS = [
 	Liferay.Language.get('basic-info'),
 	Liferay.Language.get('action-builder'),
 ];
 
+interface ActionProps {
+	isApproved?: boolean;
+	objectAction: Partial<ObjectAction>;
+	objectActionCodeEditorElements: SidebarCategory[];
+	objectActionExecutors: CustomItem[];
+	objectActionTriggers: CustomItem[];
+	objectDefinitionExternalReferenceCode: string;
+	objectDefinitionId: number;
+	objectDefinitionsRelationshipsURL: string;
+	readOnly?: boolean;
+	requestParams: {
+		method: 'POST' | 'PUT';
+		url: string;
+	};
+	successMessage: string;
+	systemObject: boolean;
+	title: string;
+	validateExpressionURL: string;
+}
+
+interface ErrorMessage {
+	fieldName: keyof ObjectAction;
+	message?: string;
+	messages?: ErrorMessage[];
+}
+
+interface Error {
+	[key: string]: string | Error;
+}
+
+export type ActionError = FormError<ObjectAction & ObjectActionParameters> & {
+	predefinedValues?: {[key: string]: string};
+};
+
 export default function Action({
+	isApproved,
 	objectAction: initialValues,
 	objectActionCodeEditorElements,
 	objectActionExecutors,
 	objectActionTriggers,
+	objectDefinitionExternalReferenceCode,
+	objectDefinitionId,
 	objectDefinitionsRelationshipsURL,
 	readOnly,
 	requestParams: {method, url},
 	successMessage,
+	systemObject,
 	validateExpressionURL,
-}: IProps) {
+}: ActionProps) {
 	const [backEndErrors, setBackEndErrors] = useState<Error>({});
 
 	const onSubmit = async (objectAction: ObjectAction) => {
 		if (objectAction.parameters) {
 			delete objectAction?.parameters['lineCount'];
 		}
+
+		delete objectAction.objectDefinitionId;
 
 		try {
 			await API.save(url, objectAction, method);
@@ -141,8 +178,11 @@ export default function Action({
 			<ClayTabs.Content activeIndex={activeIndex} fade>
 				<ClayTabs.TabPane>
 					<BasicInfo
-						errors={errors}
+						errors={
+							Object.keys(errors).length ? errors : backEndErrors
+						}
 						handleChange={handleChange}
+						isApproved={isApproved!}
 						readOnly={readOnly}
 						setValues={setValues}
 						values={values}
@@ -154,15 +194,24 @@ export default function Action({
 						errors={
 							Object.keys(errors).length ? errors : backEndErrors
 						}
+						isApproved={isApproved!}
 						objectActionCodeEditorElements={
 							objectActionCodeEditorElements
 						}
 						objectActionExecutors={objectActionExecutors}
 						objectActionTriggers={objectActionTriggers}
+						objectDefinitionExternalReferenceCode={
+							objectDefinitionExternalReferenceCode
+						}
+						objectDefinitionId={
+							objectDefinitionId ??
+							initialValues.objectDefinitionId
+						}
 						objectDefinitionsRelationshipsURL={
 							objectDefinitionsRelationshipsURL
 						}
 						setValues={setValues}
+						systemObject={systemObject}
 						validateExpressionURL={validateExpressionURL}
 						values={values}
 					/>
@@ -171,149 +220,3 @@ export default function Action({
 		</SidePanelForm>
 	);
 }
-
-function useObjectActionForm({initialValues, onSubmit}: IUseObjectActionForm) {
-	const [fields, setFields] = useState<ObjectField[]>([]);
-
-	const objectFieldsMap = useMemo(() => {
-		const fieldMap = new Map<string, ObjectField>();
-
-		fields.forEach((field) => {
-			fieldMap.set(field.name, field);
-		});
-
-		return fieldMap;
-	}, [fields]);
-
-	const validate = (values: Partial<ObjectAction>) => {
-		const errors: ActionError = {};
-		if (invalidateRequired(values.name)) {
-			errors.name = REQUIRED_MSG;
-		}
-
-		if (invalidateRequired(values.objectActionTriggerKey)) {
-			errors.objectActionTriggerKey = REQUIRED_MSG;
-		}
-
-		if (invalidateRequired(values.objectActionExecutorKey)) {
-			errors.objectActionExecutorKey = REQUIRED_MSG;
-		}
-		else if (
-			values.objectActionExecutorKey === 'webhook' &&
-			invalidateRequired(values.parameters?.url)
-		) {
-			errors.url = REQUIRED_MSG;
-		}
-		else if (
-			values.objectActionExecutorKey === 'groovy' &&
-			!!values.parameters?.lineCount &&
-			values.parameters.lineCount > 2987
-		) {
-			errors.script = Liferay.Language.get(
-				'the-maximum-number-of-lines-available-is-2987'
-			);
-		}
-		else if (values.objectActionExecutorKey === 'add-object-entry') {
-			if (!values.parameters?.objectDefinitionId) {
-				errors.objectDefinitionId = REQUIRED_MSG;
-			}
-			else if (values.parameters?.predefinedValues) {
-				const predefinedValues = values.parameters?.predefinedValues;
-
-				predefinedValues.forEach(({name, value}) => {
-					if (
-						objectFieldsMap.get(name)?.required &&
-						invalidateRequired(value)
-					) {
-						if (!errors.predefinedValues) {
-							errors.predefinedValues = {} as any;
-						}
-						errors.predefinedValues![name] = REQUIRED_MSG;
-					}
-				});
-			}
-		}
-
-		if (
-			typeof values.conditionExpression === 'string' &&
-			invalidateRequired(values.conditionExpression)
-		) {
-			errors.conditionExpression = REQUIRED_MSG;
-		}
-
-		if (Object.keys(errors).length) {
-			openToast({
-				message: REQUIRED_MSG,
-				type: 'danger',
-			});
-		}
-
-		return errors;
-	};
-
-	const {errors, values, ...otherProps} = useForm<
-		ObjectAction,
-		ObjectActionParameters
-	>({
-		initialValues,
-		onSubmit,
-		validate,
-	});
-
-	useEffect(() => {
-		if (values.parameters?.objectDefinitionId) {
-			API.getObjectFields(values.parameters.objectDefinitionId).then(
-				(fields) => {
-					const filteredFields = fields.filter(
-						({businessType, system}) =>
-							businessType !== 'Aggregation' &&
-							businessType !== 'Relationship' &&
-							!system
-					);
-
-					setFields(filteredFields);
-				}
-			);
-		}
-		else {
-			setFields([]);
-		}
-	}, [values.parameters?.objectDefinitionId]);
-
-	return {errors: errors as ActionError, values, ...otherProps};
-}
-
-interface IProps {
-	objectAction: Partial<ObjectAction>;
-	objectActionCodeEditorElements: SidebarCategory[];
-	objectActionExecutors: CustomItem[];
-	objectActionTriggers: CustomItem[];
-	objectDefinitionsRelationshipsURL: string;
-	readOnly?: boolean;
-	requestParams: {
-		method: 'POST' | 'PUT';
-		url: string;
-	};
-	successMessage: string;
-	title: string;
-	validateExpressionURL: string;
-}
-
-interface ErrorMessage {
-	fieldName: keyof ObjectAction;
-	message?: string;
-	messages?: ErrorMessage[];
-}
-
-interface Error {
-	[key: string]: string | Error;
-}
-
-interface IUseObjectActionForm {
-	initialValues: Partial<ObjectAction>;
-	onSubmit: (field: ObjectAction) => void;
-}
-
-export type ActionError = FormError<ObjectAction & ObjectActionParameters> & {
-	predefinedValues?: {[key: string]: string};
-};

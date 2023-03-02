@@ -21,7 +21,7 @@ import com.liferay.adaptive.media.image.model.AMImageEntry;
 import com.liferay.adaptive.media.image.processor.AMImageProcessor;
 import com.liferay.adaptive.media.image.scaler.AMImageScaledImage;
 import com.liferay.adaptive.media.image.scaler.AMImageScaler;
-import com.liferay.adaptive.media.image.scaler.AMImageScalerTracker;
+import com.liferay.adaptive.media.image.scaler.AMImageScalerRegistry;
 import com.liferay.adaptive.media.image.service.AMImageEntryLocalService;
 import com.liferay.adaptive.media.image.validator.AMImageValidator;
 import com.liferay.adaptive.media.processor.AMProcessor;
@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.Date;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -44,7 +43,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.portal.kernel.repository.model.FileVersion",
 	service = {AMImageProcessor.class, AMProcessor.class}
 )
@@ -84,16 +82,13 @@ public final class AMImageProcessorImpl implements AMImageProcessor {
 			return;
 		}
 
-		Optional<AMImageConfigurationEntry> amImageConfigurationEntryOptional =
+		AMImageConfigurationEntry amImageConfigurationEntry =
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				fileVersion.getCompanyId(), configurationEntryUuid);
 
-		if (!amImageConfigurationEntryOptional.isPresent()) {
+		if (amImageConfigurationEntry == null) {
 			return;
 		}
-
-		AMImageConfigurationEntry amImageConfigurationEntry =
-			amImageConfigurationEntryOptional.get();
 
 		AMImageEntry amImageEntry = _amImageEntryLocalService.fetchAMImageEntry(
 			amImageConfigurationEntry.getUUID(),
@@ -110,7 +105,7 @@ public final class AMImageProcessorImpl implements AMImageProcessor {
 			}
 
 			AMImageScaler amImageScaler =
-				_amImageScalerTracker.getAMImageScaler(
+				_amImageScalerRegistry.getAMImageScaler(
 					fileVersion.getMimeType());
 
 			if (amImageScaler == null) {
@@ -188,7 +183,7 @@ public final class AMImageProcessorImpl implements AMImageProcessor {
 	private AMImageEntryLocalService _amImageEntryLocalService;
 
 	@Reference
-	private AMImageScalerTracker _amImageScalerTracker;
+	private AMImageScalerRegistry _amImageScalerRegistry;
 
 	@Reference
 	private AMImageValidator _amImageValidator;

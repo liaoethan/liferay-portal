@@ -22,12 +22,14 @@ import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalSer
 import com.liferay.exportimport.kernel.service.ExportImportLocalServiceUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.events.Action;
 import com.liferay.portal.kernel.events.ActionException;
 import com.liferay.portal.kernel.exception.LayoutPermissionException;
 import com.liferay.portal.kernel.exception.NoSuchGroupException;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.NoSuchUserException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.image.ImageToolUtil;
 import com.liferay.portal.kernel.interval.IntervalActionProcessor;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -79,7 +81,6 @@ import com.liferay.portal.kernel.servlet.PortalWebResourcesUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ColorSchemeFactoryUtil;
-import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -90,6 +91,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.SessionParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -102,7 +104,6 @@ import com.liferay.portal.theme.ThemeDisplayFactory;
 import com.liferay.portal.util.LayoutClone;
 import com.liferay.portal.util.LayoutCloneFactory;
 import com.liferay.portal.util.LayoutTypeAccessPolicyTracker;
-import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.sites.kernel.util.SitesUtil;
@@ -952,14 +953,14 @@ public class ServicePreAction extends Action {
 
 			// LEP-4069
 
-			CookieKeys.validateSupportCookie(httpServletRequest);
+			CookiesManagerUtil.validateSupportCookie(httpServletRequest);
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(exception);
 			}
 
-			CookieKeys.addSupportCookie(
+			CookiesManagerUtil.addSupportCookie(
 				httpServletRequest, httpServletResponse);
 		}
 
@@ -1001,9 +1002,7 @@ public class ServicePreAction extends Action {
 			Group layoutGroup = layout.getGroup();
 
 			if (layoutGroup.isUser()) {
-				if (!GetterUtil.getBoolean(
-						PropsUtil.get("feature.flag.LPS-155692"))) {
-
+				if (!FeatureFlagManagerUtil.isEnabled("LPS-155692")) {
 					long originalPlid = ParamUtil.getLong(
 						PortalUtil.getOriginalServletRequest(
 							httpServletRequest),
@@ -1028,9 +1027,13 @@ public class ServicePreAction extends Action {
 				}
 
 				if ((layout.isPrivateLayout() &&
-					 !PropsValues.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED) ||
+					 !PrefsPropsUtil.getBoolean(
+						 PortalUtil.getCompanyId(httpServletRequest),
+						 PropsKeys.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED)) ||
 					(layout.isPublicLayout() &&
-					 !PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED)) {
+					 !PrefsPropsUtil.getBoolean(
+						 user.getCompanyId(),
+						 PropsKeys.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED))) {
 
 					User layoutUser = UserLocalServiceUtil.getUserById(
 						company.getCompanyId(), layoutGroup.getClassPK());
@@ -1606,7 +1609,7 @@ public class ServicePreAction extends Action {
 		// Session
 
 		if (PropsValues.SESSION_ENABLE_URL_WITH_SESSION_ID &&
-			!CookieKeys.hasSessionId(httpServletRequest)) {
+			!CookiesManagerUtil.hasSessionId(httpServletRequest)) {
 
 			themeDisplay.setAddSessionIdToURL(true);
 			themeDisplay.setSessionId(httpSession.getId());
@@ -1802,6 +1805,12 @@ public class ServicePreAction extends Action {
 	 *         <code>false</code> otherwise
 	 */
 	private boolean _isLoginRequest(HttpServletRequest httpServletRequest) {
+		if (GetterUtil.getBoolean(
+				httpServletRequest.getAttribute(WebKeys.LOGIN_REQUEST))) {
+
+			return true;
+		}
+
 		String requestURI = httpServletRequest.getRequestURI();
 
 		String mainPath = _PATH_MAIN;
@@ -1976,8 +1985,12 @@ public class ServicePreAction extends Action {
 
 		boolean addDefaultUserPrivateLayouts = false;
 
-		if (PropsValues.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED &&
-			PropsValues.LAYOUT_USER_PRIVATE_LAYOUTS_AUTO_CREATE) {
+		if (PrefsPropsUtil.getBoolean(
+				user.getCompanyId(),
+				PropsKeys.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED) &&
+			PrefsPropsUtil.getBoolean(
+				user.getCompanyId(),
+				PropsKeys.LAYOUT_USER_PRIVATE_LAYOUTS_AUTO_CREATE)) {
 
 			addDefaultUserPrivateLayouts = true;
 
@@ -2005,7 +2018,10 @@ public class ServicePreAction extends Action {
 
 		boolean deleteDefaultUserPrivateLayouts = false;
 
-		if (!PropsValues.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED) {
+		if (!PrefsPropsUtil.getBoolean(
+				user.getCompanyId(),
+				PropsKeys.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED)) {
+
 			deleteDefaultUserPrivateLayouts = true;
 		}
 		else if (PropsValues.LAYOUT_USER_PRIVATE_LAYOUTS_POWER_USER_REQUIRED) {
@@ -2033,8 +2049,12 @@ public class ServicePreAction extends Action {
 
 		boolean addDefaultUserPublicLayouts = false;
 
-		if (PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED &&
-			PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_AUTO_CREATE) {
+		if (PrefsPropsUtil.getBoolean(
+				user.getCompanyId(),
+				PropsKeys.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED) &&
+			PrefsPropsUtil.getBoolean(
+				user.getCompanyId(),
+				PropsKeys.LAYOUT_USER_PUBLIC_LAYOUTS_AUTO_CREATE)) {
 
 			addDefaultUserPublicLayouts = true;
 
@@ -2062,7 +2082,10 @@ public class ServicePreAction extends Action {
 
 		boolean deleteDefaultUserPublicLayouts = false;
 
-		if (!PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED) {
+		if (!PrefsPropsUtil.getBoolean(
+				user.getCompanyId(),
+				PropsKeys.LAYOUT_USER_PUBLIC_LAYOUTS_ENABLED)) {
+
 			deleteDefaultUserPublicLayouts = true;
 		}
 		else if (PropsValues.LAYOUT_USER_PUBLIC_LAYOUTS_POWER_USER_REQUIRED) {

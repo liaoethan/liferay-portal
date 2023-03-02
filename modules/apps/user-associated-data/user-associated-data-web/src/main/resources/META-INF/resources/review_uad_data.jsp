@@ -204,8 +204,8 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 				<clay:sheet-section>
 					<c:choose>
 						<c:when test="<%= totalReviewableUADEntitiesCount == 0 %>">
-							<liferay-ui:empty-result-message
-								message="all-data-that-requires-review-has-been-anonymized"
+							<liferay-frontend:empty-result-message
+								title='<%= LanguageUtil.get(resourceBundle, "all-data-that-requires-review-has-been-anonymized") %>'
 							/>
 						</c:when>
 						<c:otherwise>
@@ -227,12 +227,12 @@ renderResponse.setTitle(StringBundler.concat(selectedUser.getFullName(), " - ", 
 	<portlet:param name="scope" value="<%= scope %>" />
 </portlet:renderURL>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
+
 	var baseURL = '<%= reviewUADDataURL %>';
 
 	var clickListeners = [];
-
-	var delegate = delegateModule.default;
 
 	var registerClickHandler = function (element, clickHandlerFn) {
 		clickListeners.push(delegate(element, 'click', 'input', clickHandlerFn));

@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
@@ -58,10 +57,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Levente Hudák
  * @author Daniel Kocsis
  */
-@Component(
-	immediate = true,
-	service = DraftExportImportConfigurationMessageListener.class
-)
+@Component(service = {})
 public class DraftExportImportConfigurationMessageListener
 	extends BaseMessageListener {
 
@@ -237,9 +233,6 @@ public class DraftExportImportConfigurationMessageListener
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
-	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.FieldArray;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.search.document.Document;
 import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.engine.adapter.index.GetFieldMappingIndexRequest;
@@ -37,8 +38,6 @@ import com.liferay.portal.search.test.util.indexing.DocumentCreationHelpers;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -266,19 +265,18 @@ public abstract class BaseNestedFieldsTestCase extends BaseIndexingTestCase {
 					searchResponse -> {
 						assertOneResult(searchResponse);
 
-						Document document = searchResponse.getDocumentsStream(
-						).findAny(
-						).get();
+						List<Document> documents =
+							searchResponse.getDocuments();
+
+						Document document = documents.get(
+							RandomTestUtil.randomInt(0, documents.size() - 1));
 
 						List<?> values = document.getValues("ddmFieldArray");
 
-						Optional<Object> optional =
-							NestedDDMFieldArrayUtil.getFieldValue(
-								fieldName,
-								(Stream<Map<String, Object>>)values.stream());
-
 						Assert.assertEquals(
-							expectedValue, optional.orElse(null));
+							expectedValue,
+							NestedDDMFieldArrayUtil.getFieldValue(
+								fieldName, (List<Map<String, Object>>)values));
 					});
 			});
 	}

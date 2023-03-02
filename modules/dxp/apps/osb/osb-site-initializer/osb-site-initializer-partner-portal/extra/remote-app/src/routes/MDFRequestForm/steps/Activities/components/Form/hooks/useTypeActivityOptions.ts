@@ -9,50 +9,34 @@
  * distribution rights of the Software.
  */
 
-import {useEffect, useMemo, useState} from 'react';
+import {OptionHTMLAttributes} from 'react';
 
-import TypeActivity from '../../../../../../../common/interfaces/typeActivity';
-import useGetTacticsByTypeActivityId from '../../../../../../../common/services/liferay/object/type-activities/useGetTacticsByTypeActivityId';
+import LiferayPicklist from '../../../../../../../common/interfaces/liferayPicklist';
 
 export default function useTypeActivityOptions(
-	typeActivities: TypeActivity[] | undefined,
-	handleSelected: (typeActivity: TypeActivity) => void
+	typeActivities: OptionHTMLAttributes<HTMLOptionElement>[] | undefined,
+	handleSelected: (option: LiferayPicklist) => void,
+	handleClearForm: () => void
 ) {
-	const [selectedTypeActivity, setSelectedTypeActivity] = useState<
-		TypeActivity
-	>();
-
-	const {data: tactics} = useGetTacticsByTypeActivityId(
-		selectedTypeActivity?.id
-	);
-
-	useEffect(() => {
-		if (selectedTypeActivity) {
-			handleSelected(selectedTypeActivity);
-		}
-	}, [handleSelected, selectedTypeActivity]);
-
 	const onTypeActivitySelected = (
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
-		const optionSelected = typeActivities?.find(
-			(typeActivity) => typeActivity.id === +event.target.value
-		);
+		const optionSelected = typeActivities?.find((typeActivity) => {
+			return typeActivity.value === event.target.value;
+		});
 
-		setSelectedTypeActivity(optionSelected);
+		if (optionSelected) {
+			handleSelected({
+				key: optionSelected.value as string,
+				name: optionSelected.label,
+			});
+
+			handleClearForm();
+		}
 	};
 
 	return {
 		onTypeActivitySelected,
-		selectedTypeActivity,
-		tacticsBySelectedTypeActivity: tactics?.items,
-		typeActivitiesOptions: useMemo(
-			() =>
-				typeActivities?.map((typeActivity) => ({
-					label: typeActivity.name,
-					value: typeActivity.id,
-				})) as React.OptionHTMLAttributes<HTMLOptionElement>[],
-			[typeActivities]
-		),
+		typeActivitiesOptions: typeActivities,
 	};
 }

@@ -42,7 +42,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-my-commerce-wish-lists",
@@ -62,7 +61,7 @@ import org.osgi.service.component.annotations.Reference;
 		"javax.portlet.supported-public-render-parameter=commerceWishListId",
 		"javax.portlet.version=3.0"
 	},
-	service = {MyCommerceWishListsPortlet.class, Portlet.class}
+	service = Portlet.class
 )
 public class MyCommerceWishListsPortlet extends MVCPortlet {
 

@@ -312,15 +312,17 @@ public class FieldDisplayContext {
 		).put(
 			"parentContactId", "Long"
 		).put(
-			"prefixId", "Long"
+			"prefixListTypeId", "Long"
 		).put(
 			"skypeSn", "String"
 		).put(
 			"smsSn", "String"
 		).put(
-			"suffixId", "Long"
+			"suffixListTypeId", "Long"
 		).put(
 			"twitterSn", "String"
+		).put(
+			"userName", "String"
 		).build();
 	private static final Map<String, String> _userFieldNames =
 		TreeMapBuilder.put(

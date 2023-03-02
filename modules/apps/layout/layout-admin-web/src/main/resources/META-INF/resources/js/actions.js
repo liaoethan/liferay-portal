@@ -17,10 +17,14 @@ import {navigate, openConfirmModal, openModal} from 'frontend-js-web';
 import openDeleteLayoutModal from './openDeleteLayoutModal';
 
 const ACTIONS = {
-	copyLayout: ({copyLayoutURL}, portletNamespace) => {
+	convertToPageTemplate: () => {
+		Liferay.fire('convertToPageTemplate');
+	},
+
+	copyLayout: ({copyLayoutURL}) => {
 		openModal({
 			height: '60vh',
-			id: `${portletNamespace}addLayoutDialog`,
+			id: 'addLayoutDialog',
 			size: 'md',
 			title: Liferay.Language.get('copy-page'),
 			url: copyLayoutURL,

@@ -21,6 +21,7 @@ import {ListViewContextProviderProps} from '../../../context/ListViewContext';
 import {FormModal} from '../../../hooks/useFormModal';
 import useHeader from '../../../hooks/useHeader';
 import i18n from '../../../i18n';
+import {UserGroup} from '../../../services/rest';
 import {Action} from '../../../types';
 import useUserActions from './useUserActions';
 
@@ -49,6 +50,7 @@ const UserListView: React.FC<UserListViewProps> = ({
 			forceRefetch={formModal?.forceRefetch}
 			managementToolbarProps={{
 				addButton: () => navigate('create'),
+				filterSchema: 'user',
 				title: i18n.translate('users'),
 			}}
 			resource="/user-accounts"
@@ -60,20 +62,24 @@ const UserListView: React.FC<UserListViewProps> = ({
 						key: 'givenName',
 						render: (givenName, {familyName}) =>
 							`${givenName} ${familyName}`,
-						sorteable: true,
 						value: i18n.translate('name'),
 					},
 					{
 						clickable: true,
 						key: 'alternateName',
-						sorteable: true,
 						value: i18n.translate('screen-name'),
 					},
 					{
 						clickable: true,
 						key: 'emailAddress',
-						sorteable: true,
 						value: i18n.translate('email-address'),
+					},
+					{
+						clickable: true,
+						key: 'userGroupBriefs',
+						render: (userGroups: UserGroup[] = []) =>
+							userGroups.map(({name}) => name).join(', '),
+						value: i18n.translate('user-group'),
 					},
 				],
 				...tableProps,
@@ -96,13 +102,13 @@ const Users = () => {
 	const navigate = useNavigate();
 
 	useHeader({
-		useDropdown: [],
-		useHeading: [
+		dropdown: [],
+		heading: [
 			{
 				title: i18n.translate('manage-users'),
 			},
 		],
-		useIcon: 'cog',
+		icon: 'cog',
 	});
 
 	return (

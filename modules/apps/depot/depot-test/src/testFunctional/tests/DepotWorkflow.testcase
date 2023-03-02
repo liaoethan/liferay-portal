@@ -24,7 +24,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -41,9 +41,9 @@ definition {
 	}
 
 	@description = "This ensures that the approved image from a depot is available to use in its connected site."
-	@priority = "5"
-	@refactorneeded
-	test ApproveImage {
+	@priority = 5
+	@refactordone
+	test CanApproveImage {
 		property portal.acceptance = "true";
 
 		JSONFolder.addFolder(
@@ -73,26 +73,12 @@ definition {
 
 		BlogsNavigator.gotoSelectFile();
 
-		SelectFrame(locator1 = "ItemSelector#ITEM_SELECTOR_IFRAME");
-
-		AssertClick(
-			key_navTab = "Documents and Media",
-			locator1 = "ItemSelector#NAVIGATION_SPECIFIC_TAB",
-			value1 = "Documents and Media");
-
-		ManagementBar.setFilterAndOrder(filterBy = "Everywhere");
-
-		Click(
-			key_rowEntry = "DM Folder Name",
-			locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_NAME");
-
-		AssertElementNotPresent(
-			key_imageFileName = "Document_1.jpg",
-			locator1 = "ItemSelector#SELECT_FILE_IMAGE_CARD");
-
-		AssertTextEquals(
-			locator1 = "Message#EMPTY_INFO",
-			value1 = "There are no documents or media files in this folder.");
+		ItemSelector.selectRepositoryImage(
+			depotName = "Test Depot Name",
+			folderName = "DM Folder Name",
+			imageFileName = "Document_1.jpg",
+			navTab = "Documents and Media",
+			noViewPermission = "true");
 
 		Navigator.openURL();
 
@@ -128,9 +114,9 @@ definition {
 	}
 
 	@description = "This ensures that the approved WC article from a depot is available to use in its connected site."
-	@priority = "5"
-	@refactorneeded
-	test ApproveWCArticle {
+	@priority = 5
+	@refactordone
+	test CanApproveWCArticle {
 		property portal.acceptance = "true";
 
 		ApplicationsMenu.gotoPortlet(
@@ -224,9 +210,9 @@ definition {
 	}
 
 	@description = "This test covers LPS-113392. It ensures that an asset library WC article can be approved by the content reviewer."
-	@priority = "5"
-	@refactorneeded
-	test ApproveWCArticleByContentReviewer {
+	@priority = 5
+	@refactordone
+	test CanApproveWCArticleByContentReviewer {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
 
 		JSONUser.addUser(
@@ -240,22 +226,11 @@ definition {
 			requireReset = "false",
 			userEmailAddress = "user1@liferay.com");
 
-		DepotNavigator.openDepotAdmin();
-
-		DepotNavigator.gotoDepotPortlet(
+		JSONUser.addUserToDepot(
 			depotName = "Test Depot Name",
-			portlet = "Memberships");
+			userEmailAddress = "user1@liferay.com");
 
-		Depot.assignUserAsMember(
-			depotName = "Test Depot Name",
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.assignAssetLibraryRole(
 			roleTitle = "Asset Library Content Reviewer",
@@ -326,15 +301,10 @@ definition {
 	}
 
 	@description = "This ensures that a single approver workflow of web content can be defined for the asset library."
-	@priority = "5"
-	@refactorneeded
-	test ApproveWCArticleWithinDepot {
-		DepotNavigator.openDepotAdmin();
-
-		DepotNavigator.gotoDepotPortlet(
-			category = "Configuration",
-			depotName = "Test Depot Name",
-			portlet = "Workflow");
+	@priority = 5
+	@refactordone
+	test CanApproveWCArticleWithinDepot {
+		DepotNavigator.openDepotWorkflowAdmin(depotName = "Test Depot Name");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
@@ -376,9 +346,9 @@ definition {
 	}
 
 	@description = "This ensures that the approved WC article in folder from a depot is available to use in its connected site."
-	@priority = "5"
-	@refactorneeded
-	test ApproveWCInFolder {
+	@priority = 5
+	@refactordone
+	test CanApproveWCInFolder {
 		JSONWebcontent.addFolder(
 			folderName = "WC Folder Name",
 			groupName = "Test Depot Name",
@@ -479,9 +449,9 @@ definition {
 	}
 
 	@description = "This ensures that the resubmitted image from a depot is available to use in its connected site."
-	@priority = "5"
-	@refactorneeded
-	test RejectAndResubmitImage {
+	@priority = 5
+	@refactordone
+	test CanRejectAndResubmitImage {
 		JSONFolder.addFolder(
 			dmFolderDescription = "DM Folder Description",
 			dmFolderName = "DM Folder Name",
@@ -595,9 +565,9 @@ definition {
 	}
 
 	@description = "This ensures that the resubmitted WC article from a depot is available to use in its connected site."
-	@priority = "5"
-	@refactorneeded
-	test RejectAndResubmitWC {
+	@priority = 5
+	@refactordone
+	test CanRejectAndResubmitWC {
 		ApplicationsMenu.gotoPortlet(
 			category = "Workflow",
 			panel = "Applications",
@@ -710,14 +680,10 @@ definition {
 	}
 
 	@description = "This ensures that the resubmitted web content can be approved in an asset library."
-	@priority = "5"
-	@refactorneeded
-	test RejectandResubmitWCArticleWithinDepot {
-		DepotNavigator.openDepotAdmin();
-
-		DepotNavigator.gotoDepotPortlet(
-			depotName = "Test Depot Name",
-			portlet = "Workflow");
+	@priority = 5
+	@refactordone
+	test CanRejectAndResubmitWCArticleWithinDepot {
+		DepotNavigator.openDepotWorkflowAdmin(depotName = "Test Depot Name");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
@@ -792,9 +758,9 @@ definition {
 	}
 
 	@description = "This ensures that an asset library WC article can be rejected by the content reviewer."
-	@priority = "5"
-	@refactorneeded
-	test RejectWCArticleByContentReviewer {
+	@priority = 5
+	@refactordone
+	test CanRejectWCArticleByContentReviewer {
 		property custom.properties = "jsonws.web.service.paths.excludes=";
 
 		JSONUser.addUser(
@@ -808,33 +774,17 @@ definition {
 			requireReset = "false",
 			userEmailAddress = "user1@liferay.com");
 
-		DepotNavigator.openDepotAdmin();
-
-		DepotNavigator.gotoDepotPortlet(
-			category = "People",
+		JSONUser.addUserToDepot(
 			depotName = "Test Depot Name",
-			portlet = "Memberships");
+			userEmailAddress = "user1@liferay.com");
 
-		Depot.assignUserAsMember(
-			depotName = "Test Depot Name",
-			userFirstName = "userfn",
-			userLastName = "userln",
-			userScreenName = "usersn");
-
-		ApplicationsMenu.gotoPortlet(
-			category = "Users",
-			panel = "Control Panel",
-			portlet = "Users and Organizations");
+		User.openUsersAdmin();
 
 		User.assignAssetLibraryRole(
 			roleTitle = "Asset Library Content Reviewer",
 			userScreenName = "usersn");
 
-		DepotNavigator.openDepotAdmin();
-
-		DepotNavigator.gotoDepotPortlet(
-			depotName = "Test Depot Name",
-			portlet = "Workflow");
+		DepotNavigator.openDepotWorkflowAdmin(depotName = "Test Depot Name");
 
 		Workflow.configureWorkflow(
 			workflowDefinition = "Single Approver",
@@ -883,9 +833,9 @@ definition {
 	}
 
 	@description = "This ensures that a DM folder workflow can be restored to default from other settings."
-	@priority = "4"
-	@refactorneeded
-	test RestoreDMFolderWorkflowToDefault {
+	@priority = 4
+	@refactordone
+	test CanRestoreDMFolderWorkflowToDefault {
 		JSONFolder.addFolder(
 			dmFolderDescription = "DM Folder Description",
 			dmFolderName = "DM Folder Name",
@@ -929,9 +879,9 @@ definition {
 	}
 
 	@description = "This ensures that a WC folder workflow can be restored to default from other settings."
-	@priority = "4"
-	@refactorneeded
-	test RestoreWCFolderWorkflowToDefault {
+	@priority = 4
+	@refactordone
+	test CanRestoreWCFolderWorkflowToDefault {
 		JSONWebcontent.addFolder(
 			folderName = "WC Folder Name",
 			groupName = "Test Depot Name",
@@ -972,9 +922,9 @@ definition {
 	}
 
 	@description = "This ensures that the workflow can be set in an asset library."
-	@priority = "5"
-	@refactorneeded
-	test Smoke {
+	@priority = 5
+	@refactordone
+	test WorkflowCanBeSetInDepot {
 		property portal.acceptance = "true";
 
 		DepotNavigator.openDepotAdmin();

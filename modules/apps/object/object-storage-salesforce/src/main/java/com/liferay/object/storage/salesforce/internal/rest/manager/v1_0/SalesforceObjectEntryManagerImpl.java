@@ -20,6 +20,7 @@ import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
 import com.liferay.object.rest.dto.v1_0.Status;
@@ -61,7 +62,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -97,8 +97,8 @@ public class SalesforceObjectEntryManagerImpl
 	@Override
 	public ObjectEntry addObjectRelationshipMappingTableValues(
 			DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, String objectRelationshipName,
-			long primaryKey1, long primaryKey2)
+			ObjectRelationship objectRelationship, long primaryKey1,
+			long primaryKey2)
 		throws Exception {
 
 		return null;
@@ -124,6 +124,16 @@ public class SalesforceObjectEntryManagerImpl
 	}
 
 	@Override
+	public Object addSystemObjectRelationshipMappingTableValues(
+			ObjectDefinition objectDefinition,
+			ObjectRelationship objectRelationship, long primaryKey1,
+			long primaryKey2)
+		throws Exception {
+
+		return null;
+	}
+
+	@Override
 	public void deleteObjectEntry(
 			ObjectDefinition objectDefinition, long objectEntryId)
 		throws Exception {
@@ -140,6 +150,21 @@ public class SalesforceObjectEntryManagerImpl
 			StringBundler.concat(
 				"sobjects/", objectDefinition.getExternalReferenceCode(), "/",
 				externalReferenceCode));
+	}
+
+	@Override
+	public void executeObjectAction(
+			DTOConverterContext dtoConverterContext, String objectActionName,
+			ObjectDefinition objectDefinition, long objectEntryId)
+		throws Exception {
+	}
+
+	@Override
+	public void executeObjectAction(
+			long companyId, DTOConverterContext dtoConverterContext,
+			String externalReferenceCode, String objectActionName,
+			ObjectDefinition objectDefinition, String scopeKey)
+		throws Exception {
 	}
 
 	@Override
@@ -184,7 +209,9 @@ public class SalesforceObjectEntryManagerImpl
 			Sort[] sorts)
 		throws Exception {
 
-		return null;
+		return _getObjectEntries(
+			companyId, objectDefinition, scopeKey, dtoConverterContext,
+			pagination, search, sorts);
 	}
 
 	@Override
@@ -448,14 +475,22 @@ public class SalesforceObjectEntryManagerImpl
 
 				Map<String, String> valueMap = (HashMap<String, String>)value;
 
-				value = valueMap.get("key");
+				ListTypeEntry listTypeEntry =
+					_listTypeEntryLocalService.getListTypeEntry(
+						objectField.getListTypeDefinitionId(),
+						valueMap.get("key"));
+
+				value = listTypeEntry.getExternalReferenceCode();
 			}
 
 			map.put(
 				objectField.getExternalReferenceCode(),
 				Objects.equals(value, StringPool.BLANK) ? null : value);
 
-			if (Objects.equals(
+			if (StringUtil.endsWith(
+					objectDefinition.getExternalReferenceCode(),
+					_CUSTOM_OBJECT_SUFFIX) &&
+				Objects.equals(
 					objectField.getObjectFieldId(),
 					objectDefinition.getTitleObjectFieldId())) {
 
@@ -492,9 +527,9 @@ public class SalesforceObjectEntryManagerImpl
 					"delete", Collections.<String, String>emptyMap()
 				).build();
 				creator = CreatorUtil.toCreator(
-					_portal, Optional.empty(),
+					_portal, null,
 					_userLocalService.fetchUserByExternalReferenceCode(
-						companyId, jsonObject.getString("OwnerId")));
+						jsonObject.getString("OwnerId"), companyId));
 				dateCreated = dateFormat.parse(
 					jsonObject.getString("CreatedDate"));
 				dateModified = dateFormat.parse(
@@ -554,8 +589,10 @@ public class SalesforceObjectEntryManagerImpl
 						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
 
 				ListTypeEntry listTypeEntry =
-					_listTypeEntryLocalService.fetchListTypeEntry(
-						objectField.getListTypeDefinitionId(), (String)value);
+					_listTypeEntryLocalService.
+						fetchListTypeEntryByExternalReferenceCode(
+							(String)value, objectDefinition.getCompanyId(),
+							objectField.getListTypeDefinitionId());
 
 				if (listTypeEntry == null) {
 					continue;
@@ -578,6 +615,8 @@ public class SalesforceObjectEntryManagerImpl
 
 		return objectEntry;
 	}
+
+	private static final String _CUSTOM_OBJECT_SUFFIX = "__c";
 
 	private final Map<String, String> _defaultObjectFieldNames =
 		HashMapBuilder.put(

@@ -28,7 +28,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 /**
  * @author Adam Brandizzi
  */
-@Component(immediate = true, service = IndexContributorsHolder.class)
+@Component(service = IndexContributorsHolder.class)
 public class IndexContributorsHolder {
 
 	@Reference(
@@ -37,6 +37,8 @@ public class IndexContributorsHolder {
 		policyOption = ReferencePolicyOption.GREEDY
 	)
 	protected void addIndexContributor(IndexContributor indexContributor) {
+		_indexContributors.add(indexContributor);
+
 		for (IndexContributorReceiver indexContributorReceiver :
 				_indexContributorReceivers) {
 

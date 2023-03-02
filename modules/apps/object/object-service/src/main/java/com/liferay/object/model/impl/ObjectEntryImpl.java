@@ -14,18 +14,19 @@
 
 package com.liferay.object.model.impl;
 
+import com.liferay.object.entry.util.ObjectEntryValuesUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.object.service.ObjectEntryLocalServiceUtil;
 import com.liferay.object.service.ObjectFieldLocalServiceUtil;
-import com.liferay.object.util.ObjectEntryFieldValueUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 
 import java.io.Serializable;
 
@@ -49,8 +50,7 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 
 	@Override
 	public String getModelClassName() {
-		return "com.liferay.object.model.ObjectDefinition#" +
-			getObjectDefinitionId();
+		return ObjectDefinition.class.getName() + "#" + getObjectDefinitionId();
 	}
 
 	@Override
@@ -85,8 +85,13 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 					objectDefinition.getTitleObjectFieldId());
 
 			if (objectField != null) {
-				return ObjectEntryFieldValueUtil.getValueString(
-					objectField, getValues());
+				return ObjectEntryValuesUtil.getValueString(
+					objectField,
+					HashMapBuilder.create(
+						getValues()
+					).putAll(
+						ObjectEntryLocalServiceUtil.getSystemValues(this)
+					).build());
 			}
 		}
 

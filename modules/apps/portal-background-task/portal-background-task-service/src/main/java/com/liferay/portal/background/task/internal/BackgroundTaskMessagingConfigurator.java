@@ -14,9 +14,11 @@
 
 package com.liferay.portal.background.task.internal;
 
-import com.liferay.portal.background.task.internal.messaging.BackgroundTaskGlobalStatusMessageListener;
+import com.liferay.portal.background.task.configuration.BackgroundTaskManagerConfiguration;
 import com.liferay.portal.background.task.internal.messaging.BackgroundTaskMessageListener;
+import com.liferay.portal.background.task.internal.messaging.BackgroundTaskStatusMessageListener;
 import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutorRegistry;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusRegistry;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskThreadLocalManager;
@@ -26,10 +28,14 @@ import com.liferay.portal.kernel.messaging.DestinationConfiguration;
 import com.liferay.portal.kernel.messaging.DestinationFactory;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.MessageBus;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.util.MapUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -42,15 +48,24 @@ import org.osgi.service.component.annotations.Reference;
  * @author Vendel Toreki
  */
 @Component(
-	immediate = true, service = BackgroundTaskMessagingConfigurator.class
+	configurationPid = "com.liferay.portal.background.task.configuration.BackgroundTaskManagerConfiguration",
+	service = {}
 )
 public class BackgroundTaskMessagingConfigurator {
 
 	@Activate
-	protected void activate(BundleContext bundleContext) {
+	protected void activate(
+		BundleContext bundleContext, Map<String, Object> properties) {
+
+		BackgroundTaskManagerConfiguration backgroundTaskManagerConfiguration =
+			ConfigurableUtil.createConfigurable(
+				BackgroundTaskManagerConfiguration.class, properties);
+
 		Destination backgroundTaskDestination = _registerDestination(
 			bundleContext, DestinationConfiguration.DESTINATION_TYPE_PARALLEL,
-			DestinationNames.BACKGROUND_TASK, 5, 10);
+			DestinationNames.BACKGROUND_TASK,
+			backgroundTaskManagerConfiguration.workersCoreSize(),
+			backgroundTaskManagerConfiguration.workersMaxSize());
 
 		backgroundTaskDestination.register(
 			new BackgroundTaskMessageListener(
@@ -63,8 +78,10 @@ public class BackgroundTaskMessagingConfigurator {
 			DestinationNames.BACKGROUND_TASK_STATUS, 1, 1);
 
 		backgroundTaskStatusDestination.register(
-			new BackgroundTaskGlobalStatusMessageListener(
-				_backgroundTaskLocalService, _lockManager));
+			new BackgroundTaskStatusMessageListener(
+				_backgroundTaskLocalService, _backgroundTaskStatusRegistry,
+				_lockManager, _roleLocalService, _userLocalService,
+				_userNotificationEventLocalService));
 	}
 
 	@Deactivate
@@ -119,7 +136,17 @@ public class BackgroundTaskMessagingConfigurator {
 	@Reference
 	private MessageBus _messageBus;
 
+	@Reference
+	private RoleLocalService _roleLocalService;
+
 	private final List<ServiceRegistration<Destination>> _serviceRegistrations =
 		new ArrayList<>();
+
+	@Reference
+	private UserLocalService _userLocalService;
+
+	@Reference
+	private UserNotificationEventLocalService
+		_userNotificationEventLocalService;
 
 }

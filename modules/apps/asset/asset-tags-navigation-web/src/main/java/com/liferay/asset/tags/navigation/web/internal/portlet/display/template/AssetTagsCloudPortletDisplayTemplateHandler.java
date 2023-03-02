@@ -18,10 +18,8 @@ import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.tags.navigation.constants.AssetTagsNavigationPortletKeys;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.template.TemplateHandler;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -30,7 +28,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + AssetTagsNavigationPortletKeys.ASSET_TAGS_CLOUD,
 	service = TemplateHandler.class
 )
@@ -44,14 +41,10 @@ public class AssetTagsCloudPortletDisplayTemplateHandler
 
 	@Override
 	public String getName(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", locale, getClass());
-
 		return _language.format(
 			locale, "x-template",
 			portal.getPortletTitle(
-				AssetTagsNavigationPortletKeys.ASSET_TAGS_CLOUD,
-				resourceBundle),
+				AssetTagsNavigationPortletKeys.ASSET_TAGS_CLOUD, locale),
 			false);
 	}
 

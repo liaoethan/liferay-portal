@@ -27,9 +27,15 @@ export default function PublishButton({canPublish, formRef, label, onPublish}) {
 		false
 	);
 
+	const submitURL =
+		config.singleSegmentsExperienceMode &&
+		config.saveVariantSegmentsExperienceURL
+			? config.saveVariantSegmentsExperienceURL
+			: config.publishURL;
+
 	return (
 		<>
-			<form action={config.publishURL} method="POST" ref={formRef}>
+			<form action={submitURL} method="POST" ref={formRef}>
 				<input
 					name={`${config.portletNamespace}redirect`}
 					type="hidden"
@@ -50,7 +56,7 @@ export default function PublishButton({canPublish, formRef, label, onPublish}) {
 							}
 						});
 					}}
-					small
+					size="sm"
 				>
 					{label}
 				</ClayButton>

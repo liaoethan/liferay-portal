@@ -81,10 +81,10 @@ public class ObjectFieldModelImpl
 
 	public static final Object[][] TABLE_COLUMNS = {
 		{"mvccVersion", Types.BIGINT}, {"uuid_", Types.VARCHAR},
+		{"externalReferenceCode", Types.VARCHAR},
 		{"objectFieldId", Types.BIGINT}, {"companyId", Types.BIGINT},
 		{"userId", Types.BIGINT}, {"userName", Types.VARCHAR},
 		{"createDate", Types.TIMESTAMP}, {"modifiedDate", Types.TIMESTAMP},
-		{"externalReferenceCode", Types.VARCHAR},
 		{"listTypeDefinitionId", Types.BIGINT},
 		{"objectDefinitionId", Types.BIGINT}, {"businessType", Types.VARCHAR},
 		{"dbColumnName", Types.VARCHAR}, {"dbTableName", Types.VARCHAR},
@@ -102,13 +102,13 @@ public class ObjectFieldModelImpl
 	static {
 		TABLE_COLUMNS_MAP.put("mvccVersion", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("uuid_", Types.VARCHAR);
+		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("objectFieldId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("companyId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("userId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("userName", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("createDate", Types.TIMESTAMP);
 		TABLE_COLUMNS_MAP.put("modifiedDate", Types.TIMESTAMP);
-		TABLE_COLUMNS_MAP.put("externalReferenceCode", Types.VARCHAR);
 		TABLE_COLUMNS_MAP.put("listTypeDefinitionId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("objectDefinitionId", Types.BIGINT);
 		TABLE_COLUMNS_MAP.put("businessType", Types.VARCHAR);
@@ -128,7 +128,7 @@ public class ObjectFieldModelImpl
 	}
 
 	public static final String TABLE_SQL_CREATE =
-		"create table ObjectField (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,objectFieldId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,externalReferenceCode VARCHAR(75) null,listTypeDefinitionId LONG,objectDefinitionId LONG,businessType VARCHAR(75) null,dbColumnName VARCHAR(75) null,dbTableName VARCHAR(75) null,dbType VARCHAR(75) null,defaultValue VARCHAR(75) null,indexed BOOLEAN,indexedAsKeyword BOOLEAN,indexedLanguageId VARCHAR(75) null,label STRING null,name VARCHAR(75) null,relationshipType VARCHAR(75) null,required BOOLEAN,state_ BOOLEAN,system_ BOOLEAN)";
+		"create table ObjectField (mvccVersion LONG default 0 not null,uuid_ VARCHAR(75) null,externalReferenceCode VARCHAR(75) null,objectFieldId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createDate DATE null,modifiedDate DATE null,listTypeDefinitionId LONG,objectDefinitionId LONG,businessType VARCHAR(75) null,dbColumnName VARCHAR(75) null,dbTableName VARCHAR(75) null,dbType VARCHAR(75) null,defaultValue VARCHAR(75) null,indexed BOOLEAN,indexedAsKeyword BOOLEAN,indexedLanguageId VARCHAR(75) null,label STRING null,name VARCHAR(75) null,relationshipType VARCHAR(75) null,required BOOLEAN,state_ BOOLEAN,system_ BOOLEAN)";
 
 	public static final String TABLE_SQL_DROP = "drop table ObjectField";
 
@@ -298,139 +298,165 @@ public class ObjectFieldModelImpl
 	public Map<String, Function<ObjectField, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<ObjectField, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<ObjectField, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<ObjectField, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<ObjectField, Object>> attributeGetterFunctions =
-			new LinkedHashMap<String, Function<ObjectField, Object>>();
-		Map<String, BiConsumer<ObjectField, ?>> attributeSetterBiConsumers =
-			new LinkedHashMap<String, BiConsumer<ObjectField, ?>>();
+		private static final Map<String, Function<ObjectField, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", ObjectField::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<ObjectField, Long>)ObjectField::setMvccVersion);
-		attributeGetterFunctions.put("uuid", ObjectField::getUuid);
-		attributeSetterBiConsumers.put(
-			"uuid", (BiConsumer<ObjectField, String>)ObjectField::setUuid);
-		attributeGetterFunctions.put(
-			"objectFieldId", ObjectField::getObjectFieldId);
-		attributeSetterBiConsumers.put(
-			"objectFieldId",
-			(BiConsumer<ObjectField, Long>)ObjectField::setObjectFieldId);
-		attributeGetterFunctions.put("companyId", ObjectField::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<ObjectField, Long>)ObjectField::setCompanyId);
-		attributeGetterFunctions.put("userId", ObjectField::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId", (BiConsumer<ObjectField, Long>)ObjectField::setUserId);
-		attributeGetterFunctions.put("userName", ObjectField::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<ObjectField, String>)ObjectField::setUserName);
-		attributeGetterFunctions.put("createDate", ObjectField::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<ObjectField, Date>)ObjectField::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", ObjectField::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<ObjectField, Date>)ObjectField::setModifiedDate);
-		attributeGetterFunctions.put(
-			"externalReferenceCode", ObjectField::getExternalReferenceCode);
-		attributeSetterBiConsumers.put(
-			"externalReferenceCode",
-			(BiConsumer<ObjectField, String>)
-				ObjectField::setExternalReferenceCode);
-		attributeGetterFunctions.put(
-			"listTypeDefinitionId", ObjectField::getListTypeDefinitionId);
-		attributeSetterBiConsumers.put(
-			"listTypeDefinitionId",
-			(BiConsumer<ObjectField, Long>)
-				ObjectField::setListTypeDefinitionId);
-		attributeGetterFunctions.put(
-			"objectDefinitionId", ObjectField::getObjectDefinitionId);
-		attributeSetterBiConsumers.put(
-			"objectDefinitionId",
-			(BiConsumer<ObjectField, Long>)ObjectField::setObjectDefinitionId);
-		attributeGetterFunctions.put(
-			"businessType", ObjectField::getBusinessType);
-		attributeSetterBiConsumers.put(
-			"businessType",
-			(BiConsumer<ObjectField, String>)ObjectField::setBusinessType);
-		attributeGetterFunctions.put(
-			"dbColumnName", ObjectField::getDBColumnName);
-		attributeSetterBiConsumers.put(
-			"dbColumnName",
-			(BiConsumer<ObjectField, String>)ObjectField::setDBColumnName);
-		attributeGetterFunctions.put(
-			"dbTableName", ObjectField::getDBTableName);
-		attributeSetterBiConsumers.put(
-			"dbTableName",
-			(BiConsumer<ObjectField, String>)ObjectField::setDBTableName);
-		attributeGetterFunctions.put("dbType", ObjectField::getDBType);
-		attributeSetterBiConsumers.put(
-			"dbType", (BiConsumer<ObjectField, String>)ObjectField::setDBType);
-		attributeGetterFunctions.put(
-			"defaultValue", ObjectField::getDefaultValue);
-		attributeSetterBiConsumers.put(
-			"defaultValue",
-			(BiConsumer<ObjectField, String>)ObjectField::setDefaultValue);
-		attributeGetterFunctions.put("indexed", ObjectField::getIndexed);
-		attributeSetterBiConsumers.put(
-			"indexed",
-			(BiConsumer<ObjectField, Boolean>)ObjectField::setIndexed);
-		attributeGetterFunctions.put(
-			"indexedAsKeyword", ObjectField::getIndexedAsKeyword);
-		attributeSetterBiConsumers.put(
-			"indexedAsKeyword",
-			(BiConsumer<ObjectField, Boolean>)ObjectField::setIndexedAsKeyword);
-		attributeGetterFunctions.put(
-			"indexedLanguageId", ObjectField::getIndexedLanguageId);
-		attributeSetterBiConsumers.put(
-			"indexedLanguageId",
-			(BiConsumer<ObjectField, String>)ObjectField::setIndexedLanguageId);
-		attributeGetterFunctions.put("label", ObjectField::getLabel);
-		attributeSetterBiConsumers.put(
-			"label", (BiConsumer<ObjectField, String>)ObjectField::setLabel);
-		attributeGetterFunctions.put("name", ObjectField::getName);
-		attributeSetterBiConsumers.put(
-			"name", (BiConsumer<ObjectField, String>)ObjectField::setName);
-		attributeGetterFunctions.put(
-			"relationshipType", ObjectField::getRelationshipType);
-		attributeSetterBiConsumers.put(
-			"relationshipType",
-			(BiConsumer<ObjectField, String>)ObjectField::setRelationshipType);
-		attributeGetterFunctions.put("required", ObjectField::getRequired);
-		attributeSetterBiConsumers.put(
-			"required",
-			(BiConsumer<ObjectField, Boolean>)ObjectField::setRequired);
-		attributeGetterFunctions.put("state", ObjectField::getState);
-		attributeSetterBiConsumers.put(
-			"state", (BiConsumer<ObjectField, Boolean>)ObjectField::setState);
-		attributeGetterFunctions.put("system", ObjectField::getSystem);
-		attributeSetterBiConsumers.put(
-			"system", (BiConsumer<ObjectField, Boolean>)ObjectField::setSystem);
+		static {
+			Map<String, Function<ObjectField, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap<String, Function<ObjectField, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", ObjectField::getMvccVersion);
+			attributeGetterFunctions.put("uuid", ObjectField::getUuid);
+			attributeGetterFunctions.put(
+				"externalReferenceCode", ObjectField::getExternalReferenceCode);
+			attributeGetterFunctions.put(
+				"objectFieldId", ObjectField::getObjectFieldId);
+			attributeGetterFunctions.put(
+				"companyId", ObjectField::getCompanyId);
+			attributeGetterFunctions.put("userId", ObjectField::getUserId);
+			attributeGetterFunctions.put("userName", ObjectField::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", ObjectField::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", ObjectField::getModifiedDate);
+			attributeGetterFunctions.put(
+				"listTypeDefinitionId", ObjectField::getListTypeDefinitionId);
+			attributeGetterFunctions.put(
+				"objectDefinitionId", ObjectField::getObjectDefinitionId);
+			attributeGetterFunctions.put(
+				"businessType", ObjectField::getBusinessType);
+			attributeGetterFunctions.put(
+				"dbColumnName", ObjectField::getDBColumnName);
+			attributeGetterFunctions.put(
+				"dbTableName", ObjectField::getDBTableName);
+			attributeGetterFunctions.put("dbType", ObjectField::getDBType);
+			attributeGetterFunctions.put(
+				"defaultValue", ObjectField::getDefaultValue);
+			attributeGetterFunctions.put("indexed", ObjectField::getIndexed);
+			attributeGetterFunctions.put(
+				"indexedAsKeyword", ObjectField::getIndexedAsKeyword);
+			attributeGetterFunctions.put(
+				"indexedLanguageId", ObjectField::getIndexedLanguageId);
+			attributeGetterFunctions.put("label", ObjectField::getLabel);
+			attributeGetterFunctions.put("name", ObjectField::getName);
+			attributeGetterFunctions.put(
+				"relationshipType", ObjectField::getRelationshipType);
+			attributeGetterFunctions.put("required", ObjectField::getRequired);
+			attributeGetterFunctions.put("state", ObjectField::getState);
+			attributeGetterFunctions.put("system", ObjectField::getSystem);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<ObjectField, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<ObjectField, ?>> attributeSetterBiConsumers =
+				new LinkedHashMap<String, BiConsumer<ObjectField, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<ObjectField, Long>)ObjectField::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"uuid", (BiConsumer<ObjectField, String>)ObjectField::setUuid);
+			attributeSetterBiConsumers.put(
+				"externalReferenceCode",
+				(BiConsumer<ObjectField, String>)
+					ObjectField::setExternalReferenceCode);
+			attributeSetterBiConsumers.put(
+				"objectFieldId",
+				(BiConsumer<ObjectField, Long>)ObjectField::setObjectFieldId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<ObjectField, Long>)ObjectField::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<ObjectField, Long>)ObjectField::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<ObjectField, String>)ObjectField::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<ObjectField, Date>)ObjectField::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<ObjectField, Date>)ObjectField::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"listTypeDefinitionId",
+				(BiConsumer<ObjectField, Long>)
+					ObjectField::setListTypeDefinitionId);
+			attributeSetterBiConsumers.put(
+				"objectDefinitionId",
+				(BiConsumer<ObjectField, Long>)
+					ObjectField::setObjectDefinitionId);
+			attributeSetterBiConsumers.put(
+				"businessType",
+				(BiConsumer<ObjectField, String>)ObjectField::setBusinessType);
+			attributeSetterBiConsumers.put(
+				"dbColumnName",
+				(BiConsumer<ObjectField, String>)ObjectField::setDBColumnName);
+			attributeSetterBiConsumers.put(
+				"dbTableName",
+				(BiConsumer<ObjectField, String>)ObjectField::setDBTableName);
+			attributeSetterBiConsumers.put(
+				"dbType",
+				(BiConsumer<ObjectField, String>)ObjectField::setDBType);
+			attributeSetterBiConsumers.put(
+				"defaultValue",
+				(BiConsumer<ObjectField, String>)ObjectField::setDefaultValue);
+			attributeSetterBiConsumers.put(
+				"indexed",
+				(BiConsumer<ObjectField, Boolean>)ObjectField::setIndexed);
+			attributeSetterBiConsumers.put(
+				"indexedAsKeyword",
+				(BiConsumer<ObjectField, Boolean>)
+					ObjectField::setIndexedAsKeyword);
+			attributeSetterBiConsumers.put(
+				"indexedLanguageId",
+				(BiConsumer<ObjectField, String>)
+					ObjectField::setIndexedLanguageId);
+			attributeSetterBiConsumers.put(
+				"label",
+				(BiConsumer<ObjectField, String>)ObjectField::setLabel);
+			attributeSetterBiConsumers.put(
+				"name", (BiConsumer<ObjectField, String>)ObjectField::setName);
+			attributeSetterBiConsumers.put(
+				"relationshipType",
+				(BiConsumer<ObjectField, String>)
+					ObjectField::setRelationshipType);
+			attributeSetterBiConsumers.put(
+				"required",
+				(BiConsumer<ObjectField, Boolean>)ObjectField::setRequired);
+			attributeSetterBiConsumers.put(
+				"state",
+				(BiConsumer<ObjectField, Boolean>)ObjectField::setState);
+			attributeSetterBiConsumers.put(
+				"system",
+				(BiConsumer<ObjectField, Boolean>)ObjectField::setSystem);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -475,6 +501,35 @@ public class ObjectFieldModelImpl
 	@Deprecated
 	public String getOriginalUuid() {
 		return getColumnOriginalValue("uuid_");
+	}
+
+	@JSON
+	@Override
+	public String getExternalReferenceCode() {
+		if (_externalReferenceCode == null) {
+			return "";
+		}
+		else {
+			return _externalReferenceCode;
+		}
+	}
+
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		if (_columnOriginalValues == Collections.EMPTY_MAP) {
+			_setColumnOriginalValues();
+		}
+
+		_externalReferenceCode = externalReferenceCode;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalExternalReferenceCode() {
+		return getColumnOriginalValue("externalReferenceCode");
 	}
 
 	@JSON
@@ -602,35 +657,6 @@ public class ObjectFieldModelImpl
 		}
 
 		_modifiedDate = modifiedDate;
-	}
-
-	@JSON
-	@Override
-	public String getExternalReferenceCode() {
-		if (_externalReferenceCode == null) {
-			return "";
-		}
-		else {
-			return _externalReferenceCode;
-		}
-	}
-
-	@Override
-	public void setExternalReferenceCode(String externalReferenceCode) {
-		if (_columnOriginalValues == Collections.EMPTY_MAP) {
-			_setColumnOriginalValues();
-		}
-
-		_externalReferenceCode = externalReferenceCode;
-	}
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public String getOriginalExternalReferenceCode() {
-		return getColumnOriginalValue("externalReferenceCode");
 	}
 
 	@JSON
@@ -1244,13 +1270,13 @@ public class ObjectFieldModelImpl
 
 		objectFieldImpl.setMvccVersion(getMvccVersion());
 		objectFieldImpl.setUuid(getUuid());
+		objectFieldImpl.setExternalReferenceCode(getExternalReferenceCode());
 		objectFieldImpl.setObjectFieldId(getObjectFieldId());
 		objectFieldImpl.setCompanyId(getCompanyId());
 		objectFieldImpl.setUserId(getUserId());
 		objectFieldImpl.setUserName(getUserName());
 		objectFieldImpl.setCreateDate(getCreateDate());
 		objectFieldImpl.setModifiedDate(getModifiedDate());
-		objectFieldImpl.setExternalReferenceCode(getExternalReferenceCode());
 		objectFieldImpl.setListTypeDefinitionId(getListTypeDefinitionId());
 		objectFieldImpl.setObjectDefinitionId(getObjectDefinitionId());
 		objectFieldImpl.setBusinessType(getBusinessType());
@@ -1280,6 +1306,8 @@ public class ObjectFieldModelImpl
 		objectFieldImpl.setMvccVersion(
 			this.<Long>getColumnOriginalValue("mvccVersion"));
 		objectFieldImpl.setUuid(this.<String>getColumnOriginalValue("uuid_"));
+		objectFieldImpl.setExternalReferenceCode(
+			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		objectFieldImpl.setObjectFieldId(
 			this.<Long>getColumnOriginalValue("objectFieldId"));
 		objectFieldImpl.setCompanyId(
@@ -1291,8 +1319,6 @@ public class ObjectFieldModelImpl
 			this.<Date>getColumnOriginalValue("createDate"));
 		objectFieldImpl.setModifiedDate(
 			this.<Date>getColumnOriginalValue("modifiedDate"));
-		objectFieldImpl.setExternalReferenceCode(
-			this.<String>getColumnOriginalValue("externalReferenceCode"));
 		objectFieldImpl.setListTypeDefinitionId(
 			this.<Long>getColumnOriginalValue("listTypeDefinitionId"));
 		objectFieldImpl.setObjectDefinitionId(
@@ -1409,6 +1435,18 @@ public class ObjectFieldModelImpl
 			objectFieldCacheModel.uuid = null;
 		}
 
+		objectFieldCacheModel.externalReferenceCode =
+			getExternalReferenceCode();
+
+		String externalReferenceCode =
+			objectFieldCacheModel.externalReferenceCode;
+
+		if ((externalReferenceCode != null) &&
+			(externalReferenceCode.length() == 0)) {
+
+			objectFieldCacheModel.externalReferenceCode = null;
+		}
+
 		objectFieldCacheModel.objectFieldId = getObjectFieldId();
 
 		objectFieldCacheModel.companyId = getCompanyId();
@@ -1439,18 +1477,6 @@ public class ObjectFieldModelImpl
 		}
 		else {
 			objectFieldCacheModel.modifiedDate = Long.MIN_VALUE;
-		}
-
-		objectFieldCacheModel.externalReferenceCode =
-			getExternalReferenceCode();
-
-		String externalReferenceCode =
-			objectFieldCacheModel.externalReferenceCode;
-
-		if ((externalReferenceCode != null) &&
-			(externalReferenceCode.length() == 0)) {
-
-			objectFieldCacheModel.externalReferenceCode = null;
 		}
 
 		objectFieldCacheModel.listTypeDefinitionId = getListTypeDefinitionId();
@@ -1602,6 +1628,7 @@ public class ObjectFieldModelImpl
 
 	private long _mvccVersion;
 	private String _uuid;
+	private String _externalReferenceCode;
 	private long _objectFieldId;
 	private long _companyId;
 	private long _userId;
@@ -1609,7 +1636,6 @@ public class ObjectFieldModelImpl
 	private Date _createDate;
 	private Date _modifiedDate;
 	private boolean _setModifiedDate;
-	private String _externalReferenceCode;
 	private long _listTypeDefinitionId;
 	private long _objectDefinitionId;
 	private String _businessType;
@@ -1631,8 +1657,9 @@ public class ObjectFieldModelImpl
 	public <T> T getColumnValue(String columnName) {
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
 
-		Function<ObjectField, Object> function = _attributeGetterFunctions.get(
-			columnName);
+		Function<ObjectField, Object> function =
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(
@@ -1659,14 +1686,14 @@ public class ObjectFieldModelImpl
 
 		_columnOriginalValues.put("mvccVersion", _mvccVersion);
 		_columnOriginalValues.put("uuid_", _uuid);
+		_columnOriginalValues.put(
+			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put("objectFieldId", _objectFieldId);
 		_columnOriginalValues.put("companyId", _companyId);
 		_columnOriginalValues.put("userId", _userId);
 		_columnOriginalValues.put("userName", _userName);
 		_columnOriginalValues.put("createDate", _createDate);
 		_columnOriginalValues.put("modifiedDate", _modifiedDate);
-		_columnOriginalValues.put(
-			"externalReferenceCode", _externalReferenceCode);
 		_columnOriginalValues.put(
 			"listTypeDefinitionId", _listTypeDefinitionId);
 		_columnOriginalValues.put("objectDefinitionId", _objectDefinitionId);
@@ -1713,19 +1740,19 @@ public class ObjectFieldModelImpl
 
 		columnBitmasks.put("uuid_", 2L);
 
-		columnBitmasks.put("objectFieldId", 4L);
+		columnBitmasks.put("externalReferenceCode", 4L);
 
-		columnBitmasks.put("companyId", 8L);
+		columnBitmasks.put("objectFieldId", 8L);
 
-		columnBitmasks.put("userId", 16L);
+		columnBitmasks.put("companyId", 16L);
 
-		columnBitmasks.put("userName", 32L);
+		columnBitmasks.put("userId", 32L);
 
-		columnBitmasks.put("createDate", 64L);
+		columnBitmasks.put("userName", 64L);
 
-		columnBitmasks.put("modifiedDate", 128L);
+		columnBitmasks.put("createDate", 128L);
 
-		columnBitmasks.put("externalReferenceCode", 256L);
+		columnBitmasks.put("modifiedDate", 256L);
 
 		columnBitmasks.put("listTypeDefinitionId", 512L);
 

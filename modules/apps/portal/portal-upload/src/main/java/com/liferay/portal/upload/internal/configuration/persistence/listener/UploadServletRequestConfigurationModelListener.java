@@ -35,7 +35,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pei-Jung Lan
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.portal.upload.internal.configuration.UploadServletRequestConfiguration",
 	service = ConfigurationModelListener.class
 )
@@ -46,20 +45,24 @@ public class UploadServletRequestConfigurationModelListener
 	public void onBeforeSave(String pid, Dictionary<String, Object> properties)
 		throws ConfigurationModelListenerException {
 
-		long maxSize = (long)properties.get("maxSize");
+		Object maxSizeObject = properties.get("maxSize");
 
-		if (maxSize < _MINIMUM_MAX_SIZE) {
-			ResourceBundle resourceBundle = _getResourceBundle();
+		if (maxSizeObject != null) {
+			long maxSize = (long)maxSizeObject;
 
-			throw new ConfigurationModelListenerException(
-				_language.format(
-					resourceBundle,
-					"the-maximum-upload-request-size-cannot-be-less-than-x",
-					_language.formatStorageSize(
-						GetterUtil.getDouble(_MINIMUM_MAX_SIZE),
-						resourceBundle.getLocale())),
-				UploadServletRequestConfiguration.class, getClass(),
-				properties);
+			if (maxSize < _MINIMUM_MAX_SIZE) {
+				ResourceBundle resourceBundle = _getResourceBundle();
+
+				throw new ConfigurationModelListenerException(
+					_language.format(
+						resourceBundle,
+						"the-maximum-upload-request-size-cannot-be-less-than-x",
+						_language.formatStorageSize(
+							GetterUtil.getDouble(_MINIMUM_MAX_SIZE),
+							resourceBundle.getLocale())),
+					UploadServletRequestConfiguration.class, getClass(),
+					properties);
+			}
 		}
 
 		String tempDir = (String)properties.get("tempDir");

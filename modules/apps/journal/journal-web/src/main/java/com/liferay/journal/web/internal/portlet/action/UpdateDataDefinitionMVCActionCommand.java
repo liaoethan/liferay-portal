@@ -19,11 +19,11 @@ import com.liferay.data.engine.rest.dto.v2_0.DataDefinition;
 import com.liferay.data.engine.rest.dto.v2_0.DataLayout;
 import com.liferay.data.engine.rest.resource.exception.DataDefinitionValidationException;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
-import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.service.persistence.JournalArticleUtil;
+import com.liferay.journal.web.internal.portlet.action.util.DataDefinitionFieldNameUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseTransactionalMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.servlet.SessionErrors;
@@ -33,8 +33,6 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -47,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + JournalPortletKeys.JOURNAL,
 		"mvc.command.name=/journal/update_data_definition"
@@ -105,22 +102,26 @@ public class UpdateDataDefinitionMVCActionCommand
 		long dataDefinitionId = ParamUtil.getLong(
 			actionRequest, "dataDefinitionId");
 
-		String dataDefinitionString = ParamUtil.getString(
-			actionRequest, "dataDefinition");
-
 		DataDefinition dataDefinition = DataDefinition.toDTO(
-			dataDefinitionString);
+			ParamUtil.getString(actionRequest, "dataDefinition"));
 
 		String structureKey = ParamUtil.getString(
 			actionRequest, "structureKey");
-		String dataLayout = ParamUtil.getString(actionRequest, "dataLayout");
-		Map<Locale, String> descriptionMap = _localization.getLocalizationMap(
-			actionRequest, "description");
 
 		dataDefinition.setDataDefinitionKey(structureKey);
-		dataDefinition.setDefaultDataLayout(DataLayout.toDTO(dataLayout));
+
+		DataLayout dataLayout = DataLayout.toDTO(
+			ParamUtil.getString(actionRequest, "dataLayout"));
+
+		DataDefinitionFieldNameUtil.normalizeFieldName(
+			dataDefinition, dataLayout);
+
+		dataDefinition.setDefaultDataLayout(dataLayout);
+
 		dataDefinition.setDescription(
-			LocalizedValueUtil.toStringObjectMap(descriptionMap));
+			LocalizedValueUtil.toStringObjectMap(
+				_localization.getLocalizationMap(
+					actionRequest, "description")));
 
 		dataDefinitionResource.putDataDefinition(
 			dataDefinitionId, dataDefinition);
@@ -136,9 +137,6 @@ public class UpdateDataDefinitionMVCActionCommand
 
 	@Reference
 	private DataDefinitionResource.Factory _dataDefinitionResourceFactory;
-
-	@Reference
-	private DDMStructureLocalService _ddmStructureLocalService;
 
 	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;

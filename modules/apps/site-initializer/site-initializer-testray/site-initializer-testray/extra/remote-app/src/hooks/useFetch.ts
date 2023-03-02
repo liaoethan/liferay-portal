@@ -13,13 +13,48 @@
  */
 
 import {useMemo} from 'react';
-import useSWR from 'swr';
+import useSWR, {SWRConfiguration} from 'swr';
+
+import Rest, {APIParametersOptions} from '../core/Rest';
+
+type FetchOptions<Data> = {
+	params?: APIParametersOptions;
+	swrConfig?: SWRConfiguration & {shouldFetch?: boolean | string | number};
+	transformData?: (data: Data) => Data;
+};
+
+const getBaseURL = (url: string | null, options?: APIParametersOptions) => {
+	if (!url) {
+		return null;
+	}
+
+	const searchParams = Rest.getPageParameter(options, url);
+
+	let baseURL = url;
+
+	if (url.includes('?')) {
+		baseURL = url.slice(0, url.indexOf('?'));
+	}
+
+	if (searchParams.length) {
+		baseURL += `?${searchParams}`;
+	}
+
+	return baseURL;
+};
 
 export function useFetch<Data = any, Error = any>(
 	url: string | null,
-	transformData?: (data: Data) => Data
+	fetchParameters?: FetchOptions<Data>
 ) {
-	const {data, error, isValidating, mutate} = useSWR<Data, Error>(url);
+	const {params, swrConfig, transformData} = fetchParameters ?? {};
+
+	const shouldFetch = swrConfig?.shouldFetch ?? true;
+
+	const {data, error, isValidating, mutate} = useSWR<Data, Error>(
+		() => (shouldFetch ? getBaseURL(url, params) : null),
+		swrConfig
+	);
 
 	const memoizedData = useMemo(() => {
 		if (data && transformData) {
@@ -35,7 +70,8 @@ export function useFetch<Data = any, Error = any>(
 		data: memoizedData,
 		error,
 		isValidating,
-		loading: !data,
+		loading: error ? false : !data,
 		mutate,
+		revalidate: () => mutate((response) => response, {revalidate: true}),
 	};
 }

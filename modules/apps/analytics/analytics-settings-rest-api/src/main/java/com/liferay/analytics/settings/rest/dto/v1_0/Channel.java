@@ -41,6 +41,7 @@ import java.util.Set;
 import javax.annotation.Generated;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Size;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -89,6 +90,34 @@ public class Channel implements Serializable {
 	@GraphQLField
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	protected String channelId;
+
+	@Schema
+	public Boolean getCommerceSyncEnabled() {
+		return commerceSyncEnabled;
+	}
+
+	public void setCommerceSyncEnabled(Boolean commerceSyncEnabled) {
+		this.commerceSyncEnabled = commerceSyncEnabled;
+	}
+
+	@JsonIgnore
+	public void setCommerceSyncEnabled(
+		UnsafeSupplier<Boolean, Exception> commerceSyncEnabledUnsafeSupplier) {
+
+		try {
+			commerceSyncEnabled = commerceSyncEnabledUnsafeSupplier.get();
+		}
+		catch (RuntimeException re) {
+			throw re;
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected Boolean commerceSyncEnabled;
 
 	@Schema
 	public Date getCreateDate() {
@@ -148,6 +177,7 @@ public class Channel implements Serializable {
 	protected DataSource[] dataSources;
 
 	@Schema
+	@Size(min = 3)
 	public String getName() {
 		return name;
 	}
@@ -215,6 +245,16 @@ public class Channel implements Serializable {
 			sb.append(_escape(channelId));
 
 			sb.append("\"");
+		}
+
+		if (commerceSyncEnabled != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"commerceSyncEnabled\": ");
+
+			sb.append(commerceSyncEnabled);
 		}
 
 		if (createDate != null) {

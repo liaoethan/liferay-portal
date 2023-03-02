@@ -20,7 +20,6 @@ import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
@@ -34,7 +33,6 @@ import java.util.Map;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -42,7 +40,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.instances.on.demand.admin.internal.configuration.OnDemandAdminConfiguration",
-	immediate = true, service = MessageListener.class
+	service = {}
 )
 public class OnDemandAdminCleanerMessageListener extends BaseMessageListener {
 
@@ -55,10 +53,8 @@ public class OnDemandAdminCleanerMessageListener extends BaseMessageListener {
 
 		Trigger trigger = _triggerFactory.createTrigger(
 			OnDemandAdminCleanerMessageListener.class.getName(),
-			OnDemandAdminCleanerMessageListener.class.getName(),
-			new Date(
-				System.currentTimeMillis() + (cleanUpInterval * Time.HOUR)),
-			null, cleanUpInterval, TimeUnit.HOUR);
+			OnDemandAdminCleanerMessageListener.class.getName(), null, null,
+			cleanUpInterval, TimeUnit.HOUR);
 
 		_schedulerEngineHelper.register(
 			this,
@@ -79,13 +75,6 @@ public class OnDemandAdminCleanerMessageListener extends BaseMessageListener {
 		_onDemandAdminManager.cleanUpOnDemandAdminUsers(
 			new Date(
 				System.currentTimeMillis() - (Time.HOUR * cleanUpInterval)));
-	}
-
-	@Modified
-	protected void modified(Map<String, Object> properties) {
-		deactivate();
-
-		activate(properties);
 	}
 
 	private volatile OnDemandAdminConfiguration _onDemandAdminConfiguration;

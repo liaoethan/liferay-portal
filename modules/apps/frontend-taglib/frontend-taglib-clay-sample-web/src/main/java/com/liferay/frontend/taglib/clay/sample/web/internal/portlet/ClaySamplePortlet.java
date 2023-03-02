@@ -16,11 +16,12 @@ package com.liferay.frontend.taglib.clay.sample.web.internal.portlet;
 
 import com.liferay.frontend.taglib.clay.sample.web.constants.ClaySamplePortletKeys;
 import com.liferay.frontend.taglib.clay.sample.web.internal.display.context.CardsDisplayContext;
+import com.liferay.frontend.taglib.clay.sample.web.internal.display.context.ClaySampleDisplayContext;
 import com.liferay.frontend.taglib.clay.sample.web.internal.display.context.DropdownsDisplayContext;
 import com.liferay.frontend.taglib.clay.sample.web.internal.display.context.MultiselectDisplayContext;
 import com.liferay.frontend.taglib.clay.sample.web.internal.display.context.NavigationBarsDisplayContext;
+import com.liferay.frontend.taglib.clay.sample.web.internal.display.context.TabsDisplayContext;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCPortlet;
-import com.liferay.portal.kernel.util.Portal;
 
 import java.io.IOException;
 
@@ -30,13 +31,11 @@ import javax.portlet.RenderRequest;
 import javax.portlet.RenderResponse;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Chema Balsas
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.css-class-wrapper=portlet-clay-sample",
 		"com.liferay.portlet.display-category=category.sample",
@@ -67,23 +66,23 @@ public class ClaySamplePortlet extends MVCPortlet {
 		renderRequest.setAttribute(
 			ClaySamplePortletKeys.CARDS_DISPLAY_CONTEXT,
 			new CardsDisplayContext());
-
+		renderRequest.setAttribute(
+			ClaySamplePortletKeys.CLAY_SAMPLE_DISPLAY_CONTEXT,
+			new ClaySampleDisplayContext());
 		renderRequest.setAttribute(
 			ClaySamplePortletKeys.DROPDOWNS_DISPLAY_CONTEXT,
 			new DropdownsDisplayContext());
-
 		renderRequest.setAttribute(
 			ClaySamplePortletKeys.MULTISELECT_DISPLAY_CONTEXT,
 			new MultiselectDisplayContext());
-
 		renderRequest.setAttribute(
 			ClaySamplePortletKeys.NAVIGATION_BARS_DISPLAY_CONTEXT,
 			new NavigationBarsDisplayContext());
+		renderRequest.setAttribute(
+			ClaySamplePortletKeys.TABS_DISPLAY_CONTEXT,
+			new TabsDisplayContext());
 
 		super.doDispatch(renderRequest, renderResponse);
 	}
-
-	@Reference
-	private Portal _portal;
 
 }

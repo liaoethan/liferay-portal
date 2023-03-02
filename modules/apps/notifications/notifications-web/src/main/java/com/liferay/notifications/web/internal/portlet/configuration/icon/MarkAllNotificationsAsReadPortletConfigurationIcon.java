@@ -24,10 +24,7 @@ import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.util.ResourceBundle;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
@@ -39,7 +36,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alejandro Tardín
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + NotificationsPortletKeys.NOTIFICATIONS,
 	service = PortletConfigurationIcon.class
 )
@@ -48,10 +44,8 @@ public class MarkAllNotificationsAsReadPortletConfigurationIcon
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", getLocale(portletRequest), getClass());
-
-		return _language.get(resourceBundle, "mark-all-notifications-as-read");
+		return _language.get(
+			getLocale(portletRequest), "mark-all-notifications-as-read");
 	}
 
 	@Override
@@ -94,11 +88,6 @@ public class MarkAllNotificationsAsReadPortletConfigurationIcon
 			}
 		}
 
-		return false;
-	}
-
-	@Override
-	public boolean isToolTip() {
 		return false;
 	}
 

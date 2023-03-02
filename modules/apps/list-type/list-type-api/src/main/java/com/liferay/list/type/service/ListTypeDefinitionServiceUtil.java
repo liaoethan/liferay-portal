@@ -40,10 +40,12 @@ public class ListTypeDefinitionServiceUtil {
 	 * Never modify this class directly. Add custom service methods to <code>com.liferay.list.type.service.impl.ListTypeDefinitionServiceImpl</code> and rerun ServiceBuilder to regenerate this class.
 	 */
 	public static ListTypeDefinition addListTypeDefinition(
-			Map<java.util.Locale, String> nameMap)
+			String externalReferenceCode, Map<java.util.Locale, String> nameMap,
+			List<com.liferay.list.type.model.ListTypeEntry> listTypeEntries)
 		throws PortalException {
 
-		return getService().addListTypeDefinition(nameMap);
+		return getService().addListTypeDefinition(
+			externalReferenceCode, nameMap, listTypeEntries);
 	}
 
 	public static ListTypeDefinition deleteListTypeDefinition(
@@ -60,11 +62,29 @@ public class ListTypeDefinitionServiceUtil {
 		return getService().deleteListTypeDefinition(listTypeDefinitionId);
 	}
 
+	public static ListTypeDefinition
+			fetchListTypeDefinitionByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().fetchListTypeDefinitionByExternalReferenceCode(
+			externalReferenceCode, companyId);
+	}
+
 	public static ListTypeDefinition getListTypeDefinition(
 			long listTypeDefinitionId)
 		throws PortalException {
 
 		return getService().getListTypeDefinition(listTypeDefinitionId);
+	}
+
+	public static ListTypeDefinition
+			getListTypeDefinitionByExternalReferenceCode(
+				String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return getService().getListTypeDefinitionByExternalReferenceCode(
+			externalReferenceCode, companyId);
 	}
 
 	public static List<ListTypeDefinition> getListTypeDefinitions(
@@ -87,11 +107,14 @@ public class ListTypeDefinitionServiceUtil {
 	}
 
 	public static ListTypeDefinition updateListTypeDefinition(
-			long listTypeDefinitionId, Map<java.util.Locale, String> nameMap)
+			String externalReferenceCode, long listTypeDefinitionId,
+			Map<java.util.Locale, String> nameMap,
+			List<com.liferay.list.type.model.ListTypeEntry> listTypeEntries)
 		throws PortalException {
 
 		return getService().updateListTypeDefinition(
-			listTypeDefinitionId, nameMap);
+			externalReferenceCode, listTypeDefinitionId, nameMap,
+			listTypeEntries);
 	}
 
 	public static ListTypeDefinitionService getService() {

@@ -43,6 +43,7 @@ import com.liferay.commerce.model.CommerceOrderType;
 import com.liferay.commerce.model.CommerceShippingEngine;
 import com.liferay.commerce.model.CommerceShippingMethod;
 import com.liferay.commerce.model.CommerceShippingOption;
+import com.liferay.commerce.model.attributes.provider.CommerceModelAttributesProvider;
 import com.liferay.commerce.price.CommerceOrderPrice;
 import com.liferay.commerce.price.CommerceOrderPriceCalculation;
 import com.liferay.commerce.product.model.CommerceChannel;
@@ -63,10 +64,10 @@ import com.liferay.commerce.util.CommerceShippingHelper;
 import com.liferay.commerce.util.CommerceUtil;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -85,11 +86,12 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.search.Indexer;
-import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.search.SortFactory;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -102,13 +104,12 @@ import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowHandlerRegistryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
@@ -128,11 +129,18 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+
 /**
  * @author Andrea Di Giorgi
  * @author Alessio Antonio Rendina
  * @author Marco Leo
  */
+@Component(
+	property = "model.class.name=com.liferay.commerce.model.CommerceOrder",
+	service = AopService.class
+)
 public class CommerceOrderLocalServiceImpl
 	extends CommerceOrderLocalServiceBaseImpl {
 
@@ -274,7 +282,7 @@ public class CommerceOrderLocalServiceImpl
 
 		commerceOrder.setManuallyAdjusted(false);
 
-		Date orderDate = PortalUtil.getDate(
+		Date orderDate = _portal.getDate(
 			orderDateMonth, orderDateDay, orderDateYear, orderDateHour,
 			orderDateMinute, user.getTimeZone(), null);
 
@@ -330,8 +338,8 @@ public class CommerceOrderLocalServiceImpl
 		CommerceOrder commerceOrder = null;
 
 		if (Validator.isNotNull(externalReferenceCode)) {
-			commerceOrder = commerceOrderPersistence.fetchByC_ERC(
-				serviceContext.getCompanyId(), externalReferenceCode);
+			commerceOrder = commerceOrderPersistence.fetchByERC_C(
+				externalReferenceCode, serviceContext.getCompanyId());
 		}
 
 		if (commerceOrder != null) {
@@ -349,7 +357,7 @@ public class CommerceOrderLocalServiceImpl
 
 			User user = _userLocalService.getUser(serviceContext.getUserId());
 
-			Date orderDate = PortalUtil.getDate(
+			Date orderDate = _portal.getDate(
 				orderDateMonth, orderDateDay, orderDateYear, orderDateHour,
 				orderDateMinute, user.getTimeZone(), null);
 
@@ -575,8 +583,8 @@ public class CommerceOrderLocalServiceImpl
 			return null;
 		}
 
-		return commerceOrderPersistence.fetchByC_ERC(
-			companyId, externalReferenceCode);
+		return commerceOrderPersistence.fetchByERC_C(
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -642,7 +650,24 @@ public class CommerceOrderLocalServiceImpl
 
 		SearchContext searchContext = _buildSearchContext(
 			companyId, groupId, commerceAccountIds, keywords,
-			excludeOrderStatus, orderStatuses, start, end);
+			excludeOrderStatus, orderStatuses, start, end, null);
+
+		BaseModelSearchResult<CommerceOrder> baseModelSearchResult =
+			commerceOrderLocalService.searchCommerceOrders(searchContext);
+
+		return baseModelSearchResult.getBaseModels();
+	}
+
+	@Override
+	public List<CommerceOrder> getCommerceOrders(
+			long companyId, long groupId, long[] commerceAccountIds,
+			String keywords, int[] orderStatuses, boolean excludeOrderStatus,
+			int start, int end, Sort sort)
+		throws PortalException {
+
+		SearchContext searchContext = _buildSearchContext(
+			companyId, groupId, commerceAccountIds, keywords,
+			excludeOrderStatus, orderStatuses, start, end, sort);
 
 		BaseModelSearchResult<CommerceOrder> baseModelSearchResult =
 			commerceOrderLocalService.searchCommerceOrders(searchContext);
@@ -702,7 +727,7 @@ public class CommerceOrderLocalServiceImpl
 		SearchContext searchContext = _buildSearchContext(
 			companyId, groupId, commerceAccountIds, keywords,
 			excludeOrderStatus, orderStatuses, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS);
+			QueryUtil.ALL_POS, null);
 
 		return commerceOrderLocalService.searchCommerceOrdersCount(
 			searchContext);
@@ -1046,7 +1071,7 @@ public class CommerceOrderLocalServiceImpl
 			SearchContext searchContext)
 		throws PortalException {
 
-		Indexer<CommerceOrder> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+		Indexer<CommerceOrder> indexer = _indexerRegistry.nullSafeGetIndexer(
 			CommerceOrder.class.getName());
 
 		for (int i = 0; i < 10; i++) {
@@ -1068,7 +1093,7 @@ public class CommerceOrderLocalServiceImpl
 	public long searchCommerceOrdersCount(SearchContext searchContext)
 		throws PortalException {
 
-		Indexer<CommerceOrder> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
+		Indexer<CommerceOrder> indexer = _indexerRegistry.nullSafeGetIndexer(
 			CommerceOrder.class.getName());
 
 		return indexer.searchCount(searchContext);
@@ -1481,7 +1506,7 @@ public class CommerceOrderLocalServiceImpl
 
 		User user = _userLocalService.getUser(serviceContext.getUserId());
 
-		Date requestedDeliveryDate = PortalUtil.getDate(
+		Date requestedDeliveryDate = _portal.getDate(
 			requestedDeliveryDateMonth, requestedDeliveryDateDay,
 			requestedDeliveryDateYear, requestedDeliveryDateHour,
 			requestedDeliveryDateMinute, user.getTimeZone(),
@@ -1510,7 +1535,7 @@ public class CommerceOrderLocalServiceImpl
 			commerceOrderId);
 
 		commerceOrder.setOrderDate(
-			PortalUtil.getDate(
+			_portal.getDate(
 				orderDateMonth, orderDateDay, orderDateYear, orderDateHour,
 				orderDateMinute, user.getTimeZone(),
 				CommerceOrderDateException.class));
@@ -1711,8 +1736,8 @@ public class CommerceOrderLocalServiceImpl
 		CommerceOrder commerceOrder = null;
 
 		if (Validator.isNotNull(externalReferenceCode)) {
-			commerceOrder = commerceOrderPersistence.fetchByC_ERC(
-				serviceContext.getCompanyId(), externalReferenceCode);
+			commerceOrder = commerceOrderPersistence.fetchByERC_C(
+				externalReferenceCode, serviceContext.getCompanyId());
 		}
 
 		if (commerceOrder != null) {
@@ -1749,7 +1774,7 @@ public class CommerceOrderLocalServiceImpl
 	private SearchContext _buildSearchContext(
 			long companyId, long commerceChannelGroupId,
 			long[] commerceAccountIds, String keywords, boolean negated,
-			int[] orderStatuses, int start, int end)
+			int[] orderStatuses, int start, int end, Sort sort)
 		throws PortalException {
 
 		SearchContext searchContext = new SearchContext();
@@ -1768,10 +1793,18 @@ public class CommerceOrderLocalServiceImpl
 		searchContext.setEnd(end);
 		searchContext.setGroupIds(new long[] {commerceChannelGroupId});
 		searchContext.setKeywords(keywords);
-		searchContext.setSorts(
-			SortFactoryUtil.getSort(
-				CommerceOrder.class, Sort.LONG_TYPE, Field.CREATE_DATE,
-				"DESC"));
+
+		if (sort == null) {
+			sort = SortFactoryUtil.getSort(
+				CommerceOrder.class, Sort.LONG_TYPE, Field.CREATE_DATE, "DESC");
+		}
+		else {
+			sort.setFieldName(Field.CREATE_DATE);
+			sort.setType(Sort.LONG_TYPE);
+		}
+
+		searchContext.setSorts(sort);
+
 		searchContext.setStart(start);
 
 		QueryConfig queryConfig = searchContext.getQueryConfig();
@@ -1798,7 +1831,7 @@ public class CommerceOrderLocalServiceImpl
 			if (commerceOrder == null) {
 				commerceOrders = null;
 
-				Indexer<CommerceOrder> indexer = IndexerRegistryUtil.getIndexer(
+				Indexer<CommerceOrder> indexer = _indexerRegistry.getIndexer(
 					CommerceOrder.class);
 
 				long companyId = GetterUtil.getLong(
@@ -1861,25 +1894,33 @@ public class CommerceOrderLocalServiceImpl
 			() -> {
 				Message message = new Message();
 
+				DTOConverter<?, ?> commerceOrderDTOConverter =
+					_dtoConverterRegistry.getDTOConverter(
+						CommerceOrder.class.getName());
+
 				message.setPayload(
 					JSONUtil.put(
 						"commerceOrder",
 						() -> {
-							DTOConverter<?, ?> dtoConverter =
-								_dtoConverterRegistry.getDTOConverter(
-									CommerceOrder.class.getName());
-
-							Object object = dtoConverter.toDTO(
+							Object object = commerceOrderDTOConverter.toDTO(
 								new DefaultDTOConverterContext(
 									_dtoConverterRegistry,
 									commerceOrder.getCommerceOrderId(),
 									LocaleUtil.getSiteDefault(), null, null));
 
-							return JSONFactoryUtil.createJSONObject(
-								object.toString());
+							return _jsonFactory.createJSONObject(
+								_jsonFactory.looseSerializeDeep(object));
 						}
 					).put(
 						"commerceOrderId", commerceOrder.getCommerceOrderId()
+					).put(
+						"model" + CommerceOrder.class.getSimpleName(),
+						commerceOrder.getModelAttributes()
+					).put(
+						"modelDTO" + commerceOrderDTOConverter.getContentType(),
+						_commerceModelAttributesProvider.getModelAttributes(
+							commerceOrder, commerceOrderDTOConverter,
+							commerceOrder.getUserId())
 					).put(
 						"paymentStatus", commerceOrder.getPaymentStatus()
 					).put(
@@ -2234,85 +2275,100 @@ public class CommerceOrderLocalServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		CommerceOrderLocalServiceImpl.class);
 
-	@BeanReference(type = CommerceAddressLocalService.class)
+	@Reference
 	private CommerceAddressLocalService _commerceAddressLocalService;
 
-	@ServiceReference(type = CommerceChannelLocalService.class)
+	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;
 
-	@ServiceReference(type = CommerceCurrencyLocalService.class)
+	@Reference
 	private CommerceCurrencyLocalService _commerceCurrencyLocalService;
 
-	@ServiceReference(type = CommerceDiscountLocalService.class)
+	@Reference
 	private CommerceDiscountLocalService _commerceDiscountLocalService;
 
-	@ServiceReference(type = CommerceDiscountUsageEntryLocalService.class)
+	@Reference
 	private CommerceDiscountUsageEntryLocalService
 		_commerceDiscountUsageEntryLocalService;
 
-	@ServiceReference(type = CommerceDiscountValidatorHelper.class)
+	@Reference
 	private CommerceDiscountValidatorHelper _commerceDiscountValidatorHelper;
 
-	@ServiceReference(type = CommerceOrderConfiguration.class)
+	@Reference
+	private CommerceModelAttributesProvider _commerceModelAttributesProvider;
+
+	@Reference
 	private CommerceOrderConfiguration _commerceOrderConfiguration;
 
-	@BeanReference(type = CommerceOrderItemLocalService.class)
+	@Reference
 	private CommerceOrderItemLocalService _commerceOrderItemLocalService;
 
-	@BeanReference(type = CommerceOrderItemPersistence.class)
+	@Reference
 	private CommerceOrderItemPersistence _commerceOrderItemPersistence;
 
-	@BeanReference(type = CommerceOrderNoteLocalService.class)
+	@Reference
 	private CommerceOrderNoteLocalService _commerceOrderNoteLocalService;
 
-	@BeanReference(type = CommerceOrderPaymentLocalService.class)
+	@Reference
 	private CommerceOrderPaymentLocalService _commerceOrderPaymentLocalService;
 
-	@ServiceReference(type = CommerceOrderPriceCalculation.class)
+	@Reference
 	private CommerceOrderPriceCalculation _commerceOrderPriceCalculation;
 
-	@BeanReference(type = CommerceOrderTypeLocalService.class)
+	@Reference
 	private CommerceOrderTypeLocalService _commerceOrderTypeLocalService;
 
-	@ServiceReference(type = CommerceShippingEngineRegistry.class)
+	@Reference
 	private CommerceShippingEngineRegistry _commerceShippingEngineRegistry;
 
-	@ServiceReference(type = CommerceShippingHelper.class)
+	@Reference
 	private CommerceShippingHelper _commerceShippingHelper;
 
-	@BeanReference(type = CommerceShippingMethodLocalService.class)
+	@Reference
 	private CommerceShippingMethodLocalService
 		_commerceShippingMethodLocalService;
 
-	@ServiceReference(type = CommerceTermEntryLocalService.class)
+	@Reference
 	private CommerceTermEntryLocalService _commerceTermEntryLocalService;
 
-	@ServiceReference(type = ConfigurationProvider.class)
+	@Reference
 	private ConfigurationProvider _configurationProvider;
 
-	@ServiceReference(type = DTOConverterRegistry.class)
+	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
 
-	@ServiceReference(type = ExpandoRowLocalService.class)
+	@Reference
 	private ExpandoRowLocalService _expandoRowLocalService;
 
-	@ServiceReference(type = GroupLocalService.class)
+	@Reference
 	private GroupLocalService _groupLocalService;
 
-	@ServiceReference(type = JsonHelper.class)
+	@Reference
+	private IndexerRegistry _indexerRegistry;
+
+	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private JsonHelper _jsonHelper;
 
-	@ServiceReference(type = UserLocalService.class)
+	@Reference
+	private Portal _portal;
+
+	@Reference
+	private SortFactory _sortFactory;
+
+	@Reference
 	private UserLocalService _userLocalService;
 
-	@ServiceReference(type = WorkflowDefinitionLinkLocalService.class)
+	@Reference
 	private WorkflowDefinitionLinkLocalService
 		_workflowDefinitionLinkLocalService;
 
-	@ServiceReference(type = WorkflowInstanceLinkLocalService.class)
+	@Reference
 	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;
 
-	@ServiceReference(type = WorkflowTaskManager.class)
+	@Reference
 	private WorkflowTaskManager _workflowTaskManager;
 
 }

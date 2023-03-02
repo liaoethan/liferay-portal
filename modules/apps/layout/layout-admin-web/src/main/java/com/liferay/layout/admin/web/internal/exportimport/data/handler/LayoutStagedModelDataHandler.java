@@ -63,6 +63,8 @@ import com.liferay.layout.seo.service.LayoutSEOSiteLocalService;
 import com.liferay.layout.service.LayoutClassedModelUsageLocalService;
 import com.liferay.layout.service.LayoutLocalizationLocalService;
 import com.liferay.layout.util.LayoutCopyHelper;
+import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
+import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -73,7 +75,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.NoSuchLayoutException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -163,7 +165,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.layout.configuration.LayoutExportImportConfiguration",
-	immediate = true, service = StagedModelDataHandler.class
+	service = StagedModelDataHandler.class
 )
 public class LayoutStagedModelDataHandler
 	extends BaseStagedModelDataHandler<Layout> {
@@ -180,7 +182,7 @@ public class LayoutStagedModelDataHandler
 			String uuid, long groupId, String className, String extraData)
 		throws PortalException {
 
-		JSONObject extraDataJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject extraDataJSONObject = _jsonFactory.createJSONObject(
 			extraData);
 
 		boolean privateLayout = extraDataJSONObject.getBoolean("privateLayout");
@@ -470,7 +472,9 @@ public class LayoutStagedModelDataHandler
 		if ((portletDataContext.isPrivateLayout() &&
 			 !layout.isTypeAssetDisplay()) ||
 			GetterUtil.getBoolean(
-				layoutElement.attributeValue("layout-content-page-template"))) {
+				layoutElement.attributeValue("layout-content-page-template")) ||
+			GetterUtil.getBoolean(
+				layoutElement.attributeValue("layout-master-page-template"))) {
 
 			privateLayout = true;
 		}
@@ -801,6 +805,10 @@ public class LayoutStagedModelDataHandler
 				importedParentLayout =
 					_layoutLocalService.fetchLayoutByFriendlyURL(
 						groupId, privateLayout, parentLayoutFriendlyURL);
+			}
+
+			if (importedParentLayout == null) {
+				importedParentLayout = layouts.get(parentLayoutId);
 			}
 
 			parentPlid = importedParentLayout.getPlid();
@@ -2664,12 +2672,40 @@ public class LayoutStagedModelDataHandler
 						fetchLayoutPageTemplateEntryByPlid(layout.getClassPK());
 			}
 
-			if ((layoutPageTemplateEntry != null) &&
-				(layoutPageTemplateEntry.getType() ==
-					LayoutPageTemplateEntryTypeConstants.TYPE_BASIC)) {
+			if (layoutPageTemplateEntry != null) {
+				if (layoutPageTemplateEntry.getType() ==
+						LayoutPageTemplateEntryTypeConstants.TYPE_BASIC) {
 
-				layoutElement.addAttribute(
-					"layout-content-page-template", Boolean.TRUE.toString());
+					layoutElement.addAttribute(
+						"layout-content-page-template",
+						Boolean.TRUE.toString());
+				}
+
+				if (layoutPageTemplateEntry.getType() ==
+						LayoutPageTemplateEntryTypeConstants.
+							TYPE_MASTER_LAYOUT) {
+
+					layoutElement.addAttribute(
+						"layout-master-page-template", Boolean.TRUE.toString());
+				}
+			}
+			else {
+				LayoutUtilityPageEntry layoutUtilityPageEntry =
+					_layoutUtilityPageEntryLocalService.
+						fetchLayoutUtilityPageEntryByPlid(layout.getPlid());
+
+				if (layoutUtilityPageEntry == null) {
+					layoutUtilityPageEntry =
+						_layoutUtilityPageEntryLocalService.
+							fetchLayoutUtilityPageEntryByPlid(
+								layout.getClassPK());
+				}
+
+				if (layoutUtilityPageEntry != null) {
+					layoutElement.addAttribute(
+						"layout-content-page-template",
+						Boolean.TRUE.toString());
+				}
 			}
 		}
 
@@ -2953,6 +2989,9 @@ public class LayoutStagedModelDataHandler
 	private ImageLocalService _imageLocalService;
 
 	@Reference
+	private JSONFactory _jsonFactory;
+
+	@Reference
 	private LayoutBranchLocalService _layoutBranchLocalService;
 
 	@Reference
@@ -3012,6 +3051,10 @@ public class LayoutStagedModelDataHandler
 
 	@Reference
 	private LayoutTemplateLocalService _layoutTemplateLocalService;
+
+	@Reference
+	private LayoutUtilityPageEntryLocalService
+		_layoutUtilityPageEntryLocalService;
 
 	@Reference
 	private PermissionImporter _permissionImporter;

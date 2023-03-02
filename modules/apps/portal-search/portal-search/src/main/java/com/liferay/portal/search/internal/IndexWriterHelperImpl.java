@@ -14,14 +14,13 @@
 
 package com.liferay.portal.search.internal;
 
-import com.liferay.portal.background.task.constants.BackgroundTaskContextMapConstants;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
+import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskContextMapConstants;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.search.Document;
@@ -62,7 +61,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.configuration.IndexWriterHelperConfiguration",
-	immediate = true, service = IndexWriterHelper.class
+	service = IndexWriterHelper.class
 )
 public class IndexWriterHelperImpl implements IndexWriterHelper {
 
@@ -483,8 +482,7 @@ public class IndexWriterHelperImpl implements IndexWriterHelper {
 	}
 
 	@Override
-	public void updateDocument(
-			long companyId, Document document, boolean commitImmediately)
+	public void updateDocument(long companyId, Document document)
 		throws SearchException {
 
 		_enforceStandardUID(document);
@@ -507,9 +505,7 @@ public class IndexWriterHelperImpl implements IndexWriterHelper {
 
 		searchContext.setCompanyId(companyId);
 
-		_setCommitImmediately(
-			searchContext,
-			commitImmediately || ProxyModeThreadLocal.isForceSync());
+		_setCommitImmediately(searchContext, true);
 
 		indexWriter.updateDocument(searchContext, document);
 	}

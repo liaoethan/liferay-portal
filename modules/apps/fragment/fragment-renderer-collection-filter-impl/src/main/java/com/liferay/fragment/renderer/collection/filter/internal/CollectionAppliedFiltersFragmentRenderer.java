@@ -14,7 +14,7 @@
 
 package com.liferay.fragment.renderer.collection.filter.internal;
 
-import com.liferay.fragment.collection.filter.FragmentCollectionFilterTracker;
+import com.liferay.fragment.collection.filter.FragmentCollectionFilterRegistry;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.renderer.collection.filter.internal.display.context.CollectionAppliedFiltersFragmentRendererDisplayContext;
@@ -23,10 +23,8 @@ import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -55,10 +53,7 @@ public class CollectionAppliedFiltersFragmentRenderer
 
 	@Override
 	public String getLabel(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", getClass());
-
-		return _language.get(resourceBundle, "applied-filters");
+		return _language.get(locale, "applied-filters");
 	}
 
 	@Override
@@ -71,7 +66,7 @@ public class CollectionAppliedFiltersFragmentRenderer
 			CollectionAppliedFiltersFragmentRendererDisplayContext.class.
 				getName(),
 			new CollectionAppliedFiltersFragmentRendererDisplayContext(
-				_fragmentCollectionFilterTracker,
+				_fragmentCollectionFilterRegistry,
 				_fragmentEntryConfigurationParser,
 				_fragmentEntryLinkLocalService, fragmentRendererContext,
 				httpServletRequest));
@@ -91,7 +86,7 @@ public class CollectionAppliedFiltersFragmentRenderer
 		CollectionAppliedFiltersFragmentRenderer.class);
 
 	@Reference
-	private FragmentCollectionFilterTracker _fragmentCollectionFilterTracker;
+	private FragmentCollectionFilterRegistry _fragmentCollectionFilterRegistry;
 
 	@Reference
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;

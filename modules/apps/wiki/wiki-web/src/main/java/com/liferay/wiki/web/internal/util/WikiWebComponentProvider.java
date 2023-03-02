@@ -15,7 +15,6 @@
 package com.liferay.wiki.web.internal.util;
 
 import com.liferay.wiki.configuration.WikiGroupServiceConfiguration;
-import com.liferay.wiki.web.internal.display.context.WikiDisplayContextProvider;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -25,26 +24,15 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Iván Zaera
  */
-@Component(immediate = true, service = {})
+@Component(service = {})
 public class WikiWebComponentProvider {
 
 	public static WikiWebComponentProvider getWikiWebComponentProvider() {
 		return _wikiWebComponentProvider;
 	}
 
-	public WikiDisplayContextProvider getWikiDisplayContextProvider() {
-		return _wikiDisplayContextProvider;
-	}
-
 	public WikiGroupServiceConfiguration getWikiGroupServiceConfiguration() {
 		return _wikiGroupServiceConfiguration;
-	}
-
-	@Reference(unbind = "-")
-	public void setWikiDisplayContextProvider(
-		WikiDisplayContextProvider wikiDisplayContextProvider) {
-
-		_wikiDisplayContextProvider = wikiDisplayContextProvider;
 	}
 
 	@Activate
@@ -72,7 +60,6 @@ public class WikiWebComponentProvider {
 
 	private static WikiWebComponentProvider _wikiWebComponentProvider;
 
-	private WikiDisplayContextProvider _wikiDisplayContextProvider;
 	private WikiGroupServiceConfiguration _wikiGroupServiceConfiguration;
 
 }

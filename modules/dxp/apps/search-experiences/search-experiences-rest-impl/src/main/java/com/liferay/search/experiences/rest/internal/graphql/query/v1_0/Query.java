@@ -35,6 +35,7 @@ import com.liferay.search.experiences.rest.dto.v1_0.QueryPrefilterContributor;
 import com.liferay.search.experiences.rest.dto.v1_0.SXPBlueprint;
 import com.liferay.search.experiences.rest.dto.v1_0.SXPElement;
 import com.liferay.search.experiences.rest.dto.v1_0.SXPParameterContributorDefinition;
+import com.liferay.search.experiences.rest.dto.v1_0.SearchIndex;
 import com.liferay.search.experiences.rest.dto.v1_0.SearchableAssetName;
 import com.liferay.search.experiences.rest.dto.v1_0.SearchableAssetNameDisplay;
 import com.liferay.search.experiences.rest.resource.v1_0.FieldMappingInfoResource;
@@ -45,6 +46,7 @@ import com.liferay.search.experiences.rest.resource.v1_0.QueryPrefilterContribut
 import com.liferay.search.experiences.rest.resource.v1_0.SXPBlueprintResource;
 import com.liferay.search.experiences.rest.resource.v1_0.SXPElementResource;
 import com.liferay.search.experiences.rest.resource.v1_0.SXPParameterContributorDefinitionResource;
+import com.liferay.search.experiences.rest.resource.v1_0.SearchIndexResource;
 import com.liferay.search.experiences.rest.resource.v1_0.SearchableAssetNameDisplayResource;
 import com.liferay.search.experiences.rest.resource.v1_0.SearchableAssetNameResource;
 
@@ -136,6 +138,14 @@ public class Query {
 			sxpParameterContributorDefinitionResourceComponentServiceObjects;
 	}
 
+	public static void setSearchIndexResourceComponentServiceObjects(
+		ComponentServiceObjects<SearchIndexResource>
+			searchIndexResourceComponentServiceObjects) {
+
+		_searchIndexResourceComponentServiceObjects =
+			searchIndexResourceComponentServiceObjects;
+	}
+
 	public static void setSearchableAssetNameResourceComponentServiceObjects(
 		ComponentServiceObjects<SearchableAssetNameResource>
 			searchableAssetNameResourceComponentServiceObjects) {
@@ -156,10 +166,12 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {fieldMappingInfos(query: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {fieldMappingInfos(external: ___, indexName: ___, query: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public FieldMappingInfoPage fieldMappingInfos(
+			@GraphQLName("external") Boolean external,
+			@GraphQLName("indexName") String indexName,
 			@GraphQLName("query") String query)
 		throws Exception {
 
@@ -167,7 +179,8 @@ public class Query {
 			_fieldMappingInfoResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			fieldMappingInfoResource -> new FieldMappingInfoPage(
-				fieldMappingInfoResource.getFieldMappingInfosPage(query)));
+				fieldMappingInfoResource.getFieldMappingInfosPage(
+					external, indexName, query)));
 	}
 
 	/**
@@ -190,10 +203,10 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {mLModels(limit: ___, pipelineTag: ___, query: ___, tag: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {sentenceTransformerMLModels(limit: ___, pipelineTag: ___, query: ___, tag: ___){items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
-	public MLModelPage mLModels(
+	public MLModelPage sentenceTransformerMLModels(
 			@GraphQLName("limit") Integer limit,
 			@GraphQLName("pipelineTag") String pipelineTag,
 			@GraphQLName("query") String query, @GraphQLName("tag") String tag)
@@ -203,7 +216,7 @@ public class Query {
 			_mlModelResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			mlModelResource -> new MLModelPage(
-				mlModelResource.getMLModelsPage(
+				mlModelResource.getSentenceTransformerMLModelsPage(
 					limit, pipelineTag, query, tag)));
 	}
 
@@ -383,6 +396,20 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {searchIndexes{items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
+	 */
+	@GraphQLField
+	public SearchIndexPage searchIndexes() throws Exception {
+		return _applyComponentServiceObjects(
+			_searchIndexResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			searchIndexResource -> new SearchIndexPage(
+				searchIndexResource.getSearchIndexesPage()));
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
 	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {searchableAssetNames{items {__}, page, pageSize, totalCount}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
@@ -488,7 +515,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<FieldMappingInfo> items;
@@ -521,7 +548,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<KeywordQueryContributor> items;
@@ -554,7 +581,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<MLModel> items;
@@ -589,7 +616,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<ModelPrefilterContributor> items;
@@ -624,7 +651,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<QueryPrefilterContributor> items;
@@ -657,7 +684,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<SXPBlueprint> items;
@@ -690,7 +717,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<SXPElement> items;
@@ -725,10 +752,43 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<SXPParameterContributorDefinition> items;
+
+		@GraphQLField
+		protected long lastPage;
+
+		@GraphQLField
+		protected long page;
+
+		@GraphQLField
+		protected long pageSize;
+
+		@GraphQLField
+		protected long totalCount;
+
+	}
+
+	@GraphQLName("SearchIndexPage")
+	public class SearchIndexPage {
+
+		public SearchIndexPage(Page searchIndexPage) {
+			actions = searchIndexPage.getActions();
+
+			items = searchIndexPage.getItems();
+			lastPage = searchIndexPage.getLastPage();
+			page = searchIndexPage.getPage();
+			pageSize = searchIndexPage.getPageSize();
+			totalCount = searchIndexPage.getTotalCount();
+		}
+
+		@GraphQLField
+		protected Map<String, Map<String, String>> actions;
+
+		@GraphQLField
+		protected java.util.Collection<SearchIndex> items;
 
 		@GraphQLField
 		protected long lastPage;
@@ -758,7 +818,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<SearchableAssetName> items;
@@ -793,7 +853,7 @@ public class Query {
 		}
 
 		@GraphQLField
-		protected Map<String, Map> actions;
+		protected Map<String, Map<String, String>> actions;
 
 		@GraphQLField
 		protected java.util.Collection<SearchableAssetNameDisplay> items;
@@ -965,6 +1025,20 @@ public class Query {
 	}
 
 	private void _populateResourceContext(
+			SearchIndexResource searchIndexResource)
+		throws Exception {
+
+		searchIndexResource.setContextAcceptLanguage(_acceptLanguage);
+		searchIndexResource.setContextCompany(_company);
+		searchIndexResource.setContextHttpServletRequest(_httpServletRequest);
+		searchIndexResource.setContextHttpServletResponse(_httpServletResponse);
+		searchIndexResource.setContextUriInfo(_uriInfo);
+		searchIndexResource.setContextUser(_user);
+		searchIndexResource.setGroupLocalService(_groupLocalService);
+		searchIndexResource.setRoleLocalService(_roleLocalService);
+	}
+
+	private void _populateResourceContext(
 			SearchableAssetNameResource searchableAssetNameResource)
 		throws Exception {
 
@@ -1017,6 +1091,8 @@ public class Query {
 	private static ComponentServiceObjects
 		<SXPParameterContributorDefinitionResource>
 			_sxpParameterContributorDefinitionResourceComponentServiceObjects;
+	private static ComponentServiceObjects<SearchIndexResource>
+		_searchIndexResourceComponentServiceObjects;
 	private static ComponentServiceObjects<SearchableAssetNameResource>
 		_searchableAssetNameResourceComponentServiceObjects;
 	private static ComponentServiceObjects<SearchableAssetNameDisplayResource>

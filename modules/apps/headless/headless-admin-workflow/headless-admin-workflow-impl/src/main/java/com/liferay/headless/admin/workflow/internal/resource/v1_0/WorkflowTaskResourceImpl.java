@@ -25,13 +25,17 @@ import com.liferay.headless.admin.workflow.internal.dto.v1_0.util.CreatorUtil;
 import com.liferay.headless.admin.workflow.internal.dto.v1_0.util.ObjectReviewedUtil;
 import com.liferay.headless.admin.workflow.internal.dto.v1_0.util.RoleUtil;
 import com.liferay.headless.admin.workflow.resource.v1_0.WorkflowTaskResource;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
@@ -64,6 +68,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/workflow-task.properties",
 	scope = ServiceScope.PROTOTYPE, service = WorkflowTaskResource.class
 )
+@CTAware
 public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 
 	@Override
@@ -93,6 +98,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByWorkflowInstance(
 					contextCompany.getCompanyId(), assigneeId,
@@ -112,6 +118,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByWorkflowInstance(
 					contextCompany.getCompanyId(), null, workflowInstanceId,
@@ -154,6 +161,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByUser(
 					contextCompany.getCompanyId(), contextUser.getUserId(),
@@ -171,6 +179,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByUserRoles(
 					contextCompany.getCompanyId(), contextUser.getUserId(),
@@ -188,6 +197,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByRole(
 					contextCompany.getCompanyId(), roleId, null,
@@ -205,6 +215,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByUser(
 					contextCompany.getCompanyId(), assigneeId, null,
@@ -222,6 +233,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksByUserRoles(
 					contextCompany.getCompanyId(), assigneeId, null,
@@ -239,6 +251,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 		throws Exception {
 
 		return Page.of(
+			_getActions(),
 			transform(
 				_workflowTaskManager.getWorkflowTasksBySubmittingUser(
 					contextCompany.getCompanyId(), creatorId, null,
@@ -443,6 +456,30 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 				workflowTaskAssignToMe.getDueDate()));
 	}
 
+	private Map<String, Map<String, String>> _getActions() {
+		return HashMapBuilder.<String, Map<String, String>>put(
+			"assignedToMe",
+			addAction(
+				ActionKeys.VIEW, "getWorkflowTasksAssignedToMePage",
+				WorkflowConstants.RESOURCE_NAME, null)
+		).put(
+			"assignedToRole",
+			addAction(
+				ActionKeys.VIEW, "getWorkflowTasksAssignedToRolePage",
+				WorkflowConstants.RESOURCE_NAME, null)
+		).put(
+			"assignedToUser",
+			addAction(
+				ActionKeys.VIEW, "getWorkflowTasksAssignedToUserPage",
+				WorkflowConstants.RESOURCE_NAME, null)
+		).put(
+			"assignedToUserRoles",
+			addAction(
+				ActionKeys.VIEW, "getWorkflowTasksAssignedToUserRolesPage",
+				WorkflowConstants.RESOURCE_NAME, null)
+		).build();
+	}
+
 	private Role[] _getRoles(List<WorkflowTaskAssignee> workflowTaskAssignees)
 		throws Exception {
 
@@ -567,6 +604,39 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 				workflowDefinitionVersion = String.valueOf(
 					workflowTask.getWorkflowDefinitionVersion());
 				workflowInstanceId = workflowTask.getWorkflowInstanceId();
+
+				setActions(
+					HashMapBuilder.<String, Map<String, String>>put(
+						"assignToMe",
+						addAction(
+							ActionKeys.UPDATE, workflowTask.getWorkflowTaskId(),
+							"postWorkflowTaskAssignToMe",
+							_workflowTaskModelResourcePermission)
+					).put(
+						"assignToRole",
+						addAction(
+							ActionKeys.UPDATE, workflowTask.getWorkflowTaskId(),
+							"postWorkflowTaskAssignToRole",
+							_workflowTaskModelResourcePermission)
+					).put(
+						"assignToUser",
+						addAction(
+							ActionKeys.UPDATE, workflowTask.getWorkflowTaskId(),
+							"postWorkflowTaskAssignToUser",
+							_workflowTaskModelResourcePermission)
+					).put(
+						"changeTransition",
+						addAction(
+							ActionKeys.UPDATE, workflowTask.getWorkflowTaskId(),
+							"postWorkflowTaskChangeTransition",
+							_workflowTaskModelResourcePermission)
+					).put(
+						"updateDueDate",
+						addAction(
+							ActionKeys.UPDATE, workflowTask.getWorkflowTaskId(),
+							"patchWorkflowTaskUpdateDueDate",
+							_workflowTaskModelResourcePermission)
+					).build());
 			}
 		};
 	}
@@ -583,7 +653,7 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 	@Reference
 	private UserLocalService _userLocalService;
 
-	@Reference(target = "(proxy.bean=false)")
+	@Reference
 	private WorkflowComparatorFactory _workflowComparatorFactory;
 
 	@Reference
@@ -591,5 +661,10 @@ public class WorkflowTaskResourceImpl extends BaseWorkflowTaskResourceImpl {
 
 	@Reference
 	private WorkflowTaskManager _workflowTaskManager;
+
+	@Reference(
+		target = "(model.class.name=com.liferay.portal.kernel.workflow.WorkflowTask)"
+	)
+	private ModelResourcePermission<?> _workflowTaskModelResourcePermission;
 
 }

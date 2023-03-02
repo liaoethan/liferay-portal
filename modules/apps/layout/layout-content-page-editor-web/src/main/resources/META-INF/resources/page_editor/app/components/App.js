@@ -12,78 +12,104 @@
  * details.
  */
 
+import {ClayIconSpriteContext} from '@clayui/icon';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import {StyleBookContextProvider} from '../../plugins/page-design-options/hooks/useStyleBook';
+import ConvertToPageTemplateModal from '../../plugins/convert_to_page_template_modal/components/ConvertToPageTemplateModal';
+import {StyleBookContextProvider} from '../../plugins/page_design_options/hooks/useStyleBook';
 import {INIT} from '../actions/types';
+import {config} from '../config/index';
 import {CollectionActiveItemContextProvider} from '../contexts/CollectionActiveItemContext';
 import {ControlsProvider} from '../contexts/ControlsContext';
 import {DisplayPagePreviewItemContextProvider} from '../contexts/DisplayPagePreviewItemContext';
 import {EditableProcessorContextProvider} from '../contexts/EditableProcessorContext';
 import {FormValidationContextProvider} from '../contexts/FormValidationContext';
 import {GlobalContextProvider} from '../contexts/GlobalContext';
+import {
+	KeyboardMovementContextProvider,
+	useMovementSource,
+} from '../contexts/KeyboardMovementContext';
 import {StoreContextProvider} from '../contexts/StoreContext';
-import WidgetsManager from '../contexts/WidgetsManager';
+import AppHooks from '../hooks/app_hooks/index';
 import {reducer} from '../reducers/index';
-import {DragAndDropContextProvider} from '../utils/drag-and-drop/useDragAndDrop';
+import {DragAndDropContextProvider} from '../utils/drag_and_drop/useDragAndDrop';
 import CommonStylesManager from './CommonStylesManager';
 import {DisplayPagePreviewItemSelector} from './DisplayPagePreviewItemSelector';
 import DragPreview from './DragPreview';
 import ItemConfigurationSidebar from './ItemConfigurationSidebar';
+import KeyboardMovementManager from './KeyboardMovementManager';
+import KeyboardMovementPreview from './KeyboardMovementPreview';
+import KeyboardMovementText from './KeyboardMovementText';
 import {LayoutBreadcrumbs} from './LayoutBreadcrumbs';
 import LayoutViewport from './LayoutViewport';
 import ShortcutManager from './ShortcutManager';
 import Sidebar from './Sidebar';
 import Toolbar from './Toolbar';
-import AppHooks from './app-hooks/index';
+import WidgetsManager from './WidgetsManager';
 
 export default function App({state}) {
 	const initialState = reducer(state, {type: INIT});
 
 	return (
-		<StoreContextProvider initialState={initialState} reducer={reducer}>
-			<ControlsProvider>
-				<CollectionActiveItemContextProvider>
-					<DragAndDropContextProvider>
-						<EditableProcessorContextProvider>
-							<DisplayPagePreviewItemContextProvider>
-								<AppHooks />
+		<ClayIconSpriteContext.Provider value={config.adminThemeSpritemap}>
+			<StoreContextProvider initialState={initialState} reducer={reducer}>
+				<ConvertToPageTemplateModal />
 
-								<DisplayPagePreviewItemSelector dark />
+				<ControlsProvider>
+					<CollectionActiveItemContextProvider>
+						<DragAndDropContextProvider>
+							<EditableProcessorContextProvider>
+								<DisplayPagePreviewItemContextProvider>
+									<AppHooks />
 
-								<DragPreview />
+									<DisplayPagePreviewItemSelector dark />
 
-								<WidgetsManager />
+									<DragPreview />
 
-								<FormValidationContextProvider>
-									<Toolbar />
+									<WidgetsManager />
 
-									<ShortcutManager />
+									<FormValidationContextProvider>
+										<Toolbar />
 
-									<GlobalContextProvider>
-										<CommonStylesManager />
+										<KeyboardMovementContextProvider>
+											<KeyboardManager />
 
-										<LayoutViewport />
+											<KeyboardMovementPreview />
 
-										<LayoutBreadcrumbs />
+											<KeyboardMovementText />
 
-										<StyleBookContextProvider>
-											<Sidebar />
+											<GlobalContextProvider>
+												<CommonStylesManager />
 
-											<ItemConfigurationSidebar />
-										</StyleBookContextProvider>
-									</GlobalContextProvider>
-								</FormValidationContextProvider>
-							</DisplayPagePreviewItemContextProvider>
-						</EditableProcessorContextProvider>
-					</DragAndDropContextProvider>
-				</CollectionActiveItemContextProvider>
-			</ControlsProvider>
-		</StoreContextProvider>
+												<LayoutViewport />
+
+												<LayoutBreadcrumbs />
+
+												<StyleBookContextProvider>
+													<Sidebar />
+
+													<ItemConfigurationSidebar />
+												</StyleBookContextProvider>
+											</GlobalContextProvider>
+										</KeyboardMovementContextProvider>
+									</FormValidationContextProvider>
+								</DisplayPagePreviewItemContextProvider>
+							</EditableProcessorContextProvider>
+						</DragAndDropContextProvider>
+					</CollectionActiveItemContextProvider>
+				</ControlsProvider>
+			</StoreContextProvider>
+		</ClayIconSpriteContext.Provider>
 	);
 }
 
 App.propTypes = {
 	state: PropTypes.object.isRequired,
 };
+
+function KeyboardManager() {
+	const movementSource = useMovementSource();
+
+	return movementSource ? <KeyboardMovementManager /> : <ShortcutManager />;
+}

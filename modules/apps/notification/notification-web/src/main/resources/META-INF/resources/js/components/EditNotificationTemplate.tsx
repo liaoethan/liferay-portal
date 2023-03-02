@@ -12,97 +12,107 @@
  * details.
  */
 
-import ClayButton from '@clayui/button';
 import ClayForm from '@clayui/form';
-import ClayLabel from '@clayui/label';
-import ClayManagementToolbar from '@clayui/management-toolbar';
 import {
 	API,
-	Card,
-	Input,
-	InputLocalized,
-	RichTextLocalized,
-	SingleSelect,
+	ManagementToolbar,
+	REQUIRED_MSG,
+	invalidateRequired,
 	openToast,
 	useForm,
 } from '@liferay/object-js-components-web';
 import {fetch} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
-import {Attachments} from './Attachments';
-import {DefinitionOfTerms} from './DefinitionOfTerms';
+import {defaultLanguageId} from '../util/constants';
 
 import './EditNotificationTemplate.scss';
+import {BasicInfoContainer} from './BasicInfoContainer/BasicInfoContainer';
+import ContentContainer from './ContentContainer/ContentContainer';
+import {SettingsContainer} from './SettingsContainer/SettingsContainer';
 
 const HEADERS = new Headers({
 	'Accept': 'application/json',
 	'Content-Type': 'application/json',
 });
 
-const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
+export type NotificationTemplateError = {
+	bcc?: string;
+	body?: string;
+	cc?: string;
+	description?: string;
+	from?: string;
+	fromName?: string;
+	name?: string;
+	subject?: string;
+	to?: string;
+	type?: string;
+};
+
+interface EditNotificationTemplateProps {
+	backURL: string;
+	baseResourceURL: string;
+	editorConfig: object;
+	externalReferenceCode: string;
+	notificationTemplateId: number;
+	notificationTemplateType: string;
+	portletNamespace: string;
+}
 
 export default function EditNotificationTemplate({
+	backURL,
 	baseResourceURL,
 	editorConfig,
-	notificationTemplateId,
+	externalReferenceCode,
+	notificationTemplateId = 0,
 	notificationTemplateType,
-}: IProps) {
+	portletNamespace,
+}: EditNotificationTemplateProps) {
 	notificationTemplateId = Number(notificationTemplateId);
 
-	const initialValues = {
-		bcc: '',
-		body: {
-			[defaultLanguageId]: '',
-		},
-		cc: '',
-		description: '',
-		from: '',
-		fromName: {
-			[defaultLanguageId]: '',
-		},
-		name: '',
-		subject: {
-			[defaultLanguageId]: '',
-		},
-		to: {
-			[defaultLanguageId]: '',
-		},
-	};
+	const [isSubmitted, setIsSubmitted] = useState(false);
 
-	const [selectedLocale, setSelectedLocale] = useState(
+	const [selectedLocale, setSelectedLocale] = useState<Locale>(
 		Liferay.ThemeDisplay.getDefaultLanguageId
 	);
 
+	const [templateTitle, setTemplateTitle] = useState<string>('');
+
 	const validate = (values: any) => {
-		const errors: {
-			bcc?: string;
-			body?: string;
-			cc?: string;
-			description?: string;
-			from?: string;
-			fromName?: string;
-			name?: string;
-			subject?: string;
-			to?: string;
-			type?: string;
-		} = {};
+		const errors: NotificationTemplateError = {};
 
 		if (!values.name) {
-			errors.name = Liferay.Language.get('required');
+			errors.name = REQUIRED_MSG;
 		}
 
-		if (!values.from) {
-			errors.from = Liferay.Language.get('required');
+		if (!values.subject[defaultLanguageId]) {
+			errors.subject = Liferay.Language.get('required');
 		}
 
-		if (!values.fromName[defaultLanguageId]) {
-			errors.fromName = Liferay.Language.get('required');
+		if (notificationTemplateType === 'email' || values.type === 'email') {
+			if (!values.recipients[0].from) {
+				errors.from = REQUIRED_MSG;
+			}
+
+			if (!values.recipients[0].fromName[defaultLanguageId]) {
+				errors.fromName = REQUIRED_MSG;
+			}
+
+			if (!values.recipients[0].to[defaultLanguageId]) {
+				errors.to = REQUIRED_MSG;
+			}
 		}
 
 		return errors;
 	};
 
-	const onSubmit = async (notification: TNotificationTemplate) => {
+	const onSubmit = async (notification: NotificationTemplate) => {
+		if (isSubmitted) {
+			return;
+		}
+
+		setIsSubmitted(true);
+
 		const response = await fetch(
 			notificationTemplateId !== 0
 				? `/o/notification/v1.0/notification-templates/${notificationTemplateId}`
@@ -138,292 +148,175 @@ export default function EditNotificationTemplate({
 		}
 	};
 
-	const {errors, handleSubmit, setValues, values} = useForm({
+	let recipientInitialValue: any;
+
+	if (
+		notificationTemplateType === '' ||
+		notificationTemplateType === 'email'
+	) {
+		recipientInitialValue = [
+			{
+				bcc: '',
+				cc: '',
+				from: '',
+				fromName: {
+					[defaultLanguageId]: '',
+				},
+				to: {
+					[defaultLanguageId]: '',
+				},
+			} as EmailRecipients,
+		];
+	}
+	else {
+		recipientInitialValue = [];
+	}
+
+	const initialValues: NotificationTemplate = {
+		attachmentObjectFieldIds: [],
+		body: {
+			[defaultLanguageId]: '',
+		},
+		description: '',
+		editorType: 'richText' as editorTypeOptions,
+		externalReferenceCode: '',
+		name: '',
+		objectDefinitionExternalReferenceCode: '',
+		objectDefinitionId: 0,
+		recipientType:
+			notificationTemplateType === 'userNotification' ? 'term' : 'email',
+		recipients: recipientInitialValue,
+		subject: {
+			[defaultLanguageId]: '',
+		},
+		type: notificationTemplateType,
+	};
+
+	const {errors, setValues, validateSubmit, values} = useForm({
 		initialValues,
 		onSubmit,
 		validate,
 	});
 
-	const [templateTitle, setTemplateTitle] = useState<string>();
-
-	const [notificationType, setNotificationType] = useState<string>(
-		notificationTemplateType
-	);
-
 	useEffect(() => {
-		if (notificationTemplateId !== 0) {
-			API.getNotificationTemplate(notificationTemplateId).then(
-				({
+		const makeFetch = async () => {
+			if (notificationTemplateId !== 0) {
+				const {
 					attachmentObjectFieldIds,
-					bcc,
 					body,
-					cc,
 					description,
-					from,
-					fromName,
+					editorType,
+					externalReferenceCode,
 					name,
+					objectDefinitionExternalReferenceCode,
 					objectDefinitionId,
+					recipientType,
+					recipients,
 					subject,
-					to,
 					type,
-				}) => {
-					setValues({
-						...values,
-						attachmentObjectFieldIds,
-						bcc,
-						body,
-						cc,
-						description,
-						from,
-						fromName,
-						name,
-						objectDefinitionId,
-						subject,
-						to,
-						type,
-					});
+				} = await API.getNotificationTemplateById(
+					notificationTemplateId
+				);
 
-					setTemplateTitle(name);
-					setNotificationType(type);
-				}
-			);
-		}
-		else {
-			setTemplateTitle(
-				Liferay.Language.get('untitled-notification-template')
-			);
-		}
+				setValues({
+					...values,
+					attachmentObjectFieldIds,
+					body,
+					description,
+					editorType,
+					externalReferenceCode,
+					name,
+					objectDefinitionExternalReferenceCode,
+					objectDefinitionId,
+					recipientType,
+					recipients,
+					subject,
+					type,
+				});
+
+				setTemplateTitle(name);
+			}
+			else {
+				setTemplateTitle(
+					Liferay.Language.get('untitled-notification-template')
+				);
+			}
+		};
+
+		makeFetch();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [notificationTemplateId]);
 
 	return (
-		<ClayForm onSubmit={handleSubmit}>
-			<ClayManagementToolbar className="lfr__notification-template-management-tollbar">
-				<ClayManagementToolbar.ItemList>
-					<h2>{templateTitle}</h2>
-
-					{Liferay.FeatureFlags['LPS-162133'] && (
-						<div className="lfr__notification-template-label">
-							{notificationType === 'email' ? (
-								<ClayLabel displayType="success">
-									{Liferay.Language.get('email')}
-								</ClayLabel>
-							) : (
-								<ClayLabel displayType="info">
-									{Liferay.Language.get('user-notification')}
-								</ClayLabel>
-							)}
-						</div>
-					)}
-				</ClayManagementToolbar.ItemList>
-
-				<ClayManagementToolbar.ItemList>
-					<ClayButton
-						displayType="secondary"
-						onClick={() => window.history.back()}
-					>
-						{Liferay.Language.get('cancel')}
-					</ClayButton>
-
-					<ClayButton className="inline-item-after" type="submit">
-						{Liferay.Language.get('save')}
-					</ClayButton>
-				</ClayManagementToolbar.ItemList>
-			</ClayManagementToolbar>
+		<ClayForm>
+			<ManagementToolbar
+				backURL={backURL}
+				badgeClassName={
+					values.type === 'email' ? 'label-success' : 'label-info'
+				}
+				badgeLabel={
+					values.type === 'email'
+						? Liferay.Language.get('email')
+						: Liferay.Language.get('user-notification')
+				}
+				entityId={notificationTemplateId}
+				externalReferenceCode={
+					invalidateRequired(values.externalReferenceCode)
+						? externalReferenceCode
+						: values.externalReferenceCode
+				}
+				externalReferenceCodeSaveURL={`/o/notification/v1.0/notification-templates/${notificationTemplateId}`}
+				hasPublishPermission={true}
+				hasUpdatePermission={true}
+				helpMessage={Liferay.Language.get(
+					'internal-key-to-reference-the-notification-template'
+				)}
+				label={templateTitle}
+				onExternalReferenceCodeChange={(value) => {
+					setValues({
+						externalReferenceCode: value,
+					});
+				}}
+				onGetEntity={() =>
+					API.getNotificationTemplateById(notificationTemplateId)
+				}
+				onSubmit={validateSubmit}
+				portletNamespace={portletNamespace}
+				showEntityDetails={notificationTemplateId !== 0}
+			/>
 
 			<div className="lfr__notification-template-container">
 				<div className="lfr__notification-template-cards">
 					<div className="row">
 						<div className="col-lg-6 lfr__notification-template-card">
-							<Card title={Liferay.Language.get('basic-info')}>
-								<Input
-									error={errors.name}
-									label={Liferay.Language.get('name')}
-									name="name"
-									onChange={({target}) =>
-										setValues({
-											...values,
-											name: target.value,
-										})
-									}
-									required
-									value={values.name}
-								/>
-
-								<Input
-									component="textarea"
-									label={Liferay.Language.get('description')}
-									name="description"
-									onChange={({target}) =>
-										setValues({
-											...values,
-											description: target.value,
-										})
-									}
-									type="text"
-									value={values.description}
-								/>
-
-								{!Liferay.FeatureFlags['LPS-162133'] && (
-									<SingleSelect
-										disabled
-										label={Liferay.Language.get('type')}
-										options={[]}
-										value={Liferay.Language.get('email')}
-									/>
-								)}
-							</Card>
+							<BasicInfoContainer
+								errors={errors}
+								setValues={setValues}
+								values={values}
+							/>
 						</div>
 
 						<div className="col-lg-6 lfr__notification-template-card">
-							<Card title={Liferay.Language.get('settings')}>
-								<InputLocalized
-									label={Liferay.Language.get('to')}
-									name="to"
-									onChange={(translation) => {
-										setValues({
-											...values,
-											to: translation,
-										});
-									}}
-									placeholder=""
-									selectedLocale={selectedLocale}
-									translations={values.to}
-								/>
-
-								<div className="row">
-									<div className="col-lg-6">
-										<Input
-											label={Liferay.Language.get('cc')}
-											name="cc"
-											onChange={({target}) =>
-												setValues({
-													...values,
-													cc: target.value,
-												})
-											}
-											value={values.cc}
-										/>
-									</div>
-
-									<div className="col-lg-6">
-										<Input
-											label={Liferay.Language.get('bcc')}
-											name="bcc"
-											onChange={({target}) =>
-												setValues({
-													...values,
-													bcc: target.value,
-												})
-											}
-											value={values.bcc}
-										/>
-									</div>
-								</div>
-
-								<div className="row">
-									<div className="col-lg-6">
-										<Input
-											error={errors.from}
-											label={Liferay.Language.get(
-												'from-address'
-											)}
-											name="fromAddress"
-											onChange={({target}) =>
-												setValues({
-													...values,
-													from: target.value,
-												})
-											}
-											required
-											value={values.from}
-										/>
-									</div>
-
-									<div className="col-lg-6">
-										<InputLocalized
-											error={errors.fromName}
-											label={Liferay.Language.get(
-												'from-name'
-											)}
-											name="fromName"
-											onChange={(translation) => {
-												setValues({
-													...values,
-													fromName: translation,
-												});
-											}}
-											placeholder=""
-											required
-											selectedLocale={selectedLocale}
-											translations={values.fromName}
-										/>
-									</div>
-								</div>
-							</Card>
+							<SettingsContainer
+								errors={errors}
+								selectedLocale={selectedLocale}
+								setValues={setValues}
+								values={values}
+							/>
 						</div>
 					</div>
 
-					<Card title={Liferay.Language.get('content')}>
-						<InputLocalized
-							label={Liferay.Language.get('subject')}
-							name="subject"
-							onChange={(translation) => {
-								setValues({
-									...values,
-									subject: translation,
-								});
-							}}
-							placeholder=""
-							selectedLocale={selectedLocale}
-							translations={values.subject}
-						/>
-
-						<RichTextLocalized
-							editorConfig={editorConfig}
-							label={Liferay.Language.get('body')}
-							name="body"
-							onSelectedLocaleChange={({label}) =>
-								setSelectedLocale(label)
-							}
-							onTranslationsChange={(translation) => {
-								setValues({
-									...values,
-									body: translation,
-								});
-							}}
-							selectedLocale={selectedLocale}
-							translations={values.body}
-						/>
-
-						<DefinitionOfTerms baseResourceURL={baseResourceURL} />
-
-						<Attachments setValues={setValues} values={values} />
-					</Card>
+					<ContentContainer
+						baseResourceURL={baseResourceURL}
+						editorConfig={editorConfig}
+						errors={errors}
+						selectedLocale={selectedLocale}
+						setSelectedLocale={setSelectedLocale}
+						setValues={setValues}
+						values={values}
+					/>
 				</div>
 			</div>
 		</ClayForm>
 	);
 }
-
-interface IProps {
-	baseResourceURL: string;
-	editorConfig: object;
-	notificationTemplateId: number;
-	notificationTemplateType: string;
-}
-
-export type TNotificationTemplate = {
-	attachmentObjectFieldIds: string[] | number[];
-	bcc: string;
-	body: LocalizedValue<string>;
-	cc: string;
-	description: string;
-	from: string;
-	fromName: LocalizedValue<string>;
-	name: string;
-	objectDefinitionId: number | null;
-	subject: LocalizedValue<string>;
-	to: LocalizedValue<string>;
-	type: string;
-};

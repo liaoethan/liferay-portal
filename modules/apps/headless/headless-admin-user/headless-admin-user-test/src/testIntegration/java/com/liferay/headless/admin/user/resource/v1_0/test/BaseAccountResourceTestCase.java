@@ -219,11 +219,20 @@ public abstract class BaseAccountResourceTestCase {
 
 		assertContains(account1, (List<Account>)page.getItems());
 		assertContains(account2, (List<Account>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetAccountsPage_getExpectedActions());
 
 		accountResource.deleteAccount(account1.getId());
 
 		accountResource.deleteAccount(account2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetAccountsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -983,7 +992,10 @@ public abstract class BaseAccountResourceTestCase {
 			assertEquals(
 				Arrays.asList(irrelevantAccount),
 				(List<Account>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetOrganizationAccountsPage_getExpectedActions(
+					irrelevantOrganizationId));
 		}
 
 		Account account1 = testGetOrganizationAccountsPage_addAccount(
@@ -999,11 +1011,23 @@ public abstract class BaseAccountResourceTestCase {
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(account1, account2), (List<Account>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page,
+			testGetOrganizationAccountsPage_getExpectedActions(organizationId));
 
 		accountResource.deleteAccount(account1.getId());
 
 		accountResource.deleteAccount(account2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetOrganizationAccountsPage_getExpectedActions(
+				String organizationId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -1483,6 +1507,14 @@ public abstract class BaseAccountResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("customFields", additionalAssertFieldName)) {
+				if (account.getCustomFields() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("description", additionalAssertFieldName)) {
 				if (account.getDescription() == null) {
 					valid = false;
@@ -1566,6 +1598,12 @@ public abstract class BaseAccountResourceTestCase {
 	}
 
 	protected void assertValid(Page<Account> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Account> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Account> accounts = page.getItems();
@@ -1580,6 +1618,20 @@ public abstract class BaseAccountResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1664,6 +1716,17 @@ public abstract class BaseAccountResourceTestCase {
 				if (!equals(
 						(Map)account1.getActions(),
 						(Map)account2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("customFields", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						account1.getCustomFields(),
+						account2.getCustomFields())) {
 
 					return false;
 				}
@@ -1836,6 +1899,10 @@ public abstract class BaseAccountResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -1878,6 +1945,11 @@ public abstract class BaseAccountResourceTestCase {
 		}
 
 		if (entityFieldName.equals("actions")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("customFields")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}

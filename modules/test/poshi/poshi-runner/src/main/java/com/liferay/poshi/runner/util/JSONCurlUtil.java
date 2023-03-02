@@ -153,7 +153,7 @@ public class JSONCurlUtil {
 			sb.append(" ");
 			sb.append(_getRequestOptionsString());
 			sb.append(" ");
-			sb.append(_quote(_requestURL));
+			sb.append(_requestURL);
 
 			Process process = ExecUtil.executeCommands(
 				true, new File("."), 1000 * 60 * 15, sb.toString());
@@ -203,7 +203,7 @@ public class JSONCurlUtil {
 		private String _getRequestURL(List<String> tokens) {
 			String token = tokens.get(0);
 
-			if (token.startsWith("http")) {
+			if (token.startsWith("file") || token.startsWith("http")) {
 				return token;
 			}
 
@@ -230,16 +230,6 @@ public class JSONCurlUtil {
 			}
 
 			System.out.println(message);
-		}
-
-		private String _quote(String value) {
-			char quoteChar = '\'';
-
-			if (OSDetector.isWindows()) {
-				quoteChar = '\"';
-			}
-
-			return quoteChar + value + quoteChar;
 		}
 
 		private void _setRequestOptions(List<String> tokens) {
@@ -310,8 +300,8 @@ public class JSONCurlUtil {
 		private static Pattern _escapePattern = Pattern.compile(
 			"<CURL_DATA\\[([\\s\\S]*?)\\]CURL_DATA>");
 		private static Pattern _requestPattern = Pattern.compile(
-			"(-[\\w#:\\.]|--[\\w#:\\.-]{2,}|(?:[\\s]|^)https?:[^\\s]+)" +
-				"(\\s+|\\Z)");
+			"(-[\\w#:\\.]|--[\\w#:\\.-]{2,}|(?:[\\s]|^)(?:file|https?)" +
+				":[^\\s]+)(\\s+|\\Z)");
 
 		private Map<String, String> _curlDataMap = new HashMap<>();
 		private final int _maxPrintLineLength = 2500;

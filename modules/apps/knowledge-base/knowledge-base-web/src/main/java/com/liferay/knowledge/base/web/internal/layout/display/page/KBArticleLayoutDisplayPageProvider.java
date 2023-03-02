@@ -14,6 +14,7 @@
 
 package com.liferay.knowledge.base.web.internal.layout.display.page;
 
+import com.liferay.asset.util.AssetHelper;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.knowledge.base.constants.KBFolderConstants;
 import com.liferay.knowledge.base.model.KBArticle;
@@ -24,6 +25,7 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.constants.FriendlyURLResolverConstants;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.List;
 
@@ -33,7 +35,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Adolfo Pérez
  */
-@Component(immediate = true, service = LayoutDisplayPageProvider.class)
+@Component(service = LayoutDisplayPageProvider.class)
 public class KBArticleLayoutDisplayPageProvider
 	implements LayoutDisplayPageProvider<KBArticle> {
 
@@ -51,11 +53,18 @@ public class KBArticleLayoutDisplayPageProvider
 			KBArticle kbArticle = _kbArticleLocalService.fetchKBArticle(
 				infoItemReference.getClassPK());
 
+			if (kbArticle == null) {
+				kbArticle = _kbArticleLocalService.fetchLatestKBArticle(
+					infoItemReference.getClassPK(),
+					WorkflowConstants.STATUS_ANY);
+			}
+
 			if ((kbArticle == null) || kbArticle.isDraft()) {
 				return null;
 			}
 
-			return new KBArticleLayoutDisplayPageObjectProvider(kbArticle);
+			return new KBArticleLayoutDisplayPageObjectProvider(
+				kbArticle, _assetHelper);
 		}
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);
@@ -78,7 +87,8 @@ public class KBArticleLayoutDisplayPageProvider
 				return null;
 			}
 
-			return new KBArticleLayoutDisplayPageObjectProvider(kbArticle);
+			return new KBArticleLayoutDisplayPageObjectProvider(
+				kbArticle, _assetHelper);
 		}
 		catch (PortalException portalException) {
 			throw new RuntimeException(portalException);
@@ -105,6 +115,9 @@ public class KBArticleLayoutDisplayPageProvider
 
 		return KBFolderConstants.DEFAULT_PARENT_FOLDER_ID;
 	}
+
+	@Reference
+	private AssetHelper _assetHelper;
 
 	@Reference
 	private KBArticleLocalService _kbArticleLocalService;

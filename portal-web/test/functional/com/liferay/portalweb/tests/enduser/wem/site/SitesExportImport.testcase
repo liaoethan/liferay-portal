@@ -20,7 +20,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -32,8 +32,84 @@ definition {
 		}
 	}
 
+	@description = "This is a use case for LPS-143743. Assert that can import global scoped WC that comment on another site with no error."
+	@priority = 3
+	test CanImportGlobalScopedWCThatCommentOnAnotherSite {
+		property test.name.skip.portal.instance = "SitesExportImport#CanImportGlobalScopedWCThatCommentOnAnotherSite";
+
+		task ("Given: Add a WC on Global site and an assert publisher widget to a page on "Test Site Name" site") {
+			JSONWebcontent.addWebContent(
+				content = "Web Content Content",
+				groupName = "Global",
+				title = "Web Content Title");
+
+			JSONLayout.addPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Test Page Name");
+
+			JSONLayout.addWidgetToPublicLayout(
+				groupName = "Test Site Name",
+				layoutName = "Test Page Name",
+				widgetName = "Asset Publisher");
+		}
+
+		task ("And: Configure the "SCOPE" to Global and enable "Comments" in Assert Publisher Configuration Settings") {
+			Navigator.gotoSitePage(
+				pageName = "Test Page Name",
+				siteName = "Test Site Name");
+
+			AssetPublisherPortlet.configureDisplaySettings(displaySettings = "Comments");
+
+			AssetPublisherPortlet.configureDynamicAssetSelectionPG(portletName = "Asset Publisher");
+
+			AssetPublisherPortlet.configureScope(globalSite = "Global");
+
+			IFrame.closeFrame();
+
+			AssetPublisherPortlet.viewAssetPG(assetTitle = "Web Content Title");
+		}
+
+		task ("When: Add a comment to the WC") {
+			Comments.addPG(entryComment = "Comment message 1");
+		}
+
+		task ("And: Export all checkboxes under CONTENT on Global site") {
+			LAR.configureExportSiteCP(
+				checkContentNameList = "Templates,Calendar",
+				siteScopeName = "Global");
+
+			LAR.exportWithAssertionOnSuccess();
+
+			var larFileName = LAR.getLarFileName();
+
+			LAR.downloadLar();
+		}
+
+		task ("And: Add and login a virtual instance") {
+			PortalInstances.openVirtualInstancesAdmin();
+
+			PortalInstances.addCP(
+				mailDomain = "www.able.com",
+				virtualHost = "www.able.com",
+				webId = "www.able.com");
+
+			User.firstLoginPG(
+				password = "test",
+				userEmailAddress = "test@www.able.com",
+				virtualHostsURL = "http://www.able.com:8080");
+		}
+
+		task ("Then: Assert that the import of the LAR process is successful by unchecking DM under CONTENT") {
+			LAR.importSiteCP(
+				baseURL = "http://www.able.com:8080",
+				larFileName = ${larFileName},
+				siteName = "Global",
+				uncheckContentNameList = "Documents and Media");
+		}
+	}
+
 	@description = "This is a use case for LPS-96391, export and import site with web content display in fragment."
-	@priority = "5"
+	@priority = 5
 	test ExportImportSiteWithEmbeddedWCDInFragment {
 		property portal.acceptance = "true";
 		property testray.component.names = "Content Pages,Site Administration";
@@ -56,8 +132,8 @@ definition {
 
 			FragmentsEditor.autocompleteFragmentHTML(
 				autocompleteField = "lfr-widget-web-content",
-				fragmentHtml = "${fragmentHtml}",
-				htmlSnippet = "${htmlSnippet}");
+				fragmentHtml = ${fragmentHtml},
+				htmlSnippet = ${htmlSnippet});
 
 			PortletEntry.publish();
 		}
@@ -103,7 +179,7 @@ definition {
 		task ("Expoet site and download site lar") {
 			LAR.exportSiteCP(siteScopeName = "Test Site Name");
 
-			var key_larFileName = "${larFileName}";
+			var key_larFileName = ${larFileName};
 			var larFileName = LAR.getLarFileName();
 
 			LAR.downloadLar();
@@ -113,7 +189,7 @@ definition {
 			JSONGroup.addGroup(groupName = "Site Name");
 
 			LAR.importSiteCP(
-				larFileName = "${larFileName}",
+				larFileName = ${larFileName},
 				siteName = "Site Name");
 		}
 
@@ -146,7 +222,7 @@ definition {
 	}
 
 	@description = "This is a test for LPS-98501. Export and import the whole site where a content page with a global fragment."
-	@priority = "4"
+	@priority = 4
 	test ExportImportSiteWithGlobalFragmentInContentPage {
 		property testray.main.component.name = "Content Pages";
 
@@ -165,7 +241,7 @@ definition {
 </${configuration.headingLevel}>
 			''';
 
-			var htmlSnippet = StringUtil.regexReplaceAll("${htmlSnippet}", "${newLine}", "");
+			var htmlSnippet = StringUtil.regexReplaceAll(${htmlSnippet}, ${newLine}, "");
 			var jsonSnippet = '''
 {
 	"fieldSets": [
@@ -206,14 +282,14 @@ definition {
 }
 			''';
 
-			var jsonSnippet = StringUtil.regexReplaceAll("${jsonSnippet}", "${newLine}", "");
+			var jsonSnippet = StringUtil.regexReplaceAll(${jsonSnippet}, ${newLine}, "");
 
 			JSONFragment.addSection(
 				collectionName = "Global Collection Name",
-				configuration = "${jsonSnippet}",
+				configuration = ${jsonSnippet},
 				fragmentStatus = "Approved",
 				groupName = "Global",
-				html = "${htmlSnippet}",
+				html = ${htmlSnippet},
 				name = "Global Fragment Name");
 		}
 
@@ -244,7 +320,7 @@ definition {
 		task ("Export the site") {
 			LAR.exportSiteCP(siteScopeName = "Test Site Name");
 
-			var key_larFileName = "${larFileName}";
+			var key_larFileName = ${larFileName};
 			var larFileName = LAR.getLarFileName();
 
 			LAR.downloadLar();
@@ -254,7 +330,7 @@ definition {
 			JSONGroup.addGroup(groupName = "Site Name");
 
 			LAR.importSiteCP(
-				larFileName = "${larFileName}",
+				larFileName = ${larFileName},
 				siteName = "Site Name");
 		}
 
@@ -271,7 +347,7 @@ definition {
 	}
 
 	@description = "This is a test for LPS-122296. Can export and import a site containing a content page with a mapped image."
-	@priority = "5"
+	@priority = 5
 	test ExportImportSiteWithMappedImage {
 		property portal.acceptance = "true";
 
@@ -335,7 +411,7 @@ definition {
 			var larFileName = LAR.getLarFileName();
 
 			LAR.importSiteCP(
-				larFileName = "${larFileName}",
+				larFileName = ${larFileName},
 				siteName = "Site Name");
 		}
 
@@ -353,7 +429,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-120198. Export and import the whole site where a content page with fragment linked to page."
-	@priority = "4"
+	@priority = 4
 	test ExportImportSiteWithMappedPage {
 		task ("Add the first content page") {
 			JSONLayout.addPublicLayout(
@@ -413,7 +489,7 @@ definition {
 		task ("Export the site") {
 			LAR.exportSiteCP(siteScopeName = "Test Site Name");
 
-			var key_larFileName = "${larFileName}";
+			var key_larFileName = ${larFileName};
 			var larFileName = LAR.getLarFileName();
 
 			LAR.downloadLar();
@@ -423,7 +499,7 @@ definition {
 			JSONGroup.addGroup(groupName = "Site Name");
 
 			LAR.importSiteCP(
-				larFileName = "${larFileName}",
+				larFileName = ${larFileName},
 				siteName = "Site Name");
 		}
 
@@ -448,7 +524,7 @@ definition {
 	}
 
 	@description = "This is a test for LPS-133032. Can export and import a site containing a style book."
-	@priority = "4"
+	@priority = 4
 	test ExportImportSiteWithStyleBook {
 		task ("Add a style book") {
 			StyleBooksAdmin.openStyleBooksAdmin(siteURLKey = "test-site-name");
@@ -474,7 +550,7 @@ definition {
 			var larFileName = LAR.getLarFileName();
 
 			LAR.importSiteCP(
-				larFileName = "${larFileName}",
+				larFileName = ${larFileName},
 				siteName = "Site Name");
 		}
 
@@ -488,7 +564,7 @@ definition {
 	}
 
 	@description = "This is a test for LPS-128151. The user can import a site with Home page into the default site."
-	@priority = "4"
+	@priority = 4
 	test ImportSiteWithHomePageToDefaultSite {
 		task ("Add a content page named Home") {
 			JSONLayout.addPublicLayout(
@@ -534,7 +610,7 @@ definition {
 
 		task ("Import the new site into the default site") {
 			LAR.importSiteCP(
-				larFileName = "${larFileName}",
+				larFileName = ${larFileName},
 				siteName = "Guest");
 		}
 

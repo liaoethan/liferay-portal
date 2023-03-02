@@ -14,18 +14,16 @@
 
 import React from 'react';
 
-import {Component} from '../../core/AppContext';
+import {Component} from '../../common/AppContext';
 import ExperienceToolbarSection from './components/ExperienceToolbarSection';
 import ExperienceReducer from './reducers/index';
 
 function renderExperiencesSection() {
 	const {Component} = this;
 
-	const selectId = `${this.toolbarId}_${this.toolbarPluginId}`;
-
 	return (
 		<Component>
-			<ExperienceToolbarSection selectId={selectId} />
+			<ExperienceToolbarSection />
 		</Component>
 	);
 }

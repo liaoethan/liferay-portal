@@ -16,27 +16,40 @@
 import Avatar from '../../components/Avatar';
 import Container from '../../components/Layout/Container';
 import ListView from '../../components/ListView';
-import ProgressBar from '../../components/ProgressBar';
+import TaskbarProgress from '../../components/ProgressBar/TaskbarProgress';
 import StatusBadge from '../../components/StatusBadge';
+import {StatusBadgeType} from '../../components/StatusBadge/StatusBadge';
+import SearchBuilder from '../../core/SearchBuilder';
 import {useHeader} from '../../hooks';
 import i18n from '../../i18n';
-import {testrayTaskImpl} from '../../services/rest';
-import {SUBTASK_STATUS} from '../../util/constants';
+import {
+	PickList,
+	TestrayTask,
+	UserAccount,
+	testrayTaskImpl,
+} from '../../services/rest';
+import {StatusesProgressScore, chartClassNames} from '../../util/constants';
 import {getTimeFromNow} from '../../util/date';
-import {routines} from '../../util/mock';
+import {getPercentLabel} from '../../util/graph.util';
+import {TaskStatuses} from '../../util/statuses';
 import TestflowModal from './TestflowModal';
 import useTestflowActions from './useTestflowActions';
 
 const TestFlow = () => {
 	const {actions, modal} = useTestflowActions();
 
-	useHeader({useIcon: 'merge'});
+	const searchBuilder = new SearchBuilder({useURIEncode: false});
+
+	const taskFilter = searchBuilder.ne('dueStatus', TaskStatuses.OPEN).build();
+
+	useHeader({icon: 'merge'});
 
 	return (
 		<Container>
 			<ListView
 				managementToolbarProps={{
 					addButton: () => modal.open(),
+					filterSchema: 'testflow',
 					title: i18n.translate('tasks'),
 				}}
 				resource={testrayTaskImpl.resource}
@@ -46,13 +59,13 @@ const TestFlow = () => {
 						{
 							clickable: true,
 							key: 'dueStatus',
-							render: (status: number) => (
+							render: (dueStatus: PickList) => (
 								<StatusBadge
 									type={
-										(SUBTASK_STATUS as any)[status]?.color
+										dueStatus?.key.toLowerCase() as StatusBadgeType
 									}
 								>
-									{(SUBTASK_STATUS as any)[status]?.label}
+									{dueStatus?.name}
 								</StatusBadge>
 							),
 							value: i18n.translate('status'),
@@ -68,7 +81,7 @@ const TestFlow = () => {
 						{
 							clickable: true,
 							key: 'name',
-							size: 'sm',
+							size: 'lg',
 							value: i18n.translate('task'),
 						},
 						{
@@ -87,42 +100,87 @@ const TestFlow = () => {
 							clickable: true,
 							key: 'buildName',
 							render: (_, task) => task?.build?.name,
+							size: 'lg',
 							value: i18n.translate('build-name'),
 						},
 						{
 							key: 'score',
-							render: () => '59 / 2172 (3%)',
+							render: (
+								_,
+								{
+									subtaskScore,
+									subtaskScoreCompleted,
+								}: TestrayTask
+							) => (
+								<span>
+									{`${subtaskScoreCompleted ?? 0} / ${
+										subtaskScore ?? 0
+									}`}
+
+									<span className="text-gray">
+										{` (${getPercentLabel(
+											(Number(subtaskScoreCompleted) /
+												Number(subtaskScore)) *
+												100
+										)}) `}
+									</span>
+								</span>
+							),
+							size: 'sm',
 							value: i18n.translate('score'),
 						},
 						{
 							key: 'progress',
-							render: () => (
-								<ProgressBar
-									items={{
-										incomplete: 100,
-										passed: 10,
-									}}
+							render: (
+								_,
+								{
+									subtaskScoreCompleted,
+									subtaskScoreSelfIncomplete,
+								}: TestrayTask
+							) => (
+								<TaskbarProgress
+									displayTotalCompleted={false}
+									items={[
+										[
+											StatusesProgressScore.OTHER,
+											Number(subtaskScoreCompleted),
+										],
+										[
+											StatusesProgressScore.INCOMPLETE,
+											Number(subtaskScoreSelfIncomplete),
+										],
+									]}
+									taskbarClassNames={chartClassNames}
 								/>
 							),
-							size: 'sm',
+							size: 'md',
 							value: i18n.translate('progress'),
 						},
 						{
-							key: 'assigned',
-							render: () => (
+							key: 'users',
+							render: (users: UserAccount[]) => (
 								<Avatar.Group
-									assignedUsers={routines[0].assigned}
+									assignedUsers={users.map(
+										({image, name}) => ({
+											name,
+											url: image,
+										})
+									)}
 									groupSize={3}
 								/>
 							),
-							value: i18n.translate('assigned'),
+							value: i18n.translate('assigned-users'),
 						},
 					],
-					navigateTo: (item) => `/testflow/${item.id}`,
+					navigateTo: (task) => `/testflow/${task.id}`,
+					rowWrap: true,
 				}}
 				transformData={(response) =>
 					testrayTaskImpl.transformDataFromList(response)
 				}
+				variables={{
+					filter: taskFilter,
+				}}
 			/>
 
 			<TestflowModal modal={modal} />

@@ -28,17 +28,18 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletApp;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
+import com.liferay.portal.kernel.servlet.BufferCacheServletResponse;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.servlet.RequestDispatcherUtil;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
-import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -47,7 +48,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.minifier.MinifierUtil;
 import com.liferay.portal.servlet.filters.dynamiccss.DynamicCSSUtil;
 import com.liferay.portal.util.AggregateUtil;
-import com.liferay.portal.util.PrefsPropsUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
@@ -143,7 +143,15 @@ public class ComboServlet extends HttpServlet {
 
 			name = HttpComponentsUtil.decodePath(name);
 
-			ServletContext servletContext = getServletContext();
+			String modulePortletId = StringPool.BLANK;
+
+			int index = name.indexOf(CharPool.COLON);
+
+			if (index > 0) {
+				modulePortletId = name.substring(0, index + 1);
+
+				name = name.substring(index + 1);
+			}
 
 			String pathProxy = PortalUtil.getPathProxy();
 
@@ -151,10 +159,17 @@ public class ComboServlet extends HttpServlet {
 				name = name.replaceFirst(pathProxy, StringPool.BLANK);
 			}
 
-			String contextPath = servletContext.getContextPath();
+			if (index < 0) {
+				ServletContext servletContext = getServletContext();
 
-			if (name.startsWith(contextPath)) {
-				name = name.replaceFirst(contextPath, StringPool.BLANK);
+				String contextPath = servletContext.getContextPath();
+
+				if (name.startsWith(contextPath)) {
+					name = name.replaceFirst(contextPath, StringPool.BLANK);
+				}
+			}
+			else {
+				name = modulePortletId.concat(name);
 			}
 
 			modulePathsSet.add(name);
@@ -347,11 +362,42 @@ public class ComboServlet extends HttpServlet {
 			fileContentBag = _EMPTY_FILE_CONTENT_BAG;
 		}
 		else {
-			ObjectValuePair<String, Long> objectValuePair =
-				RequestDispatcherUtil.getContentAndLastModifiedTime(
+			BufferCacheServletResponse bufferCacheServletResponse =
+				RequestDispatcherUtil.getBufferCacheServletResponse(
 					requestDispatcher, httpServletRequest, httpServletResponse);
 
-			String stringFileContent = objectValuePair.getKey();
+			String stringFileContent = StringPool.BLANK;
+
+			String cacheControl = GetterUtil.getString(
+				bufferCacheServletResponse.getHeader("Cache-Control"));
+			String contentType = GetterUtil.getString(
+				bufferCacheServletResponse.getContentType());
+			int status = bufferCacheServletResponse.getStatus();
+
+			if (cacheControl.contains("no-cache") ||
+				cacheControl.contains("no-store")) {
+
+				_log.error(
+					"Skip " + modulePath +
+						" because it sent no-cache or no-store headers");
+			}
+			else if (!contentType.startsWith("application/javascript") &&
+					 !contentType.startsWith("text/css") &&
+					 !contentType.startsWith("text/javascript")) {
+
+				_log.error(
+					"Skip " + modulePath +
+						" because its content type is not CSS or JavaScript");
+			}
+			else if (status != HttpServletResponse.SC_OK) {
+				_log.error(
+					StringBundler.concat(
+						"Skip ", modulePath, " because it returns HTTP status ",
+						status));
+			}
+			else {
+				stringFileContent = bufferCacheServletResponse.getString();
+			}
 
 			if (!StringUtil.endsWith(resourcePath, _CSS_MINIFIED_DASH_SUFFIX) &&
 				!StringUtil.endsWith(resourcePath, _CSS_MINIFIED_DOT_SUFFIX) &&
@@ -409,19 +455,12 @@ public class ComboServlet extends HttpServlet {
 						stringFileContent);
 				}
 				else if (minifierType.equals("js")) {
-					Matcher matcher = _esModulePattern.matcher(
+					Matcher matcher = _importModulePattern.matcher(
 						stringFileContent);
 
 					if (matcher.matches()) {
 						stringFileContent =
 							matcher.group(1) + "../o/" + matcher.group(3);
-
-						String identifier =
-							StringPool.UNDERLINE +
-								DigesterUtil.digestHex(modulePath);
-
-						stringFileContent = stringFileContent.replaceAll(
-							"esModule", identifier);
 					}
 					else {
 						stringFileContent = MinifierUtil.minifyJavaScript(
@@ -447,7 +486,10 @@ public class ComboServlet extends HttpServlet {
 
 			fileContentBag = new FileContentBag(
 				stringFileContent.getBytes(StringPool.UTF8),
-				objectValuePair.getValue());
+				GetterUtil.getLong(
+					bufferCacheServletResponse.getHeader(
+						HttpHeaders.LAST_MODIFIED),
+					-1));
 		}
 
 		if (PropsValues.COMBO_CHECK_TIMESTAMP) {
@@ -564,12 +606,12 @@ public class ComboServlet extends HttpServlet {
 	private static final PortalCache<String, byte[][]> _bytesArrayPortalCache =
 		PortalCacheHelperUtil.getPortalCache(
 			PortalCacheManagerNames.SINGLE_VM, ComboServlet.class.getName());
-	private static final Pattern _esModulePattern = Pattern.compile(
-		"(import\\s*\\*\\s*as\\s*esModule\\s*from\\s*[\"'])((?:\\.\\./)+)(.*)",
-		Pattern.DOTALL);
 	private static final PortalCache<String, FileContentBag>
 		_fileContentBagPortalCache = PortalCacheHelperUtil.getPortalCache(
 			PortalCacheManagerNames.SINGLE_VM, FileContentBag.class.getName());
+	private static final Pattern _importModulePattern = Pattern.compile(
+		"(import\\s*\\*\\s*as\\s*\\w*\\s*from\\s*[\"'])((?:\\.\\./)+)(.*)",
+		Pattern.DOTALL);
 
 	private final Set<String> _protectedParameters = SetUtil.fromArray(
 		"browserId", "minifierType", "languageId", "t", "themeId", "zx");

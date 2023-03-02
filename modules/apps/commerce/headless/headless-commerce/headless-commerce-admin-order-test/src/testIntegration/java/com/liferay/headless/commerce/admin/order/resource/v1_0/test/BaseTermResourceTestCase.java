@@ -223,11 +223,20 @@ public abstract class BaseTermResourceTestCase {
 
 		assertContains(term1, (List<Term>)page.getItems());
 		assertContains(term2, (List<Term>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetTermsPage_getExpectedActions());
 
 		termResource.deleteTerm(term1.getId());
 
 		termResource.deleteTerm(term2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetTermsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -1011,6 +1020,12 @@ public abstract class BaseTermResourceTestCase {
 	}
 
 	protected void assertValid(Page<Term> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Term> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Term> terms = page.getItems();
@@ -1025,6 +1040,20 @@ public abstract class BaseTermResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1318,6 +1347,10 @@ public abstract class BaseTermResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.trash.TrashHelper;
 import com.liferay.trash.service.TrashEntryService;
 
 import java.io.IOException;
@@ -65,7 +66,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.fragment.entry.processor.portlet.alias=web-content",
 		"com.liferay.portlet.add-default-resource=true",
@@ -195,7 +195,8 @@ public class JournalContentPortlet extends MVCPortlet {
 		try {
 			JournalContentDisplayContext.create(
 				renderRequest, renderResponse, _CLASS_NAME_ID,
-				_ddmTemplateModelResourcePermission, _itemSelector);
+				_ddmTemplateModelResourcePermission, _itemSelector,
+				_trashHelper);
 		}
 		catch (PortalException portalException) {
 			if (_log.isDebugEnabled()) {
@@ -252,7 +253,8 @@ public class JournalContentPortlet extends MVCPortlet {
 			try {
 				JournalContentDisplayContext.create(
 					resourceRequest, resourceResponse, _CLASS_NAME_ID,
-					_ddmTemplateModelResourcePermission, _itemSelector);
+					_ddmTemplateModelResourcePermission, _itemSelector,
+					_trashHelper);
 			}
 			catch (PortalException portalException) {
 				if (_log.isDebugEnabled()) {
@@ -298,5 +300,8 @@ public class JournalContentPortlet extends MVCPortlet {
 
 	@Reference
 	private TrashEntryService _trashEntryService;
+
+	@Reference
+	private TrashHelper _trashHelper;
 
 }

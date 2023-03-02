@@ -41,7 +41,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.elasticsearch7.configuration.ElasticsearchConfiguration",
-	immediate = true, service = ElasticsearchConfigurationWrapper.class
+	service = ElasticsearchConfigurationWrapper.class
 )
 public class ElasticsearchConfigurationWrapper
 	implements Comparator<ElasticsearchConfigurationObserver> {
@@ -128,6 +128,14 @@ public class ElasticsearchConfigurationWrapper
 
 	public boolean logExceptionsOnly() {
 		return _elasticsearchConfiguration.logExceptionsOnly();
+	}
+
+	public int maxConnections() {
+		return _elasticsearchConfiguration.maxConnections();
+	}
+
+	public int maxConnectionsPerRoute() {
+		return _elasticsearchConfiguration.maxConnectionsPerRoute();
 	}
 
 	public String minimumRequiredNodeVersion() {

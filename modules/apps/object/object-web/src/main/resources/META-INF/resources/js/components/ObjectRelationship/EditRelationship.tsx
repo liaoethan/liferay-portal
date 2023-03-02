@@ -95,6 +95,7 @@ export default function EditRelationship({
 				)}
 
 				<InputLocalized
+					disableFlag={readOnly}
 					disabled={readOnly}
 					error={errors.label}
 					label={Liferay.Language.get('label')}
@@ -133,12 +134,14 @@ export default function EditRelationship({
 						/>
 
 						<SelectRelationship
-							error={errors.parameterObjectFieldId}
-							objectDefinitionId={values.objectDefinitionId2}
-							onChange={(parameterObjectFieldId) =>
-								setValues({parameterObjectFieldId})
+							error={errors.parameterObjectFieldName}
+							objectDefinitionExternalReferenceCode={
+								values.objectDefinitionExternalReferenceCode2 as string
 							}
-							value={values.parameterObjectFieldId}
+							onChange={(parameterObjectFieldName) =>
+								setValues({parameterObjectFieldName})
+							}
+							value={values.parameterObjectFieldName}
 						/>
 					</Card>
 				)}

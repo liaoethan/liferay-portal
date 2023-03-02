@@ -9,14 +9,51 @@ $toolbarZIndex: 971;
 
 .knowledge-base-portlet-admin {
 	.kb-article {
+		.container-form-lg {
+			padding-top: 1rem;
+		}
+
+		.container-view {
+			padding-bottom: 0;
+			padding-top: 1.5rem;
+		}
+
 		.kb-article-title {
 			font-size: 2.5rem;
 			font-weight: $font-weight-bold;
 			margin-bottom: 1.5rem;
 		}
+
+		.knowledge-base-child-article-title {
+			color: $dark;
+			font-size: 0.875rem;
+		}
+
+		.lfr-search-container-wrapper
+			.lfr-search-container-list
+			+ .taglib-search-iterator-page-iterator-bottom {
+			margin-top: 0;
+		}
+
+		.list-group-notification .list-group-item {
+			border-width: 1px;
+		}
+
+		.panel-unstyled .panel-body {
+			padding: 1.5rem;
+		}
+
+		fieldset > legend {
+			h3 {
+				color: $secondary;
+				font-size: 0.75rem;
+				margin-bottom: 0;
+				padding-top: 0;
+			}
+		}
 	}
 	.knowledge-base-vertical-bar {
-		position: relative;
+		position: fixed;
 		z-index: 1;
 
 		> div {
@@ -32,6 +69,10 @@ $toolbarZIndex: 971;
 			background-color: $gray-200;
 			color: $dark;
 			font-weight: 600;
+
+			a.link-secondary {
+				color: $dark;
+			}
 		}
 
 		.sidebar {
@@ -40,11 +81,6 @@ $toolbarZIndex: 971;
 
 			.sidebar-header .component-title {
 				font-size: 1rem;
-			}
-
-			.c-empty-state-title {
-				color: $gray-600;
-				font-weight: normal;
 			}
 
 			.treeview-item a:hover {
@@ -64,7 +100,7 @@ $toolbarZIndex: 971;
 	.knowledge-base-admin-content {
 		margin-left: 40px;
 
-		transition: margin-left 0.3s ease-in-out;
+		transition: margin-left 0.25s ease-in-out;
 	}
 
 	.knowledge-base-vertical-bar.expanded + .knowledge-base-admin-content {
@@ -80,9 +116,9 @@ $toolbarZIndex: 971;
 		.contextual-sidebar {
 			border-left: 1px $gray-300 solid;
 			box-shadow: none;
-			overflow-y: scroll;
-
 			margin-top: 2.5rem;
+			overflow-y: scroll;
+			z-index: 1;
 
 			.sidebar-body {
 				.collapse-icon {
@@ -196,5 +232,34 @@ $toolbarZIndex: 971;
 				}
 			}
 		}
+
+		.kb-attachments {
+			margin-top: 0;
+
+			.lfr-dynamic-uploader .upload-target {
+				background-color: $gray-200;
+				border-color: $gray-400;
+				border-width: 2px;
+
+				.drop-file-text {
+					font-size: 0.875rem;
+					font-weight: 600;
+
+					.small {
+						display: inline;
+						font-weight: 600;
+						margin-left: 3px;
+					}
+				}
+			}
+		}
+	}
+
+	.lfr-search-container-wrapper .list-group .list-group-item h2.h5 {
+		font-weight: 600;
+	}
+
+	.management-bar .navbar-nav {
+		column-gap: 0.25rem;
 	}
 }

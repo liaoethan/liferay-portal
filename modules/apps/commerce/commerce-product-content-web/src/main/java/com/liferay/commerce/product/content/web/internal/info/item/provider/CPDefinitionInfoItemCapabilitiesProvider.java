@@ -18,9 +18,8 @@ import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.info.item.capability.InfoItemCapability;
 import com.liferay.info.item.provider.InfoItemCapabilitiesProvider;
 import com.liferay.layout.page.template.info.item.capability.DisplayPageInfoItemCapability;
-import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.template.info.item.capability.TemplateInfoItemCapability;
 
 import java.util.List;
@@ -32,15 +31,13 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  * @author Alec Sloan
  */
-@Component(enabled = false, service = InfoItemCapabilitiesProvider.class)
+@Component(service = InfoItemCapabilitiesProvider.class)
 public class CPDefinitionInfoItemCapabilitiesProvider
 	implements InfoItemCapabilitiesProvider<CPDefinition> {
 
 	@Override
 	public List<InfoItemCapability> getInfoItemCapabilities() {
-		if (GetterUtil.getBoolean(
-				PropsUtil.get("feature.flag.COMMERCE-5898"))) {
-
+		if (FeatureFlagManagerUtil.isEnabled("COMMERCE-5898")) {
 			return ListUtil.fromArray(
 				_displayPageInfoItemCapability,
 				_templatePageInfoItemCapability);

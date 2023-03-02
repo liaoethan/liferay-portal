@@ -32,7 +32,7 @@ import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.upload.UploadServletRequestConfigurationHelperUtil;
+import com.liferay.portal.kernel.upload.configuration.UploadServletRequestConfigurationProviderUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
@@ -118,16 +118,14 @@ public class BasicFragmentEntryActionDropdownItemsProvider {
 							hasManageFragmentEntriesPermission &&
 							!_fragmentEntry.isReadOnly() &&
 							(_fragmentEntry.getGroupId() ==
-								_themeDisplay.getCompanyGroupId()) &&
-							(_fragmentEntry.getGlobalUsageCount() > 0),
+								_themeDisplay.getCompanyGroupId()),
 						_getViewGroupFragmentEntryUsagesActionUnsafeConsumer()
 					).add(
 						() ->
 							hasManageFragmentEntriesPermission &&
 							!_fragmentEntry.isReadOnly() &&
 							(_fragmentEntry.getGroupId() !=
-								_themeDisplay.getCompanyGroupId()) &&
-							(_fragmentEntry.getUsageCount() > 0),
+								_themeDisplay.getCompanyGroupId()),
 						_getViewFragmentEntryUsagesActionUnsafeConsumer()
 					).build());
 				dropdownGroupItem.setSeparator(true);
@@ -187,15 +185,6 @@ public class BasicFragmentEntryActionDropdownItemsProvider {
 			dropdownItem.putData(
 				"fragmentEntryId",
 				String.valueOf(_fragmentEntry.getFragmentEntryId()));
-			dropdownItem.putData(
-				"selectFragmentCollectionURL",
-				PortletURLBuilder.createRenderURL(
-					_renderResponse
-				).setMVCRenderCommandName(
-					"/fragment/select_fragment_collection"
-				).setWindowState(
-					LiferayWindowState.POP_UP
-				).buildString());
 			dropdownItem.setIcon("copy");
 			dropdownItem.setLabel(
 				LanguageUtil.get(_httpServletRequest, "make-a-copy"));
@@ -256,6 +245,8 @@ public class BasicFragmentEntryActionDropdownItemsProvider {
 					_renderResponse
 				).setActionName(
 					"/fragment/delete_fragment_entry_preview"
+				).setRedirect(
+					_themeDisplay.getURLCurrent()
 				).setParameter(
 					"fragmentEntryId", _fragmentEntry.getFragmentEntryId()
 				).buildString());
@@ -327,7 +318,7 @@ public class BasicFragmentEntryActionDropdownItemsProvider {
 			).extensions(
 				_fragmentPortletConfiguration.thumbnailExtensions()
 			).maxFileSize(
-				UploadServletRequestConfigurationHelperUtil.getMaxSize()
+				UploadServletRequestConfigurationProviderUtil.getMaxSize()
 			).portletId(
 				FragmentPortletKeys.FRAGMENT
 			).repositoryName(
@@ -431,6 +422,7 @@ public class BasicFragmentEntryActionDropdownItemsProvider {
 		_getViewFragmentEntryUsagesActionUnsafeConsumer() {
 
 		return dropdownItem -> {
+			dropdownItem.setDisabled(_fragmentEntry.getUsageCount() == 0);
 			dropdownItem.setHref(
 				_renderResponse.createRenderURL(), "mvcRenderCommandName",
 				"/fragment/view_fragment_entry_usages", "redirect",
@@ -447,6 +439,7 @@ public class BasicFragmentEntryActionDropdownItemsProvider {
 		_getViewGroupFragmentEntryUsagesActionUnsafeConsumer() {
 
 		return dropdownItem -> {
+			dropdownItem.setDisabled(_fragmentEntry.getGlobalUsageCount() == 0);
 			dropdownItem.setHref(
 				_renderResponse.createRenderURL(), "mvcRenderCommandName",
 				"/fragment/view_group_fragment_entry_usages", "redirect",

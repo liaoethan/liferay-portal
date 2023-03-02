@@ -18,6 +18,7 @@ import {useForm} from 'react-hook-form';
 import Form from '../../../components/Form';
 import DualListBox, {Boxes} from '../../../components/Form/DualListBox';
 import Modal from '../../../components/Modal';
+import SearchBuilder from '../../../core/SearchBuilder';
 import {withVisibleContent} from '../../../hoc/withVisibleContent';
 import {useFetch} from '../../../hooks/useFetch';
 import {FormModalOptions} from '../../../hooks/useFormModal';
@@ -29,7 +30,6 @@ import {
 	testrayComponentImpl,
 	testrayTeamImpl,
 } from '../../../services/rest';
-import {searchUtil} from '../../../util/search';
 
 type TeamForm = typeof yupSchema.team.__outputType;
 
@@ -51,8 +51,6 @@ export type SelectComponentsProps = {
 	teamId: number;
 };
 
-const UNASSIGNED_TEAM_ID = 0;
-
 const SelectComponents: React.FC<SelectComponentsProps> = ({
 	projectId,
 	setState,
@@ -60,20 +58,27 @@ const SelectComponents: React.FC<SelectComponentsProps> = ({
 }) => {
 	const {data: unassigned, isValidating} = useFetch<
 		APIResponse<TestrayComponent>
-	>(
-		`/components?filter=${searchUtil.eq(
-			'projectId',
-			projectId
-		)} and ${searchUtil.eq('teamId', UNASSIGNED_TEAM_ID)}`
-	);
+	>('/components', {
+		params: {
+			filter: new SearchBuilder()
+				.eq('projectId', projectId)
+				.and()
+				.eq('teamId', testrayComponentImpl.UNASSIGNED_TEAM_ID)
+				.build(),
+		},
+	});
 
 	const {data: current} = useFetch<APIResponse<TestrayComponent>>(
-		teamId && !isValidating
-			? `/components?filter=${searchUtil.eq(
-					'projectId',
-					projectId
-			  )} and ${searchUtil.eq('teamId', teamId)}`
-			: null
+		teamId && !isValidating ? '/components' : null,
+		{
+			params: {
+				filter: new SearchBuilder()
+					.eq('projectId', projectId)
+					.and()
+					.eq('teamId', teamId)
+					.build(),
+			},
+		}
 	);
 
 	const getComponentsDualBox = useCallback(() => {
@@ -97,6 +102,7 @@ const SelectComponents: React.FC<SelectComponentsProps> = ({
 		/>
 	);
 };
+
 export type State = Boxes<{teamId: number}>;
 
 const TeamFormModal: React.FC<TeamProps> = ({

@@ -18,7 +18,7 @@ import com.liferay.frontend.token.definition.FrontendToken;
 import com.liferay.frontend.token.definition.FrontendTokenDefinition;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.LayoutSet;
@@ -55,7 +55,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + StyleBookPortletKeys.STYLE_BOOK,
 		"mvc.command.name=/style_book/import_style_book_entries"
@@ -172,7 +171,7 @@ public class ImportStyleBookEntriesMVCActionCommand
 		throws JSONException {
 
 		JSONObject frontendTokensValuesJSONObject =
-			JSONFactoryUtil.createJSONObject(
+			_jsonFactory.createJSONObject(
 				styleBookEntry.getFrontendTokensValues());
 
 		for (String key : frontendTokensValuesJSONObject.keySet()) {
@@ -186,6 +185,9 @@ public class ImportStyleBookEntriesMVCActionCommand
 
 	@Reference
 	private FrontendTokenDefinitionRegistry _frontendTokenDefinitionRegistry;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

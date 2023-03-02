@@ -18,18 +18,24 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.display.context.SearchCon
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
-import com.liferay.layout.admin.web.internal.constants.LayoutUtilityPageEntryConstants;
+import com.liferay.layout.utility.page.constants.LayoutUtilityPageActionKeys;
+import com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRenderer;
+import com.liferay.layout.utility.page.kernel.LayoutUtilityPageEntryViewRendererRegistryUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.List;
 
-import javax.portlet.PortletURL;
+import javax.portlet.ResourceURL;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -57,23 +63,49 @@ public class LayoutUtilityPageEntryManagementToolbarDisplayContext
 
 	@Override
 	public List<DropdownItem> getActionDropdownItems() {
-		return DropdownItemListBuilder.add(
-			dropdownItem -> {
-				dropdownItem.putData(
-					"action", "deleteSelectedLayoutUtilityPageEntries");
-				dropdownItem.putData(
-					"deleteSelectedLayoutUtilityPageEntriesURL",
-					PortletURLBuilder.createActionURL(
-						liferayPortletResponse
-					).setActionName(
-						"/layout_admin/delete_layout_utility_page_entry"
-					).setRedirect(
-						_themeDisplay.getURLCurrent()
-					).buildString());
-				dropdownItem.setIcon("trash");
-				dropdownItem.setLabel(
-					LanguageUtil.get(httpServletRequest, "delete"));
-				dropdownItem.setQuickAction(true);
+		return DropdownItemListBuilder.addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.putData(
+								"action", "exportLayoutUtilityPageEntries");
+							dropdownItem.putData(
+								"exportLayoutUtilityPageEntriesURL",
+								_getExportLayoutUtilityPageEntryURL());
+							dropdownItem.setIcon("upload");
+							dropdownItem.setLabel(
+								LanguageUtil.get(httpServletRequest, "export"));
+							dropdownItem.setQuickAction(true);
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.putData(
+								"action",
+								"deleteSelectedLayoutUtilityPageEntries");
+							dropdownItem.putData(
+								"deleteSelectedLayoutUtilityPageEntriesURL",
+								PortletURLBuilder.createActionURL(
+									liferayPortletResponse
+								).setActionName(
+									"/layout_admin" +
+										"/delete_layout_utility_page_entry"
+								).setRedirect(
+									_themeDisplay.getURLCurrent()
+								).buildString());
+							dropdownItem.setIcon("trash");
+							dropdownItem.setLabel(
+								LanguageUtil.get(httpServletRequest, "delete"));
+							dropdownItem.setQuickAction(true);
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
 			}
 		).build();
 	}
@@ -91,27 +123,24 @@ public class LayoutUtilityPageEntryManagementToolbarDisplayContext
 	public CreationMenu getCreationMenu() {
 		return new CreationMenu() {
 			{
-				for (LayoutUtilityPageEntryConstants.Type type :
-						LayoutUtilityPageEntryConstants.Type.values()) {
+				for (LayoutUtilityPageEntryViewRenderer
+						layoutUtilityPageEntryViewRenderer :
+							LayoutUtilityPageEntryViewRendererRegistryUtil.
+								getLayoutUtilityPageEntryViewRenderers()) {
 
 					addPrimaryDropdownItem(
 						dropdownItem -> {
 							dropdownItem.setHref(
-								_getSelectMasterLayoutURL(type.getType()));
+								_getSelectMasterLayoutURL(
+									layoutUtilityPageEntryViewRenderer.
+										getType()));
 							dropdownItem.setLabel(
-								LanguageUtil.get(
-									httpServletRequest, type.getLabel()));
+								layoutUtilityPageEntryViewRenderer.getLabel(
+									_themeDisplay.getLocale()));
 						});
 				}
 			}
 		};
-	}
-
-	@Override
-	public String getSearchActionURL() {
-		PortletURL searchActionURL = getPortletURL();
-
-		return searchActionURL.toString();
 	}
 
 	@Override
@@ -120,11 +149,48 @@ public class LayoutUtilityPageEntryManagementToolbarDisplayContext
 	}
 
 	@Override
+	public Boolean isShowCreationMenu() {
+		Group group = _themeDisplay.getScopeGroup();
+
+		if (group.hasLocalOrRemoteStagingGroup()) {
+			return false;
+		}
+
+		try {
+			if (GroupPermissionUtil.contains(
+					_themeDisplay.getPermissionChecker(),
+					_themeDisplay.getScopeGroup(),
+					LayoutUtilityPageActionKeys.
+						ADD_LAYOUT_UTILITY_PAGE_ENTRY)) {
+
+				return true;
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return false;
+	}
+
+	@Override
 	protected String[] getOrderByKeys() {
 		return new String[] {"name", "create-date"};
 	}
 
-	private String _getSelectMasterLayoutURL(int type) {
+	private String _getExportLayoutUtilityPageEntryURL() {
+		ResourceURL exportLayoutUtilityPageEntryURL =
+			liferayPortletResponse.createResourceURL();
+
+		exportLayoutUtilityPageEntryURL.setResourceID(
+			"/layout_admin/export_layout_utility_page_entries");
+
+		return exportLayoutUtilityPageEntryURL.toString();
+	}
+
+	private String _getSelectMasterLayoutURL(String type) {
 		return PortletURLBuilder.createRenderURL(
 			liferayPortletResponse
 		).setMVCPath(
@@ -135,6 +201,9 @@ public class LayoutUtilityPageEntryManagementToolbarDisplayContext
 			"type", type
 		).buildString();
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		LayoutUtilityPageEntryManagementToolbarDisplayContext.class);
 
 	private final ThemeDisplay _themeDisplay;
 

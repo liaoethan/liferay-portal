@@ -18,9 +18,9 @@ import ClayTabs from '@clayui/tabs';
 import classNames from 'classnames';
 import {useContext} from 'react';
 import {useNavigate} from 'react-router-dom';
+import Permission from '~/core/Permission';
 
 import {HeaderContext} from '../../context/HeaderContext';
-import {Permission} from '../../util/permission';
 import BreadcrumbFinder from '../BreadcrumbFinder';
 import DropDown from '../DropDown';
 import DropDownWithActions from '../DropDown/DropDown';
@@ -36,13 +36,12 @@ const Header = () => {
 	const [{dropdown, headerActions, heading, symbol, tabs}] = useContext(
 		HeaderContext
 	);
+	const navigate = useNavigate();
 
 	const filteredHeaderActions = Permission.filterActions(
 		headerActions.actions,
 		headerActions.item?.actions
 	);
-
-	const navigate = useNavigate();
 
 	const BreadCrumbTrigger: React.FC<BreadCrumbTriggerProps> = ({
 		displayCarret,
@@ -84,10 +83,10 @@ const Header = () => {
 					)}
 				</div>
 
-				<BreadcrumbFinder />
+				<BreadcrumbFinder heading={heading} />
 
 				<div className="d-flex flex-row justify-content-between w-100">
-					<div className="d-flex flex-1 flex-wrap">
+					<div className="d-flex flex-1">
 						{heading.map((header, index) => {
 							const isClickable =
 								header.path && index !== heading.length - 1;
@@ -117,7 +116,7 @@ const Header = () => {
 
 									<div className="d-flex flex-row">
 										<p
-											className="header-title text-paragraph-xl"
+											className="header-title text-nowrap text-paragraph-xl"
 											title={header.title}
 										>
 											{header.title}
@@ -133,14 +132,16 @@ const Header = () => {
 						})}
 					</div>
 
-					{!!filteredHeaderActions.length && (
-						<DropDownWithActions
-							actions={filteredHeaderActions}
-							item={headerActions.item}
-							mutate={headerActions.mutate}
-							position={Align.BottomLeft}
-						/>
-					)}
+					<div className="align-items-center d-flex justify-content-center">
+						{!!filteredHeaderActions.length && (
+							<DropDownWithActions
+								actions={filteredHeaderActions}
+								item={headerActions.item}
+								mutate={headerActions.mutate}
+								position={Align.BottomLeft}
+							/>
+						)}
+					</div>
 				</div>
 			</div>
 

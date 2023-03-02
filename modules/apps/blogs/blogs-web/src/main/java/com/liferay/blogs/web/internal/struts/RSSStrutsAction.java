@@ -20,6 +20,9 @@ import com.liferay.blogs.service.BlogsEntryService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
+import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.OrganizationConstants;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.GroupPermission;
@@ -47,9 +50,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Brian Wing Shun Chan
  */
-@Component(
-	immediate = true, property = "path=/blogs/rss", service = StrutsAction.class
-)
+@Component(property = "path=/blogs/rss", service = StrutsAction.class)
 public class RSSStrutsAction implements StrutsAction {
 
 	@Override
@@ -120,14 +121,14 @@ public class RSSStrutsAction implements StrutsAction {
 
 		String rss = StringPool.BLANK;
 
-		if (companyId > 0) {
+		if (companyId != CompanyConstants.SYSTEM) {
 			String entryURL = _getFindEntryURL(themeDisplay);
 
 			rss = _blogsEntryService.getCompanyEntriesRSS(
 				companyId, new Date(), status, max, type, version, displayStyle,
 				StringPool.BLANK, entryURL, themeDisplay);
 		}
-		else if (groupId > 0) {
+		else if (groupId != GroupConstants.DEFAULT_LIVE_GROUP_ID) {
 			long plid = ParamUtil.getLong(
 				httpServletRequest, "plid", themeDisplay.getPlid());
 
@@ -137,7 +138,9 @@ public class RSSStrutsAction implements StrutsAction {
 				groupId, new Date(), status, max, type, version, displayStyle,
 				feedURL, feedURL, themeDisplay);
 		}
-		else if (organizationId > 0) {
+		else if (organizationId !=
+					OrganizationConstants.DEFAULT_PARENT_ORGANIZATION_ID) {
+
 			String entryURL = _getFindEntryURL(themeDisplay);
 
 			rss = _blogsEntryService.getOrganizationEntriesRSS(

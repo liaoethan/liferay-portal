@@ -15,7 +15,7 @@
 package com.liferay.layout.content.page.editor.web.internal.portlet.action.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.fragment.util.configuration.FragmentConfigurationField;
@@ -36,6 +36,7 @@ import com.liferay.info.test.util.model.MockObject;
 import com.liferay.layout.page.template.info.item.capability.EditPageInfoItemCapability;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.provider.LayoutStructureProvider;
 import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.layout.util.constants.LayoutDataItemTypeConstants;
@@ -44,6 +45,7 @@ import com.liferay.layout.util.structure.FragmentStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -98,6 +100,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.component.runtime.ServiceComponentRuntime;
 import org.osgi.service.component.runtime.dto.ComponentDescriptionDTO;
+import org.osgi.util.promise.Promise;
 
 import org.springframework.mock.web.MockHttpServletRequest;
 
@@ -171,8 +174,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
-					_layout, "{}", LayoutDataItemTypeConstants.TYPE_FORM,
-					_segmentsExperienceId);
+					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
+					_layoutStructureProvider, _segmentsExperienceId);
 
 			long classNameId = _portal.getClassNameId(
 				MockObject.class.getName());
@@ -224,8 +227,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
-					_layout, "{}", LayoutDataItemTypeConstants.TYPE_FORM,
-					_segmentsExperienceId);
+					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
+					_layoutStructureProvider, _segmentsExperienceId);
 
 			long classNameId = _portal.getClassNameId(
 				MockObject.class.getName());
@@ -258,7 +261,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 	}
 
 	@Test
-	public void testUpdateFormItemConfigMVCActionCommandMappingFormFFEnabled()
+	public void testUpdateFormItemConfigMVCActionCommandMappingForm()
 		throws Exception {
 
 		try (ComponentEnablerTemporarySwapper componentEnablerTemporarySwapper =
@@ -275,8 +278,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
-					_layout, "{}", LayoutDataItemTypeConstants.TYPE_FORM,
-					_segmentsExperienceId);
+					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
+					_layoutStructureProvider, _segmentsExperienceId);
 
 			long classNameId = _portal.getClassNameId(
 				MockObject.class.getName());
@@ -362,8 +365,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 
 			JSONObject addItemJSONObject =
 				ContentLayoutTestUtil.addItemToLayout(
-					_layout, "{}", LayoutDataItemTypeConstants.TYPE_FORM,
-					_segmentsExperienceId);
+					"{}", LayoutDataItemTypeConstants.TYPE_FORM, _layout,
+					_layoutStructureProvider, _segmentsExperienceId);
 
 			long classNameId = _portal.getClassNameId(
 				MockObject.class.getName());
@@ -422,8 +425,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				MockObject.class.getName());
 
 			JSONObject jsonObject = ContentLayoutTestUtil.addFormToLayout(
-				_layout, String.valueOf(classNameId), "0",
-				_segmentsExperienceId, false, _INFO_FIELDS);
+				false, String.valueOf(classNameId), "0", _layout,
+				_layoutStructureProvider, _segmentsExperienceId, _INFO_FIELDS);
 
 			String formItemId = jsonObject.getString("addedItemId");
 
@@ -476,8 +479,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				MockObject.class.getName());
 
 			JSONObject jsonObject = ContentLayoutTestUtil.addFormToLayout(
-				_layout, String.valueOf(classNameId), "0",
-				_segmentsExperienceId, false, _INFO_FIELDS);
+				false, String.valueOf(classNameId), "0", _layout,
+				_layoutStructureProvider, _segmentsExperienceId, _INFO_FIELDS);
 
 			String formItemId = jsonObject.getString("addedItemId");
 
@@ -565,8 +568,7 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 							childrenItemIds.get(i));
 
 			_assertFragmentEntry(
-				infoField.getUniqueId(),
-				_getExpectedRendererKey(infoField.getInfoFieldType()),
+				infoField.getUniqueId(), _getExpectedRendererKey(infoField),
 				fragmentStyledLayoutStructureItem.getFragmentEntryLinkId(),
 				assertRendererKey);
 		}
@@ -643,7 +645,9 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 			expectedErrorMessage, jsonObject.getString("errorMessage"));
 	}
 
-	private String _getExpectedRendererKey(InfoFieldType infoFieldType) {
+	private String _getExpectedRendererKey(InfoField infoField) {
+		InfoFieldType infoFieldType = infoField.getInfoFieldType();
+
 		if (infoFieldType instanceof BooleanInfoFieldType) {
 			return "INPUTS-checkbox";
 		}
@@ -667,6 +671,13 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 		}
 
 		if (infoFieldType instanceof TextInfoFieldType) {
+			if (FeatureFlagManagerUtil.isEnabled("LPS-161631") &&
+				GetterUtil.getBoolean(
+					infoField.getAttribute(TextInfoFieldType.MULTILINE))) {
+
+				return "INPUTS-textarea";
+			}
+
 			return "INPUTS-text-input";
 		}
 
@@ -744,8 +755,8 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 	private EditPageInfoItemCapability _editPageInfoItemCapability;
 
 	@Inject
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Inject
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
@@ -764,6 +775,9 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 	@Inject
 	private LayoutPageTemplateStructureLocalService
 		_layoutPageTemplateStructureLocalService;
+
+	@Inject
+	private LayoutStructureProvider _layoutStructureProvider;
 
 	@Inject(
 		filter = "mvc.command.name=/layout_content_page_editor/update_form_item_config"
@@ -786,8 +800,9 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 	private class ComponentEnablerTemporarySwapper implements AutoCloseable {
 
 		public ComponentEnablerTemporarySwapper(
-			String bundleSymbolicName, String componentClassName,
-			boolean enabled) {
+				String bundleSymbolicName, String componentClassName,
+				boolean enabled)
+			throws Exception {
 
 			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
@@ -813,12 +828,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 				_componentDescriptionDTO);
 
 			if (enabled) {
-				_serviceComponentRuntime.enableComponent(
+				Promise<?> promise = _serviceComponentRuntime.enableComponent(
 					_componentDescriptionDTO);
+
+				promise.getValue();
 			}
 			else {
-				_serviceComponentRuntime.disableComponent(
+				Promise<?> promise = _serviceComponentRuntime.disableComponent(
 					_componentDescriptionDTO);
+
+				promise.getValue();
 			}
 		}
 
@@ -829,12 +848,16 @@ public class UpdateFormItemConfigMVCActionCommandTest {
 			}
 
 			if (_componentEnabled) {
-				_serviceComponentRuntime.enableComponent(
+				Promise<?> promise = _serviceComponentRuntime.enableComponent(
 					_componentDescriptionDTO);
+
+				promise.getValue();
 			}
 			else {
-				_serviceComponentRuntime.disableComponent(
+				Promise<?> promise = _serviceComponentRuntime.disableComponent(
 					_componentDescriptionDTO);
+
+				promise.getValue();
 			}
 		}
 

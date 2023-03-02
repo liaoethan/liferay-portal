@@ -1,7 +1,7 @@
 @component-name = "portal-frontend-infrastructure"
 definition {
 
-	property osgi.modules.includes = "frontend-js-walkthrough-sample-web,frontend-editor-ckeditor-sample-web";
+	property osgi.modules.includes = "frontend-js-walkthrough-sample-web";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.component.names = "Walkthrough";
@@ -20,7 +20,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -29,7 +29,7 @@ definition {
 	}
 
 	@description = "LPS-159823. When skippable is set to true, checked and ends all steps the hotspot element is not present."
-	@priority = "3"
+	@priority = 3
 	test CanEnableSkippable {
 		property portal.acceptance = "true";
 
@@ -40,7 +40,7 @@ definition {
 		}
 
 		task ("And When navigate to second step") {
-			Walkthrough.goToSpecificStep(key_step = "2");
+			Walkthrough.goToSpecificStep(key_step = 2);
 		}
 
 		task ("And When enable Do not show me this again") {
@@ -50,7 +50,7 @@ definition {
 		}
 
 		task ("And When navigate to next step") {
-			Walkthrough.goToNextStep(key_step = "3");
+			Walkthrough.goToNextStep(key_step = 3);
 		}
 
 		task ("And When click ok to finish the steps") {
@@ -67,7 +67,7 @@ definition {
 	}
 
 	@description = "LPS-159844. When a walkthrough step is defined and a step is below the fold, user can see popover is."
-	@priority = "3"
+	@priority = 3
 	test CanRenderWhenStepIsBelowFold {
 		property portal.acceptance = "true";
 
@@ -92,7 +92,7 @@ definition {
 			JSONLayout.addWidgetToPublicLayout(
 				groupName = "Site Name",
 				layoutName = "Walkthrough Page 2",
-				widgetName = "CKEditor Sample");
+				widgetName = "Clay Sample");
 
 			JSONLayout.addWidgetToPublicLayout(
 				groupName = "Site Name",
@@ -109,7 +109,7 @@ definition {
 		}
 
 		task ("And When navigate to step that is below the fold") {
-			Walkthrough.goToNextStep(key_step = "2");
+			Walkthrough.goToNextStep(key_step = 2);
 		}
 
 		task ("Then popover element is visible when rendered") {
@@ -119,8 +119,52 @@ definition {
 		}
 	}
 
+	@description = "LPS-167997. It is possible use same JSON on different sites as long as the pages have same name. "
+	@priority = 4
+	test SameJSONCanBeEnabledOnMultipleSites {
+		property portal.acceptance = "true";
+
+		task ("When site 1 has walkthrough enabled site-level with JSON") {
+			Walkthrough.setupWalkthroughPage(
+				filename = "walkthrough_configuration_single_page.json",
+				siteName = "Site Name");
+		}
+
+		task ("And When site 2 has walkthrough enabled site-level with JSON") {
+			task ("Create site 2") {
+				JSONGroup.addGroup(groupName = "Test Site Name");
+
+				ApplicationsMenu.gotoSite(site = "Test Site Name");
+			}
+
+			Walkthrough.setupWalkthroughPage(
+				filename = "walkthrough_configuration_single_page.json",
+				siteName = "Test Site Name");
+		}
+
+		task ("Then hotspot element is present on first site") {
+			Navigator.openSitePage(
+				pageName = "Walkthrough Page 1",
+				siteName = "Site Name");
+
+			AssertElementPresent(
+				key_title = "",
+				locator1 = "Walkthrough#POPOVER_TITLE");
+		}
+
+		task ("And Then hotspot element is present on second site") {
+			Navigator.openSitePage(
+				pageName = "Walkthrough Page 1",
+				siteName = "Test Site Name");
+
+			AssertElementPresent(
+				key_title = "",
+				locator1 = "Walkthrough#POPOVER_TITLE");
+		}
+	}
+
 	@description = "LPS-159826. Checked that each step corresponds to the expected Step Id."
-	@priority = "5"
+	@priority = 5
 	test StepCanCorrespondToCorrectStepId {
 		property portal.acceptance = "true";
 
@@ -141,7 +185,7 @@ definition {
 		}
 
 		task ("When on step 2 correspond to the correct step ID on correct page") {
-			Walkthrough.goToNextStep(key_step = "2");
+			Walkthrough.goToNextStep(key_step = 2);
 
 			AssertLocation(value1 = "${portalURL}/web/site-name/walkthrough-page-2");
 

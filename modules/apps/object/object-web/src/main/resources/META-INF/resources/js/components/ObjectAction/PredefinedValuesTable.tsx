@@ -22,6 +22,7 @@ import {FrontendDataSet} from '@liferay/frontend-data-set-web';
 import {
 	Card,
 	ExpressionBuilder,
+	getLocalizableLabel,
 	onActionDropdownItemClick,
 	openToast,
 
@@ -33,10 +34,13 @@ import React, {useEffect, useMemo} from 'react';
 import './PredefinedValuesTable.scss';
 
 export default function PredefinedValuesTable({
+	creationLanguageId,
 	currentObjectDefinitionFields,
+	disableRequiredChecked,
 	errors,
 	objectFieldsMap,
 	setValues,
+	title,
 	validateExpressionURL,
 	values,
 }: IProps) {
@@ -59,7 +63,7 @@ export default function PredefinedValuesTable({
 			});
 		}
 
-		return predefinedValues.map(({inputAsValue, name, value}) => {
+		return predefinedValues.map(({inputAsValue, label, name, value}) => {
 			return {
 				inputAsValue: (
 					<div className="lfr-object-web__predefined-values-table-input-method">
@@ -103,9 +107,9 @@ export default function PredefinedValuesTable({
 					</div>
 				),
 
-				name: (
+				label: (
 					<div className="lfr-object-web__predefined-values-table-field">
-						{name}
+						{getLocalizableLabel(creationLanguageId, label, name)}
 
 						{objectFieldsMap.get(name)?.required === true && (
 							<span className="lfr-object-web__predefined-values-table-reference-mark">
@@ -170,6 +174,7 @@ export default function PredefinedValuesTable({
 			};
 		});
 	}, [
+		creationLanguageId,
 		errors,
 		objectFieldsMap,
 		predefinedValues,
@@ -223,6 +228,9 @@ export default function PredefinedValuesTable({
 
 			parentWindow.Liferay.fire('openModalAddColumns', {
 				disableRequired: true,
+				disableRequiredChecked,
+				getLabel: ({label, name}: ObjectField) =>
+					getLocalizableLabel(creationLanguageId, label, name),
 				getName: ({name}: ObjectField) => name,
 				header: Liferay.Language.get('add-fields'),
 				items: currentObjectDefinitionFields,
@@ -236,13 +244,14 @@ export default function PredefinedValuesTable({
 						predefinedValuesMap.set(field.name, field);
 					});
 
-					const newPredefinedValues = items.map(({name}) => {
+					const newPredefinedValues = items.map(({label, name}) => {
 						const value = predefinedValuesMap.get(name);
 
 						return value
 							? value
 							: {
 									inputAsValue: false,
+									label,
 									name,
 									value: '',
 							  };
@@ -267,7 +276,9 @@ export default function PredefinedValuesTable({
 			Liferay.detach('handleAddFields');
 		};
 	}, [
+		creationLanguageId,
 		currentObjectDefinitionFields,
+		disableRequiredChecked,
 		objectFieldsMap,
 		predefinedValues,
 		setValues,
@@ -278,7 +289,7 @@ export default function PredefinedValuesTable({
 		<>
 			<Card
 				className="lfr-object-web__predefined-values-card"
-				title={Liferay.Language.get('predefined-values')}
+				title={title ?? Liferay.Language.get('predefined-values')}
 				viewMode="no-margin"
 			>
 				<div className="lfr-object-web__predefined-values-table">
@@ -317,7 +328,7 @@ export default function PredefinedValuesTable({
 								schema: {
 									fields: [
 										{
-											fieldName: 'name',
+											fieldName: 'label',
 											label: Liferay.Language.get(
 												'field'
 											),
@@ -347,17 +358,21 @@ export default function PredefinedValuesTable({
 }
 
 interface IProps {
+	creationLanguageId: Liferay.Language.Locale;
 	currentObjectDefinitionFields: ObjectField[];
+	disableRequiredChecked?: boolean;
 	errors: {[key: string]: string};
 	objectFieldsMap: Map<string, ObjectField>;
 	predefinedValues?: PredefinedValue[];
 	setValues: (params: Partial<ObjectAction>) => void;
+	title?: string;
 	validateExpressionURL: string;
 	values: Partial<ObjectAction>;
 }
 
 interface Item {
 	inputAsValue: JSX.Element;
+	label: JSX.Element;
 	name: JSX.Element;
 	newValue: JSX.Element;
 }

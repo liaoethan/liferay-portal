@@ -29,8 +29,6 @@ import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.util.CalendarFactory;
-import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.PropertiesUtil;
@@ -42,7 +40,6 @@ import com.liferay.saml.opensaml.integration.field.expression.resolver.UserField
 import com.liferay.saml.opensaml.integration.field.expression.resolver.registry.UserFieldExpressionResolverRegistry;
 import com.liferay.saml.opensaml.integration.internal.BaseSamlTestCase;
 import com.liferay.saml.opensaml.integration.internal.field.expression.handler.DefaultUserFieldExpressionHandler;
-import com.liferay.saml.opensaml.integration.internal.metadata.MetadataManager;
 import com.liferay.saml.opensaml.integration.internal.processor.factory.UserProcessorFactoryImpl;
 import com.liferay.saml.opensaml.integration.internal.util.OpenSamlUtil;
 import com.liferay.saml.opensaml.integration.resolver.UserResolver;
@@ -56,7 +53,6 @@ import java.io.Serializable;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -100,7 +96,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 
-		_mockCalendarUtil();
 		_mockDigesterUtil();
 		_mockLanguageUtil();
 
@@ -128,8 +123,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		ReflectionTestUtil.setFieldValue(
 			_defaultUserResolver, "_companyLocalService",
 			_mockCompanyLocalService(_company));
-		ReflectionTestUtil.setFieldValue(
-			_defaultUserResolver, "_metadataManager", _mockMetadataManager());
 		ReflectionTestUtil.setFieldValue(
 			_defaultUserResolver, "_samlPeerBindingLocalService",
 			_mockSamlPeerBindingLocalService());
@@ -587,20 +580,6 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		);
 	}
 
-	private void _mockCalendarUtil() {
-		CalendarFactoryUtil calendarFactoryUtil = new CalendarFactoryUtil();
-
-		CalendarFactory calendarFactory = Mockito.mock(CalendarFactory.class);
-
-		calendarFactoryUtil.setCalendarFactory(calendarFactory);
-
-		Mockito.when(
-			calendarFactory.getCalendar()
-		).thenReturn(
-			new GregorianCalendar()
-		);
-	}
-
 	private Company _mockCompany() {
 		Company company = Mockito.mock(Company.class);
 
@@ -673,27 +652,15 @@ public class DefaultUserResolverTest extends BaseSamlTestCase {
 		languageUtil.setLanguage(new LanguageImpl());
 	}
 
-	private MetadataManager _mockMetadataManager() {
-		MetadataManager metadataManager = Mockito.mock(MetadataManager.class);
-
-		Mockito.when(
-			metadataManager.getUserAttributeMappings(Mockito.eq(IDP_ENTITY_ID))
-		).thenReturn(
-			_ATTRIBUTE_MAPPINGS
-		);
-
-		return metadataManager;
-	}
-
 	private SamlPeerBindingLocalService _mockSamlPeerBindingLocalService() {
 		SamlPeerBindingLocalService samlPeerBindingLocalService = Mockito.mock(
 			SamlPeerBindingLocalService.class);
 
 		Mockito.when(
 			samlPeerBindingLocalService.fetchSamlPeerBinding(
-				Mockito.any(Long.class), Mockito.nullable(String.class),
+				Mockito.any(Long.class), Mockito.any(boolean.class),
 				Mockito.nullable(String.class), Mockito.nullable(String.class),
-				Mockito.nullable(String.class))
+				Mockito.nullable(String.class), Mockito.nullable(String.class))
 		).thenReturn(
 			null
 		);

@@ -3,7 +3,7 @@ definition {
 
 	property database.types = "db2,hypersonic,mariadb,mysql,oracle,postgresql,sqlserver";
 	property osgi.module.configuration.file.names = "com.liferay.change.tracking.configuration.CTSettingsConfiguration.config";
-	property osgi.module.configurations = "enabled=B&quot;true&quot;";
+	property osgi.module.configurations = "enabled=B\"true\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Publications";
@@ -17,7 +17,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -25,7 +25,7 @@ definition {
 		}
 	}
 
-	@priority = "3"
+	@priority = 3
 	test CancelPublicationCreation {
 		Publications.cancelPublicationCreation(publicationName = "Publication Name");
 
@@ -34,23 +34,33 @@ definition {
 			value1 = "Publication Name");
 	}
 
-	@priority = "3"
+	@priority = 3
 	test CreateNewPublicationWithLongName {
-		Publications.createNewPublication(
-			gotoPublicationsAdmin = "true",
-			publicationName = "Lopadotemachoselachogaleokranioleipsanodrimhypotrimmatosilphioparaomelitokatakechymenokichlepikossyphophattoperisteralektryonoptekephalliokigklopeleiolagoiosiraiobaphetraganopterygon");
+		PublicationsNavigator.openPublicationsAdmin();
 
-		Alert.viewLengthValidationField();
+		Click(locator1 = "Button#PLUS");
+
+		Type(
+			locator1 = "Publications#PUBLICATION_NAME",
+			value1 = "Lopadotemachoselachogaleokranioleipsanodrimhypotrimmatosilphioparaomelitokatakechymenokichlepikossyphophattoperisteralektryonoptekephalliokigklopeleiolagoiosiraiobaphetraganopterygon");
+
+		AssertElementPresent(
+			key_text = "Create",
+			locator1 = "Button#ANY_DISABLED");
 	}
 
-	@priority = "3"
+	@priority = 3
 	test CreateNewPublicationWithoutName {
-		Publications.createNewPublication(gotoPublicationsAdmin = "true");
+		PublicationsNavigator.openPublicationsAdmin();
 
-		Alert.viewRequiredField();
+		Click(locator1 = "Button#PLUS");
+
+		AssertElementPresent(
+			key_text = "Create",
+			locator1 = "Button#ANY_DISABLED");
 	}
 
-	@priority = "5"
+	@priority = 5
 	test DeletePublication {
 		property portal.acceptance = "true";
 
@@ -83,7 +93,7 @@ definition {
 		Page.viewNoPG(pageName = "Test Page");
 	}
 
-	@priority = "4"
+	@priority = 4
 	test SwitchPublication {
 		Publications.createNewPublication(publicationName = "Publication Name");
 
@@ -149,7 +159,7 @@ definition {
 
 		Publications.workOnProduction();
 
-		AssertTextEquals(
+		AssertTextEquals.assertPartialText(
 			locator1 = "Message#EMPTY_INFO",
 			value1 = "No web content was found.");
 	}

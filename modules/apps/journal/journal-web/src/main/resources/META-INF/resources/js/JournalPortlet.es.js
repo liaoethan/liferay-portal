@@ -32,6 +32,7 @@ export default function _JournalPortlet({
 	classNameId,
 	contentTitle,
 	defaultLanguageId: initialDefaultLanguageId,
+	displayDate,
 	hasSavePermission,
 	namespace,
 }) {
@@ -54,7 +55,10 @@ export default function _JournalPortlet({
 	);
 	const saveButton = document.getElementById(`${namespace}saveButton`);
 
-	const availableLocales = [...initialAvailableLocales];
+	const availableLocales = [
+		...initialAvailableLocales,
+		initialDefaultLanguageId,
+	];
 
 	let articleId = initialArticleId;
 	let defaultLanguageId = initialDefaultLanguageId;
@@ -72,15 +76,82 @@ export default function _JournalPortlet({
 
 	const editingDefaultValues = classNameId && classNameId !== '0';
 
-	const handleContextualSidebarButtonClick = () => {
+	if (editingDefaultValues) {
+		const getInput = (inputName) =>
+			document.getElementById(`${namespace}${inputName}`);
+
+		const resetInput = (inputName) => {
+			const input = getInput(inputName);
+
+			if (input && !displayDate) {
+				input.value = '';
+			}
+		};
+
+		resetInput('displayDate');
+		resetInput('displayDateAmPm');
+		resetInput('displayDateDay');
+		resetInput('displayDateHour');
+		resetInput('displayDateMinute');
+		resetInput('displayDateMonth');
+		resetInput('displayDateTime');
+		resetInput('displayDateYear');
+
+		const displayDateInput = getInput('displayDate');
+
+		if (displayDateInput) {
+			displayDateInput.addEventListener('change', (event) => {
+				if (!event.target.value) {
+					getInput('displayDateDay').value = '';
+					getInput('displayDateMonth').value = '';
+					getInput('displayDateYear').value = '';
+				}
+			});
+		}
+	}
+
+	const handleContextualSidebarButton = () => {
 		contextualSidebarContainer?.classList.toggle(
 			'contextual-sidebar-visible'
 		);
 	};
 
+	const isContextualSidebarOpen = () =>
+		contextualSidebarContainer.classList.contains(
+			'contextual-sidebar-visible'
+		);
+
+	const updateContextualSidebarAriaAttributes = () => {
+		const isOpen = isContextualSidebarOpen();
+
+		const title = isOpen
+			? Liferay.Language.get('close-configuration-panel')
+			: Liferay.Language.get('open-configuration-panel');
+
+		contextualSidebarButton.setAttribute('aria-label', title);
+		contextualSidebarButton.setAttribute('aria-selected', isOpen);
+		contextualSidebarButton.setAttribute('title', title);
+	};
+
+	const handleContextualSidebarButtonClick = () => {
+		handleContextualSidebarButton();
+
+		updateContextualSidebarAriaAttributes();
+
+		if (isContextualSidebarOpen()) {
+			contextualSidebarContainer.focus();
+		}
+	};
+
 	const handleDDMFormError = (error) => {
 		publishingLock.unlock();
 		console.error(error);
+
+		const workflowActionInput = document.getElementById(
+			`${namespace}workflowAction`
+		);
+
+		workflowActionInput.value = Liferay.Workflow.ACTION_SAVE_DRAFT;
 
 		const titleInputComponent = Liferay.component(
 			`${namespace}titleMapAsXML`
@@ -389,8 +460,10 @@ export default function _JournalPortlet({
 	}
 
 	if (window.innerWidth > Liferay.BREAKPOINTS.PHONE) {
-		handleContextualSidebarButtonClick();
+		handleContextualSidebarButton();
 	}
+
+	updateContextualSidebarAriaAttributes();
 
 	return {
 		dispose() {

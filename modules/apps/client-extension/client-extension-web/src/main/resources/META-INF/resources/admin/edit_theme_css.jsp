@@ -17,11 +17,23 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<ThemeCSSCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<ThemeCSSCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-ThemeCSSCET themeCSSCET = editClientExtensionEntryPartDisplayContext.getCET();
+ThemeCSSCET themeCSSCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input label="main-css-url" name="mainURL" type="text" value="<%= themeCSSCET.getMainURL() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="main-css-url" name="mainURL" type="text" value="<%= themeCSSCET.getMainURL() %>" />
 
-<aui:input label="clay-css-url" name="clayURL" type="text" value="<%= themeCSSCET.getClayURL() %>" />
+	<div class="form-text">
+		<liferay-ui:message key="this-css-replaces-main-css" />
+	</div>
+</aui:field-wrapper>
+
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="clay-css-url" name="clayURL" type="text" value="<%= themeCSSCET.getClayURL() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="this-css-replaces-clay-css" />
+	</div>
+</aui:field-wrapper>

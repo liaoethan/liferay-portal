@@ -16,12 +16,13 @@ package com.liferay.account.service.impl;
 
 import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.exception.AccountGroupNameException;
-import com.liferay.account.exception.DuplicateAccountGroupExternalReferenceCodeException;
 import com.liferay.account.model.AccountGroup;
 import com.liferay.account.model.AccountGroupRel;
 import com.liferay.account.service.base.AccountGroupLocalServiceBaseImpl;
 import com.liferay.account.service.persistence.AccountGroupRelPersistence;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -45,8 +46,8 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -173,6 +174,21 @@ public class AccountGroupLocalServiceImpl
 	}
 
 	@Override
+	public List<AccountGroup> getAccountGroups(
+		long companyId, String name, int start, int end,
+		OrderByComparator<AccountGroup> orderByComparator) {
+
+		if (Validator.isNull(name)) {
+			return accountGroupPersistence.findByCompanyId(
+				companyId, start, end, orderByComparator);
+		}
+
+		return accountGroupPersistence.findByC_LikeN(
+			companyId, StringUtil.quote(name, StringPool.PERCENT), start, end,
+			orderByComparator);
+	}
+
+	@Override
 	public List<AccountGroup> getAccountGroupsByAccountGroupId(
 		long[] accountGroupIds) {
 
@@ -182,6 +198,16 @@ public class AccountGroupLocalServiceImpl
 	@Override
 	public int getAccountGroupsCount(long companyId) {
 		return accountGroupPersistence.countByCompanyId(companyId);
+	}
+
+	@Override
+	public long getAccountGroupsCount(long companyId, String name) {
+		if (Validator.isNull(name)) {
+			return accountGroupPersistence.countByCompanyId(companyId);
+		}
+
+		return accountGroupPersistence.countByC_LikeN(
+			companyId, StringUtil.quote(name, StringPool.PERCENT));
 	}
 
 	@Override
@@ -273,9 +299,6 @@ public class AccountGroupLocalServiceImpl
 			return accountGroup;
 		}
 
-		_validateExternalReferenceCode(
-			accountGroup.getAccountGroupId(), externalReferenceCode);
-
 		accountGroup.setExternalReferenceCode(externalReferenceCode);
 
 		return updateAccountGroup(accountGroup);
@@ -359,28 +382,6 @@ public class AccountGroupLocalServiceImpl
 
 		throw new SearchException(
 			"Unable to fix the search index after 10 attempts");
-	}
-
-	private void _validateExternalReferenceCode(
-			long accountGroupId, String externalReferenceCode)
-		throws PortalException {
-
-		if (Validator.isNull(externalReferenceCode)) {
-			return;
-		}
-
-		AccountGroup accountGroup = getAccountGroup(accountGroupId);
-
-		accountGroup = fetchAccountGroupByExternalReferenceCode(
-			accountGroup.getCompanyId(), externalReferenceCode);
-
-		if (accountGroup == null) {
-			return;
-		}
-
-		if (accountGroup.getAccountGroupId() != accountGroupId) {
-			throw new DuplicateAccountGroupExternalReferenceCodeException();
-		}
 	}
 
 	private void _validateName(String name) throws PortalException {

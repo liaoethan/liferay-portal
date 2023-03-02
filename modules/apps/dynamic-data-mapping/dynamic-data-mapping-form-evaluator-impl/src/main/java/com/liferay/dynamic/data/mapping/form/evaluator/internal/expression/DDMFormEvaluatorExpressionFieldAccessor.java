@@ -19,7 +19,7 @@ import com.liferay.dynamic.data.mapping.expression.GetFieldPropertyRequest;
 import com.liferay.dynamic.data.mapping.expression.GetFieldPropertyResponse;
 import com.liferay.dynamic.data.mapping.form.evaluator.DDMFormEvaluatorFieldContextKey;
 import com.liferay.dynamic.data.mapping.form.evaluator.internal.helper.DDMFormEvaluatorFormValuesHelper;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.form.field.type.DefaultDDMFormFieldValueAccessor;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -29,12 +29,13 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author Rafael Praxedes
@@ -47,13 +48,13 @@ public class DDMFormEvaluatorExpressionFieldAccessor
 		Map<String, DDMFormField> ddmFormFieldsMap,
 		Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 			ddmFormFieldsPropertyChanges,
-		DDMFormFieldTypeServicesTracker ddmFormFieldTypeServicesTracker,
+		DDMFormFieldTypeServicesRegistry ddmFormFieldTypeServicesRegistry,
 		Locale locale) {
 
 		_ddmFormEvaluatorFormValuesHelper = ddmFormEvaluatorFormValuesHelper;
 		_ddmFormFieldsMap = ddmFormFieldsMap;
 		_ddmFormFieldsPropertyChanges = ddmFormFieldsPropertyChanges;
-		_ddmFormFieldTypeServicesTracker = ddmFormFieldTypeServicesTracker;
+		_ddmFormFieldTypeServicesRegistry = ddmFormFieldTypeServicesRegistry;
 		_locale = locale;
 	}
 
@@ -173,7 +174,7 @@ public class DDMFormEvaluatorExpressionFieldAccessor
 		}
 
 		DDMFormFieldValueAccessor<?> ddmFormFieldValueAccessor =
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldValueAccessor(
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldValueAccessor(
 				ddmFormField.getType());
 
 		if (ddmFormFieldValueAccessor != null) {
@@ -244,21 +245,23 @@ public class DDMFormEvaluatorExpressionFieldAccessor
 	}
 
 	private Object _getFieldValues(String fieldName) {
+		List<Object> list = new ArrayList<>();
+
 		Set<DDMFormEvaluatorFieldContextKey> ddmFormFieldContextKeys =
 			_ddmFormEvaluatorFormValuesHelper.getDDMFormFieldContextKeys(
 				fieldName);
 
-		Stream<DDMFormEvaluatorFieldContextKey> stream =
-			ddmFormFieldContextKeys.stream();
+		for (DDMFormEvaluatorFieldContextKey ddmFormEvaluatorFieldContextKey :
+				ddmFormFieldContextKeys) {
+
+			list.add(getFieldValue(ddmFormEvaluatorFieldContextKey));
+		}
 
 		DDMFormFieldValueAccessor<?> ddmFormFieldValueAccessor =
 			_getDDMFormFieldValueAccessor(fieldName);
 
-		Object[] values = stream.map(
-			this::getFieldValue
-		).toArray(
-			ddmFormFieldValueAccessor.getArrayGeneratorIntFunction()
-		);
+		Object[] values = list.toArray(
+			ddmFormFieldValueAccessor.getArrayGenericType());
 
 		if (ArrayUtil.isNotEmpty(values) && (values.length == 1)) {
 			return values[0];
@@ -272,8 +275,8 @@ public class DDMFormEvaluatorExpressionFieldAccessor
 	private final Map<String, DDMFormField> _ddmFormFieldsMap;
 	private final Map<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
 		_ddmFormFieldsPropertyChanges;
-	private final DDMFormFieldTypeServicesTracker
-		_ddmFormFieldTypeServicesTracker;
+	private final DDMFormFieldTypeServicesRegistry
+		_ddmFormFieldTypeServicesRegistry;
 	private final DDMFormFieldValueAccessor<String>
 		_defaultDDMFormFieldValueAccessor =
 			new DefaultDDMFormFieldValueAccessor();

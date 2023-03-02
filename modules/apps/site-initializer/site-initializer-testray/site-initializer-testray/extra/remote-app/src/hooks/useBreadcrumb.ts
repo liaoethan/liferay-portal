@@ -14,21 +14,15 @@
 
 import {useCallback, useMemo, useRef, useState} from 'react';
 
+import SearchBuilder from '../core/SearchBuilder';
 import i18n from '../i18n';
 import {
 	APIResponse,
 	TestrayCaseResult,
-	testrayCaseResultRest,
+	testrayCaseResultImpl,
 } from '../services/rest';
-import {searchUtil} from '../util/search';
 import useDebounce from './useDebounce';
 import {useFetch} from './useFetch';
-
-type Resource =
-	| 'TestrayProject'
-	| 'TestrayRoutine'
-	| 'TestrayBuild'
-	| 'TestrayCaseResult';
 
 export type Entity = {
 	entity: string;
@@ -39,7 +33,7 @@ export type Entity = {
 };
 
 type BreadCrumb = {
-	entity: Resource;
+	entity: Entity;
 	label: string;
 	value: number;
 };
@@ -61,23 +55,27 @@ const getEntityUrlAndNormalizer = (
 	url: getResource(ids, search),
 });
 
-const useBreadcrumb = (entities: Entity[]) => {
+const useBreadcrumb = (entities: Entity[], {active}: {active: boolean}) => {
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const [breadCrumb, setBreadCrumb] = useState<BreadCrumb[]>([]);
 	const [search, setSearch] = useState('');
-
-	const debouncedSearch = useDebounce(search, 1000);
+	const debouncedSearch = useDebounce(search, 500);
 
 	const currentEntity = entities[breadCrumb.length];
+
 	const ids = breadCrumb.map(({value}) => value);
+
 	const {transformer, url} = getEntityUrlAndNormalizer(
 		currentEntity,
 		ids,
 		debouncedSearch
 	);
 
-	const {data} = useFetch<APIResponse<any>>(url, transformer);
+	const {data} = useFetch<APIResponse<any>>(url, {
+		swrConfig: {shouldFetch: active},
+		transformData: transformer,
+	});
 
 	const items = useMemo(() => data?.items || [], [data?.items]);
 
@@ -93,11 +91,11 @@ const useBreadcrumb = (entities: Entity[]) => {
 
 			setTimeout(() => {
 				setSearch(lastBreadcrumb.label);
-			}, 10);
 
-			setTimeout(() => {
-				inputRef.current?.select();
-			}, 20);
+				setTimeout(() => {
+					inputRef.current?.select();
+				}, 10);
+			}, 10);
 		}
 	}, [breadCrumb]);
 
@@ -108,6 +106,7 @@ const useBreadcrumb = (entities: Entity[]) => {
 
 	return {
 		breadCrumb,
+		currentEntity,
 		entities,
 		inputRef,
 		items,
@@ -122,42 +121,48 @@ const useBreadcrumb = (entities: Entity[]) => {
 const defaultEntities: Entity[] = [
 	{
 		entity: 'projects',
+		getPage: ([projectId]) => `/project/${projectId}/routines`,
 		getResource: (_, search) =>
-			`/projects?filter=${searchUtil.contains(
+			`/projects?filter=${SearchBuilder.contains(
 				'name',
 				search
-			)}&pageSize=1000`,
+			)}&pageSize=100`,
 		name: i18n.translate('project'),
 	},
 	{
 		entity: 'routines',
-		getPage: ([projectId]) => `/project/${projectId}/routines`,
+		getPage: ([projectId, routineId]) =>
+			`/project/${projectId}/routines/${routineId}`,
 		getResource: ([projectId], search) =>
-			`/routines?filter=${searchUtil.eq(
+			`/routines?filter=${SearchBuilder.eq(
 				'projectId',
 				projectId
-			)} and ${searchUtil.contains('name', search)}&pageSize=1000`,
+			)} and ${SearchBuilder.contains('name', search)}&pageSize=50`,
 		name: i18n.translate('routine'),
 	},
 	{
 		entity: 'builds',
+		getPage: ([projectId, routineId, buildId]) =>
+			`/project/${projectId}/routines/${routineId}/build/${buildId}`,
 		getResource: ([, routineId], search) =>
-			`/builds?filter=${searchUtil.eq(
+			`/builds?filter=${SearchBuilder.eq(
 				'routineId',
 				routineId
-			)} and ${searchUtil.contains('name', search)}&pageSize=1000`,
+			)} and ${SearchBuilder.contains('name', search)}&pageSize=100`,
 		name: i18n.translate('build'),
 	},
 	{
 		entity: 'caseresults',
+		getPage: ([projectId, routineId, buildId, caseResultsId]) =>
+			`/project/${projectId}/routines/${routineId}/build/${buildId}/case-result/${caseResultsId}`,
 		getResource: ([, , buildId]) =>
-			`/caseresults?filter=${searchUtil.eq(
+			`/caseresults?filter=${SearchBuilder.eq(
 				'buildId',
 				buildId
-			)}&nestedFields=case&pageSize=1000`,
+			)}&nestedFields=case,r_runToCaseResult_c_runId&pageSize=20&fields=r_caseToCaseResult_c_case,id,run`,
 		name: i18n.translate('case-result'),
 		transformer: (response: APIResponse<TestrayCaseResult>) => {
-			const transformedResponse = testrayCaseResultRest.transformDataFromList(
+			const transformedResponse = testrayCaseResultImpl.transformDataFromList(
 				response
 			);
 
@@ -166,6 +171,8 @@ const defaultEntities: Entity[] = [
 				items: transformedResponse.items.map((caseResult) => ({
 					...caseResult,
 					label: caseResult.case?.name,
+					run: caseResult.r_runToCaseResult_c_run?.id,
+					value: caseResult.id,
 				})),
 			};
 		},

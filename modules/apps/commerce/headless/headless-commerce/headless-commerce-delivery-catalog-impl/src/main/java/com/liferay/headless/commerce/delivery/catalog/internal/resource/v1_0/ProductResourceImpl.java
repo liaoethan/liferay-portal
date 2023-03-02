@@ -72,7 +72,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/product.properties",
 	scope = ServiceScope.PROTOTYPE, service = ProductResource.class
 )
@@ -110,7 +109,7 @@ public class ProductResourceImpl extends BaseProductResourceImpl {
 
 	@Override
 	public Page<Product> getChannelProductsPage(
-			Long channelId, Long accountId, Filter filter,
+			Long channelId, Long accountId, String search, Filter filter,
 			Pagination pagination, Sort[] sorts)
 		throws Exception {
 
@@ -139,6 +138,7 @@ public class ProductResourceImpl extends BaseProductResourceImpl {
 					booleanQuery -> booleanQuery.getPreBooleanFilter(), filter)
 			});
 		searchContext.setCompanyId(contextCompany.getCompanyId());
+		searchContext.setKeywords(search);
 
 		CPQuery cpQuery = new CPQuery();
 

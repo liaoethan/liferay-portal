@@ -46,7 +46,6 @@ import java.io.IOException;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -57,7 +56,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = {
 		"osgi.command.function=check", "osgi.command.function=cleanUp",
 		"osgi.command.function=migrate", "osgi.command.scope=thumbnails"
@@ -268,16 +266,15 @@ public class AMThumbnailsOSGiCommands {
 				for (ThumbnailConfiguration thumbnailConfiguration :
 						_getThumbnailConfigurations()) {
 
-					Optional<AMImageConfigurationEntry>
-						amImageConfigurationEntryOptional =
-							thumbnailConfiguration.
-								selectMatchingConfigurationEntry(
-									amImageConfigurationEntries);
+					AMImageConfigurationEntry amImageConfigurationEntry =
+						thumbnailConfiguration.selectMatchingConfigurationEntry(
+							amImageConfigurationEntries);
 
-					amImageConfigurationEntryOptional.ifPresent(
-						amImageConfigurationEntry -> _migrate(
+					if (amImageConfigurationEntry != null) {
+						_migrate(
 							actualFileName, amImageConfigurationEntry,
-							thumbnailConfiguration));
+							thumbnailConfiguration);
+					}
 				}
 			}
 		}

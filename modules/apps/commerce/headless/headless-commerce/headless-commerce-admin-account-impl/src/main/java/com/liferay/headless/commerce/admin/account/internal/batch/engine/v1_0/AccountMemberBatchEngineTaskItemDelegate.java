@@ -14,11 +14,11 @@
 
 package com.liferay.headless.commerce.admin.account.internal.batch.engine.v1_0;
 
+import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.batch.engine.BaseBatchEngineTaskItemDelegate;
 import com.liferay.batch.engine.BatchEngineTaskItemDelegate;
 import com.liferay.batch.engine.pagination.Page;
 import com.liferay.batch.engine.pagination.Pagination;
-import com.liferay.commerce.account.service.CommerceAccountService;
 import com.liferay.commerce.account.service.CommerceAccountUserRelService;
 import com.liferay.headless.commerce.admin.account.dto.v1_0.AccountMember;
 import com.liferay.headless.commerce.admin.account.internal.constants.v1_0.AccountMemberBatchEngineTaskItemDelegateConstants;
@@ -39,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "batch.engine.task.item.delegate.name=" + AccountMemberBatchEngineTaskItemDelegateConstants.COMMERCE_ACCOUNT_MEMBER,
 	service = BatchEngineTaskItemDelegate.class
 )
@@ -55,7 +54,7 @@ public class AccountMemberBatchEngineTaskItemDelegate
 
 		AccountMemberUtil.addCommerceAccountUserRel(
 			_commerceAccountUserRelService, accountMember,
-			_commerceAccountService.getCommerceAccount(
+			_accountEntryLocalService.getAccountEntry(
 				Long.valueOf(id.toString())),
 			AccountMemberUtil.getUser(
 				_userLocalService, accountMember,
@@ -73,7 +72,7 @@ public class AccountMemberBatchEngineTaskItemDelegate
 	}
 
 	@Reference
-	private CommerceAccountService _commerceAccountService;
+	private AccountEntryLocalService _accountEntryLocalService;
 
 	@Reference
 	private CommerceAccountUserRelService _commerceAccountUserRelService;

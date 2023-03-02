@@ -25,6 +25,22 @@ CookiesBannerConfigurationDisplayContext cookiesBannerConfigurationDisplayContex
 	id='<%= liferayPortletResponse.getNamespace() + "cookiesBannerConfigurationForm" %>'
 >
 	<clay:row>
+
+		<%
+		String alertMessage = ParamUtil.getString(request, "alertMessage");
+		%>
+
+		<c:if test="<%= alertMessage != StringPool.BLANK %>">
+			<clay:col
+				size="12"
+			>
+				<clay:alert
+					displayType='<%= ParamUtil.getString(request, "alertDisplayType", "info") %>'
+					message="<%= alertMessage %>"
+				/>
+			</clay:col>
+		</c:if>
+
 		<clay:col
 			cssClass="mb-3"
 			size="12"
@@ -45,7 +61,7 @@ CookiesBannerConfigurationDisplayContext cookiesBannerConfigurationDisplayContex
 		>
 
 			<%
-			for (ConsentCookieType requiredConsentCookieType : cookiesBannerConfigurationDisplayContext.getRequiredConsentCookieTypes(scopeGroupId)) {
+			for (ConsentCookieType requiredConsentCookieType : cookiesBannerConfigurationDisplayContext.getRequiredConsentCookieTypes()) {
 			%>
 
 				<clay:content-row
@@ -72,7 +88,7 @@ CookiesBannerConfigurationDisplayContext cookiesBannerConfigurationDisplayContex
 			<%
 			}
 
-			for (ConsentCookieType optionalConsentCookieType : cookiesBannerConfigurationDisplayContext.getOptionalConsentCookieTypes(scopeGroupId)) {
+			for (ConsentCookieType optionalConsentCookieType : cookiesBannerConfigurationDisplayContext.getOptionalConsentCookieTypes()) {
 			%>
 
 				<clay:content-row
@@ -154,6 +170,6 @@ CookiesBannerConfigurationDisplayContext cookiesBannerConfigurationDisplayContex
 
 <liferay-frontend:component
 	componentId="CookiesBannerConfiguration"
-	context="<%= cookiesBannerConfigurationDisplayContext.getContext(scopeGroupId) %>"
+	context="<%= cookiesBannerConfigurationDisplayContext.getContext() %>"
 	module="cookies_banner_configuration/js/CookiesBannerConfiguration"
 />

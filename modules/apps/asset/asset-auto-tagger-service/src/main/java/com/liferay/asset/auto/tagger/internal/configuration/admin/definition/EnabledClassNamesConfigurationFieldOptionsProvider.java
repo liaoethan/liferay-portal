@@ -15,16 +15,14 @@
 package com.liferay.asset.auto.tagger.internal.configuration.admin.definition;
 
 import com.liferay.asset.auto.tagger.text.extractor.TextExtractor;
-import com.liferay.asset.auto.tagger.text.extractor.TextExtractorTracker;
+import com.liferay.asset.auto.tagger.text.extractor.TextExtractorRegistry;
 import com.liferay.asset.kernel.AssetRendererFactoryRegistryUtil;
-import com.liferay.asset.kernel.model.AssetRendererFactory;
 import com.liferay.configuration.admin.definition.ConfigurationFieldOptionsProvider;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -45,41 +43,35 @@ public class EnabledClassNamesConfigurationFieldOptionsProvider
 
 	@Override
 	public List<Option> getOptions() {
-		List<AssetRendererFactory<?>> assetRendererFactories =
+		return TransformUtil.transform(
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactories(
-				CompanyThreadLocal.getCompanyId());
-
-		Stream<AssetRendererFactory<?>> stream =
-			assetRendererFactories.stream();
-
-		return stream.filter(
+				CompanyThreadLocal.getCompanyId()),
 			assetRendererFactory -> {
 				TextExtractor<?> textExtractor =
-					_textExtractorTracker.getTextExtractor(
+					_textExtractorRegistry.getTextExtractor(
 						assetRendererFactory.getClassName());
 
-				return textExtractor != null;
-			}
-		).map(
-			assetRendererFactory -> new Option() {
-
-				@Override
-				public String getLabel(Locale locale) {
-					return assetRendererFactory.getTypeName(locale);
+				if (textExtractor == null) {
+					return null;
 				}
 
-				@Override
-				public String getValue() {
-					return assetRendererFactory.getClassName();
-				}
+				return new Option() {
 
-			}
-		).collect(
-			Collectors.toList()
-		);
+					@Override
+					public String getLabel(Locale locale) {
+						return assetRendererFactory.getTypeName(locale);
+					}
+
+					@Override
+					public String getValue() {
+						return assetRendererFactory.getClassName();
+					}
+
+				};
+			});
 	}
 
 	@Reference
-	private TextExtractorTracker _textExtractorTracker;
+	private TextExtractorRegistry _textExtractorRegistry;
 
 }

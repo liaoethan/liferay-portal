@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.css-class-wrapper=portlet-alerts",
 		"com.liferay.portlet.display-category=category.news",
@@ -78,7 +77,7 @@ public class AlertsPortlet extends MVCPortlet {
 			WebKeys.PORTLET_DISPLAY_CONTEXT,
 			new DefaultAnnouncementsDisplayContext(
 				new AnnouncementsRequestHelper(httpServletRequest),
-				httpServletRequest, AnnouncementsPortletKeys.ANNOUNCEMENTS,
+				httpServletRequest, AnnouncementsPortletKeys.ALERTS,
 				renderRequest, renderResponse, _requestContextMapper,
 				_segmentsEntryRetriever, _segmentsConfigurationProvider));
 

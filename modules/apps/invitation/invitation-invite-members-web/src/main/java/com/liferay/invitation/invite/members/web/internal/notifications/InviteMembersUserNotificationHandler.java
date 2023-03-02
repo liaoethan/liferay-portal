@@ -19,7 +19,7 @@ import com.liferay.invitation.invite.members.model.MemberRequest;
 import com.liferay.invitation.invite.members.service.MemberRequestLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -35,7 +35,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.Html;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -51,7 +51,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jonathan Lee
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + InviteMembersPortletKeys.INVITE_MEMBERS,
 	service = UserNotificationHandler.class
 )
@@ -69,7 +68,7 @@ public class InviteMembersUserNotificationHandler
 			ServiceContext serviceContext)
 		throws Exception {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			userNotificationEvent.getPayload());
 
 		long memberRequestId = jsonObject.getLong("classPK");
@@ -83,28 +82,8 @@ public class InviteMembersUserNotificationHandler
 			return StringPool.BLANK;
 		}
 
-		Group group = null;
-
-		if (memberRequest != null) {
-			group = _groupLocalService.fetchGroup(memberRequest.getGroupId());
-		}
-
-		if ((group == null) || (memberRequest == null)) {
-			_userNotificationEventLocalService.deleteUserNotificationEvent(
-				userNotificationEvent.getUserNotificationEventId());
-
-			return null;
-		}
-
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			serviceContext.getLocale(),
-			InviteMembersUserNotificationHandler.class);
-
-		String title = ResourceBundleUtil.getString(
-			resourceBundle, "x-invited-you-to-join-x",
-			_getUserNameLink(memberRequest.getUserId(), serviceContext),
-			_getSiteDescriptiveName(
-				memberRequest.getGroupId(), serviceContext));
+		String title = _getTitle(
+			memberRequest, userNotificationEvent, serviceContext);
 
 		LiferayPortletResponse liferayPortletResponse =
 			serviceContext.getLiferayPortletResponse();
@@ -161,6 +140,29 @@ public class InviteMembersUserNotificationHandler
 		return StringPool.BLANK;
 	}
 
+	@Override
+	protected String getTitle(
+			UserNotificationEvent userNotificationEvent,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			userNotificationEvent.getPayload());
+
+		long memberRequestId = jsonObject.getLong("classPK");
+
+		MemberRequest memberRequest =
+			_memberRequestLocalService.fetchMemberRequest(memberRequestId);
+
+		if (memberRequest.getStatus() !=
+				MembershipRequestConstants.STATUS_PENDING) {
+
+			return StringPool.BLANK;
+		}
+
+		return _getTitle(memberRequest, userNotificationEvent, serviceContext);
+	}
+
 	private String _getSiteDescriptiveName(
 			long groupId, ServiceContext serviceContext)
 		throws Exception {
@@ -184,11 +186,40 @@ public class InviteMembersUserNotificationHandler
 		}
 
 		sb.append(
-			HtmlUtil.escape(
-				group.getDescriptiveName(serviceContext.getLocale())));
+			_html.escape(group.getDescriptiveName(serviceContext.getLocale())));
 		sb.append("</a>");
 
 		return sb.toString();
+	}
+
+	private String _getTitle(
+			MemberRequest memberRequest,
+			UserNotificationEvent userNotificationEvent,
+			ServiceContext serviceContext)
+		throws Exception {
+
+		Group group = null;
+
+		if (memberRequest != null) {
+			group = _groupLocalService.fetchGroup(memberRequest.getGroupId());
+		}
+
+		if ((group == null) || (memberRequest == null)) {
+			_userNotificationEventLocalService.deleteUserNotificationEvent(
+				userNotificationEvent.getUserNotificationEventId());
+
+			return null;
+		}
+
+		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
+			serviceContext.getLocale(),
+			InviteMembersUserNotificationHandler.class);
+
+		return ResourceBundleUtil.getString(
+			resourceBundle, "x-invited-you-to-join-x",
+			_getUserNameLink(memberRequest.getUserId(), serviceContext),
+			_getSiteDescriptiveName(
+				memberRequest.getGroupId(), serviceContext));
 	}
 
 	private String _getUserNameLink(
@@ -207,7 +238,7 @@ public class InviteMembersUserNotificationHandler
 				serviceContext.getThemeDisplay());
 
 			return StringBundler.concat(
-				"<a href=\"", userDisplayURL, "\">", HtmlUtil.escape(userName),
+				"<a href=\"", userDisplayURL, "\">", _html.escape(userName),
 				"</a>");
 		}
 		catch (Exception exception) {
@@ -224,6 +255,12 @@ public class InviteMembersUserNotificationHandler
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private Html _html;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private MemberRequestLocalService _memberRequestLocalService;

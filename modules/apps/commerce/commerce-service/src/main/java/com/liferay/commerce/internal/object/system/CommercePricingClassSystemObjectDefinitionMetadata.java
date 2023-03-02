@@ -20,6 +20,7 @@ import com.liferay.commerce.pricing.service.CommercePricingClassLocalService;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.system.BaseSystemObjectDefinitionMetadata;
+import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
@@ -50,8 +51,31 @@ public class CommercePricingClassSystemObjectDefinitionMetadata
 	}
 
 	@Override
-	public String getJaxRsApplicationName() {
-		return "Liferay.Headless.Commerce.Admin.Catalog";
+	public BaseModel<?> getBaseModelByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
+		throws PortalException {
+
+		return _commercePricingClassLocalService.
+			getCommercePricingClassByExternalReferenceCode(
+				externalReferenceCode, companyId);
+	}
+
+	@Override
+	public String getExternalReferenceCode(long primaryKey)
+		throws PortalException {
+
+		CommercePricingClass commercePricingClass =
+			_commercePricingClassLocalService.getCommercePricingClass(
+				primaryKey);
+
+		return commercePricingClass.getExternalReferenceCode();
+	}
+
+	@Override
+	public JaxRsApplicationDescriptor getJaxRsApplicationDescriptor() {
+		return new JaxRsApplicationDescriptor(
+			"Liferay.Headless.Commerce.Admin.Catalog",
+			"headless-commerce-admin-catalog", "product-groups", "v1.0");
 	}
 
 	@Override
@@ -70,9 +94,6 @@ public class CommercePricingClassSystemObjectDefinitionMetadata
 			createObjectField(
 				"Text", "String", "description", "description", false, true),
 			createObjectField(
-				"Text", "String", "external-reference-code",
-				"externalReferenceCode", false, true),
-			createObjectField(
 				"Integer", "Integer", "number-of-products", "productsCount",
 				false, true),
 			createObjectField("Text", "String", "title", "title", false, true));
@@ -89,11 +110,6 @@ public class CommercePricingClassSystemObjectDefinitionMetadata
 	}
 
 	@Override
-	public String getRESTContextPath() {
-		return "headless-commerce-admin-catalog/v1.0/product-groups";
-	}
-
-	@Override
 	public String getScope() {
 		return ObjectDefinitionConstants.SCOPE_COMPANY;
 	}
@@ -101,6 +117,11 @@ public class CommercePricingClassSystemObjectDefinitionMetadata
 	@Override
 	public Table getTable() {
 		return CommercePricingClassTable.INSTANCE;
+	}
+
+	@Override
+	public String getTitleObjectFieldName() {
+		return "title";
 	}
 
 	@Override

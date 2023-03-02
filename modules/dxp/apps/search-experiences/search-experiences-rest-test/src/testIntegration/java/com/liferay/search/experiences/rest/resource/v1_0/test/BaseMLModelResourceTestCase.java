@@ -55,6 +55,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -191,27 +192,41 @@ public abstract class BaseMLModelResourceTestCase {
 	}
 
 	@Test
-	public void testGetMLModelsPage() throws Exception {
-		Page<MLModel> page = mlModelResource.getMLModelsPage(
+	public void testGetSentenceTransformerMLModelsPage() throws Exception {
+		Page<MLModel> page = mlModelResource.getSentenceTransformerMLModelsPage(
 			null, RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString());
 
 		long totalCount = page.getTotalCount();
 
-		MLModel mlModel1 = testGetMLModelsPage_addMLModel(randomMLModel());
+		MLModel mlModel1 = testGetSentenceTransformerMLModelsPage_addMLModel(
+			randomMLModel());
 
-		MLModel mlModel2 = testGetMLModelsPage_addMLModel(randomMLModel());
+		MLModel mlModel2 = testGetSentenceTransformerMLModelsPage_addMLModel(
+			randomMLModel());
 
-		page = mlModelResource.getMLModelsPage(null, null, null, null);
+		page = mlModelResource.getSentenceTransformerMLModelsPage(
+			null, null, null, null);
 
 		Assert.assertEquals(totalCount + 2, page.getTotalCount());
 
 		assertContains(mlModel1, (List<MLModel>)page.getItems());
 		assertContains(mlModel2, (List<MLModel>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetSentenceTransformerMLModelsPage_getExpectedActions());
 	}
 
-	protected MLModel testGetMLModelsPage_addMLModel(MLModel mlModel)
+	protected Map<String, Map<String, String>>
+			testGetSentenceTransformerMLModelsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	protected MLModel testGetSentenceTransformerMLModelsPage_addMLModel(
+			MLModel mlModel)
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -303,6 +318,12 @@ public abstract class BaseMLModelResourceTestCase {
 	}
 
 	protected void assertValid(Page<MLModel> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<MLModel> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<MLModel> mlModels = page.getItems();
@@ -317,6 +338,20 @@ public abstract class BaseMLModelResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -455,6 +490,10 @@ public abstract class BaseMLModelResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

@@ -21,19 +21,18 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionFactory;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Luca Pellizzon
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = {
 		"json.web.service.context.name=commerce",
 		"json.web.service.context.path=CommerceTermEntryRel"
@@ -185,11 +184,10 @@ public class CommerceTermEntryRelServiceImpl
 			commerceTermEntryId);
 	}
 
-	private static volatile ModelResourcePermission<CommerceTermEntry>
-		_commerceTermEntryModelResourcePermission =
-			ModelResourcePermissionFactory.getInstance(
-				CommerceTermEntryRelServiceImpl.class,
-				"_commerceTermEntryModelResourcePermission",
-				CommerceTermEntry.class);
+	@Reference(
+		target = "(model.class.name=com.liferay.commerce.term.model.CommerceTermEntry)"
+	)
+	private ModelResourcePermission<CommerceTermEntry>
+		_commerceTermEntryModelResourcePermission;
 
 }

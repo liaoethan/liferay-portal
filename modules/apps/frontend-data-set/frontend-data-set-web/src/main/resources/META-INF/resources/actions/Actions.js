@@ -12,7 +12,7 @@
  * details.
  */
 
-import {openConfirmModal, openToast} from 'frontend-js-web';
+import {openConfirmModal} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useContext, useState} from 'react';
 
@@ -64,12 +64,14 @@ const formatActions = (actions, itemData) => {
 export function handleAction(
 	{
 		confirmationMessage,
+		errorMessage,
 		event,
 		itemId,
 		method,
 		onClick,
 		setLoading,
 		size,
+		status,
 		successMessage,
 		target,
 		title,
@@ -112,19 +114,14 @@ export function handleAction(
 			event.preventDefault();
 
 			setLoading(true);
-			executeAsyncItemAction(url, method)
-				.then(() => {
-					openToast({
-						message:
-							successMessage ||
-							Liferay.Language.get('action-completed'),
-						type: 'success',
-					});
-					setLoading(false);
-				})
-				.catch((_) => {
-					setLoading(false);
-				});
+
+			executeAsyncItemAction({
+				errorMessage,
+				method,
+				setActionItemLoading: setLoading,
+				successMessage,
+				url,
+			});
 		}
 		else if (target === 'inlineEdit') {
 			event.preventDefault();
@@ -153,23 +150,30 @@ export function handleAction(
 					doAction();
 				}
 			},
+			status,
+			title,
 		});
 	}
 	else {
 		doAction();
 	}
 }
-function Actions({actions, itemData, itemId}) {
-	const context = useContext(FrontendDataSetContext);
-	const {inlineEditingSettings, onActionDropdownItemClick} = context;
-
-	const [loading, setLoading] = useState(false);
-
+function Actions({actions, itemData, itemId, menuActive, onMenuActiveChange}) {
+	const frontendDataSetContext = useContext(FrontendDataSetContext);
 	const [
 		{
 			activeView: {quickActionsEnabled},
 		},
 	] = useContext(ViewsContext);
+
+	const {
+		inlineEditingSettings,
+		loadData,
+		onActionDropdownItemClick,
+		openSidePanel,
+	} = frontendDataSetContext;
+
+	const [loading, setLoading] = useState(false);
 
 	const inlineEditingAvailable =
 		inlineEditingSettings && itemData.actions?.update;
@@ -199,6 +203,8 @@ function Actions({actions, itemData, itemId}) {
 				action,
 				event,
 				itemData,
+				loadData,
+				openSidePanel,
 			});
 		}
 
@@ -210,17 +216,20 @@ function Actions({actions, itemData, itemId}) {
 			handleAction(
 				{
 					confirmationMessage: data?.confirmationMessage,
+					errorMessage: data?.errorMessage,
 					event,
 					itemId,
 					method: action.method ?? action.data?.method,
 					onClick,
 					setLoading,
 					size,
+					status: data?.status,
 					successMessage: data?.successMessage,
 					target,
+					title: data?.title,
 					url: formatActionURL(action.href, itemData),
 				},
-				context
+				frontendDataSetContext
 			);
 		}
 
@@ -247,7 +256,9 @@ function Actions({actions, itemData, itemId}) {
 				itemData={itemData}
 				itemId={itemId}
 				loading={loading}
+				menuActive={menuActive}
 				onClick={handleClick}
+				onMenuActiveChange={onMenuActiveChange}
 				setLoading={setLoading}
 			/>
 		</>
@@ -257,6 +268,7 @@ function Actions({actions, itemData, itemId}) {
 const actionType = PropTypes.shape({
 	data: PropTypes.shape({
 		confirmationMessage: PropTypes.string,
+		errorMessage: PropTypes.string,
 		method: PropTypes.oneOf(['delete', 'get', 'patch', 'post']),
 		permissionKey: PropTypes.string,
 		successMessage: PropTypes.string,

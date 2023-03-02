@@ -3,6 +3,8 @@
 
 @import 'image_editor_modal';
 
+@import 'data_engine_info_panel';
+
 @mixin file-icon($colorIndex, $color) {
 	[data-file-icon-color='#{$colorIndex}'] .lexicon-icon {
 		color: $color;
@@ -88,13 +90,16 @@ $productMenuWidth: 320px;
 				> .tbar-nav {
 					flex-wrap: wrap;
 
+					@include media-breakpoint-up(lg) {
+						flex-wrap: nowrap;
+					}
+
 					> .tbar-item {
 						padding: 0.5em;
 					}
 
 					> .tbar-item:first-child {
-						border-top: solid thin #e7e7ed;
-						order: 1;
+						border-bottom: solid thin #e7e7ed;
 						width: 100%;
 					}
 
@@ -135,13 +140,12 @@ $productMenuWidth: 320px;
 				border: 0;
 			}
 
-			@media (min-width: 768px) {
+			@include media-breakpoint-up(lg) {
 				min-height: $toolbarDesktopHeight;
 
 				> .container-fluid > .tbar-nav {
 					> .tbar-item:first-child {
-						border-top: none;
-						order: 0;
+						border-bottom: none;
 						width: auto;
 					}
 
@@ -163,7 +167,7 @@ $productMenuWidth: 320px;
 				margin-top: $toolbarDesktopHeight;
 			}
 
-			@media (max-width: 769px) {
+			@include media-breakpoint-down(md) {
 				> .container-fluid {
 					margin: 0;
 					padding: 0;
@@ -773,11 +777,6 @@ $productMenuWidth: 320px;
 				.card-type-directory .card {
 					box-shadow: 0 0 0 2px $primary-l2;
 				}
-			}
-
-			.taglib-empty-result-message {
-				background-color: $primary-l3;
-				border-color: transparent;
 			}
 		}
 	}

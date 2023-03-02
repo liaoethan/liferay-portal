@@ -45,7 +45,7 @@ import com.liferay.search.experiences.internal.blueprint.parameter.contributor.O
 import com.liferay.search.experiences.internal.blueprint.parameter.contributor.SXPParameterContributor;
 import com.liferay.search.experiences.internal.blueprint.parameter.contributor.TimeSXPParameterContributor;
 import com.liferay.search.experiences.internal.blueprint.parameter.contributor.UserSXPParameterContributor;
-import com.liferay.search.experiences.internal.ml.sentence.embedding.SentenceEmbeddingRetriever;
+import com.liferay.search.experiences.ml.embedding.text.TextEmbeddingRetriever;
 import com.liferay.search.experiences.rest.dto.v1_0.Configuration;
 import com.liferay.search.experiences.rest.dto.v1_0.Parameter;
 import com.liferay.search.experiences.rest.dto.v1_0.ParameterConfiguration;
@@ -80,7 +80,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Petteri Karttunen
  */
 @Component(
-	enabled = false, immediate = true,
+	enabled = false,
 	service = {
 		SXPParameterContributorDefinitionProvider.class,
 		SXPParameterDataCreator.class
@@ -140,7 +140,7 @@ public class SXPParameterDataCreator
 			new ContextSXPParameterContributor(_groupLocalService, _language),
 			new IpstackSXPParameterContributor(_configurationProvider),
 			new MLSXPParameterContributor(
-				_configurationProvider, _sentenceEmbeddingRetriever),
+				_configurationProvider, _language, _textEmbeddingRetriever),
 			new OpenWeatherMapSXPParameterContributor(_configurationProvider),
 			new TimeSXPParameterContributor(),
 			new UserSXPParameterContributor(
@@ -163,17 +163,14 @@ public class SXPParameterDataCreator
 
 		String keywords = GetterUtil.getString(searchContext.getKeywords());
 
-		_add(
-			new StringSXPParameter("keywords.raw", true, keywords),
-			sxpParameters);
-
 		if ((StringUtil.count(keywords, CharPool.QUOTE) % 2) != 0) {
 			keywords = StringUtil.replace(
 				keywords, CharPool.QUOTE, StringPool.BLANK);
 		}
 
 		keywords = keywords.replaceAll("/", "&#8725;");
-		keywords = keywords.replaceAll("\"", "\\\\\"");
+		keywords = keywords.replaceAll("\"", "&#34;");
+		keywords = keywords.replaceAll("\\$", "&#36;");
 		keywords = keywords.replaceAll("\\[", "&#91;");
 		keywords = keywords.replaceAll("\\\\", "&#92;");
 		keywords = keywords.replaceAll("\\]", "&#93;");
@@ -737,10 +734,10 @@ public class SXPParameterDataCreator
 	@Reference
 	private SegmentsEntryRetriever _segmentsEntryRetriever;
 
-	@Reference
-	private SentenceEmbeddingRetriever _sentenceEmbeddingRetriever;
-
 	private SXPParameterContributor[] _sxpParameterContributors;
+
+	@Reference
+	private TextEmbeddingRetriever _textEmbeddingRetriever;
 
 	@Reference
 	private UserGroupGroupRoleLocalService _userGroupGroupRoleLocalService;

@@ -22,9 +22,8 @@ import com.liferay.portal.workflow.kaleo.definition.Transition;
 import com.liferay.portal.workflow.kaleo.definition.exception.KaleoDefinitionValidationException;
 import com.liferay.portal.workflow.kaleo.definition.parser.NodeValidator;
 
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * @author Michael C. Han
@@ -38,6 +37,7 @@ public abstract class BaseNodeValidator<T extends Node>
 
 		doValidate(definition, node);
 
+		_validateLabel(node);
 		_validateName(node);
 		_validateNotifications(node);
 		_validateTransitions(node.getOutgoingTransitions());
@@ -46,29 +46,44 @@ public abstract class BaseNodeValidator<T extends Node>
 	protected abstract void doValidate(Definition definition, T node)
 		throws KaleoDefinitionValidationException;
 
+	private void _validateLabel(T node)
+		throws KaleoDefinitionValidationException {
+
+		Map<Locale, String> labelMap = node.getLabelMap();
+
+		if (labelMap == null) {
+			return;
+		}
+
+		for (Map.Entry<Locale, String> entry : labelMap.entrySet()) {
+			String value = entry.getValue();
+
+			if (value.length() > _NODE_VALUE_MAX_LENGTH) {
+				throw new KaleoDefinitionValidationException.
+					MustSetValidNodeNameLength(_NODE_VALUE_MAX_LENGTH, value);
+			}
+		}
+	}
+
 	private void _validateName(T node)
 		throws KaleoDefinitionValidationException {
 
-		String name = node.getDefaultLabel();
+		String name = node.getName();
 
-		if (name.length() > 200) {
+		if (name.length() > _NODE_VALUE_MAX_LENGTH) {
 			throw new KaleoDefinitionValidationException.
-				MustSetValidNodeNameLength(200, name);
+				MustSetValidNodeNameLength(_NODE_VALUE_MAX_LENGTH, name);
 		}
 	}
 
 	private void _validateNotifications(T node)
 		throws KaleoDefinitionValidationException {
 
-		Set<Notification> notifications = node.getNotifications();
-
-		Stream<Notification> notificationsStream = notifications.stream();
-
-		if (notificationsStream.anyMatch(
-				notification -> Validator.isNull(notification.getTemplate()))) {
-
-			throw new KaleoDefinitionValidationException.
-				EmptyNotificationTemplate(node.getDefaultLabel());
+		for (Notification notification : node.getNotifications()) {
+			if (Validator.isNull(notification.getTemplate())) {
+				throw new KaleoDefinitionValidationException.
+					EmptyNotificationTemplate(node.getDefaultLabel());
+			}
 		}
 	}
 
@@ -88,5 +103,7 @@ public abstract class BaseNodeValidator<T extends Node>
 			_validateTransition(transition);
 		}
 	}
+
+	private static final int _NODE_VALUE_MAX_LENGTH = 200;
 
 }

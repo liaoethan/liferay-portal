@@ -58,7 +58,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Michael C. Han
  */
 @Component(
-	enabled = false, immediate = true,
+	enabled = false,
 	property = {
 		"after-filter=Absolute Redirects Filter", "dispatcher=FORWARD",
 		"dispatcher=REQUEST", "servlet-context-name=",
@@ -160,10 +160,8 @@ public class MonitoringFilter
 			else if (exception instanceof ServletException) {
 				throw (ServletException)exception;
 			}
-			else {
-				throw new ServletException(
-					"Unable to execute request", exception);
-			}
+
+			throw new ServletException("Unable to execute request", exception);
 		}
 		finally {
 			if (portalRequestDataSample != null) {

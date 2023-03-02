@@ -83,6 +83,14 @@ public class ObjectRelationshipLocalServiceUtil {
 			serviceContext);
 	}
 
+	public static ObjectRelationship createManyToManyObjectRelationshipTable(
+			long userId, ObjectRelationship objectRelationship)
+		throws PortalException {
+
+		return getService().createManyToManyObjectRelationshipTable(
+			userId, objectRelationship);
+	}
+
 	/**
 	 * Creates a new object relationship with the primary key. Does not add the object relationship to the database.
 	 *
@@ -265,12 +273,19 @@ public class ObjectRelationshipLocalServiceUtil {
 	}
 
 	public static ObjectRelationship
-			fetchObjectRelationshipByObjectDefinitionId(
-				long objectDefinitionId, String name)
-		throws Exception {
+		fetchObjectRelationshipByObjectDefinitionId(
+			long objectDefinitionId, String name) {
 
 		return getService().fetchObjectRelationshipByObjectDefinitionId(
 			objectDefinitionId, name);
+	}
+
+	public static ObjectRelationship
+		fetchObjectRelationshipByObjectDefinitionId1(
+			long objectDefinitionId1, String name) {
+
+		return getService().fetchObjectRelationshipByObjectDefinitionId1(
+			objectDefinitionId1, name);
 	}
 
 	public static ObjectRelationship fetchObjectRelationshipByObjectFieldId2(
@@ -305,6 +320,12 @@ public class ObjectRelationshipLocalServiceUtil {
 		getActionableDynamicQuery() {
 
 		return getService().getActionableDynamicQuery();
+	}
+
+	public static List<ObjectRelationship> getAllObjectRelationships(
+		long objectDefinitionId) {
+
+		return getService().getAllObjectRelationships(objectDefinitionId);
 	}
 
 	public static com.liferay.portal.kernel.dao.orm.ExportActionableDynamicQuery
@@ -344,11 +365,11 @@ public class ObjectRelationshipLocalServiceUtil {
 	}
 
 	public static ObjectRelationship getObjectRelationshipByObjectDefinitionId(
-			long objectDefinitionId, String objectRelationshipName)
+			long objectDefinitionId, String name)
 		throws Exception {
 
 		return getService().getObjectRelationshipByObjectDefinitionId(
-			objectDefinitionId, objectRelationshipName);
+			objectDefinitionId, name);
 	}
 
 	/**
@@ -402,6 +423,12 @@ public class ObjectRelationshipLocalServiceUtil {
 
 		return getService().getObjectRelationships(
 			objectDefinitionId1, objectDefinition2, type);
+	}
+
+	public static List<ObjectRelationship> getObjectRelationships(
+		long objectDefinitionId, String type) {
+
+		return getService().getObjectRelationships(objectDefinitionId, type);
 	}
 
 	public static List<ObjectRelationship> getObjectRelationships(

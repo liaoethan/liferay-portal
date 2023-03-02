@@ -17,7 +17,7 @@ package com.liferay.analytics.batch.exportimport.internal.manager;
 import com.liferay.analytics.batch.exportimport.manager.AnalyticsBatchExportImportManager;
 import com.liferay.analytics.message.storage.service.AnalyticsMessageLocalService;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
-import com.liferay.analytics.settings.configuration.AnalyticsConfigurationTracker;
+import com.liferay.analytics.settings.configuration.AnalyticsConfigurationRegistry;
 import com.liferay.batch.engine.BatchEngineExportTaskExecutor;
 import com.liferay.batch.engine.BatchEngineImportTaskExecutor;
 import com.liferay.batch.engine.BatchEngineTaskContentType;
@@ -31,7 +31,7 @@ import com.liferay.batch.engine.service.BatchEngineImportTaskLocalService;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -41,7 +41,6 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -70,14 +69,14 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Riccardo Ferrari
  */
-@Component(immediate = true, service = AnalyticsBatchExportImportManager.class)
+@Component(service = AnalyticsBatchExportImportManager.class)
 public class AnalyticsBatchExportImportManagerImpl
 	implements AnalyticsBatchExportImportManager {
 
 	@Override
 	public void exportToAnalyticsCloud(
 			String batchEngineExportTaskItemDelegateName, long companyId,
-			List<String> fieldNamesList,
+			List<String> fieldNamesList, String filterString,
 			UnsafeConsumer<String, Exception> notificationUnsafeConsumer,
 			Date resourceLastModifiedDate, String resourceName, long userId)
 		throws Exception {
@@ -93,6 +92,23 @@ public class AnalyticsBatchExportImportManagerImpl
 				StringBundler.concat(
 					Field.getSortableFieldName(Field.MODIFIED_DATE), " ge ",
 					resourceLastModifiedDate.getTime()));
+		}
+
+		if (Validator.isNotNull(filterString)) {
+			if (resourceLastModifiedDate != null) {
+				parameters.put(
+					"filter",
+					StringBundler.concat(
+						"(", parameters.get("filter"), ") and (", filterString,
+						")"));
+			}
+			else {
+				parameters.put("filter", filterString);
+			}
+		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Filtering by: " + parameters.get("filter"));
 		}
 
 		BatchEngineExportTask batchEngineExportTask =
@@ -215,7 +231,7 @@ public class AnalyticsBatchExportImportManagerImpl
 	protected BatchEngineExportTaskExecutor batchEngineExportTaskExecutor;
 
 	private void _checkCompany(long companyId) {
-		if (_analyticsConfigurationTracker.isActive()) {
+		if (_analyticsConfigurationRegistry.isActive()) {
 			return;
 		}
 
@@ -224,7 +240,8 @@ public class AnalyticsBatchExportImportManagerImpl
 		}
 
 		AnalyticsConfiguration analyticsConfiguration =
-			_analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			_analyticsConfigurationRegistry.getAnalyticsConfiguration(
+				companyId);
 
 		if (Validator.isNotNull(
 				analyticsConfiguration.liferayAnalyticsEndpointURL())) {
@@ -253,7 +270,8 @@ public class AnalyticsBatchExportImportManagerImpl
 		}
 
 		AnalyticsConfiguration analyticsConfiguration =
-			_analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			_analyticsConfigurationRegistry.getAnalyticsConfiguration(
+				companyId);
 
 		options.setLocation(
 			HttpComponentsUtil.addParameter(
@@ -267,16 +285,15 @@ public class AnalyticsBatchExportImportManagerImpl
 			if (response.getResponseCode() ==
 					HttpURLConnection.HTTP_FORBIDDEN) {
 
-				JSONObject responseJSONObject =
-					JSONFactoryUtil.createJSONObject(
-						StringUtil.read(inputStream));
+				JSONObject responseJSONObject = _jsonFactory.createJSONObject(
+					StringUtil.read(inputStream));
 
 				_processInvalidTokenMessage(
 					companyId, responseJSONObject.getString("message"));
 			}
 
 			if (inputStream != null) {
-				return FileUtil.createTempFile(inputStream);
+				return _file.createTempFile(inputStream);
 			}
 		}
 		catch (Exception exception) {
@@ -288,7 +305,8 @@ public class AnalyticsBatchExportImportManagerImpl
 
 	private Http.Options _getOptions(long companyId) {
 		AnalyticsConfiguration analyticsConfiguration =
-			_analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			_analyticsConfigurationRegistry.getAnalyticsConfiguration(
+				companyId);
 
 		Http.Options options = new Http.Options();
 
@@ -407,7 +425,8 @@ public class AnalyticsBatchExportImportManagerImpl
 			(resourceLastModifiedDate != null) ? "INCREMENTAL" : "FULL");
 
 		AnalyticsConfiguration analyticsConfiguration =
-			_analyticsConfigurationTracker.getAnalyticsConfiguration(companyId);
+			_analyticsConfigurationRegistry.getAnalyticsConfiguration(
+				companyId);
 
 		options.setLocation(
 			analyticsConfiguration.liferayAnalyticsEndpointURL() +
@@ -421,9 +440,8 @@ public class AnalyticsBatchExportImportManagerImpl
 			if (response.getResponseCode() ==
 					HttpURLConnection.HTTP_FORBIDDEN) {
 
-				JSONObject responseJSONObject =
-					JSONFactoryUtil.createJSONObject(
-						StringUtil.read(inputStream));
+				JSONObject responseJSONObject = _jsonFactory.createJSONObject(
+					StringUtil.read(inputStream));
 
 				_processInvalidTokenMessage(
 					companyId, responseJSONObject.getString("message"));
@@ -454,7 +472,7 @@ public class AnalyticsBatchExportImportManagerImpl
 			"EEE, dd MMM yyyy HH:mm:ss zzz");
 
 	@Reference
-	private AnalyticsConfigurationTracker _analyticsConfigurationTracker;
+	private AnalyticsConfigurationRegistry _analyticsConfigurationRegistry;
 
 	@Reference
 	private AnalyticsMessageLocalService _analyticsMessageLocalService;
@@ -480,6 +498,12 @@ public class AnalyticsBatchExportImportManagerImpl
 	private ConfigurationProvider _configurationProvider;
 
 	@Reference
+	private com.liferay.portal.kernel.util.File _file;
+
+	@Reference
 	private Http _http;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

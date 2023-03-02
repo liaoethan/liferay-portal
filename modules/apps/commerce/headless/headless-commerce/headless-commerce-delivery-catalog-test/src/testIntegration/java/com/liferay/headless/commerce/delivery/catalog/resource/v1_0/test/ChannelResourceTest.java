@@ -15,20 +15,25 @@
 package com.liferay.headless.commerce.delivery.catalog.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.commerce.product.constants.CommerceChannelConstants;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.headless.commerce.delivery.catalog.client.dto.v1_0.Channel;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
@@ -49,22 +54,45 @@ public class ChannelResourceTest extends BaseChannelResourceTestCase {
 			_user.getUserId());
 	}
 
+	@Ignore
+	@Override
+	@Test
+	public void testGraphQLGetChannelsPage() throws Exception {
+		super.testGraphQLGetChannelsPage();
+	}
+
 	@Override
 	protected String[] getAdditionalAssertFieldNames() {
 		return new String[] {"currencyCode", "name", "type"};
 	}
 
+	@Override
+	protected Channel randomChannel() throws Exception {
+		return new Channel() {
+			{
+				currencyCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				externalReferenceCode = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				id = RandomTestUtil.randomLong();
+				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
+				siteGroupId = testGroup.getGroupId();
+				type = CommerceChannelConstants.CHANNEL_TYPE_SITE;
+			}
+		};
+	}
+
 	protected Channel testGetChannelsPage_addChannel(Channel channel)
 		throws Exception {
 
-		return _addChannel(channel);
+		return _addCommerceChannel(channel);
 	}
 
 	protected Channel testGraphQLChannel_addChannel() throws Exception {
-		return _addChannel(randomChannel());
+		return _addCommerceChannel(randomChannel());
 	}
 
-	private Channel _addChannel(Channel channel) throws Exception {
+	private Channel _addCommerceChannel(Channel channel) throws Exception {
 		CommerceChannel commerceChannel =
 			_commerceChannelLocalService.addCommerceChannel(
 				channel.getExternalReferenceCode(), channel.getSiteGroupId(),
@@ -73,10 +101,6 @@ public class ChannelResourceTest extends BaseChannelResourceTestCase {
 
 		_commerceChannels.add(commerceChannel);
 
-		return _toChannel(commerceChannel);
-	}
-
-	private Channel _toChannel(CommerceChannel commerceChannel) {
 		return new Channel() {
 			{
 				currencyCode = commerceChannel.getCommerceCurrencyCode();

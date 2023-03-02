@@ -12,7 +12,9 @@
  * details.
  */
 
+import ClayIcon from '@clayui/icon';
 import {normalizeFieldName} from 'data-engine-js-components-web';
+import {sub} from 'frontend-js-web';
 import React, {useRef} from 'react';
 
 import {FieldBase} from '../FieldBase/ReactFieldBase.es';
@@ -60,7 +62,9 @@ const Main = ({
 	name,
 	onBlur,
 	onChange,
+	onClick,
 	onFocus,
+	onKeyDown,
 	onKeywordBlur,
 	onKeywordChange,
 	onReferenceBlur,
@@ -69,6 +73,7 @@ const Main = ({
 	readOnly,
 	reference,
 	required,
+	showCloseButton,
 	showKeyword = false,
 	showLabel,
 	spritemap,
@@ -107,6 +112,7 @@ const Main = ({
 					}
 				}}
 				onFocus={onFocus}
+				onKeyDown={onKeyDown}
 				placeholder={placeholder}
 				readOnly={readOnly}
 				required={required}
@@ -116,6 +122,20 @@ const Main = ({
 				value={value}
 				visible={visible}
 			/>
+
+			{showCloseButton && (
+				<button
+					aria-label={sub(
+						Liferay.Language.get('remove-x-option'),
+						keyword
+					)}
+					className="close close-modal"
+					onClick={onClick}
+					type="button"
+				>
+					<ClayIcon symbol="times" />
+				</button>
+			)}
 
 			{showKeyword && (
 				<KeyValue

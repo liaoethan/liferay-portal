@@ -15,11 +15,14 @@
 package com.liferay.layout.admin.web.internal.portlet.action;
 
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
+import com.liferay.layout.admin.web.internal.handler.LayoutUtilityPageEntryPortalExceptionRequestHandler;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryService;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.ParamUtil;
 
 import javax.portlet.ActionRequest;
@@ -32,7 +35,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bárbara
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 		"mvc.command.name=/layout_admin/update_layout_utility_page_entry"
@@ -52,14 +54,37 @@ public class UpdateLayoutUtilityPageEntryMVCActionCommand
 
 		String name = ParamUtil.getString(actionRequest, "name");
 
-		_layoutUtilityPageEntryService.updateLayoutUtilityPageEntry(
-			layoutUtilityPageEntryId, name);
+		try {
+			_layoutUtilityPageEntryService.updateLayoutUtilityPageEntry(
+				layoutUtilityPageEntryId, name);
 
-		JSONPortletResponseUtil.writeJSON(
-			actionRequest, actionResponse,
-			JSONUtil.put(
-				"redirectURL", ParamUtil.getString(actionRequest, "redirect")));
+			if (SessionErrors.contains(
+					actionRequest, "layoutUtilityPageEntryNameInvalid")) {
+
+				addSuccessMessage(actionRequest, actionResponse);
+			}
+
+			JSONPortletResponseUtil.writeJSON(
+				actionRequest, actionResponse,
+				JSONUtil.put(
+					"redirectURL",
+					ParamUtil.getString(actionRequest, "redirect")));
+		}
+		catch (PortalException portalException) {
+			SessionErrors.add(
+				actionRequest, "layoutUtilityPageEntryNameInvalid");
+
+			hideDefaultErrorMessage(actionRequest);
+
+			_layoutUtilityPageEntryPortalExceptionRequestHandler.
+				handlePortalException(
+					actionRequest, actionResponse, portalException);
+		}
 	}
+
+	@Reference
+	private LayoutUtilityPageEntryPortalExceptionRequestHandler
+		_layoutUtilityPageEntryPortalExceptionRequestHandler;
 
 	@Reference
 	private LayoutUtilityPageEntryService _layoutUtilityPageEntryService;

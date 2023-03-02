@@ -43,6 +43,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.ViewTypeItemList;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
@@ -56,12 +57,10 @@ import com.liferay.portal.kernel.servlet.taglib.ui.Menu;
 import com.liferay.portal.kernel.servlet.taglib.ui.URLMenuItem;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -120,7 +119,6 @@ public class DLAdminManagementToolbarDisplayContext
 		DigitalSignatureConfiguration digitalSignatureConfiguration =
 			DigitalSignatureConfigurationUtil.getDigitalSignatureConfiguration(
 				_themeDisplay.getCompanyId(), _themeDisplay.getSiteGroupId());
-		boolean enableBulkPermissions = _isEnableBulkPermissions();
 		boolean enableOnBulk = _isEnableOnBulk();
 		boolean stagedActions = _isStagedActions();
 		User user = _themeDisplay.getUser();
@@ -214,8 +212,7 @@ public class DLAdminManagementToolbarDisplayContext
 				dropdownItem.setQuickAction(false);
 			}
 		).add(
-			() ->
-				stagedActions && !user.isDefaultUser() && enableBulkPermissions,
+			() -> stagedActions && !user.isDefaultUser(),
 			dropdownItem -> {
 				dropdownItem.putData("action", "permissions");
 				dropdownItem.setIcon("password-policies");
@@ -307,8 +304,7 @@ public class DLAdminManagementToolbarDisplayContext
 						_httpServletRequest, "filter-by-navigation"));
 			}
 		).addGroup(
-			() -> !GetterUtil.getBoolean(
-				PropsUtil.get("feature.flag.LPS-144527")),
+			() -> !FeatureFlagManagerUtil.isEnabled("LPS-144527"),
 			dropdownGroupItem -> {
 				dropdownGroupItem.setDropdownItems(_getOrderByDropdownItems());
 				dropdownGroupItem.setLabel(
@@ -388,9 +384,7 @@ public class DLAdminManagementToolbarDisplayContext
 
 	@Override
 	public List<DropdownItem> getOrderDropdownItems() {
-		if (_isSearch() ||
-			!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-144527"))) {
-
+		if (_isSearch() || !FeatureFlagManagerUtil.isEnabled("LPS-144527")) {
 			return null;
 		}
 
@@ -833,14 +827,6 @@ public class DLAdminManagementToolbarDisplayContext
 		return DLUtil.hasWorkflowDefinitionLink(
 			_themeDisplay.getCompanyId(), _themeDisplay.getScopeGroupId(),
 			folderId, fileEntryTypeId);
-	}
-
-	private boolean _isEnableBulkPermissions() {
-		if (GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-87806"))) {
-			return true;
-		}
-
-		return false;
 	}
 
 	private boolean _isEnableOnBulk() {

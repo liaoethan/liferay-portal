@@ -420,7 +420,7 @@ const MillerColumnsItem = ({
 							<ClayButtonWithIcon
 								borderless
 								displayType="secondary"
-								small
+								size="sm"
 								symbol="plus"
 								title={Liferay.Language.get('add-child-page')}
 							/>
@@ -471,7 +471,7 @@ const MillerColumnsItem = ({
 							<ClayButtonWithIcon
 								borderless
 								displayType="secondary"
-								small
+								size="sm"
 								symbol="ellipsis-v"
 								title={Liferay.Language.get(
 									'open-page-options-menu'
@@ -483,7 +483,7 @@ const MillerColumnsItem = ({
 			)}
 
 			{hasChild && (
-				<ClayLayout.ContentCol className="miller-columns-item-child-indicator">
+				<ClayLayout.ContentCol className="miller-columns-item-child-indicator text-secondary">
 					<ClayIcon symbol={rtl ? 'caret-left' : 'caret-right'} />
 				</ClayLayout.ContentCol>
 			)}

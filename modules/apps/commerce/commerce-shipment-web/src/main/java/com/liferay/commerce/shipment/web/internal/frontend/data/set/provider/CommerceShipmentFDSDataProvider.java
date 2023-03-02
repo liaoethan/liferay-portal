@@ -29,12 +29,12 @@ import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.model.CommerceShipment;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
-import com.liferay.commerce.product.service.CommerceChannelService;
 import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.commerce.service.CommerceShipmentService;
 import com.liferay.frontend.data.set.provider.FDSDataProvider;
 import com.liferay.frontend.data.set.provider.search.FDSKeywords;
 import com.liferay.frontend.data.set.provider.search.FDSPagination;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -55,7 +55,6 @@ import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -66,7 +65,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommerceShipmentFDSNames.SHIPMENTS,
 	service = FDSDataProvider.class
 )
@@ -137,7 +135,7 @@ public class CommerceShipmentFDSDataProvider
 
 			shipments.add(
 				new Shipment(
-					commerceShipment.getCommerceAccountName(),
+					commerceShipment.getAccountEntryName(),
 					_getDescriptiveAddress(commerceShipment),
 					commerceChannel.getName(),
 					dateTimeFormat.format(commerceShipment.getCreateDate()),
@@ -201,14 +199,9 @@ public class CommerceShipmentFDSDataProvider
 	private long[] _getCommerceChannelGroupIds(long companyId)
 		throws PortalException {
 
-		List<CommerceChannel> commerceChannels =
-			_commerceChannelLocalService.search(companyId);
-
-		Stream<CommerceChannel> stream = commerceChannels.stream();
-
-		return stream.mapToLong(
-			CommerceChannel::getGroupId
-		).toArray();
+		return TransformUtil.transformToLongArray(
+			_commerceChannelLocalService.search(companyId),
+			CommerceChannel::getGroupId);
 	}
 
 	private String _getDescriptiveAddress(CommerceShipment commerceShipment)
@@ -245,9 +238,6 @@ public class CommerceShipmentFDSDataProvider
 
 	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;
-
-	@Reference
-	private CommerceChannelService _commerceChannelService;
 
 	@Reference
 	private CommerceOrderService _commerceOrderService;

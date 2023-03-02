@@ -17,9 +17,15 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<GlobalCSSCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<GlobalCSSCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-GlobalCSSCET globalCSSCET = editClientExtensionEntryPartDisplayContext.getCET();
+GlobalCSSCET globalCSSCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input ignoreRequestValue="<%= true %>" label="url" name="url" type="text" value="<%= globalCSSCET.getURL() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="url" required="<%= true %>" type="text" value="<%= globalCSSCET.getURL() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="this-css-is-appended-to-theme-css" />
+	</div>
+</aui:field-wrapper>

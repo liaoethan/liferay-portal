@@ -20,22 +20,14 @@ import {
 	FormError,
 	SidebarCategory,
 } from '@liferay/object-js-components-web';
-export default function Action({
-	objectAction: initialValues,
-	objectActionCodeEditorElements,
-	objectActionExecutors,
-	objectActionTriggers,
-	objectDefinitionsRelationshipsURL,
-	readOnly,
-	requestParams: {method, url},
-	successMessage,
-	validateExpressionURL,
-}: IProps): JSX.Element;
-interface IProps {
+interface ActionProps {
+	isApproved?: boolean;
 	objectAction: Partial<ObjectAction>;
 	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: CustomItem[];
 	objectActionTriggers: CustomItem[];
+	objectDefinitionExternalReferenceCode: string;
+	objectDefinitionId: number;
 	objectDefinitionsRelationshipsURL: string;
 	readOnly?: boolean;
 	requestParams: {
@@ -43,6 +35,7 @@ interface IProps {
 		url: string;
 	};
 	successMessage: string;
+	systemObject: boolean;
 	title: string;
 	validateExpressionURL: string;
 }
@@ -53,4 +46,19 @@ export declare type ActionError = FormError<
 		[key: string]: string;
 	};
 };
+export default function Action({
+	isApproved,
+	objectAction: initialValues,
+	objectActionCodeEditorElements,
+	objectActionExecutors,
+	objectActionTriggers,
+	objectDefinitionExternalReferenceCode,
+	objectDefinitionId,
+	objectDefinitionsRelationshipsURL,
+	readOnly,
+	requestParams: {method, url},
+	successMessage,
+	systemObject,
+	validateExpressionURL,
+}: ActionProps): JSX.Element;
 export {};

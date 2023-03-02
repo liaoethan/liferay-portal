@@ -71,8 +71,10 @@ export type TObjectView = {
 };
 
 export type TState = {
+	creationLanguageId: Liferay.Language.Locale;
 	filterOperators: TFilterOperators;
 	isViewOnly: boolean;
+	objectDefinitionExternalReferenceCode: string;
 	objectFields: ObjectField[];
 	objectView: TObjectView;
 	objectViewId: string;

@@ -19,17 +19,21 @@ import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.exception.NoSuchInfoItemException;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
 import com.liferay.info.item.InfoItemDetails;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemIdentifier;
+import com.liferay.info.item.InfoItemReference;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.item.provider.InfoItemPermissionProvider;
 import com.liferay.info.item.renderer.InfoItemRenderer;
-import com.liferay.info.item.renderer.InfoItemRendererTracker;
+import com.liferay.info.item.renderer.InfoItemRendererRegistry;
 import com.liferay.info.item.renderer.InfoItemTemplatedRenderer;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
 import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -37,15 +41,12 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Tuple;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -94,10 +95,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 
 	@Override
 	public String getLabel(Locale locale) {
-		ResourceBundle resourceBundle = ResourceBundleUtil.getBundle(
-			"content.Language", getClass());
-
-		return _language.get(resourceBundle, "content-display");
+		return _language.get(locale, "content-display");
 	}
 
 	@Override
@@ -109,10 +107,10 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 		JSONObject jsonObject = _getFieldValueJSONObject(
 			fragmentRendererContext);
 
-		Optional<Object> displayObjectOptional =
-			fragmentRendererContext.getDisplayObjectOptional();
+		InfoItemReference infoItemReference =
+			fragmentRendererContext.getContextInfoItemReference();
 
-		if (!displayObjectOptional.isPresent() &&
+		if ((infoItemReference == null) &&
 			((jsonObject == null) || (jsonObject.length() == 0))) {
 
 			if (FragmentRendererUtil.isEditMode(httpServletRequest)) {
@@ -131,11 +129,10 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 			className = jsonObject.getString("className");
 
 			displayObject = _getDisplayObject(
-				className, jsonObject.getLong("classPK"),
-				displayObjectOptional);
+				className, jsonObject.getLong("classPK"), infoItemReference);
 		}
 		else {
-			displayObject = displayObjectOptional.orElse(null);
+			displayObject = _getInfoItem(infoItemReference);
 		}
 
 		if (displayObject == null) {
@@ -167,9 +164,19 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 		}
 
 		if (!_hasPermission(httpServletRequest, className, displayObject)) {
-			FragmentRendererUtil.printPortletMessageInfo(
-				httpServletRequest, httpServletResponse,
-				"you-do-not-have-permission-to-access-the-requested-resource");
+			if (!FeatureFlagManagerUtil.isEnabled("LPS-169923")) {
+				FragmentRendererUtil.printPortletMessageInfo(
+					httpServletRequest, httpServletResponse,
+					"you-do-not-have-permission-to-access-the-requested-" +
+						"resource");
+
+				return;
+			}
+
+			if (FragmentRendererUtil.isEditMode(httpServletRequest)) {
+				FragmentRendererUtil.printRestrictedContentMessage(
+					httpServletRequest, httpServletResponse);
+			}
 
 			return;
 		}
@@ -195,15 +202,14 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 	}
 
 	private Object _getDisplayObject(
-		String className, long classPK,
-		Optional<Object> displayObjectOptional) {
+		String className, long classPK, InfoItemReference infoItemReference) {
 
 		InfoItemObjectProvider<?> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		if (infoItemObjectProvider == null) {
-			return displayObjectOptional.orElse(null);
+			return _getInfoItem(infoItemReference);
 		}
 
 		try {
@@ -211,7 +217,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 				new ClassPKInfoItemIdentifier(classPK));
 
 			if (infoItem == null) {
-				return displayObjectOptional.orElse(null);
+				return _getInfoItem(infoItemReference);
 			}
 
 			return infoItem;
@@ -222,7 +228,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 			}
 		}
 
-		return displayObjectOptional.orElse(null);
+		return _getInfoItem(infoItemReference);
 	}
 
 	private JSONObject _getFieldValueJSONObject(
@@ -237,13 +243,38 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 			fragmentRendererContext.getLocale(), "itemSelector");
 	}
 
+	private Object _getInfoItem(InfoItemReference infoItemReference) {
+		if (infoItemReference == null) {
+			return null;
+		}
+
+		InfoItemIdentifier infoItemIdentifier =
+			infoItemReference.getInfoItemIdentifier();
+
+		InfoItemObjectProvider<Object> infoItemObjectProvider =
+			_infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemObjectProvider.class, infoItemReference.getClassName(),
+				infoItemIdentifier.getInfoItemServiceFilter());
+
+		try {
+			return infoItemObjectProvider.getInfoItem(infoItemIdentifier);
+		}
+		catch (NoSuchInfoItemException noSuchInfoItemException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchInfoItemException);
+			}
+		}
+
+		return null;
+	}
+
 	private Tuple _getTuple(
 		String className, Class<?> displayObjectClass,
 		FragmentRendererContext fragmentRendererContext) {
 
 		List<InfoItemRenderer<?>> infoItemRenderers =
 			FragmentRendererUtil.getInfoItemRenderers(
-				className, displayObjectClass, _infoItemRendererTracker);
+				className, displayObjectClass, _infoItemRendererRegistry);
 
 		if (infoItemRenderers == null) {
 			return null;
@@ -270,7 +301,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 
 		InfoItemRenderer<Object> infoItemRenderer =
 			(InfoItemRenderer<Object>)
-				_infoItemRendererTracker.getInfoItemRenderer(
+				_infoItemRendererRegistry.getInfoItemRenderer(
 					infoItemRendererKey);
 
 		if (infoItemRenderer != null) {
@@ -289,11 +320,14 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
-		String itemType = (String)httpServletRequest.getAttribute(
-			InfoDisplayWebKeys.INFO_LIST_DISPLAY_OBJECT_ITEM_TYPE);
+		InfoItemReference infoItemReference =
+			(InfoItemReference)httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_REFERENCE);
 
-		if (Validator.isNull(className) && Validator.isNotNull(itemType)) {
-			className = itemType;
+		if (Validator.isNull(className) &&
+			Validator.isNotNull(infoItemReference.getClassName())) {
+
+			className = infoItemReference.getClassName();
 		}
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
@@ -316,7 +350,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 
 		try {
 			InfoItemPermissionProvider infoItemPermissionProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemPermissionProvider.class, className);
 
 			if ((infoItemPermissionProvider != null) &&
@@ -343,10 +377,10 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
 
 	@Reference
-	private InfoItemRendererTracker _infoItemRendererTracker;
+	private InfoItemRendererRegistry _infoItemRendererRegistry;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;

@@ -63,12 +63,13 @@ public class ClientExtensionEntryRelLocalServiceUtil {
 
 	public static ClientExtensionEntryRel addClientExtensionEntryRel(
 			long userId, long groupId, long classNameId, long classPK,
-			String cetExternalReferenceCode, String type, String typeSettings)
+			String cetExternalReferenceCode, String type, String typeSettings,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addClientExtensionEntryRel(
 			userId, groupId, classNameId, classPK, cetExternalReferenceCode,
-			type, typeSettings);
+			type, typeSettings, serviceContext);
 	}
 
 	/**
@@ -258,31 +259,12 @@ public class ClientExtensionEntryRelLocalServiceUtil {
 			classNameId, classPK, type);
 	}
 
-	/**
-	 * Returns the client extension entry rel with the matching external reference code and company.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param externalReferenceCode the client extension entry rel's external reference code
-	 * @return the matching client extension entry rel, or <code>null</code> if a matching client extension entry rel could not be found
-	 */
 	public static ClientExtensionEntryRel
 		fetchClientExtensionEntryRelByExternalReferenceCode(
-			long companyId, String externalReferenceCode) {
+			String externalReferenceCode, long groupId) {
 
 		return getService().fetchClientExtensionEntryRelByExternalReferenceCode(
-			companyId, externalReferenceCode);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchClientExtensionEntryRelByExternalReferenceCode(long, String)}
-	 */
-	@Deprecated
-	public static ClientExtensionEntryRel
-		fetchClientExtensionEntryRelByReferenceCode(
-			long companyId, String externalReferenceCode) {
-
-		return getService().fetchClientExtensionEntryRelByReferenceCode(
-			companyId, externalReferenceCode);
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -321,21 +303,13 @@ public class ClientExtensionEntryRelLocalServiceUtil {
 			clientExtensionEntryRelId);
 	}
 
-	/**
-	 * Returns the client extension entry rel with the matching external reference code and company.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param externalReferenceCode the client extension entry rel's external reference code
-	 * @return the matching client extension entry rel
-	 * @throws PortalException if a matching client extension entry rel could not be found
-	 */
 	public static ClientExtensionEntryRel
 			getClientExtensionEntryRelByExternalReferenceCode(
-				long companyId, String externalReferenceCode)
+				String externalReferenceCode, long groupId)
 		throws PortalException {
 
 		return getService().getClientExtensionEntryRelByExternalReferenceCode(
-			companyId, externalReferenceCode);
+			externalReferenceCode, groupId);
 	}
 
 	/**
@@ -490,6 +464,16 @@ public class ClientExtensionEntryRelLocalServiceUtil {
 
 		return getService().updateClientExtensionEntryRel(
 			clientExtensionEntryRel);
+	}
+
+	public static ClientExtensionEntryRel updateClientExtensionEntryRel(
+			long clientExtensionEntryRelId, long classNameId, long classPK,
+			String cetExternalReferenceCode, String type, String typeSettings)
+		throws PortalException {
+
+		return getService().updateClientExtensionEntryRel(
+			clientExtensionEntryRelId, classNameId, classPK,
+			cetExternalReferenceCode, type, typeSettings);
 	}
 
 	public static ClientExtensionEntryRelLocalService getService() {

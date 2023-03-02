@@ -52,11 +52,15 @@ renderResponse.setTitle(LanguageUtil.get(request, titleKey));
 		).put(
 			"displayNames", LocaleUtil.toDisplayNames(LanguageUtil.getAvailableLocales(), locale)
 		).put(
-			"isView", view
+			"functionActionExecutors", kaleoDesignerDisplayContext.getFunctionActionExecutorsJSONArray()
+		).put(
+			"isView", view || !kaleoDesignerDisplayContext.canPublishWorkflowDefinition()
 		).put(
 			"languageIds", LocaleUtil.toLanguageIds(LanguageUtil.getAvailableLocales())
 		).put(
 			"portletNamespace", PortalUtil.getPortletNamespace(KaleoDesignerPortletKeys.KALEO_DESIGNER)
+		).put(
+			"statuses", kaleoDesignerDisplayContext.getStatusesJSONArray()
 		).put(
 			"title", (kaleoDefinitionVersion == null) ? LanguageUtil.get(request, "new-workflow") : kaleoDefinitionVersion.getTitle(locale)
 		).put(

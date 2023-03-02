@@ -13,23 +13,31 @@
  */
 
 import ClayButton from '@clayui/button';
-import ClayDropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
-import {useContext, useState} from 'react';
+import ClayPopover from '@clayui/popover';
+import {useCallback, useContext, useMemo, useState} from 'react';
 
 import {ListViewContext, ListViewTypes} from '../../context/ListViewContext';
+import SearchBuilder from '../../core/SearchBuilder';
 import useFormActions from '../../hooks/useFormActions';
 import i18n from '../../i18n';
-import {SearchBuilder} from '../../util/search';
+import {FilterSchema} from '../../schema/filter';
 import Form from '../Form';
 import {RendererFields} from '../Form/Renderer';
+import {FieldOptions} from '../Form/Renderer/Renderer';
 
 type ManagementToolbarFilterProps = {
-	filterFields?: RendererFields[];
+	filterSchema?: FilterSchema;
 };
 
-const getInitialFilters = (fields?: RendererFields[]) => {
-	if (fields) {
+const ManagementToolbarFilter: React.FC<ManagementToolbarFilterProps> = ({
+	filterSchema,
+}) => {
+	const fields = useMemo(() => filterSchema?.fields as RendererFields[], [
+		filterSchema?.fields,
+	]);
+
+	const initialFilters = useMemo(() => {
 		const initialValues: {[key: string]: string} = {};
 
 		for (const field of fields) {
@@ -37,18 +45,15 @@ const getInitialFilters = (fields?: RendererFields[]) => {
 		}
 
 		return initialValues;
-	}
+	}, [fields]);
 
-	return {};
-};
-
-const ManagementToolbarFilter: React.FC<ManagementToolbarFilterProps> = ({
-	filterFields,
-}) => {
-	const initialFilters = getInitialFilters(filterFields);
-	const [, dispatch] = useContext(ListViewContext);
+	const [listViewContext, dispatch] = useContext(ListViewContext);
+	const [fieldOptions, setFieldOptions] = useState<FieldOptions>({});
 	const [filter, setFilter] = useState('');
-	const [form, setForm] = useState(initialFilters);
+	const [form, setForm] = useState(() => ({
+		...initialFilters,
+		...listViewContext.filters.filter,
+	}));
 	const formActions = useFormActions();
 
 	const onChange = formActions.form.onChange({form, setForm});
@@ -62,33 +67,37 @@ const ManagementToolbarFilter: React.FC<ManagementToolbarFilterProps> = ({
 		});
 	};
 
-	const onApply = () => {
+	const onApply = useCallback(() => {
 		const filterCleaned = SearchBuilder.removeEmptyFilter(form);
 
-		const entries = Object.keys(filterCleaned).map((key) => ({
-			label: filterFields?.find(({name}) => name === key)?.label,
-			name: key,
-			value: filterCleaned[key],
-		}));
+		const entries = Object.keys(filterCleaned).map((key) => {
+			const field = fields?.find(({name}) => name === key);
+
+			const value = filterCleaned[key];
+
+			return {
+				label: field?.label,
+				name: key,
+				value,
+			};
+		});
 
 		dispatch({
 			payload: {filters: {entries, filter: filterCleaned}},
 			type: ListViewTypes.SET_UPDATE_FILTERS_AND_SORT,
 		});
-	};
+	}, [dispatch, fields, form]);
 
 	return (
-		<ClayDropDown
-			menuElementAttrs={{
-				className: 'management-toolbar-filter-dropdown',
-			}}
-			menuWidth="sm"
-			renderMenuOnClick
+		<ClayPopover
+			alignPosition="bottom-right"
+			className="popover-filter"
+			closeOnClickOutside
 			trigger={
-				<ClayButton className="nav-link" displayType="unstyled">
+				<ClayButton className="d-flex nav-link" displayType="unstyled">
 					<span className="navbar-breakpoint-down-d-none">
 						<ClayIcon
-							className="inline-item inline-item-after"
+							className="inline-item inline-item-after inline-item-before"
 							symbol="filter"
 						/>
 					</span>
@@ -99,49 +108,52 @@ const ManagementToolbarFilter: React.FC<ManagementToolbarFilterProps> = ({
 				</ClayButton>
 			}
 		>
-			{!!filterFields?.length && (
-				<>
-					<div className="dropdown-header">
-						<p className="font-weight-bold my-2">
-							{i18n.translate('filter-results')}
-						</p>
+			<div className="align-content-between d-flex flex-column">
+				<div className="dropdown-header">
+					<p className="font-weight-bold my-2">
+						{i18n.translate('filter-results')}
+					</p>
 
-						<Form.Input
-							name="search-filter"
-							onChange={({target: {value}}) => setFilter(value)}
-							placeholder="Search Filters"
-							value={filter}
-						/>
-					</div>
+					<Form.Input
+						name="search-filter"
+						onChange={({target: {value}}) => setFilter(value)}
+						placeholder={i18n.translate('search-filters')}
+						value={filter}
+					/>
+
 					<Form.Divider />
+				</div>
 
-					<div className="popover-body">
+				<div className="body-filters">
+					<div className="popover-filter-content">
 						<Form.Renderer
-							fields={filterFields}
+							fieldOptions={fieldOptions}
+							fields={fields}
 							filter={filter}
 							form={form}
 							onChange={onChange}
+							setFieldOptions={setFieldOptions}
 						/>
 					</div>
+				</div>
 
+				<div className="popover-footer">
 					<Form.Divider />
 
-					<div className="popover-footer">
-						<ClayButton onClick={onApply}>
-							{i18n.translate('apply')}
-						</ClayButton>
+					<ClayButton onClick={onApply}>
+						{i18n.translate('apply')}
+					</ClayButton>
 
-						<ClayButton
-							className="ml-3"
-							displayType="secondary"
-							onClick={onClear}
-						>
-							{i18n.translate('clear')}
-						</ClayButton>
-					</div>
-				</>
-			)}
-		</ClayDropDown>
+					<ClayButton
+						className="ml-3"
+						displayType="secondary"
+						onClick={onClear}
+					>
+						{i18n.translate('clear')}
+					</ClayButton>
+				</div>
+			</div>
+		</ClayPopover>
 	);
 };
 

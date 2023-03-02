@@ -132,9 +132,8 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 		ReflectionTestUtil.setFieldValue(
 			_webSsoProfileImpl, "metadataManager", metadataManagerImpl);
 		ReflectionTestUtil.setFieldValue(_webSsoProfileImpl, "portal", portal);
-
-		_webSsoProfileImpl.setSamlBindings(samlBindings);
-
+		ReflectionTestUtil.setFieldValue(
+			_webSsoProfileImpl, "samlBindingProvider", samlBindingProvider);
 		ReflectionTestUtil.setFieldValue(
 			_webSsoProfileImpl, "samlProviderConfigurationHelper",
 			samlProviderConfigurationHelper);
@@ -1229,8 +1228,7 @@ public class WebSsoProfileIntegrationTest extends BaseSamlTestCase {
 				samlSsoRequestContext, assertionConsumerService, issueDate);
 
 		return _webSsoProfileImpl.getSuccessSubject(
-			samlSsoRequestContext, assertionConsumerService, nameID,
-			subjectConfirmationData);
+			nameID, subjectConfirmationData);
 	}
 
 	private void _testVerifyAssertionSignature(String entityId)

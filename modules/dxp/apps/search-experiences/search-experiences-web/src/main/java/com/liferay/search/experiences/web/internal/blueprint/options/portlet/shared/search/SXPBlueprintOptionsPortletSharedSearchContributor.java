@@ -24,8 +24,6 @@ import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchSe
 import com.liferay.search.experiences.constants.SXPPortletKeys;
 import com.liferay.search.experiences.web.internal.blueprint.options.portlet.preferences.SXPBlueprintOptionsPortletPreferencesUtil;
 
-import java.util.Optional;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.component.annotations.Component;
@@ -35,7 +33,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Kevin Tan
  */
 @Component(
-	enabled = false, immediate = true,
+	enabled = false,
 	property = "javax.portlet.name=" + SXPPortletKeys.SXP_BLUEPRINT_OPTIONS,
 	service = PortletSharedSearchContributor.class
 )
@@ -53,7 +51,7 @@ public class SXPBlueprintOptionsPortletSharedSearchContributor
 
 		SearchRequestBuilder searchRequestBuilder =
 			portletSharedSearchSettings.getFederatedSearchRequestBuilder(
-				Optional.of(federatedSearchKey));
+				federatedSearchKey);
 
 		searchRequestBuilder.withSearchContext(
 			searchContext -> {

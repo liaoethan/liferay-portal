@@ -48,7 +48,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommerceOrderFDSNames.PLACED_ORDERS,
 	service = FDSDataProvider.class
 )
@@ -84,7 +83,7 @@ public class PlacedCommerceOrderFDSDataProvider
 			_commerceOrderService.getUserPlacedCommerceOrders(
 				commerceChannel.getCompanyId(), commerceChannel.getGroupId(),
 				fdsKeywords.getKeywords(), fdsPagination.getStartPosition(),
-				fdsPagination.getEndPosition());
+				fdsPagination.getEndPosition(), sort);
 
 		CPRequestHelper cpRequestHelper = new CPRequestHelper(
 			httpServletRequest);

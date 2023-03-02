@@ -21,6 +21,7 @@ import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
+import com.liferay.oauth2.provider.redirect.OAuth2RedirectURIInterpolator;
 import com.liferay.oauth2.provider.rest.internal.configuration.OAuth2AuthorizationServerConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.authorize.configuration.OAuth2AuthorizationFlowConfiguration;
 import com.liferay.oauth2.provider.rest.internal.endpoint.constants.OAuth2ProviderRESTEndpointConstants;
@@ -40,10 +41,12 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.TransactionConfig;
@@ -347,6 +350,10 @@ public class LiferayOAuthDataProvider
 			companyId, clientId);
 	}
 
+	public Client getClient(OAuth2Application oAuth2Application) {
+		return _populateClient(oAuth2Application, getMessageContext());
+	}
+
 	@Override
 	public List<Client> getClients(UserSubject resourceOwner) {
 		throw new UnsupportedOperationException();
@@ -362,9 +369,25 @@ public class LiferayOAuthDataProvider
 	}
 
 	public String getIssuer() {
-		MessageContext messageContext = getMessageContext();
+		try {
+			MessageContext messageContext = getMessageContext();
 
-		return _portal.getHost(messageContext.getHttpServletRequest());
+			return _portal.getHost(messageContext.getHttpServletRequest());
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+
+			Company company = _companyLocalService.fetchCompany(
+				CompanyThreadLocal.getCompanyId());
+
+			if (company != null) {
+				return company.getWebId();
+			}
+		}
+
+		return null;
 	}
 
 	public OAuth2Authorization getOAuth2Authorization(
@@ -448,8 +471,8 @@ public class LiferayOAuthDataProvider
 			long lifetime = expires - issuedAt;
 
 			RefreshToken refreshToken = new RefreshToken(
-				_populateClient(oAuth2Application), refreshTokenKey, lifetime,
-				issuedAt);
+				_populateClient(oAuth2Application, getMessageContext()),
+				refreshTokenKey, lifetime, issuedAt);
 
 			refreshToken.setAccessTokens(
 				Collections.singletonList(
@@ -498,6 +521,17 @@ public class LiferayOAuthDataProvider
 
 		return _serverAuthorizationCodeGrantProvider.
 			getServerAuthorizationCodeGrant(code);
+	}
+
+	public UserSubject getUserSubject(long userId) {
+		User user = _userLocalService.fetchUser(userId);
+
+		if (user == null) {
+			return null;
+		}
+
+		return _populateUserSubject(
+			user.getCompanyId(), userId, user.getScreenName());
 	}
 
 	@Override
@@ -800,7 +834,7 @@ public class LiferayOAuthDataProvider
 
 		messageContext.put(OAuthConstants.CLIENT_ID, clientId);
 
-		return _populateClient(oAuth2Application);
+		return _populateClient(oAuth2Application, messageContext);
 	}
 
 	@Override
@@ -1141,7 +1175,9 @@ public class LiferayOAuthDataProvider
 		return serverAccessToken;
 	}
 
-	private Client _populateClient(OAuth2Application oAuth2Application) {
+	private Client _populateClient(
+		OAuth2Application oAuth2Application, MessageContext messageContext) {
+
 		String clientSecret = oAuth2Application.getClientSecret();
 
 		if (Validator.isBlank(clientSecret)) {
@@ -1224,7 +1260,10 @@ public class LiferayOAuthDataProvider
 					oAuth2Application.getOAuth2ApplicationScopeAliasesId()));
 		}
 
-		client.setRedirectUris(oAuth2Application.getRedirectURIsList());
+		client.setRedirectUris(
+			OAuth2RedirectURIInterpolator.interpolateRedirectURIsList(
+				messageContext.getHttpServletRequest(),
+				oAuth2Application.getRedirectURIsList(), _portal));
 		client.setSubject(
 			_populateUserSubject(
 				oAuth2Application.getCompanyId(),
@@ -1394,6 +1433,9 @@ public class LiferayOAuthDataProvider
 		policyOption = ReferencePolicyOption.GREEDY
 	)
 	private volatile BearerTokenProviderAccessor _bearerTokenProviderAccessor;
+
+	@Reference
+	private CompanyLocalService _companyLocalService;
 
 	@Reference
 	private ConfigurationProvider _configurationProvider;

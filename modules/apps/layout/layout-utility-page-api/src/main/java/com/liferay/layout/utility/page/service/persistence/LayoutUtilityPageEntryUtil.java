@@ -806,6 +806,66 @@ public class LayoutUtilityPageEntryUtil {
 	}
 
 	/**
+	 * Returns the layout utility page entry where plid = &#63; or throws a <code>NoSuchLayoutUtilityPageEntryException</code> if it could not be found.
+	 *
+	 * @param plid the plid
+	 * @return the matching layout utility page entry
+	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
+	 */
+	public static LayoutUtilityPageEntry findByPlid(long plid)
+		throws com.liferay.layout.utility.page.exception.
+			NoSuchLayoutUtilityPageEntryException {
+
+		return getPersistence().findByPlid(plid);
+	}
+
+	/**
+	 * Returns the layout utility page entry where plid = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param plid the plid
+	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
+	 */
+	public static LayoutUtilityPageEntry fetchByPlid(long plid) {
+		return getPersistence().fetchByPlid(plid);
+	}
+
+	/**
+	 * Returns the layout utility page entry where plid = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param plid the plid
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
+	 */
+	public static LayoutUtilityPageEntry fetchByPlid(
+		long plid, boolean useFinderCache) {
+
+		return getPersistence().fetchByPlid(plid, useFinderCache);
+	}
+
+	/**
+	 * Removes the layout utility page entry where plid = &#63; from the database.
+	 *
+	 * @param plid the plid
+	 * @return the layout utility page entry that was removed
+	 */
+	public static LayoutUtilityPageEntry removeByPlid(long plid)
+		throws com.liferay.layout.utility.page.exception.
+			NoSuchLayoutUtilityPageEntryException {
+
+		return getPersistence().removeByPlid(plid);
+	}
+
+	/**
+	 * Returns the number of layout utility page entries where plid = &#63;.
+	 *
+	 * @param plid the plid
+	 * @return the number of matching layout utility page entries
+	 */
+	public static int countByPlid(long plid) {
+		return getPersistence().countByPlid(plid);
+	}
+
+	/**
 	 * Returns all the layout utility page entries where groupId = &#63; and type = &#63;.
 	 *
 	 * @param groupId the group ID
@@ -813,7 +873,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_T(
-		long groupId, int type) {
+		long groupId, String type) {
 
 		return getPersistence().findByG_T(groupId, type);
 	}
@@ -832,7 +892,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the range of matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_T(
-		long groupId, int type, int start, int end) {
+		long groupId, String type, int start, int end) {
 
 		return getPersistence().findByG_T(groupId, type, start, end);
 	}
@@ -852,7 +912,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the ordered range of matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_T(
-		long groupId, int type, int start, int end,
+		long groupId, String type, int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getPersistence().findByG_T(
@@ -875,7 +935,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the ordered range of matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_T(
-		long groupId, int type, int start, int end,
+		long groupId, String type, int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator,
 		boolean useFinderCache) {
 
@@ -893,7 +953,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry findByG_T_First(
-			long groupId, int type,
+			long groupId, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -911,7 +971,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the first matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry fetchByG_T_First(
-		long groupId, int type,
+		long groupId, String type,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getPersistence().fetchByG_T_First(
@@ -928,7 +988,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry findByG_T_Last(
-			long groupId, int type,
+			long groupId, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -946,7 +1006,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the last matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry fetchByG_T_Last(
-		long groupId, int type,
+		long groupId, String type,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getPersistence().fetchByG_T_Last(
@@ -964,7 +1024,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @throws NoSuchLayoutUtilityPageEntryException if a layout utility page entry with the primary key could not be found
 	 */
 	public static LayoutUtilityPageEntry[] findByG_T_PrevAndNext(
-			long LayoutUtilityPageEntryId, long groupId, int type,
+			long LayoutUtilityPageEntryId, long groupId, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -981,7 +1041,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the matching layout utility page entries that the user has permission to view
 	 */
 	public static List<LayoutUtilityPageEntry> filterFindByG_T(
-		long groupId, int type) {
+		long groupId, String type) {
 
 		return getPersistence().filterFindByG_T(groupId, type);
 	}
@@ -1000,7 +1060,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the range of matching layout utility page entries that the user has permission to view
 	 */
 	public static List<LayoutUtilityPageEntry> filterFindByG_T(
-		long groupId, int type, int start, int end) {
+		long groupId, String type, int start, int end) {
 
 		return getPersistence().filterFindByG_T(groupId, type, start, end);
 	}
@@ -1020,7 +1080,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the ordered range of matching layout utility page entries that the user has permission to view
 	 */
 	public static List<LayoutUtilityPageEntry> filterFindByG_T(
-		long groupId, int type, int start, int end,
+		long groupId, String type, int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getPersistence().filterFindByG_T(
@@ -1038,7 +1098,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @throws NoSuchLayoutUtilityPageEntryException if a layout utility page entry with the primary key could not be found
 	 */
 	public static LayoutUtilityPageEntry[] filterFindByG_T_PrevAndNext(
-			long LayoutUtilityPageEntryId, long groupId, int type,
+			long LayoutUtilityPageEntryId, long groupId, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -1053,7 +1113,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @param groupId the group ID
 	 * @param type the type
 	 */
-	public static void removeByG_T(long groupId, int type) {
+	public static void removeByG_T(long groupId, String type) {
 		getPersistence().removeByG_T(groupId, type);
 	}
 
@@ -1064,7 +1124,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @param type the type
 	 * @return the number of matching layout utility page entries
 	 */
-	public static int countByG_T(long groupId, int type) {
+	public static int countByG_T(long groupId, String type) {
 		return getPersistence().countByG_T(groupId, type);
 	}
 
@@ -1075,7 +1135,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @param type the type
 	 * @return the number of matching layout utility page entries that the user has permission to view
 	 */
-	public static int filterCountByG_T(long groupId, int type) {
+	public static int filterCountByG_T(long groupId, String type) {
 		return getPersistence().filterCountByG_T(groupId, type);
 	}
 
@@ -1088,7 +1148,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type) {
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type) {
 
 		return getPersistence().findByG_D_T(
 			groupId, defaultLayoutUtilityPageEntry, type);
@@ -1109,7 +1169,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the range of matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		int start, int end) {
 
 		return getPersistence().findByG_D_T(
@@ -1132,7 +1192,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the ordered range of matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
@@ -1158,7 +1218,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the ordered range of matching layout utility page entries
 	 */
 	public static List<LayoutUtilityPageEntry> findByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator,
 		boolean useFinderCache) {
@@ -1179,7 +1239,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry findByG_D_T_First(
-			long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+			long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -1198,7 +1258,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the first matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry fetchByG_D_T_First(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getPersistence().fetchByG_D_T_First(
@@ -1216,7 +1276,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry findByG_D_T_Last(
-			long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+			long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -1235,7 +1295,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the last matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
 	 */
 	public static LayoutUtilityPageEntry fetchByG_D_T_Last(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
 		return getPersistence().fetchByG_D_T_Last(
@@ -1255,7 +1315,7 @@ public class LayoutUtilityPageEntryUtil {
 	 */
 	public static LayoutUtilityPageEntry[] findByG_D_T_PrevAndNext(
 			long LayoutUtilityPageEntryId, long groupId,
-			boolean defaultLayoutUtilityPageEntry, int type,
+			boolean defaultLayoutUtilityPageEntry, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -1274,7 +1334,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the matching layout utility page entries that the user has permission to view
 	 */
 	public static List<LayoutUtilityPageEntry> filterFindByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type) {
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type) {
 
 		return getPersistence().filterFindByG_D_T(
 			groupId, defaultLayoutUtilityPageEntry, type);
@@ -1295,7 +1355,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the range of matching layout utility page entries that the user has permission to view
 	 */
 	public static List<LayoutUtilityPageEntry> filterFindByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		int start, int end) {
 
 		return getPersistence().filterFindByG_D_T(
@@ -1318,7 +1378,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the ordered range of matching layout utility page entries that the user has permission to view
 	 */
 	public static List<LayoutUtilityPageEntry> filterFindByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type,
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type,
 		int start, int end,
 		OrderByComparator<LayoutUtilityPageEntry> orderByComparator) {
 
@@ -1340,7 +1400,7 @@ public class LayoutUtilityPageEntryUtil {
 	 */
 	public static LayoutUtilityPageEntry[] filterFindByG_D_T_PrevAndNext(
 			long LayoutUtilityPageEntryId, long groupId,
-			boolean defaultLayoutUtilityPageEntry, int type,
+			boolean defaultLayoutUtilityPageEntry, String type,
 			OrderByComparator<LayoutUtilityPageEntry> orderByComparator)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
@@ -1358,7 +1418,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @param type the type
 	 */
 	public static void removeByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type) {
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type) {
 
 		getPersistence().removeByG_D_T(
 			groupId, defaultLayoutUtilityPageEntry, type);
@@ -1373,7 +1433,7 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the number of matching layout utility page entries
 	 */
 	public static int countByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type) {
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type) {
 
 		return getPersistence().countByG_D_T(
 			groupId, defaultLayoutUtilityPageEntry, type);
@@ -1388,80 +1448,155 @@ public class LayoutUtilityPageEntryUtil {
 	 * @return the number of matching layout utility page entries that the user has permission to view
 	 */
 	public static int filterCountByG_D_T(
-		long groupId, boolean defaultLayoutUtilityPageEntry, int type) {
+		long groupId, boolean defaultLayoutUtilityPageEntry, String type) {
 
 		return getPersistence().filterCountByG_D_T(
 			groupId, defaultLayoutUtilityPageEntry, type);
 	}
 
 	/**
-	 * Returns the layout utility page entry where groupId = &#63; and externalReferenceCode = &#63; or throws a <code>NoSuchLayoutUtilityPageEntryException</code> if it could not be found.
+	 * Returns the layout utility page entry where groupId = &#63; and name = &#63; and type = &#63; or throws a <code>NoSuchLayoutUtilityPageEntryException</code> if it could not be found.
 	 *
 	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
+	 * @param name the name
+	 * @param type the type
 	 * @return the matching layout utility page entry
 	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
 	 */
-	public static LayoutUtilityPageEntry findByG_ERC(
-			long groupId, String externalReferenceCode)
+	public static LayoutUtilityPageEntry findByG_N_T(
+			long groupId, String name, String type)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
 
-		return getPersistence().findByG_ERC(groupId, externalReferenceCode);
+		return getPersistence().findByG_N_T(groupId, name, type);
 	}
 
 	/**
-	 * Returns the layout utility page entry where groupId = &#63; and externalReferenceCode = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the layout utility page entry where groupId = &#63; and name = &#63; and type = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
 	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
+	 * @param name the name
+	 * @param type the type
 	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
 	 */
-	public static LayoutUtilityPageEntry fetchByG_ERC(
-		long groupId, String externalReferenceCode) {
+	public static LayoutUtilityPageEntry fetchByG_N_T(
+		long groupId, String name, String type) {
 
-		return getPersistence().fetchByG_ERC(groupId, externalReferenceCode);
+		return getPersistence().fetchByG_N_T(groupId, name, type);
 	}
 
 	/**
-	 * Returns the layout utility page entry where groupId = &#63; and externalReferenceCode = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the layout utility page entry where groupId = &#63; and name = &#63; and type = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
 	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
+	 * @param name the name
+	 * @param type the type
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
 	 */
-	public static LayoutUtilityPageEntry fetchByG_ERC(
-		long groupId, String externalReferenceCode, boolean useFinderCache) {
+	public static LayoutUtilityPageEntry fetchByG_N_T(
+		long groupId, String name, String type, boolean useFinderCache) {
 
-		return getPersistence().fetchByG_ERC(
-			groupId, externalReferenceCode, useFinderCache);
+		return getPersistence().fetchByG_N_T(
+			groupId, name, type, useFinderCache);
 	}
 
 	/**
-	 * Removes the layout utility page entry where groupId = &#63; and externalReferenceCode = &#63; from the database.
+	 * Removes the layout utility page entry where groupId = &#63; and name = &#63; and type = &#63; from the database.
 	 *
 	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
+	 * @param name the name
+	 * @param type the type
 	 * @return the layout utility page entry that was removed
 	 */
-	public static LayoutUtilityPageEntry removeByG_ERC(
-			long groupId, String externalReferenceCode)
+	public static LayoutUtilityPageEntry removeByG_N_T(
+			long groupId, String name, String type)
 		throws com.liferay.layout.utility.page.exception.
 			NoSuchLayoutUtilityPageEntryException {
 
-		return getPersistence().removeByG_ERC(groupId, externalReferenceCode);
+		return getPersistence().removeByG_N_T(groupId, name, type);
 	}
 
 	/**
-	 * Returns the number of layout utility page entries where groupId = &#63; and externalReferenceCode = &#63;.
+	 * Returns the number of layout utility page entries where groupId = &#63; and name = &#63; and type = &#63;.
 	 *
 	 * @param groupId the group ID
-	 * @param externalReferenceCode the external reference code
+	 * @param name the name
+	 * @param type the type
 	 * @return the number of matching layout utility page entries
 	 */
-	public static int countByG_ERC(long groupId, String externalReferenceCode) {
-		return getPersistence().countByG_ERC(groupId, externalReferenceCode);
+	public static int countByG_N_T(long groupId, String name, String type) {
+		return getPersistence().countByG_N_T(groupId, name, type);
+	}
+
+	/**
+	 * Returns the layout utility page entry where externalReferenceCode = &#63; and groupId = &#63; or throws a <code>NoSuchLayoutUtilityPageEntryException</code> if it could not be found.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching layout utility page entry
+	 * @throws NoSuchLayoutUtilityPageEntryException if a matching layout utility page entry could not be found
+	 */
+	public static LayoutUtilityPageEntry findByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.layout.utility.page.exception.
+			NoSuchLayoutUtilityPageEntryException {
+
+		return getPersistence().findByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the layout utility page entry where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
+	 */
+	public static LayoutUtilityPageEntry fetchByERC_G(
+		String externalReferenceCode, long groupId) {
+
+		return getPersistence().fetchByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the layout utility page entry where externalReferenceCode = &#63; and groupId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the matching layout utility page entry, or <code>null</code> if a matching layout utility page entry could not be found
+	 */
+	public static LayoutUtilityPageEntry fetchByERC_G(
+		String externalReferenceCode, long groupId, boolean useFinderCache) {
+
+		return getPersistence().fetchByERC_G(
+			externalReferenceCode, groupId, useFinderCache);
+	}
+
+	/**
+	 * Removes the layout utility page entry where externalReferenceCode = &#63; and groupId = &#63; from the database.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the layout utility page entry that was removed
+	 */
+	public static LayoutUtilityPageEntry removeByERC_G(
+			String externalReferenceCode, long groupId)
+		throws com.liferay.layout.utility.page.exception.
+			NoSuchLayoutUtilityPageEntryException {
+
+		return getPersistence().removeByERC_G(externalReferenceCode, groupId);
+	}
+
+	/**
+	 * Returns the number of layout utility page entries where externalReferenceCode = &#63; and groupId = &#63;.
+	 *
+	 * @param externalReferenceCode the external reference code
+	 * @param groupId the group ID
+	 * @return the number of matching layout utility page entries
+	 */
+	public static int countByERC_G(String externalReferenceCode, long groupId) {
+		return getPersistence().countByERC_G(externalReferenceCode, groupId);
 	}
 
 	/**

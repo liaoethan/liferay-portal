@@ -225,29 +225,11 @@ public class AccountGroupLocalServiceUtil {
 		return getService().fetchAccountGroup(accountGroupId);
 	}
 
-	/**
-	 * Returns the account group with the matching external reference code and company.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param externalReferenceCode the account group's external reference code
-	 * @return the matching account group, or <code>null</code> if a matching account group could not be found
-	 */
 	public static AccountGroup fetchAccountGroupByExternalReferenceCode(
-		long companyId, String externalReferenceCode) {
+		String externalReferenceCode, long companyId) {
 
 		return getService().fetchAccountGroupByExternalReferenceCode(
-			companyId, externalReferenceCode);
-	}
-
-	/**
-	 * @deprecated As of Cavanaugh (7.4.x), replaced by {@link #fetchAccountGroupByExternalReferenceCode(long, String)}
-	 */
-	@Deprecated
-	public static AccountGroup fetchAccountGroupByReferenceCode(
-		long companyId, String externalReferenceCode) {
-
-		return getService().fetchAccountGroupByReferenceCode(
-			companyId, externalReferenceCode);
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -277,20 +259,12 @@ public class AccountGroupLocalServiceUtil {
 		return getService().getAccountGroup(accountGroupId);
 	}
 
-	/**
-	 * Returns the account group with the matching external reference code and company.
-	 *
-	 * @param companyId the primary key of the company
-	 * @param externalReferenceCode the account group's external reference code
-	 * @return the matching account group
-	 * @throws PortalException if a matching account group could not be found
-	 */
 	public static AccountGroup getAccountGroupByExternalReferenceCode(
-			long companyId, String externalReferenceCode)
+			String externalReferenceCode, long companyId)
 		throws PortalException {
 
 		return getService().getAccountGroupByExternalReferenceCode(
-			companyId, externalReferenceCode);
+			externalReferenceCode, companyId);
 	}
 
 	/**
@@ -331,6 +305,14 @@ public class AccountGroupLocalServiceUtil {
 			companyId, start, end, orderByComparator);
 	}
 
+	public static List<AccountGroup> getAccountGroups(
+		long companyId, String name, int start, int end,
+		OrderByComparator<AccountGroup> orderByComparator) {
+
+		return getService().getAccountGroups(
+			companyId, name, start, end, orderByComparator);
+	}
+
 	public static List<AccountGroup> getAccountGroupsByAccountGroupId(
 		long[] accountGroupIds) {
 
@@ -348,6 +330,10 @@ public class AccountGroupLocalServiceUtil {
 
 	public static int getAccountGroupsCount(long companyId) {
 		return getService().getAccountGroupsCount(companyId);
+	}
+
+	public static long getAccountGroupsCount(long companyId, String name) {
+		return getService().getAccountGroupsCount(companyId, name);
 	}
 
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery

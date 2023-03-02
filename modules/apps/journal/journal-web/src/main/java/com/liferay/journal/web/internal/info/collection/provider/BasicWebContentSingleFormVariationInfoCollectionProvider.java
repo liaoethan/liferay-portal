@@ -29,7 +29,6 @@ import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.filter.InfoFilter;
 import com.liferay.info.filter.KeywordsInfoFilter;
 import com.liferay.info.form.InfoForm;
-import com.liferay.info.item.InfoItemServiceTracker;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.info.localized.SingleValueInfoLocalizedValue;
 import com.liferay.info.pagination.InfoPage;
@@ -37,24 +36,15 @@ import com.liferay.info.pagination.Pagination;
 import com.liferay.info.sort.Sort;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
-import com.liferay.journal.web.internal.search.JournalSearcher;
+import com.liferay.journal.web.internal.util.JournalSearcherUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
-import com.liferay.portal.kernel.search.Hits;
-import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.QueryConfig;
 import com.liferay.portal.kernel.search.SearchContext;
-import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -68,7 +58,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -76,9 +65,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Eudaldo Alonso
  */
-@Component(
-	enabled = false, immediate = true, service = InfoCollectionProvider.class
-)
+@Component(enabled = false, service = InfoCollectionProvider.class)
 public class BasicWebContentSingleFormVariationInfoCollectionProvider
 	implements ConfigurableInfoCollectionProvider<JournalArticle>,
 			   FilteredInfoCollectionProvider<JournalArticle>,
@@ -88,42 +75,13 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 	public InfoPage<JournalArticle> getCollectionInfoPage(
 		CollectionQuery collectionQuery) {
 
-		try {
-			Indexer<?> indexer = JournalSearcher.getInstance();
+		List<JournalArticle> articles =
+			JournalSearcherUtil.searchJournalArticles(
+				searchContext -> _populateSearchContext(
+					collectionQuery, searchContext));
 
-			SearchContext searchContext = _buildSearchContext(collectionQuery);
-
-			Hits hits = indexer.search(searchContext);
-
-			List<JournalArticle> articles = new ArrayList<>();
-
-			for (Document document : hits.getDocs()) {
-				String className = document.get(Field.ENTRY_CLASS_NAME);
-
-				if (className.equals(JournalArticle.class.getName())) {
-					long classPK = GetterUtil.getLong(
-						document.get(Field.ENTRY_CLASS_PK));
-
-					JournalArticle article =
-						_journalArticleLocalService.fetchLatestArticle(
-							classPK, WorkflowConstants.STATUS_ANY, false);
-
-					if (article != null) {
-						articles.add(article);
-					}
-				}
-			}
-
-			return InfoPage.of(
-				articles, collectionQuery.getPagination(), hits.getLength());
-		}
-		catch (SearchException searchException) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(searchException);
-			}
-		}
-
-		return null;
+		return InfoPage.of(
+			articles, collectionQuery.getPagination(), articles.size());
 	}
 
 	@Override
@@ -170,94 +128,6 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 		return Arrays.asList(new KeywordsInfoFilter());
 	}
 
-	private SearchContext _buildSearchContext(CollectionQuery collectionQuery) {
-		SearchContext searchContext = new SearchContext();
-
-		searchContext.setAndSearch(true);
-		searchContext.setAttributes(
-			HashMapBuilder.<String, Serializable>put(
-				Field.STATUS, WorkflowConstants.STATUS_APPROVED
-			).put(
-				"ddmStructureKey", "BASIC-WEB-CONTENT"
-			).put(
-				"head", true
-			).put(
-				"latest", true
-			).build());
-
-		Optional<Map<String, String[]>> configurationOptional =
-			collectionQuery.getConfigurationOptional();
-
-		Map<String, String[]> configuration = configurationOptional.orElse(
-			Collections.emptyMap());
-
-		String[] assetTagNames = configuration.get(Field.ASSET_TAG_NAMES);
-
-		if (ArrayUtil.isNotEmpty(assetTagNames) &&
-			Validator.isNotNull(assetTagNames[0])) {
-
-			searchContext.setAssetTagNames(assetTagNames);
-		}
-
-		String[] title = configuration.get(Field.TITLE);
-
-		if (ArrayUtil.isNotEmpty(title) && Validator.isNotNull(title[0])) {
-			searchContext.setAttribute(
-				Field.getLocalizedName(
-					LocaleUtil.getSiteDefault(), Field.TITLE),
-				title[0]);
-		}
-
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
-
-		searchContext.setCompanyId(serviceContext.getCompanyId());
-
-		Pagination pagination = collectionQuery.getPagination();
-
-		searchContext.setEnd(pagination.getEnd());
-
-		searchContext.setGroupIds(
-			new long[] {serviceContext.getScopeGroupId()});
-
-		Optional<KeywordsInfoFilter> keywordsInfoFilterOptional =
-			collectionQuery.getInfoFilterOptional(KeywordsInfoFilter.class);
-
-		if (keywordsInfoFilterOptional.isPresent()) {
-			KeywordsInfoFilter keywordsInfoFilter =
-				keywordsInfoFilterOptional.get();
-
-			searchContext.setKeywords(keywordsInfoFilter.getKeywords());
-		}
-
-		Optional<Sort> sortOptional = collectionQuery.getSortOptional();
-
-		if (sortOptional.isPresent()) {
-			Sort sort = sortOptional.get();
-
-			searchContext.setSorts(
-				new com.liferay.portal.kernel.search.Sort(
-					sort.getFieldName(),
-					com.liferay.portal.kernel.search.Sort.LONG_TYPE,
-					sort.isReverse()));
-		}
-		else {
-			searchContext.setSorts(
-				new com.liferay.portal.kernel.search.Sort(
-					Field.MODIFIED_DATE,
-					com.liferay.portal.kernel.search.Sort.LONG_TYPE, true));
-		}
-
-		searchContext.setStart(pagination.getStart());
-
-		QueryConfig queryConfig = searchContext.getQueryConfig();
-
-		queryConfig.setHighlightEnabled(false);
-		queryConfig.setScoreEnabled(false);
-
-		return searchContext;
-	}
-
 	private InfoField<?> _getAssetTagsInfoField() {
 		List<SelectInfoFieldType.Option> options = new ArrayList<>();
 
@@ -297,17 +167,88 @@ public class BasicWebContentSingleFormVariationInfoCollectionProvider
 		return finalStep.build();
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		BasicWebContentSingleFormVariationInfoCollectionProvider.class);
+	private SearchContext _populateSearchContext(
+		CollectionQuery collectionQuery, SearchContext searchContext) {
+
+		Map<String, Serializable> attributes = searchContext.getAttributes();
+
+		attributes.put(Field.STATUS, WorkflowConstants.STATUS_APPROVED);
+		attributes.put("ddmStructureKey", "BASIC-WEB-CONTENT");
+		attributes.put("head", true);
+
+		searchContext.setAttributes(attributes);
+
+		Map<String, String[]> configuration =
+			collectionQuery.getConfiguration();
+
+		if (configuration == null) {
+			configuration = Collections.emptyMap();
+		}
+
+		String[] assetTagNames = configuration.get(Field.ASSET_TAG_NAMES);
+
+		if (ArrayUtil.isNotEmpty(assetTagNames) &&
+			Validator.isNotNull(assetTagNames[0])) {
+
+			searchContext.setAssetTagNames(assetTagNames);
+		}
+
+		String[] title = configuration.get(Field.TITLE);
+
+		if (ArrayUtil.isNotEmpty(title) && Validator.isNotNull(title[0])) {
+			searchContext.setAttribute(Field.TITLE, title[0]);
+		}
+
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		searchContext.setCompanyId(serviceContext.getCompanyId());
+
+		Pagination pagination = collectionQuery.getPagination();
+
+		searchContext.setEnd(pagination.getEnd());
+
+		searchContext.setGroupIds(
+			new long[] {serviceContext.getScopeGroupId()});
+
+		KeywordsInfoFilter keywordsInfoFilter = collectionQuery.getInfoFilter(
+			KeywordsInfoFilter.class);
+
+		if (keywordsInfoFilter != null) {
+			searchContext.setKeywords(keywordsInfoFilter.getKeywords());
+		}
+
+		Sort sort = collectionQuery.getSort();
+
+		if (sort != null) {
+			searchContext.setSorts(
+				new com.liferay.portal.kernel.search.Sort(
+					sort.getFieldName(),
+					com.liferay.portal.kernel.search.Sort.LONG_TYPE,
+					sort.isReverse()));
+		}
+		else {
+			searchContext.setSorts(
+				new com.liferay.portal.kernel.search.Sort(
+					Field.MODIFIED_DATE,
+					com.liferay.portal.kernel.search.Sort.LONG_TYPE, true));
+		}
+
+		searchContext.setStart(pagination.getStart());
+
+		QueryConfig queryConfig = searchContext.getQueryConfig();
+
+		queryConfig.setHighlightEnabled(false);
+		queryConfig.setScoreEnabled(false);
+
+		return searchContext;
+	}
 
 	@Reference
 	private AssetTagLocalService _assetTagLocalService;
 
 	@Reference
 	private DDMStructureLocalService _ddmStructureLocalService;
-
-	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
 
 	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;

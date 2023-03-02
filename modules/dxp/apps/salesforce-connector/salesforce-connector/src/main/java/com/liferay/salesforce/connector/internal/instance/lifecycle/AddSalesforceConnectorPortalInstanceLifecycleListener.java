@@ -14,10 +14,12 @@
 
 package com.liferay.salesforce.connector.internal.instance.lifecycle;
 
+import com.liferay.dispatch.executor.DispatchTaskExecutor;
 import com.liferay.dispatch.model.DispatchTrigger;
 import com.liferay.dispatch.repository.DispatchFileRepository;
 import com.liferay.dispatch.service.DispatchTriggerLocalService;
 import com.liferay.dispatch.talend.archive.TalendArchiveParserUtil;
+import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.service.DLFileVersionPreviewLocalService;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
@@ -25,7 +27,6 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,7 +38,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Igor Beslic
  */
 @Component(
-	enabled = false, immediate = true, property = "service.ranking:Integer=100",
+	property = "service.ranking:Integer=100",
 	service = PortalInstanceLifecycleListener.class
 )
 public class AddSalesforceConnectorPortalInstanceLifecycleListener
@@ -45,17 +46,16 @@ public class AddSalesforceConnectorPortalInstanceLifecycleListener
 
 	@Override
 	public void portalInstanceRegistered(Company company) throws Exception {
-		_createDispatchTrigger(
-			company, "etl-salesforce-account-connector-0.3.zip");
-		_createDispatchTrigger(
-			company, "etl-salesforce-order-connector-0.6.zip");
-		_createDispatchTrigger(
-			company, "etl-salesforce-price-list-connector-0.6.zip");
-		_createDispatchTrigger(
-			company, "etl-salesforce-product-connector-0.3.zip");
+		_addDispatchTrigger(
+			company, "etl-salesforce-account-connector-0.4.zip");
+		_addDispatchTrigger(company, "etl-salesforce-order-connector-0.7.zip");
+		_addDispatchTrigger(
+			company, "etl-salesforce-price-list-connector-0.7.zip");
+		_addDispatchTrigger(
+			company, "etl-salesforce-product-connector-0.4.zip");
 	}
 
-	private void _createDispatchTrigger(Company company, String name)
+	private void _addDispatchTrigger(Company company, String name)
 		throws Exception {
 
 		DispatchTrigger dispatchTrigger =
@@ -83,7 +83,8 @@ public class AddSalesforceConnectorPortalInstanceLifecycleListener
 				company.getCompanyId());
 
 			dispatchTrigger = _dispatchTriggerLocalService.addDispatchTrigger(
-				null, userId, "talend", unicodeProperties, name, true);
+				null, userId, _dispatchTaskExecutor, "talend",
+				unicodeProperties, name, true);
 
 			_dispatchFileRepository.addFileEntry(
 				userId, dispatchTrigger.getDispatchTriggerId(), name, 0,
@@ -97,14 +98,17 @@ public class AddSalesforceConnectorPortalInstanceLifecycleListener
 	@Reference
 	private DispatchFileRepository _dispatchFileRepository;
 
+	@Reference(target = "(dispatch.task.executor.type=talend)")
+	private DispatchTaskExecutor _dispatchTaskExecutor;
+
 	@Reference
 	private DispatchTriggerLocalService _dispatchTriggerLocalService;
 
 	@Reference
 	private DLFileVersionPreviewLocalService _dlFileVersionPreviewLocalService;
 
-	@Reference(target = "(dl.store.impl.enabled=true)")
-	private StoreFactory _storeFactory;
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 	@Reference
 	private UserLocalService _userLocalService;

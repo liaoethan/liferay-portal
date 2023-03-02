@@ -25,25 +25,21 @@ import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
 import com.liferay.portal.search.indexer.BaseModelRetriever;
 
-import java.util.Optional;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = BaseModelRetriever.class)
+@Component(service = BaseModelRetriever.class)
 public class BaseModelRetrieverImpl implements BaseModelRetriever {
 
 	@Override
-	public Optional<BaseModel<?>> fetchBaseModel(
-		String className, long classPK) {
-
+	public BaseModel<?> fetchBaseModel(String className, long classPK) {
 		PersistedModel persistModel = _getPersistedModel(className, classPK);
 
 		if (persistModel == null) {
-			return Optional.empty();
+			return null;
 		}
 
 		if (!(persistModel instanceof BaseModel)) {
@@ -51,10 +47,10 @@ public class BaseModelRetrieverImpl implements BaseModelRetriever {
 				_log.warn(persistModel + " is not a base model");
 			}
 
-			return Optional.empty();
+			return null;
 		}
 
-		return Optional.ofNullable((BaseModel<?>)persistModel);
+		return (BaseModel<?>)persistModel;
 	}
 
 	private PersistedModel _getPersistedModel(String className, long classPK) {

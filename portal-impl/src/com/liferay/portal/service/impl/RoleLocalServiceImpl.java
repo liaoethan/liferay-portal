@@ -20,6 +20,7 @@ import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.expression.Predicate;
+import com.liferay.petra.sql.dsl.query.JoinStep;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -72,7 +73,6 @@ import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
 import com.liferay.portal.kernel.search.SearchException;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
@@ -108,15 +108,18 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.security.permission.PermissionCacheUtil;
 import com.liferay.portal.service.base.RoleLocalServiceBaseImpl;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.users.admin.kernel.util.UsersAdminUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -446,7 +449,9 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 		type = SystemEventConstants.TYPE_DELETE
 	)
 	public Role deleteRole(Role role) throws PortalException {
-		if (role.isSystem() && !CompanyThreadLocal.isDeleteInProcess()) {
+		if (role.isSystem() &&
+			!PortalInstances.isCurrentCompanyInDeletionProcess()) {
+
 			throw new RequiredRoleException();
 		}
 
@@ -1195,7 +1200,9 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Returns the union of all the user's roles within the groups.
+	 * Returns the union of all the user's roles within the groups. If no
+	 * groups are provided, only the user's directly assigned roles are
+	 * returned.
 	 *
 	 * @param  userId the primary key of the user
 	 * @param  groups the groups (optionally <code>null</code>)
@@ -1203,19 +1210,8 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 */
 	@Override
 	public List<Role> getUserRelatedRoles(long userId, List<Group> groups) {
-		if (ListUtil.isEmpty(groups)) {
-			return Collections.emptyList();
-		}
-
-		long[] groupIds = new long[groups.size()];
-
-		for (int i = 0; i < groups.size(); i++) {
-			Group group = groups.get(i);
-
-			groupIds[i] = group.getGroupId();
-		}
-
-		return getUserRelatedRoles(userId, groupIds);
+		return getUserRelatedRoles(
+			userId, ListUtil.toLongArray(groups, Group.GROUP_ID_ACCESSOR));
 	}
 
 	/**
@@ -1231,7 +1227,9 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	}
 
 	/**
-	 * Returns the union of all the user's roles within the groups.
+	 * Returns the union of all the user's roles within the groups. If no
+	 * groupIds are provided, only the user's directly assigned roles are
+	 * returned.
 	 *
 	 * @param  userId the primary key of the user
 	 * @param  groupIds the primary keys of the groups
@@ -1239,7 +1237,9 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 	 */
 	@Override
 	public List<Role> getUserRelatedRoles(long userId, long[] groupIds) {
-		return rolePersistence.dslQuery(
+		Set<Role> roles = new LinkedHashSet<>();
+
+		List<Role> userRoles = dslQuery(
 			DSLQueryFactoryUtil.select(
 				RoleTable.INSTANCE
 			).from(
@@ -1249,41 +1249,72 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 				Users_RolesTable.INSTANCE.roleId.eq(RoleTable.INSTANCE.roleId)
 			).where(
 				Users_RolesTable.INSTANCE.userId.eq(userId)
-			).union(
-				DSLQueryFactoryUtil.select(
-					RoleTable.INSTANCE
-				).from(
-					RoleTable.INSTANCE
-				).innerJoinON(
-					Groups_RolesTable.INSTANCE,
-					Groups_RolesTable.INSTANCE.roleId.eq(
-						RoleTable.INSTANCE.roleId)
-				).where(
-					() -> {
-						if (groupIds.length == 0) {
-							return null;
-						}
-
-						Predicate predicate =
-							Groups_RolesTable.INSTANCE.groupId.eq(groupIds[0]);
-
-						for (int i = 1; i < groupIds.length; i++) {
-							predicate = predicate.or(
-								Groups_RolesTable.INSTANCE.groupId.eq(
-									groupIds[i]));
-						}
-
-						return predicate.withParentheses();
-					}
-				)
 			));
+
+		if (!userRoles.isEmpty()) {
+			roles.addAll(userRoles);
+		}
+
+		if (ArrayUtil.isNotEmpty(groupIds)) {
+			JoinStep joinStep = DSLQueryFactoryUtil.select(
+				RoleTable.INSTANCE
+			).from(
+				RoleTable.INSTANCE
+			).innerJoinON(
+				Groups_RolesTable.INSTANCE,
+				Groups_RolesTable.INSTANCE.roleId.eq(RoleTable.INSTANCE.roleId)
+			);
+
+			List<Role> groupRoles = new ArrayList<>();
+
+			int chunk = 2000;
+
+			for (int i = 0; i < groupIds.length; i += chunk) {
+
+				// We cannot use an "in" clause because more than 1000 items in
+				// a list causes a syntax error in Oracle. See LPS-173475 and
+				// ORA-01795.
+
+				/*groupRoles.addAll(
+					dslQuery(
+						joinStep.where(
+							Groups_RolesTable.INSTANCE.groupId.in(
+								ArrayUtil.toLongArray(
+									Arrays.copyOfRange(
+										groupIds, i, i + chunk))))));*/
+
+				Predicate predicate = null;
+
+				long[] curGroupIds = Arrays.copyOfRange(
+					groupIds, i, Math.min(groupIds.length, i + chunk));
+
+				for (long curGroupId : curGroupIds) {
+					predicate = Predicate.or(
+						predicate,
+						Groups_RolesTable.INSTANCE.groupId.eq(curGroupId));
+				}
+
+				if (predicate != null) {
+					groupRoles.addAll(
+						dslQuery(joinStep.where(predicate.withParentheses())));
+				}
+			}
+
+			if (!groupRoles.isEmpty()) {
+				roles.addAll(groupRoles);
+			}
+		}
+
+		return new ArrayList<>(roles);
 	}
 
 	@Override
 	public List<Role> getUserTeamRoles(long userId, long groupId) {
+		Set<Role> roles = new LinkedHashSet<>();
+
 		long classNameId = _classNameLocalService.getClassNameId(Team.class);
 
-		return rolePersistence.dslQuery(
+		List<Role> teamRoles = rolePersistence.dslQuery(
 			DSLQueryFactoryUtil.select(
 				RoleTable.INSTANCE
 			).from(
@@ -1306,36 +1337,43 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 				).and(
 					Users_TeamsTable.INSTANCE.userId.eq(userId)
 				)
-			).union(
-				DSLQueryFactoryUtil.select(
-					RoleTable.INSTANCE
-				).from(
-					RoleTable.INSTANCE
-				).innerJoinON(
-					TeamTable.INSTANCE,
-					TeamTable.INSTANCE.companyId.eq(
-						RoleTable.INSTANCE.companyId
-					).and(
-						TeamTable.INSTANCE.teamId.eq(RoleTable.INSTANCE.classPK)
-					)
-				).innerJoinON(
-					UserGroups_TeamsTable.INSTANCE,
-					UserGroups_TeamsTable.INSTANCE.teamId.eq(
-						TeamTable.INSTANCE.teamId)
-				).innerJoinON(
-					Users_UserGroupsTable.INSTANCE,
-					Users_UserGroupsTable.INSTANCE.userGroupId.eq(
-						UserGroups_TeamsTable.INSTANCE.userGroupId)
-				).where(
-					RoleTable.INSTANCE.classNameId.eq(
-						classNameId
-					).and(
-						TeamTable.INSTANCE.groupId.eq(groupId)
-					).and(
-						Users_UserGroupsTable.INSTANCE.userId.eq(userId)
-					)
+			));
+
+		roles.addAll(teamRoles);
+
+		List<Role> userGroupRoles = rolePersistence.dslQuery(
+			DSLQueryFactoryUtil.select(
+				RoleTable.INSTANCE
+			).from(
+				RoleTable.INSTANCE
+			).innerJoinON(
+				TeamTable.INSTANCE,
+				TeamTable.INSTANCE.companyId.eq(
+					RoleTable.INSTANCE.companyId
+				).and(
+					TeamTable.INSTANCE.teamId.eq(RoleTable.INSTANCE.classPK)
+				)
+			).innerJoinON(
+				UserGroups_TeamsTable.INSTANCE,
+				UserGroups_TeamsTable.INSTANCE.teamId.eq(
+					TeamTable.INSTANCE.teamId)
+			).innerJoinON(
+				Users_UserGroupsTable.INSTANCE,
+				Users_UserGroupsTable.INSTANCE.userGroupId.eq(
+					UserGroups_TeamsTable.INSTANCE.userGroupId)
+			).where(
+				RoleTable.INSTANCE.classNameId.eq(
+					classNameId
+				).and(
+					TeamTable.INSTANCE.groupId.eq(groupId)
+				).and(
+					Users_UserGroupsTable.INSTANCE.userId.eq(userId)
 				)
 			));
+
+		roles.addAll(userGroupRoles);
+
+		return new ArrayList<>(roles);
 	}
 
 	/**
@@ -1800,9 +1838,17 @@ public class RoleLocalServiceImpl extends RoleLocalServiceBaseImpl {
 
 		roleIds = UsersAdminUtil.addRequiredRoles(userId, roleIds);
 
-		_userPersistence.setRoles(userId, roleIds);
+		Arrays.sort(roleIds);
 
-		reindex(userId);
+		long[] currentRoleIds = _userPersistence.getRolePrimaryKeys(userId);
+
+		Arrays.sort(currentRoleIds);
+
+		if (!Arrays.equals(currentRoleIds, roleIds)) {
+			_userPersistence.setRoles(userId, roleIds);
+
+			reindex(userId);
+		}
 	}
 
 	/**

@@ -14,9 +14,9 @@
 
 package com.liferay.headless.commerce.admin.pricing.internal.resource.v2_0;
 
+import com.liferay.account.service.AccountEntryService;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.commerce.account.service.CommerceAccountGroupService;
-import com.liferay.commerce.account.service.CommerceAccountService;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.service.CommerceCurrencyService;
 import com.liferay.commerce.discount.service.CommerceDiscountService;
@@ -96,7 +96,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Riccardo Alberti
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v2_0/price-list.properties",
 	scope = ServiceScope.PROTOTYPE, service = PriceListResource.class
 )
@@ -272,11 +271,17 @@ public class PriceListResourceImpl extends BasePriceListResourceImpl {
 
 		return HashMapBuilder.<String, Map<String, String>>put(
 			"delete",
-			addAction(
-				"DELETE", commercePriceList.getCommercePriceListId(),
-				"deletePriceList", commercePriceList.getUserId(),
-				"com.liferay.commerce.price.list.model.CommercePriceList",
-				commercePriceList.getGroupId())
+			() -> {
+				if (commercePriceList.isCatalogBasePriceList()) {
+					return null;
+				}
+
+				return addAction(
+					"DELETE", commercePriceList.getCommercePriceListId(),
+					"deletePriceList", commercePriceList.getUserId(),
+					"com.liferay.commerce.price.list.model.CommercePriceList",
+					commercePriceList.getGroupId());
+			}
 		).put(
 			"get",
 			addAction(
@@ -370,9 +375,8 @@ public class PriceListResourceImpl extends BasePriceListResourceImpl {
 				}
 
 				PriceListAccountUtil.addCommercePriceListAccountRel(
-					_commerceAccountService,
-					_commercePriceListAccountRelService, priceListAccount,
-					commercePriceList, _serviceContextHelper);
+					_accountEntryService, _commercePriceListAccountRelService,
+					priceListAccount, commercePriceList, _serviceContextHelper);
 			}
 		}
 
@@ -609,13 +613,13 @@ public class PriceListResourceImpl extends BasePriceListResourceImpl {
 	private static final EntityModel _entityModel = new PriceListEntityModel();
 
 	@Reference
+	private AccountEntryService _accountEntryService;
+
+	@Reference
 	private AssetCategoryLocalService _assetCategoryLocalService;
 
 	@Reference
 	private CommerceAccountGroupService _commerceAccountGroupService;
-
-	@Reference
-	private CommerceAccountService _commerceAccountService;
 
 	@Reference
 	private CommerceCatalogService _commerceCatalogService;

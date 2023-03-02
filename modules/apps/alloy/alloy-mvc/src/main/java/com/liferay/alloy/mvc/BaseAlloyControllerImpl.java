@@ -76,7 +76,6 @@ import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -95,7 +94,6 @@ import java.io.StringWriter;
 
 import java.lang.reflect.Method;
 
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -727,11 +725,9 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	}
 
 	protected Trigger getSchedulerTrigger() {
-		Calendar calendar = CalendarFactoryUtil.getCalendar();
-
 		return TriggerFactoryUtil.createTrigger(
-			getSchedulerJobName(), getMessageListenerGroupName(),
-			calendar.getTime(), 1, TimeUnit.DAY);
+			getSchedulerJobName(), getMessageListenerGroupName(), 1,
+			TimeUnit.DAY);
 	}
 
 	protected Map<String, Serializable> getSearchAttributes(
@@ -826,17 +822,11 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		baseAlloyIndexer.setAlloyServiceInvoker(alloyServiceInvoker);
 		baseAlloyIndexer.setClassName(portlet.getModelClassName());
 
-		if (existingIndexer != null) {
-			IndexerRegistryUtil.unregister(existingIndexer);
-		}
-
-		IndexerRegistryUtil.register(indexer);
-
 		Bundle bundle = FrameworkUtil.getBundle(getClass());
 
 		BundleContext bundleContext = bundle.getBundleContext();
 
-		bundleContext.registerService(
+		indexerServiceRegistration = bundleContext.registerService(
 			Indexer.class, indexer,
 			MapUtil.singletonDictionary(
 				"javax.portlet.name", portlet.getPortletName()));
@@ -891,8 +881,7 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 							getSchedulerStorageType());
 					}
 
-					MessageBusUtil.unregisterMessageListener(
-						destinationName, curMessageListener);
+					destination.unregister(curMessageListener);
 				}
 				catch (Exception exception) {
 					log.error(exception, exception);
@@ -907,26 +896,24 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 					DestinationConfiguration.DESTINATION_TYPE_SERIAL,
 					destinationName);
 
-			Destination serialDestination =
-				DestinationFactoryUtil.createDestination(
-					destinationConfiguration);
+			destination = DestinationFactoryUtil.createDestination(
+				destinationConfiguration);
 
 			destinationServiceRegistrations.put(
-				serialDestination.getName(),
+				destinationName,
 				_bundleContext.registerService(
-					Destination.class, serialDestination,
+					Destination.class, destination,
 					MapUtil.singletonDictionary(
-						"destination.name", serialDestination.getName())));
+						"destination.name", destinationName)));
 		}
 
 		try {
-			MessageBusUtil.registerMessageListener(
-				destinationName, messageListener);
+			destination.register(messageListener);
 
 			if (enableScheduler) {
 				SchedulerEngineHelperUtil.schedule(
 					getSchedulerTrigger(), getSchedulerStorageType(), null,
-					destinationName, null, 0);
+					destinationName, null);
 			}
 		}
 		catch (Exception exception) {
@@ -1666,6 +1653,7 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	protected HttpServletResponse httpServletResponse;
 	protected Indexer<BaseModel<?>> indexer;
 	protected String indexerClassName;
+	protected ServiceRegistration<?> indexerServiceRegistration;
 	protected String lifecycle;
 	protected LiferayPortletConfig liferayPortletConfig;
 	protected LiferayPortletResponse liferayPortletResponse;

@@ -16,13 +16,12 @@ package com.liferay.analytics.settings.internal.messaging;
 
 import com.liferay.analytics.message.sender.client.AnalyticsMessageSenderClient;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
-import com.liferay.analytics.settings.configuration.AnalyticsConfigurationTracker;
+import com.liferay.analytics.settings.configuration.AnalyticsConfigurationRegistry;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
@@ -40,9 +39,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Rachael Koestartyo
  */
-@Component(
-	immediate = true, service = CheckAnalyticsConnectionsMessageListener.class
-)
+@Component(service = {})
 public class CheckAnalyticsConnectionsMessageListener
 	extends BaseMessageListener {
 
@@ -70,7 +67,7 @@ public class CheckAnalyticsConnectionsMessageListener
 	@Override
 	protected void doReceive(Message message) throws Exception {
 		Map<Long, AnalyticsConfiguration> analyticsConfigurations =
-			_analyticsConfigurationTracker.getAnalyticsConfigurations();
+			_analyticsConfigurationRegistry.getAnalyticsConfigurations();
 
 		if (analyticsConfigurations.isEmpty()) {
 			return;
@@ -99,13 +96,10 @@ public class CheckAnalyticsConnectionsMessageListener
 		CheckAnalyticsConnectionsMessageListener.class);
 
 	@Reference
-	private AnalyticsConfigurationTracker _analyticsConfigurationTracker;
+	private AnalyticsConfigurationRegistry _analyticsConfigurationRegistry;
 
 	@Reference
 	private AnalyticsMessageSenderClient _analyticsMessageSenderClient;
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
-	private ModuleServiceLifecycle _moduleServiceLifecycle;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

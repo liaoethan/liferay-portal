@@ -17,6 +17,7 @@ package com.liferay.layout.admin.web.internal.portlet.action;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
+import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryService;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.util.ParamUtil;
@@ -31,7 +32,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bárbara Cabrera
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 		"mvc.command.name=/layout_admin/update_default_layout_utility_page_entry"
@@ -54,20 +54,13 @@ public class UpdateDefaultLayoutUtilityPageEntryMVCActionCommand
 				layoutUtilityPageEntryId);
 
 		if (layoutUtilityPageEntry.isDefaultLayoutUtilityPageEntry()) {
-			layoutUtilityPageEntry.setDefaultLayoutUtilityPageEntry(false);
-
-			_layoutUtilityPageEntryLocalService.updateLayoutUtilityPageEntry(
-				layoutUtilityPageEntry);
-
-			sendRedirect(actionRequest, actionResponse);
-
-			return;
+			_layoutUtilityPageEntryService.unsetDefaultLayoutUtilityPageEntry(
+				layoutUtilityPageEntryId);
 		}
-
-		layoutUtilityPageEntry.setDefaultLayoutUtilityPageEntry(true);
-
-		_layoutUtilityPageEntryLocalService.updateLayoutUtilityPageEntry(
-			layoutUtilityPageEntry);
+		else {
+			_layoutUtilityPageEntryService.setDefaultLayoutUtilityPageEntry(
+				layoutUtilityPageEntryId);
+		}
 
 		sendRedirect(actionRequest, actionResponse);
 	}
@@ -75,5 +68,8 @@ public class UpdateDefaultLayoutUtilityPageEntryMVCActionCommand
 	@Reference
 	private LayoutUtilityPageEntryLocalService
 		_layoutUtilityPageEntryLocalService;
+
+	@Reference
+	private LayoutUtilityPageEntryService _layoutUtilityPageEntryService;
 
 }

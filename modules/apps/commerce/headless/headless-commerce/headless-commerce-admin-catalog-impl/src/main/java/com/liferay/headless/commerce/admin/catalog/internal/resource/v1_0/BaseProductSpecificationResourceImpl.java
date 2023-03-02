@@ -19,15 +19,21 @@ import com.liferay.headless.commerce.admin.catalog.resource.v1_0.ProductSpecific
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.GroupedModel;
+import com.liferay.portal.kernel.model.ResourceAction;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalServiceUtil;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -43,13 +49,20 @@ import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.permission.Permission;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.ActionUtil;
 import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.io.Serializable;
 
+import java.lang.reflect.Method;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -60,6 +73,7 @@ import javax.annotation.Generated;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -74,6 +88,153 @@ import javax.ws.rs.core.UriInfo;
 public abstract class BaseProductSpecificationResourceImpl
 	implements EntityModelResource, ProductSpecificationResource,
 			   VulcanBatchEngineTaskItemDelegate<ProductSpecification> {
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/productSpecifications/{id}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "id"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "ProductSpecification"
+			)
+		}
+	)
+	@javax.ws.rs.DELETE
+	@javax.ws.rs.Path("/productSpecifications/{id}")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public void deleteProductSpecification(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull @javax.ws.rs.PathParam("id")
+			Long id)
+		throws Exception {
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'DELETE' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/productSpecifications/batch'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "callbackURL"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "ProductSpecification"
+			)
+		}
+	)
+	@javax.ws.rs.Consumes("application/json")
+	@javax.ws.rs.DELETE
+	@javax.ws.rs.Path("/productSpecifications/batch")
+	@javax.ws.rs.Produces("application/json")
+	@Override
+	public Response deleteProductSpecificationBatch(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.ws.rs.QueryParam("callbackURL")
+			String callbackURL,
+			Object object)
+		throws Exception {
+
+		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
+			contextAcceptLanguage);
+		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
+		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
+			contextHttpServletRequest);
+		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
+		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
+
+		Response.ResponseBuilder responseBuilder = Response.accepted();
+
+		return responseBuilder.entity(
+			vulcanBatchEngineImportTaskResource.deleteImportTask(
+				ProductSpecification.class.getName(), callbackURL, object)
+		).build();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/productSpecifications/{id}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "id"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "ProductSpecification"
+			)
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path("/productSpecifications/{id}")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public ProductSpecification getProductSpecification(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull @javax.ws.rs.PathParam("id")
+			Long id)
+		throws Exception {
+
+		return new ProductSpecification();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-catalog/v1.0/productSpecifications/{id}' -d $'{"id": ___, "label": ___, "optionCategoryId": ___, "priority": ___, "productId": ___, "specificationId": ___, "specificationKey": ___, "value": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "id"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "ProductSpecification"
+			)
+		}
+	)
+	@javax.ws.rs.Consumes({"application/json", "application/xml"})
+	@javax.ws.rs.PATCH
+	@javax.ws.rs.Path("/productSpecifications/{id}")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public ProductSpecification patchProductSpecification(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull @javax.ws.rs.PathParam("id")
+			Long id,
+			ProductSpecification productSpecification)
+		throws Exception {
+
+		return new ProductSpecification();
+	}
 
 	/**
 	 * Invoke this method with the command line:
@@ -160,10 +321,6 @@ public abstract class BaseProductSpecificationResourceImpl
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "id"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "callbackURL"
 			)
@@ -182,9 +339,6 @@ public abstract class BaseProductSpecificationResourceImpl
 	@javax.ws.rs.Produces("application/json")
 	@Override
 	public Response postProductIdProductSpecificationBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull @javax.ws.rs.PathParam("id")
-			Long id,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.ws.rs.QueryParam("callbackURL")
 			String callbackURL,
@@ -210,7 +364,7 @@ public abstract class BaseProductSpecificationResourceImpl
 	@Override
 	@SuppressWarnings("PMD.UnusedLocalVariable")
 	public void create(
-			java.util.Collection<ProductSpecification> productSpecifications,
+			Collection<ProductSpecification> productSpecifications,
 			Map<String, Serializable> parameters)
 		throws Exception {
 
@@ -220,12 +374,15 @@ public abstract class BaseProductSpecificationResourceImpl
 
 	@Override
 	public void delete(
-			java.util.Collection<ProductSpecification> productSpecifications,
+			Collection<ProductSpecification> productSpecifications,
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		for (ProductSpecification productSpecification :
+				productSpecifications) {
+
+			deleteProductSpecification(productSpecification.getId());
+		}
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
@@ -233,7 +390,7 @@ public abstract class BaseProductSpecificationResourceImpl
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
-		return SetUtil.fromArray();
+		return SetUtil.fromArray("PARTIAL_UPDATE");
 	}
 
 	@Override
@@ -289,12 +446,44 @@ public abstract class BaseProductSpecificationResourceImpl
 
 	@Override
 	public void update(
-			java.util.Collection<ProductSpecification> productSpecifications,
+			Collection<ProductSpecification> productSpecifications,
 			Map<String, Serializable> parameters)
 		throws Exception {
 
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
+		UnsafeConsumer<ProductSpecification, Exception>
+			productSpecificationUnsafeConsumer = null;
+
+		String updateStrategy = (String)parameters.getOrDefault(
+			"updateStrategy", "UPDATE");
+
+		if ("PARTIAL_UPDATE".equalsIgnoreCase(updateStrategy)) {
+			productSpecificationUnsafeConsumer =
+				productSpecification -> patchProductSpecification(
+					productSpecification.getId() != null ?
+						productSpecification.getId() :
+							Long.parseLong(
+								(String)parameters.get(
+									"productSpecificationId")),
+					productSpecification);
+		}
+
+		if (productSpecificationUnsafeConsumer == null) {
+			throw new NotSupportedException(
+				"Update strategy \"" + updateStrategy +
+					"\" is not supported for ProductSpecification");
+		}
+
+		if (contextBatchUnsafeConsumer != null) {
+			contextBatchUnsafeConsumer.accept(
+				productSpecifications, productSpecificationUnsafeConsumer);
+		}
+		else {
+			for (ProductSpecification productSpecification :
+					productSpecifications) {
+
+				productSpecificationUnsafeConsumer.accept(productSpecification);
+			}
+		}
 	}
 
 	public void setContextAcceptLanguage(AcceptLanguage contextAcceptLanguage) {
@@ -303,7 +492,7 @@ public abstract class BaseProductSpecificationResourceImpl
 
 	public void setContextBatchUnsafeConsumer(
 		UnsafeBiConsumer
-			<java.util.Collection<ProductSpecification>,
+			<Collection<ProductSpecification>,
 			 UnsafeConsumer<ProductSpecification, Exception>, Exception>
 				contextBatchUnsafeConsumer) {
 
@@ -482,8 +671,7 @@ public abstract class BaseProductSpecificationResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> List<R> transform(
-		java.util.Collection<T> collection,
-		UnsafeFunction<T, R, E> unsafeFunction) {
+		Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction) {
 
 		return TransformUtil.transform(collection, unsafeFunction);
 	}
@@ -495,8 +683,8 @@ public abstract class BaseProductSpecificationResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> R[] transformToArray(
-		java.util.Collection<T> collection,
-		UnsafeFunction<T, R, E> unsafeFunction, Class<?> clazz) {
+		Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction,
+		Class<?> clazz) {
 
 		return TransformUtil.transformToArray(
 			collection, unsafeFunction, clazz);
@@ -509,8 +697,7 @@ public abstract class BaseProductSpecificationResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> List<R> unsafeTransform(
-			java.util.Collection<T> collection,
-			UnsafeFunction<T, R, E> unsafeFunction)
+			Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction)
 		throws E {
 
 		return TransformUtil.unsafeTransform(collection, unsafeFunction);
@@ -524,8 +711,8 @@ public abstract class BaseProductSpecificationResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> R[] unsafeTransformToArray(
-			java.util.Collection<T> collection,
-			UnsafeFunction<T, R, E> unsafeFunction, Class<?> clazz)
+			Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction,
+			Class<?> clazz)
 		throws E {
 
 		return TransformUtil.unsafeTransformToArray(
@@ -541,7 +728,7 @@ public abstract class BaseProductSpecificationResourceImpl
 
 	protected AcceptLanguage contextAcceptLanguage;
 	protected UnsafeBiConsumer
-		<java.util.Collection<ProductSpecification>,
+		<Collection<ProductSpecification>,
 		 UnsafeConsumer<ProductSpecification, Exception>, Exception>
 			contextBatchUnsafeConsumer;
 	protected com.liferay.portal.kernel.model.Company contextCompany;
@@ -559,6 +746,118 @@ public abstract class BaseProductSpecificationResourceImpl
 	protected SortParserProvider sortParserProvider;
 	protected VulcanBatchEngineImportTaskResource
 		vulcanBatchEngineImportTaskResource;
+
+	private void _checkResources(
+			long companyId, long resourceId, String resourceName)
+		throws PortalException {
+
+		int count = resourcePermissionLocalService.getResourcePermissionsCount(
+			companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(resourceId));
+
+		if (count == 0) {
+			ResourceLocalServiceUtil.addResources(
+				companyId, resourceId, 0, resourceName,
+				String.valueOf(resourceId), false, true, true);
+		}
+	}
+
+	private Collection<Permission> _getPermissions(
+			long companyId, List<ResourceAction> resourceActions,
+			long resourceId, String resourceName, String[] roleNames)
+		throws Exception {
+
+		_checkResources(companyId, resourceId, resourceName);
+
+		Map<String, Permission> permissions = new LinkedHashMap<>();
+
+		List<ResourcePermission> resourcePermissions = new ArrayList<>();
+
+		try {
+			Method method = ResourcePermissionLocalService.class.getMethod(
+				"getResourcePermissions", String.class);
+
+			resourcePermissions = (List<ResourcePermission>)method.invoke(
+				resourcePermissionLocalService, resourceName);
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			resourcePermissions =
+				resourcePermissionLocalService.getResourcePermissions(
+					companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
+					String.valueOf(resourceId));
+		}
+
+		for (ResourcePermission resourcePermission : resourcePermissions) {
+			if ((resourcePermission.getPrimKeyId() == 0) ||
+				(resourcePermission.getPrimKeyId() == resourceId)) {
+
+				com.liferay.portal.kernel.model.Role role =
+					roleLocalService.getRole(resourcePermission.getRoleId());
+
+				if ((roleNames == null) ||
+					((roleNames != null) &&
+					 ArrayUtil.contains(roleNames, role.getName()))) {
+
+					Permission permission = permissions.get(role.getName());
+
+					if (permission == null) {
+						permission = _toPermission(
+							resourceActions, resourcePermission, role);
+
+						if (permission != null) {
+							permissions.put(role.getName(), permission);
+						}
+					}
+					else {
+						Set<String> actionsIdsSet = new HashSet<>();
+
+						Collections.addAll(
+							actionsIdsSet, permission.getActionIds());
+
+						Permission newPermission = _toPermission(
+							resourceActions, resourcePermission, role);
+
+						Collections.addAll(
+							actionsIdsSet, newPermission.getActionIds());
+
+						permission.setActionIds(
+							actionsIdsSet.toArray(new String[0]));
+					}
+				}
+			}
+		}
+
+		return permissions.values();
+	}
+
+	private Permission _toPermission(
+		List<ResourceAction> resourceActions,
+		ResourcePermission resourcePermission,
+		com.liferay.portal.kernel.model.Role role) {
+
+		Set<String> actionsIdsSet = new HashSet<>();
+
+		long actionIds = resourcePermission.getActionIds();
+
+		for (ResourceAction resourceAction : resourceActions) {
+			long bitwiseValue = resourceAction.getBitwiseValue();
+
+			if ((actionIds & bitwiseValue) == bitwiseValue) {
+				actionsIdsSet.add(resourceAction.getActionId());
+			}
+		}
+
+		if (actionsIdsSet.isEmpty()) {
+			return null;
+		}
+
+		return new Permission() {
+			{
+				actionIds = actionsIdsSet.toArray(new String[0]);
+				roleName = role.getName();
+			}
+		};
+	}
 
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseProductSpecificationResourceImpl.class);

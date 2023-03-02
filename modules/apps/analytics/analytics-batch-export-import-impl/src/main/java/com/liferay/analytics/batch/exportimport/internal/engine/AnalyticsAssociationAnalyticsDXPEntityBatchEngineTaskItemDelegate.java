@@ -50,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcos Martins
  */
 @Component(
-	immediate = true,
 	property = "batch.engine.task.item.delegate.name=analytics-association-analytics-dxp-entities",
 	service = BatchEngineTaskItemDelegate.class
 )
@@ -61,7 +60,7 @@ public class AnalyticsAssociationAnalyticsDXPEntityBatchEngineTaskItemDelegate
 	public EntityModel getEntityModel(Map<String, List<String>> multivaluedMap)
 		throws Exception {
 
-		return new AnalyticsDXPEntityEntityModel();
+		return _entityModel;
 	}
 
 	@Override
@@ -139,6 +138,9 @@ public class AnalyticsAssociationAnalyticsDXPEntityBatchEngineTaskItemDelegate
 
 		return new Date(GetterUtil.getLong(lowerTerm));
 	}
+
+	private static final EntityModel _entityModel =
+		new AnalyticsDXPEntityEntityModel();
 
 	@Reference
 	private AnalyticsAssociationLocalService _analyticsAssociationLocalService;

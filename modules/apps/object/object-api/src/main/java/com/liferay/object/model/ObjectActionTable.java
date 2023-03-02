@@ -37,6 +37,10 @@ public class ObjectActionTable extends BaseTable<ObjectActionTable> {
 		"mvccVersion", Long.class, Types.BIGINT, Column.FLAG_NULLITY);
 	public final Column<ObjectActionTable, String> uuid = createColumn(
 		"uuid_", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<ObjectActionTable, String> externalReferenceCode =
+		createColumn(
+			"externalReferenceCode", String.class, Types.VARCHAR,
+			Column.FLAG_DEFAULT);
 	public final Column<ObjectActionTable, Long> objectActionId = createColumn(
 		"objectActionId", Long.class, Types.BIGINT, Column.FLAG_PRIMARY);
 	public final Column<ObjectActionTable, Long> companyId = createColumn(
@@ -60,6 +64,10 @@ public class ObjectActionTable extends BaseTable<ObjectActionTable> {
 			"conditionExpression", Clob.class, Types.CLOB, Column.FLAG_DEFAULT);
 	public final Column<ObjectActionTable, String> description = createColumn(
 		"description", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<ObjectActionTable, String> errorMessage = createColumn(
+		"errorMessage", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
+	public final Column<ObjectActionTable, String> label = createColumn(
+		"label", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<ObjectActionTable, String> name = createColumn(
 		"name", String.class, Types.VARCHAR, Column.FLAG_DEFAULT);
 	public final Column<ObjectActionTable, String> objectActionExecutorKey =

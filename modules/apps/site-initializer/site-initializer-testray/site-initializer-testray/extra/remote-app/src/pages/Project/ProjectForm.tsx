@@ -41,12 +41,12 @@ const ProjectForm = () => {
 		useOutletContext<OutletContext>() || {};
 
 	useHeader({
+		tabs: [],
 		timeout: 100,
-		useTabs: [],
 	});
 
 	const {
-		formState: {errors},
+		formState: {errors, isSubmitting},
 		handleSubmit,
 		register,
 	} = useForm<ProjectFormType>({
@@ -60,8 +60,8 @@ const ProjectForm = () => {
 
 	const _onSubmit = (project: ProjectFormType) =>
 		onSubmit(project, {
-			create: (...params) => testrayProjectImpl.create(...params),
-			update: (...params) => testrayProjectImpl.update(...params),
+			create: (data) => testrayProjectImpl.create(data),
+			update: (id, data) => testrayProjectImpl.update(id, data),
 		})
 			.then((response) => {
 				if (project.id) {
@@ -91,7 +91,11 @@ const ProjectForm = () => {
 				name="description"
 			/>
 
-			<Form.Footer onClose={onClose} onSubmit={handleSubmit(_onSubmit)} />
+			<Form.Footer
+				onClose={onClose}
+				onSubmit={handleSubmit(_onSubmit)}
+				primaryButtonProps={{loading: isSubmitting}}
+			/>
 		</Container>
 	);
 };

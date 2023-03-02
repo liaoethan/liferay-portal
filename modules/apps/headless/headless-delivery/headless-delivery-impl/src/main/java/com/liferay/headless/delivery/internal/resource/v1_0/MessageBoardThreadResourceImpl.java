@@ -44,6 +44,7 @@ import com.liferay.message.boards.util.comparator.ThreadCreateDateComparator;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.OrderFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
@@ -80,7 +81,6 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.ActionUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.portal.vulcan.util.UriInfoUtil;
 import com.liferay.ratings.kernel.model.RatingsStats;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
@@ -111,6 +111,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/message-board-thread.properties",
 	scope = ServiceScope.PROTOTYPE, service = MessageBoardThreadResource.class
 )
+@CTAware
 public class MessageBoardThreadResourceImpl
 	extends BaseMessageBoardThreadResourceImpl {
 
@@ -163,6 +164,13 @@ public class MessageBoardThreadResourceImpl
 					mbCategory.getUserId(), MBConstants.RESOURCE_NAME,
 					mbCategory.getGroupId())
 			).put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_MESSAGE, mbCategory.getCategoryId(),
+					"postMessageBoardSectionMessageBoardThreadBatch",
+					mbCategory.getUserId(), MBConstants.RESOURCE_NAME,
+					mbCategory.getGroupId())
+			).put(
 				"get",
 				addAction(
 					ActionKeys.VIEW, mbCategory.getCategoryId(),
@@ -185,7 +193,7 @@ public class MessageBoardThreadResourceImpl
 
 			return Page.of(
 				actions,
-				TransformUtil.transform(
+				transform(
 					_mbThreadService.getThreads(
 						mbCategory.getGroupId(), mbCategory.getCategoryId(),
 						new QueryDefinition<>(

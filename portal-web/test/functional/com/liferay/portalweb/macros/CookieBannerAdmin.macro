@@ -2,7 +2,7 @@ definition {
 
 	@description = "Configure Cookie Banner to be visible"
 	macro configuredToShowBanner {
-		CookieNavigator.gotoSiteSettings(portlet = "Banner");
+		CookieNavigator.gotoInstanceSettings(portlet = "Banner");
 
 		CookieBannerAdmin.saveSettings();
 	}
@@ -11,7 +11,7 @@ definition {
 	macro disableDeclineAllButton {
 		AssertClick(
 			locator1 = "CookieBannerAdmin#INCLUDE_DECLINE_ALL_BUTTON",
-			value1 = "Include \&quot;Decline All\&quot; Button");
+			value1 = "Include \\"Decline All\\" Button");
 
 		Button.clickSave();
 	}
@@ -36,25 +36,25 @@ definition {
 		if (isSet(content)) {
 			Type(
 				locator1 = "CookieBannerAdmin#CONTENT",
-				value1 = "${content}");
+				value1 = ${content});
 		}
 
 		if (isSet(privacyPolicyLink)) {
 			Type(
 				locator1 = "CookieBannerAdmin#PRIVACY_POLICY_LINK",
-				value1 = "${privacyPolicyLink}");
+				value1 = ${privacyPolicyLink});
 		}
 
 		if (isSet(linkDisplayText)) {
 			Type(
 				locator1 = "CookieBannerAdmin#LINK_DISPLAY_TEXT",
-				value1 = "${linkDisplayText}");
+				value1 = ${linkDisplayText});
 		}
 
 		if (isSet(includeDeclineAllButton)) {
 			AssertClick(
 				locator1 = "CookieBannerAdmin#INCLUDE_DECLINE_ALL_BUTTON",
-				value1 = "Include \&quot;Decline All\&quot; Button");
+				value1 = "Include \\"Decline All\\" Button");
 		}
 
 		CookieBannerAdmin.saveConfiguration();
@@ -64,11 +64,46 @@ definition {
 			value1 = "Your request completed successfully.");
 	}
 
-	@description = "Set custom texts for Cookie Banner"
+	@description = "Set custom texts for Cookie Banner at Instance Level"
 	macro setCustomTextForAllFields {
-		Variables.assertDefined(parameterList = "${text}");
+		Variables.assertDefined(parameterList = ${text});
 
-		CookieNavigator.gotoSiteSettings(portlet = "Banner");
+		CookieNavigator.gotoInstanceSettings(portlet = "Banner");
+
+		Type(
+			locator1 = "CookieBannerAdmin#CONTENT",
+			value1 = "${text}_1");
+
+		Type(
+			locator1 = "CookieBannerAdmin#PRIVACY_POLICY_LINK",
+			value1 = "${text}_2");
+
+		Type(
+			locator1 = "CookieBannerAdmin#LINK_DISPLAY_TEXT",
+			value1 = "${text}_3");
+
+		if (isSet(cancel)) {
+			AssertClick(
+				locator1 = "Button#CANCEL",
+				value1 = "Cancel");
+		}
+		else {
+			CookieBannerAdmin.saveConfiguration();
+
+			AssertTextEquals.assertPartialText(
+				locator1 = "Message#SUCCESS",
+				value1 = "Your request completed successfully.");
+		}
+	}
+
+	@description = "Set custom texts for Cookie Banner at Site Level"
+	macro setCustomTextForAllFieldsAtSiteLevel {
+		Variables.assertDefined(parameterList = ${text});
+
+		CookieNavigator.gotoSiteSettings(
+			baseURL = ${baseURL},
+			portlet = "Banner",
+			siteURLKey = ${siteURLKey});
 
 		Type(
 			locator1 = "CookieBannerAdmin#CONTENT",
@@ -100,17 +135,17 @@ definition {
 	macro verifyAllConfigurationElementsAreConfigured {
 		WaitForElementPresent(locator1 = "CookieBannerAdmin#MENU_TITLE");
 
-		while ((IsTextNotEqual(locator1 = "CookieBannerAdmin#CONTENT", value1 = "${text}")) && (maxIterations = "10")) {
+		while ((IsTextNotEqual(locator1 = "CookieBannerAdmin#CONTENT", value1 = ${text})) && (maxIterations = "10")) {
 			Refresh();
 		}
 
 		AssertTextEquals(
 			locator1 = "CookieBannerAdmin#PRIVACY_POLICY_LINK",
-			value1 = "${text}");
+			value1 = ${text});
 
 		AssertTextEquals(
 			locator1 = "CookieBannerAdmin#LINK_DISPLAY_TEXT",
-			value1 = "${text}");
+			value1 = ${text});
 
 		AssertChecked.assertCheckedNotVisible(locator1 = "CookieBannerAdmin#INCLUDE_DECLINE_ALL_BUTTON");
 	}

@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.asset.publisher.web.internal.configuration.AssetPublisherWebConfiguration",
-	immediate = true, service = AssetPublisherCustomizer.class
+	service = AssetPublisherCustomizer.class
 )
 public class DefaultAssetPublisherCustomizer
 	implements AssetPublisherCustomizer {
@@ -54,6 +54,13 @@ public class DefaultAssetPublisherCustomizer
 		PortletPreferences portletPreferences = getPortletPreferences(
 			httpServletRequest);
 
+		return GetterUtil.getInteger(
+			portletPreferences.getValue("delta", null),
+			SearchContainer.DEFAULT_DELTA);
+	}
+
+	@Override
+	public Integer getDelta(PortletPreferences portletPreferences) {
 		return GetterUtil.getInteger(
 			portletPreferences.getValue("delta", null),
 			SearchContainer.DEFAULT_DELTA);

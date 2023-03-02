@@ -15,26 +15,37 @@
 /// <reference types="react" />
 
 import {CustomItem, SidebarCategory} from '@liferay/object-js-components-web';
-import './ActionBuilder.scss';
 import {ActionError} from '../index';
-export default function ActionBuilder({
-	errors,
-	objectActionCodeEditorElements,
-	objectActionExecutors,
-	objectActionTriggers,
-	objectDefinitionsRelationshipsURL,
-	setValues,
-	validateExpressionURL,
-	values,
-}: IProps): JSX.Element;
-interface IProps {
+interface ActionBuilderProps {
 	errors: ActionError;
+	isApproved: boolean;
 	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: CustomItem[];
 	objectActionTriggers: CustomItem[];
+	objectDefinitionExternalReferenceCode: string;
+	objectDefinitionId: number;
 	objectDefinitionsRelationshipsURL: string;
 	setValues: (values: Partial<ObjectAction>) => void;
+	systemObject: boolean;
 	validateExpressionURL: string;
 	values: Partial<ObjectAction>;
 }
+export interface WarningStates {
+	mandatoryRelationships: boolean;
+	requiredFields: boolean;
+}
+export default function ActionBuilder({
+	errors,
+	isApproved,
+	objectActionCodeEditorElements,
+	objectActionExecutors,
+	objectActionTriggers,
+	objectDefinitionExternalReferenceCode,
+	objectDefinitionId,
+	objectDefinitionsRelationshipsURL,
+	setValues,
+	systemObject,
+	validateExpressionURL,
+	values,
+}: ActionBuilderProps): JSX.Element;
 export {};

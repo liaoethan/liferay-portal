@@ -16,6 +16,7 @@ import {useForm} from 'react-hook-form';
 
 import Form from '../../../components/Form';
 import Modal from '../../../components/Modal';
+import SearchBuilder from '../../../core/SearchBuilder';
 import {withVisibleContent} from '../../../hoc/withVisibleContent';
 import {useFetch} from '../../../hooks/useFetch';
 import {FormModalOptions} from '../../../hooks/useFormModal';
@@ -26,7 +27,6 @@ import {
 	TestrayTeam,
 	testrayComponentImpl,
 } from '../../../services/rest';
-import {searchUtil} from '../../../util/search';
 
 type ComponentForm = typeof yupSchema.component.__outputType;
 
@@ -49,7 +49,6 @@ const ComponentFormModal: React.FC<ComponentProps> = ({
 			? {
 					id: modalState.id,
 					name: modalState.name,
-
 					teamId: modalState.team?.id,
 			  }
 			: {
@@ -58,15 +57,18 @@ const ComponentFormModal: React.FC<ComponentProps> = ({
 		resolver: yupResolver(yupSchema.component),
 	});
 
-	const {data: teamsResponse} = useFetch<APIResponse<TestrayTeam>>(
-		`/teams?filter=${searchUtil.eq(
-			'projectId',
-			projectId
-		)}&sort=name:asc&pageSize=100&fields=id,name`
-	);
+	const {data: teamsResponse} = useFetch<APIResponse<TestrayTeam>>(`/teams`, {
+		params: {
+			fields: 'id,name',
+			filter: SearchBuilder.eq('projectId', projectId),
+			pageSize: 100,
+			sort: 'name:asc',
+		},
+	});
 
-	const teams = teamsResponse?.items || [];
 	const teamId = watch('teamId');
+	const teams = teamsResponse?.items || [];
+
 	const _onSubmit = (componentForm: ComponentForm) => {
 		onSubmit(
 			{

@@ -13,18 +13,44 @@
  */
 
 import ClayIcon from '@clayui/icon';
+import classNames from 'classnames';
 import React from 'react';
 
-export default function QuestionsBadge({className, symbol, tooltip, value}) {
+export default function QuestionsBadge({
+	className,
+	isActivityBadge,
+	symbol,
+	symbolClassName,
+	tooltip,
+	value,
+}) {
 	return (
 		<div
-			className={`c-py-2 c-px-3 rounded stretched-link-layer ${className}`}
+			className={classNames(
+				'c-py-2 c-px-3 rounded stretched-link-layer',
+				className
+			)}
 			data-tooltip-align="top"
 			title={tooltip}
 		>
-			<ClayIcon symbol={symbol} />
+			<span
+				className={classNames(
+					'label-badge-activity questions-labels-limit',
+					{
+						'label-badge-activity': isActivityBadge,
+					}
+				)}
+			>
+				{symbol && (
+					<ClayIcon
+						className={classNames(symbolClassName, 'mr-2 mt-0')}
+						fontSize={16}
+						symbol={symbol}
+					/>
+				)}
 
-			<span className="c-ml-2 font-weight-bold small">{value || 0}</span>
+				{value || 0}
+			</span>
 		</div>
 	);
 }

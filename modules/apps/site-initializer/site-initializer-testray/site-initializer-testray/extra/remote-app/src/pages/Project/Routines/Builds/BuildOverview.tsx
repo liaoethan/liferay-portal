@@ -12,48 +12,35 @@
  * details.
  */
 
-import ClayButton from '@clayui/button';
 import ClayChart from '@clayui/charts';
 import {useRef} from 'react';
-import {useNavigate} from 'react-router-dom';
 
+import JiraLink from '../../../../components/JiraLink';
 import Container from '../../../../components/Layout/Container';
 import QATable from '../../../../components/Table/QATable';
-import useCaseResultGroupBy from '../../../../data/useCaseResultGroupBy';
-import useTotalTestCases from '../../../../data/useTotalTestCases';
+import useCaseResultGroupBy from '../../../../hooks/data/useCaseResultGroupBy';
+import useIssuesFound from '../../../../hooks/data/useIssuesFound';
 import i18n from '../../../../i18n';
 import {TestrayBuild, TestrayTask} from '../../../../services/rest';
 import dayjs from '../../../../util/date';
 import {getDonutLegend} from '../../../../util/graph';
+import BuildAlertBar from './BuildAlertBar';
 
 type BuildOverviewProps = {
 	testrayBuild: TestrayBuild;
 	testrayTask?: TestrayTask;
 };
 
-const BuildOverview: React.FC<BuildOverviewProps> = ({
-	testrayBuild,
-	testrayTask,
-}) => {
-	const navigate = useNavigate();
-
+const BuildOverview: React.FC<BuildOverviewProps> = ({testrayBuild}) => {
+	const totalTestCasesGroup = useCaseResultGroupBy(testrayBuild.id);
+	const issues = useIssuesFound({buildId: testrayBuild.id});
 	const ref = useRef<any>();
 
-	const totalTestCasesGroup = useCaseResultGroupBy(testrayBuild.id);
-	const totalTestCases = useTotalTestCases();
+	const [testrayTask] = testrayBuild?.tasks as TestrayTask[];
 
 	return (
 		<>
-			{!testrayTask && (
-				<ClayButton
-					className="mb-4"
-					onClick={() =>
-						navigate(`/testflow/${testrayBuild.id}/create`)
-					}
-				>
-					{i18n.translate('analyze')}
-				</ClayButton>
-			)}
+			<BuildAlertBar testrayTask={testrayTask} />
 
 			<Container collapsable title={i18n.translate('details')}>
 				<QATable
@@ -80,7 +67,14 @@ const BuildOverview: React.FC<BuildOverviewProps> = ({
 							title: i18n.translate('created-by'),
 							value: testrayBuild.creator.name,
 						},
-						{title: i18n.translate('all-issues-found'), value: '-'},
+						{
+							title: i18n.translate('all-issues-found'),
+							value: issues.length ? (
+								<JiraLink issue={issues} />
+							) : (
+								'-'
+							),
+						},
 					]}
 				/>
 
@@ -178,9 +172,9 @@ const BuildOverview: React.FC<BuildOverviewProps> = ({
 								},
 							}}
 							data={{
-								colors: totalTestCases.colors,
-								columns: totalTestCases.barChart.columns,
-								groups: [totalTestCases.statuses],
+								colors: totalTestCasesGroup.colors,
+								columns: totalTestCasesGroup.donut.columns,
+								groups: [totalTestCasesGroup.statuses],
 								type: 'bar',
 							}}
 							legend={{

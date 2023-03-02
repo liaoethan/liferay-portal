@@ -15,6 +15,7 @@
 package com.liferay.portal.dao.db.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.BaseDBProcess;
 import com.liferay.portal.kernel.dao.db.DB;
@@ -34,7 +35,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -87,7 +92,7 @@ public class BaseDBProcessTest extends BaseDBProcess {
 
 	@After
 	public void tearDown() throws Exception {
-		runSQL("drop table " + _TABLE_NAME);
+		runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME + ")");
 	}
 
 	@Test
@@ -167,11 +172,11 @@ public class BaseDBProcessTest extends BaseDBProcess {
 	}
 
 	@Test
-	public void testAlterColumnNameNonexistedColumn() throws Exception {
+	public void testAlterColumnNameNonexistentColumn() throws Exception {
 		try {
 			alterColumnName(
-				_TABLE_NAME, "nonexistedColumn",
-				"newNonexistedColumn LONG null");
+				_TABLE_NAME, "nonexistentColumn",
+				"newNonexistentColumn LONG null");
 
 			Assert.fail();
 		}
@@ -179,7 +184,7 @@ public class BaseDBProcessTest extends BaseDBProcess {
 		}
 
 		Assert.assertFalse(
-			_dbInspector.hasColumn(_TABLE_NAME, "nonexistedColumn"));
+			_dbInspector.hasColumn(_TABLE_NAME, "nonexistentColumn"));
 	}
 
 	@Test
@@ -261,9 +266,9 @@ public class BaseDBProcessTest extends BaseDBProcess {
 	}
 
 	@Test
-	public void testAlterColumnTypeNonexistedColumn() throws Exception {
+	public void testAlterColumnTypeNonexistentColumn() throws Exception {
 		try {
-			alterColumnType(_TABLE_NAME, "nonexistedColumn", "TEXT not null");
+			alterColumnType(_TABLE_NAME, "nonexistentColumn", "TEXT not null");
 
 			Assert.fail();
 		}
@@ -272,7 +277,7 @@ public class BaseDBProcessTest extends BaseDBProcess {
 
 		Assert.assertFalse(
 			_dbInspector.hasColumnType(
-				_TABLE_NAME, "nonexistedColumn", "TEXT not null"));
+				_TABLE_NAME, "nonexistentColumn", "TEXT not null"));
 	}
 
 	@Test
@@ -400,8 +405,88 @@ public class BaseDBProcessTest extends BaseDBProcess {
 	}
 
 	@Test
-	public void testAlterTableDropNonexistedColumn() throws Exception {
-		alterTableDropColumn(_TABLE_NAME, "nonexistedColumn");
+	public void testAlterTableDropNonexistentColumn() throws Exception {
+		alterTableDropColumn(_TABLE_NAME, "nonexistentColumn");
+	}
+
+	@Test
+	public void testDropNonexistentTable() throws Exception {
+		dropTable("nonexistentTable");
+	}
+
+	@Test
+	public void testDropTable() throws Exception {
+		dropTable(_TABLE_NAME);
+
+		Assert.assertFalse(_dbInspector.hasTable(_TABLE_NAME));
+	}
+
+	@Test
+	public void testProcessConcurrently() throws Exception {
+		_validateProcessConcurrently(
+			threadIds -> processConcurrently(
+				"select id from " + _TABLE_NAME,
+				resultSet -> new Object[] {resultSet.getInt("id")},
+				values -> {
+					Thread currentThread = Thread.currentThread();
+
+					threadIds.add(currentThread.getId());
+
+					int value = (int)values[0];
+
+					runSQL(
+						StringBundler.concat(
+							"update ", _TABLE_NAME, " set typeInteger = ",
+							value, " where id = ", value));
+				},
+				null));
+	}
+
+	@Test
+	public void testProcessConcurrentlyWithBatch() throws Exception {
+		_validateProcessConcurrently(
+			threadIds -> processConcurrently(
+				"select id from " + _TABLE_NAME,
+				"update " + _TABLE_NAME + " set typeInteger = ? where id = ?",
+				resultSet -> new Object[] {resultSet.getInt("id")},
+				(values, preparedStatement) -> {
+					Thread currentThread = Thread.currentThread();
+
+					threadIds.add(currentThread.getId());
+
+					int value = (int)values[0];
+
+					preparedStatement.setInt(1, value);
+					preparedStatement.setInt(2, value);
+
+					preparedStatement.addBatch();
+				},
+				null));
+	}
+
+	@Test
+	public void testProcessConcurrentlyWithList() throws Exception {
+		Integer[] values = IntStream.rangeClosed(
+			1, _PROCESS_CONCURRENTLY_COUNT
+		).boxed(
+		).toArray(
+			Integer[]::new
+		);
+
+		_validateProcessConcurrently(
+			threadIds -> processConcurrently(
+				values,
+				value -> {
+					Thread currentThread = Thread.currentThread();
+
+					threadIds.add(currentThread.getId());
+
+					runSQL(
+						StringBundler.concat(
+							"update ", _TABLE_NAME, " set typeInteger = ",
+							value, " where id = ", value));
+				},
+				null));
 	}
 
 	private void _addIndex(String[] columnNames) {
@@ -411,6 +496,15 @@ public class BaseDBProcessTest extends BaseDBProcess {
 		ReflectionTestUtil.invoke(
 			_db, "addIndexes", new Class<?>[] {Connection.class, List.class},
 			_connection, indexMetadatas);
+	}
+
+	private void _populateTable() throws Exception {
+		for (int i = 1; i <= _PROCESS_CONCURRENTLY_COUNT; i++) {
+			runSQL(
+				StringBundler.concat(
+					"insert into ", _TABLE_NAME, " (id, notNilColumn) values (",
+					i, ", '1')"));
+		}
 	}
 
 	private void _validateIndex(String[] columnNames) throws Exception {
@@ -435,7 +529,39 @@ public class BaseDBProcessTest extends BaseDBProcess {
 			ArrayUtil.sortedUnique(indexMetadata.getColumnNames()));
 	}
 
+	private void _validateProcessConcurrently(
+			UnsafeConsumer<Set<Long>, Exception> unsafeConsumer)
+		throws Exception {
+
+		_populateTable();
+
+		Set<Long> threadIds = Collections.synchronizedSet(new HashSet<>());
+
+		unsafeConsumer.accept(threadIds);
+
+		Assert.assertTrue(threadIds.size() > 1);
+
+		_validateTableContent();
+	}
+
+	private void _validateTableContent() throws Exception {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select count(1) from ", _TABLE_NAME,
+					" where id >= 1 and id <= ", _PROCESS_CONCURRENTLY_COUNT,
+					" and typeInteger = id"));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
+
+			resultSet.next();
+
+			Assert.assertEquals(
+				_PROCESS_CONCURRENTLY_COUNT, resultSet.getInt(1));
+		}
+	}
+
 	private static final String _INDEX_NAME = "IX_TEMP";
+
+	private static final int _PROCESS_CONCURRENTLY_COUNT = 100;
 
 	private static final String _TABLE_NAME = "BasedDBProcessTest";
 

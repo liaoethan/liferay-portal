@@ -11,35 +11,64 @@
 
 import {array, date, number, object, string} from 'yup';
 
-import {TypeActivityExternalReferenceCode} from '../../../../../common/enums/typeActivityExternalReferenceCode';
-import TypeActivity from '../../../../../common/interfaces/typeActivity';
-import isObjectEmpty from '../../../utils/isObjectEmpty';
+import {TypeActivityKey} from '../../../../../common/enums/TypeActivityKey';
+import {TacticKeys} from '../../../../../common/enums/mdfRequestTactics';
+import isObjectEmpty from '../../../../../common/utils/isObjectEmpty';
+import getContentMarketingFieldsValidation from './fieldValidation/contentMarketingFields';
+import getDigitalMarketingFieldsValidation from './fieldValidation/digitalMarketingFields';
+import getEventFieldsValidation from './fieldValidation/eventFields';
+import leadListFieldsValidation from './fieldValidation/leadListvalidation';
+import getMiscellaneousMarketingFieldsValidation from './fieldValidation/miscellaneousMarketingFields';
 
 const activitiesSchema = object({
 	activities: array()
 		.of(
 			object({
-				activityPromotion: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.EVENT,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				assetsLiferayRequired: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.DIGITAL_MARKETING,
-					then: (schema) => schema.required('Required'),
-				}),
+				activityDescription: object().when(
+					['typeActivity', 'tactic'],
+					(typeActivity, tactic) => {
+						let targetFields = {};
+
+						switch (typeActivity.key) {
+							case TypeActivityKey.EVENT:
+								targetFields = getEventFieldsValidation(
+									tactic.key as TacticKeys
+								);
+								break;
+							case TypeActivityKey.DIGITAL_MARKETING:
+								targetFields = getDigitalMarketingFieldsValidation(
+									tactic.key as TacticKeys
+								);
+								break;
+							case TypeActivityKey.CONTENT_MARKETING:
+								targetFields = getContentMarketingFieldsValidation();
+								break;
+							default:
+								targetFields = getMiscellaneousMarketingFieldsValidation(
+									tactic.key as TacticKeys
+								);
+								break;
+						}
+
+						targetFields = {
+							...targetFields,
+							...leadListFieldsValidation,
+						};
+
+						return object(targetFields);
+					}
+				),
 				budgets: array()
 					.of(
 						object({
 							cost: number()
+								.max(
+									999999999,
+									'The value cannot be greater than 9,999,999.99'
+								)
 								.moreThan(0, 'Required')
 								.required('Required'),
+
 							expense: object({
 								key: string(),
 								name: string(),
@@ -51,22 +80,10 @@ const activitiesSchema = object({
 						})
 					)
 					.min(1, 'Required'),
-				description: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.EVENT,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				detailsLeadFollowUp: string()
-					.max(350, 'You have exceeded the character limit')
-					.required('Required'),
 				endDate: date()
 					.test(
 						'end-date-six-month',
-						'End date must be less than six month after start date',
+						'The activity period can not be longer than 6 months',
 						(endDate, testContext) => {
 							if (endDate) {
 								const startDate = testContext.parent.startDate;
@@ -109,69 +126,20 @@ const activitiesSchema = object({
 							return false;
 						}
 					)
+					.test(
+						'end-date-year-current-year',
+						'The end date cannot exceed the current year',
+						(endDate) => {
+							const currentYear = new Date().getFullYear();
+
+							if (endDate && currentYear) {
+								return endDate.getFullYear() === currentYear;
+							}
+
+							return false;
+						}
+					)
 					.required('Required'),
-				gatedLandingPage: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.CONTENT_MARKETING,
-					then: (schema) => schema.required('Required'),
-				}),
-				goalOfContent: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.CONTENT_MARKETING,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				hiringOutsideWriterOrAgency: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.CONTENT_MARKETING,
-					then: (schema) => schema.required('Required'),
-				}),
-				howLiferayBrandUsed: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.DIGITAL_MARKETING,
-					then: (schema) => schema.required('Required'),
-				}),
-				leadFollowUpStrategies: array().min(1, 'Required'),
-				leadGenerated: string().required('Required'),
-				liferayBranding: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.EVENT,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				liferayParticipationRequirements: string().when(
-					'typeActivity',
-					{
-						is: (typeActivity: TypeActivity) =>
-							typeActivity.externalReferenceCode ===
-							TypeActivityExternalReferenceCode.EVENT,
-						then: (schema) =>
-							schema
-								.max(
-									350,
-									'You have exceeded the character limit'
-								)
-								.required('Required'),
-					}
-				),
-				location: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.EVENT,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
 				mdfRequestAmount: number()
 					.moreThan(0, 'Required')
 					.required('Required')
@@ -190,44 +158,9 @@ const activitiesSchema = object({
 						}
 					),
 				name: string()
-					.max(350, 'You have exceeded the character limit')
+					.trim()
+					.max(40, 'You have exceeded the character limit')
 					.required('Required'),
-				overallMessageContentCTA: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.DIGITAL_MARKETING,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				primaryThemeOrMessage: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.CONTENT_MARKETING,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				sourceAndSizeOfInviteeList: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.EVENT,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
-				specificSites: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.DIGITAL_MARKETING,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
 				startDate: date()
 					.test(
 						'is-today',
@@ -243,6 +176,19 @@ const activitiesSchema = object({
 							return false;
 						}
 					)
+					.test(
+						'end-date-year-current-year',
+						'The start date cannot exceed the current year',
+						(startDate) => {
+							const currentYear = new Date().getFullYear();
+
+							if (startDate && currentYear) {
+								return startDate.getFullYear() === currentYear;
+							}
+
+							return false;
+						}
+					)
 					.required('Required'),
 				tactic: object({
 					id: number(),
@@ -252,27 +198,15 @@ const activitiesSchema = object({
 					'Required',
 					(value) => !isObjectEmpty(value)
 				),
-				targetOfLeads: string()
-					.max(350, 'You have exceeded the character limit')
-					.required('Required'),
 				typeActivity: object({
-					externalReferenceCode: string(),
 					id: number(),
 					name: string(),
+					value: string(),
 				}).test(
 					'is-empty',
 					'Required',
 					(value) => !isObjectEmpty(value)
 				),
-				venueName: string().when('typeActivity', {
-					is: (typeActivity: TypeActivity) =>
-						typeActivity.externalReferenceCode ===
-						TypeActivityExternalReferenceCode.EVENT,
-					then: (schema) =>
-						schema
-							.max(350, 'You have exceeded the character limit')
-							.required('Required'),
-				}),
 			})
 		)
 		.min(1),

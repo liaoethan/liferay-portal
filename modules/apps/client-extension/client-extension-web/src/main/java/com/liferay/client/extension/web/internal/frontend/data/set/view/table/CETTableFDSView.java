@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bruno Basto
  */
 @Component(
-	immediate = true,
 	property = "frontend.data.set.name=" + ClientExtensionAdminFDSNames.CLIENT_EXTENSION_TYPES,
 	service = FDSView.class
 )
@@ -51,6 +50,12 @@ public class CETTableFDSView extends BaseTableFDSView {
 			"status", "status",
 			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
 				"status")
+		).add(
+			"configuredFrom", "configured-from"
+		).add(
+			"modifiedDate", "modified-date",
+			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
+				"date")
 		).build();
 	}
 

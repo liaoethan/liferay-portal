@@ -28,10 +28,16 @@ export default function EditObjectStateField({objectField, readOnly}: IProps) {
 	const [pickListItems, setPickListItems] = useState<PickListItem[]>([]);
 
 	useEffect(() => {
-		API.getPickListItems(objectField.listTypeDefinitionId).then(
-			setPickListItems
-		);
-	}, [objectField.listTypeDefinitionId, setPickListItems]);
+		if (objectField?.listTypeDefinitionId) {
+			API.getPickListItems(objectField.listTypeDefinitionId).then(
+				setPickListItems
+			);
+		}
+	}, [
+		objectField.listTypeDefinitionId,
+		objectField.listTypeDefinitionExternalReferenceCode,
+		setPickListItems,
+	]);
 
 	const isStateOptionChecked = ({
 		currentKey,
@@ -63,6 +69,7 @@ export default function EditObjectStateField({objectField, readOnly}: IProps) {
 	};
 
 	const onSubmit = async ({id, ...objectField}: ObjectField) => {
+		delete objectField.listTypeDefinitionId;
 		delete objectField.system;
 
 		try {

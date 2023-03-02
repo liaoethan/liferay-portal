@@ -21,8 +21,8 @@ import React from 'react';
 import {VIEWPORT_SIZES} from '../../app/config/constants/viewportSizes';
 import {useSelector} from '../../app/contexts/StoreContext';
 import {selectPageContents} from '../../app/selectors/selectPageContents';
-import {useId} from '../../core/hooks/useId';
-import {openImageSelector} from '../../core/openImageSelector';
+import {useId} from '../hooks/useId';
+import {openImageSelector} from '../openImageSelector';
 
 export function ImageSelector({
 	fileEntryId,
@@ -44,6 +44,13 @@ export function ImageSelector({
 			?.title ?? imageTitle;
 
 	const hasImageTitle = !!imageTitle.length;
+
+	const selectButtonLabel = sub(
+		hasImageTitle
+			? Liferay.Language.get('change-x')
+			: Liferay.Language.get('select-x'),
+		Liferay.Language.get('image')
+	);
 
 	return selectedViewportSize === VIEWPORT_SIZES.desktop ? (
 		<>
@@ -69,20 +76,16 @@ export function ImageSelector({
 
 					<ClayInput.GroupItem shrink>
 						<ClayButtonWithIcon
+							aria-label={selectButtonLabel}
 							displayType="secondary"
 							onClick={() =>
 								openImageSelector((image) => {
 									onImageSelected(image);
 								})
 							}
-							small
+							size="sm"
 							symbol={hasImageTitle ? 'change' : 'plus'}
-							title={sub(
-								hasImageTitle
-									? Liferay.Language.get('change-x')
-									: Liferay.Language.get('select-x'),
-								Liferay.Language.get('image')
-							)}
+							title={selectButtonLabel}
 						/>
 					</ClayInput.GroupItem>
 
@@ -90,9 +93,12 @@ export function ImageSelector({
 						<>
 							<ClayInput.GroupItem shrink>
 								<ClayButtonWithIcon
+									aria-label={Liferay.Language.get(
+										'clear-selection'
+									)}
 									displayType="secondary"
 									onClick={onClearButtonPressed}
-									small
+									size="sm"
 									symbol="times-circle"
 									title={Liferay.Language.get(
 										'clear-selection'

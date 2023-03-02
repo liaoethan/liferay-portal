@@ -16,7 +16,6 @@ package com.liferay.portal.search.internal.reindexer;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
-import com.liferay.portal.kernel.messaging.proxy.ProxyModeThreadLocal;
 import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.search.configuration.ReindexerConfiguration;
@@ -29,7 +28,6 @@ import java.util.concurrent.ThreadFactory;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
@@ -39,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.configuration.ReindexerConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL,
 	service = Reindexer.class
 )
 public class ReindexerImpl implements Reindexer {
@@ -70,14 +67,14 @@ public class ReindexerImpl implements Reindexer {
 	}
 
 	@Reference
-	protected BulkReindexersHolder bulkReindexersHolder;
+	protected BulkReindexersRegistry bulkReindexersRegistry;
 
 	@Reference
 	protected IndexerRegistry indexerRegistry;
 
 	private Reindex _getReindex(long companyId) {
 		Reindex reindex = new Reindex(
-			indexerRegistry, bulkReindexersHolder, _executorService,
+			indexerRegistry, bulkReindexersRegistry, _executorService,
 			_reindexRequestsHolder);
 
 		reindex.setCompanyId(companyId);
@@ -85,8 +82,7 @@ public class ReindexerImpl implements Reindexer {
 			Boolean.valueOf(_reindexerConfiguration.nonbulkIndexingOverride()));
 		reindex.setSynchronousExecution(
 			GetterUtil.getBoolean(
-				_reindexerConfiguration.synchronousExecutionOverride(),
-				ProxyModeThreadLocal.isForceSync()));
+				_reindexerConfiguration.synchronousExecutionOverride(), true));
 
 		return reindex;
 	}

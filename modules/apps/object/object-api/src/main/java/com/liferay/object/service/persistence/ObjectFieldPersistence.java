@@ -937,6 +937,161 @@ public interface ObjectFieldPersistence extends BasePersistence<ObjectField> {
 	public int countByODI_DTN(long objectDefinitionId, String dbTableName);
 
 	/**
+	 * Returns all the object fields where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @return the matching object fields
+	 */
+	public java.util.List<ObjectField> findByODI_I(
+		long objectDefinitionId, boolean indexed);
+
+	/**
+	 * Returns a range of all the object fields where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>ObjectFieldModelImpl</code>.
+	 * </p>
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param start the lower bound of the range of object fields
+	 * @param end the upper bound of the range of object fields (not inclusive)
+	 * @return the range of matching object fields
+	 */
+	public java.util.List<ObjectField> findByODI_I(
+		long objectDefinitionId, boolean indexed, int start, int end);
+
+	/**
+	 * Returns an ordered range of all the object fields where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>ObjectFieldModelImpl</code>.
+	 * </p>
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param start the lower bound of the range of object fields
+	 * @param end the upper bound of the range of object fields (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @return the ordered range of matching object fields
+	 */
+	public java.util.List<ObjectField> findByODI_I(
+		long objectDefinitionId, boolean indexed, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+			orderByComparator);
+
+	/**
+	 * Returns an ordered range of all the object fields where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * <p>
+	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>ObjectFieldModelImpl</code>.
+	 * </p>
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param start the lower bound of the range of object fields
+	 * @param end the upper bound of the range of object fields (not inclusive)
+	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
+	 * @param useFinderCache whether to use the finder cache
+	 * @return the ordered range of matching object fields
+	 */
+	public java.util.List<ObjectField> findByODI_I(
+		long objectDefinitionId, boolean indexed, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+			orderByComparator,
+		boolean useFinderCache);
+
+	/**
+	 * Returns the first object field in the ordered set where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching object field
+	 * @throws NoSuchObjectFieldException if a matching object field could not be found
+	 */
+	public ObjectField findByODI_I_First(
+			long objectDefinitionId, boolean indexed,
+			com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+				orderByComparator)
+		throws NoSuchObjectFieldException;
+
+	/**
+	 * Returns the first object field in the ordered set where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the first matching object field, or <code>null</code> if a matching object field could not be found
+	 */
+	public ObjectField fetchByODI_I_First(
+		long objectDefinitionId, boolean indexed,
+		com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+			orderByComparator);
+
+	/**
+	 * Returns the last object field in the ordered set where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching object field
+	 * @throws NoSuchObjectFieldException if a matching object field could not be found
+	 */
+	public ObjectField findByODI_I_Last(
+			long objectDefinitionId, boolean indexed,
+			com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+				orderByComparator)
+		throws NoSuchObjectFieldException;
+
+	/**
+	 * Returns the last object field in the ordered set where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the last matching object field, or <code>null</code> if a matching object field could not be found
+	 */
+	public ObjectField fetchByODI_I_Last(
+		long objectDefinitionId, boolean indexed,
+		com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+			orderByComparator);
+
+	/**
+	 * Returns the object fields before and after the current object field in the ordered set where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectFieldId the primary key of the current object field
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
+	 * @return the previous, current, and next object field
+	 * @throws NoSuchObjectFieldException if a object field with the primary key could not be found
+	 */
+	public ObjectField[] findByODI_I_PrevAndNext(
+			long objectFieldId, long objectDefinitionId, boolean indexed,
+			com.liferay.portal.kernel.util.OrderByComparator<ObjectField>
+				orderByComparator)
+		throws NoSuchObjectFieldException;
+
+	/**
+	 * Removes all the object fields where objectDefinitionId = &#63; and indexed = &#63; from the database.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 */
+	public void removeByODI_I(long objectDefinitionId, boolean indexed);
+
+	/**
+	 * Returns the number of object fields where objectDefinitionId = &#63; and indexed = &#63;.
+	 *
+	 * @param objectDefinitionId the object definition ID
+	 * @param indexed the indexed
+	 * @return the number of matching object fields
+	 */
+	public int countByODI_I(long objectDefinitionId, boolean indexed);
+
+	/**
 	 * Returns the object field where objectDefinitionId = &#63; and name = &#63; or throws a <code>NoSuchObjectFieldException</code> if it could not be found.
 	 *
 	 * @param objectDefinitionId the object definition ID
@@ -1142,66 +1297,66 @@ public interface ObjectFieldPersistence extends BasePersistence<ObjectField> {
 	public int countByODI_S(long objectDefinitionId, boolean system);
 
 	/**
-	 * Returns the object field where companyId = &#63; and externalReferenceCode = &#63; and objectDefinitionId = &#63; or throws a <code>NoSuchObjectFieldException</code> if it could not be found.
+	 * Returns the object field where externalReferenceCode = &#63; and companyId = &#63; and objectDefinitionId = &#63; or throws a <code>NoSuchObjectFieldException</code> if it could not be found.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
 	 * @param objectDefinitionId the object definition ID
 	 * @return the matching object field
 	 * @throws NoSuchObjectFieldException if a matching object field could not be found
 	 */
-	public ObjectField findByC_ERC_ODI(
-			long companyId, String externalReferenceCode,
+	public ObjectField findByERC_C_ODI(
+			String externalReferenceCode, long companyId,
 			long objectDefinitionId)
 		throws NoSuchObjectFieldException;
 
 	/**
-	 * Returns the object field where companyId = &#63; and externalReferenceCode = &#63; and objectDefinitionId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
+	 * Returns the object field where externalReferenceCode = &#63; and companyId = &#63; and objectDefinitionId = &#63; or returns <code>null</code> if it could not be found. Uses the finder cache.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
 	 * @param objectDefinitionId the object definition ID
 	 * @return the matching object field, or <code>null</code> if a matching object field could not be found
 	 */
-	public ObjectField fetchByC_ERC_ODI(
-		long companyId, String externalReferenceCode, long objectDefinitionId);
+	public ObjectField fetchByERC_C_ODI(
+		String externalReferenceCode, long companyId, long objectDefinitionId);
 
 	/**
-	 * Returns the object field where companyId = &#63; and externalReferenceCode = &#63; and objectDefinitionId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
+	 * Returns the object field where externalReferenceCode = &#63; and companyId = &#63; and objectDefinitionId = &#63; or returns <code>null</code> if it could not be found, optionally using the finder cache.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
 	 * @param objectDefinitionId the object definition ID
 	 * @param useFinderCache whether to use the finder cache
 	 * @return the matching object field, or <code>null</code> if a matching object field could not be found
 	 */
-	public ObjectField fetchByC_ERC_ODI(
-		long companyId, String externalReferenceCode, long objectDefinitionId,
+	public ObjectField fetchByERC_C_ODI(
+		String externalReferenceCode, long companyId, long objectDefinitionId,
 		boolean useFinderCache);
 
 	/**
-	 * Removes the object field where companyId = &#63; and externalReferenceCode = &#63; and objectDefinitionId = &#63; from the database.
+	 * Removes the object field where externalReferenceCode = &#63; and companyId = &#63; and objectDefinitionId = &#63; from the database.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
 	 * @param objectDefinitionId the object definition ID
 	 * @return the object field that was removed
 	 */
-	public ObjectField removeByC_ERC_ODI(
-			long companyId, String externalReferenceCode,
+	public ObjectField removeByERC_C_ODI(
+			String externalReferenceCode, long companyId,
 			long objectDefinitionId)
 		throws NoSuchObjectFieldException;
 
 	/**
-	 * Returns the number of object fields where companyId = &#63; and externalReferenceCode = &#63; and objectDefinitionId = &#63;.
+	 * Returns the number of object fields where externalReferenceCode = &#63; and companyId = &#63; and objectDefinitionId = &#63;.
 	 *
-	 * @param companyId the company ID
 	 * @param externalReferenceCode the external reference code
+	 * @param companyId the company ID
 	 * @param objectDefinitionId the object definition ID
 	 * @return the number of matching object fields
 	 */
-	public int countByC_ERC_ODI(
-		long companyId, String externalReferenceCode, long objectDefinitionId);
+	public int countByERC_C_ODI(
+		String externalReferenceCode, long companyId, long objectDefinitionId);
 
 	/**
 	 * Returns all the object fields where objectDefinitionId = &#63; and dbType = &#63; and indexed = &#63;.

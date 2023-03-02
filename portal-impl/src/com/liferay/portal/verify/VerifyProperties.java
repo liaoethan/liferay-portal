@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.SystemProperties;
 import com.liferay.portal.util.PropsUtil;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +31,7 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author Brian Wing Shun Chan
@@ -42,8 +42,6 @@ public class VerifyProperties {
 		verifySystemProperties();
 
 		List<String> keys = verifyPortalProperties();
-
-		verifyDocumentLibrary();
 
 		if (!keys.isEmpty()) {
 			_log.error(
@@ -111,14 +109,6 @@ public class VerifyProperties {
 		return properties;
 	}
 
-	protected static void verifyDocumentLibrary() {
-		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			StoreFactory storeFactory = StoreFactory.getInstance();
-
-			storeFactory.checkProperties();
-		}
-	}
-
 	protected static void verifyMigratedPortalProperty(
 			Properties portalProperties, String oldKey, String newKey,
 			List<String> unmigratedKeys)
@@ -162,11 +152,11 @@ public class VerifyProperties {
 	}
 
 	protected static void verifyModularizedSystemProperty(
-			Properties systemProperties, String oldKey, String newKey,
+			Set<String> systemPropertyNames, String oldKey, String newKey,
 			String moduleName)
 		throws Exception {
 
-		if (systemProperties.containsKey(oldKey)) {
+		if (systemPropertyNames.contains(oldKey)) {
 			_log.error(
 				StringBundler.concat(
 					"System property \"", oldKey, "\" was modularized to ",
@@ -277,7 +267,7 @@ public class VerifyProperties {
 				verifyObsoleteSystemProperty(key);
 			}
 
-			Properties systemProperties = SystemProperties.getProperties();
+			Set<String> propertyNames = SystemProperties.getPropertyNames();
 
 			for (String[] keys : _MODULARIZED_SYSTEM_KEYS) {
 				String oldKey = keys[0];
@@ -285,7 +275,7 @@ public class VerifyProperties {
 				String moduleName = keys[2];
 
 				verifyModularizedSystemProperty(
-					systemProperties, oldKey, newKey, moduleName);
+					propertyNames, oldKey, newKey, moduleName);
 			}
 		}
 	}
@@ -325,8 +315,21 @@ public class VerifyProperties {
 			"module.framework.concurrent.startup.enabled"
 		},
 		{
+			"module.framework.configuration.bundle.symbolic.names",
+			"module.framework.configuration.bundle.symbolic.names"
+		},
+		{
 			"module.framework.runtime.start.level",
 			"module.framework.runtime.start.level"
+		},
+		{
+			"module.framework.services.ignored.interfaces",
+			"module.framework.services.ignored.interfaces"
+		},
+		{"module.framework.static.jars", "module.framework.static.jars"},
+		{
+			"module.framework.system.packages.extra",
+			"module.framework.system.packages.extra"
 		},
 		{"module.framework.web.start.level", "module.framework.web.start.level"}
 	};
@@ -1522,6 +1525,19 @@ public class VerifyProperties {
 			"com.liferay.asset.tags.compiler.web"
 		},
 
+		// Text Extraction
+
+		{
+			"text.extraction.fork.process.enabled",
+			"text-extraction-fork-process-enabled",
+			"com.liferay.portal.tika"
+		},
+		{
+			"text.extraction.fork.process.mime.types",
+			"text-extraction-fork-process-mime-types",
+			"com.liferay.portal.tika"
+		},
+
 		// Translator
 
 		{
@@ -1622,7 +1638,14 @@ public class VerifyProperties {
 		{
 			"ical4j.validation.relaxed", "ical4j.validation.relaxed",
 			"com.liferay.calendar.service"
+		},
+
+		// Tika
+
+		{
+			"tika.config", "tika-config-xml", "com.liferay.portal.tika"
 		}
+
 	};
 
 	private static final String[] _OBSOLETE_PORTAL_KEYS = {
@@ -1637,6 +1660,7 @@ public class VerifyProperties {
 		"asset.tag.properties.enabled", "asset.tag.suggestions.enabled",
 		"auth.login.prompt.enabled", "auth.max.failures.limit",
 		"auth.user.uuid.store.enabled", "auto.deploy.blacklist.threshold",
+		"auto.deploy.copy.commons.logging", "auto.deploy.copy.log4j",
 		"auto.deploy.dest.dir", "auto.deploy.default.dest.dir",
 		"auto.deploy.jboss.dest.dir", "auto.deploy.jboss.dest.dir[5]",
 		"auto.deploy.jboss.prefix", "auto.deploy.tomcat.dest.dir",
@@ -1787,7 +1811,8 @@ public class VerifyProperties {
 		"ehcache.rmi.peer.provider.factory.class",
 		"ehcache.rmi.peer.provider.factory.properties",
 		"ehcache.socket.so.timeout", "ehcache.socket.start.port",
-		"ehcache.statistics.enabled", "finalize.manager.thread.enabled",
+		"ehcache.statistics.enabled", "enterprise.product.commerce.enabled",
+		"finalize.manager.thread.enabled",
 		"hot.deploy.hook.custom.jsp.verification.enabled",
 		"hot.undeploy.enabled", "hot.undeploy.interval",
 		"hot.undeploy.on.redeploy", "hibernate.cache.region.factory_class",
@@ -1796,11 +1821,12 @@ public class VerifyProperties {
 		"hibernate.cache.use_structured_entries",
 		"hibernate.connection.release_mode",
 		"hibernate.session.factory.imported.class.name.regexp", "icq.jar",
-		"icq.login", "icq.password", "index.dump.compression.enabled",
+		"icq.login", "icq.password", "image.hook.impl",
+		"image.hook.file.system.root.dir", "index.dump.compression.enabled",
 		"index.filter.search.limit", "index.on.upgrade",
 		"index.portal.field.analyzer.enabled", "index.search.engine.id",
-		"index.search.highlight.enabled", "index.read.only",
-		"index.with.thread", "intraband.impl",
+		"index.search.highlight.enabled", "index.search.writer.max.queue.size",
+		"index.read.only", "index.with.thread", "intraband.impl",
 		"intraband.mailbox.reaper.thread.enabled",
 		"intraband.mailbox.storage.life", "intraband.proxy.dump.classes.dir",
 		"intraband.proxy.dump.classes.enabled", "intraband.timeout.default",
@@ -1899,7 +1925,11 @@ public class VerifyProperties {
 		"mail.hook.cyrus.delete.user", "mail.hook.cyrus.home",
 		"mail.hook.fusemail.account.type", "mail.hook.fusemail.group.parent",
 		"mail.hook.fusemail.password", "mail.hook.fusemail.url",
-		"mail.hook.fusemail.username",
+		"mail.hook.fusemail.username", "mail.hook.impl",
+		"mail.hook.sendmail.add.user", "mail.hook.sendmail.change.password",
+		"mail.hook.sendmail.delete.user", "mail.hook.sendmail.home",
+		"mail.hook.sendmail.virtusertable",
+		"mail.hook.sendmail.virtusertable.refresh", "mail.hook.shell.script",
 		"memory.cluster.scheduler.lock.cache.enabled",
 		"message.boards.email.message.added.signature",
 		"message.boards.email.message.updated.signature",
@@ -1939,6 +1969,7 @@ public class VerifyProperties {
 		"organizations.form.update.miscellaneous",
 		"organizations.indexer.enabled", "organizations.rootable",
 		"organizations.types", "permissions.object.blocking.cache",
+		"poller.notifications.timeout", "poller.request.timeout",
 		"portal.cache.manager.type.multi.vm",
 		"portal.cache.manager.type.single.vm", "portal.ctx",
 		"portal.fabric.enabled", "portal.fabric.agent.selector.class",
@@ -1974,8 +2005,8 @@ public class VerifyProperties {
 		"sandbox.deploy.listeners", "sc.image.max.size",
 		"sc.image.thumbnail.max.height", "sc.image.thumbnail.max.width",
 		"sc.product.comments.enabled", "scheduler.classes",
-		"schema.run.minimal", "scripting.jruby.compile.mode",
-		"scripting.jruby.compile.threshold",
+		"scheduler.event.message.listener.lock.timeout", "schema.run.minimal",
+		"scripting.jruby.compile.mode", "scripting.jruby.compile.threshold",
 		"search.container.page.iterator.page.values",
 		"service.builder.service.read.only.prefixes", "session.disabled",
 		"setup.database.types", "shard.available.names", "shard.default.name",

@@ -54,7 +54,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 		"mvc.command.name=/layout_admin/delete_layout"
@@ -78,6 +77,10 @@ public class DeleteLayoutMVCActionCommand extends BaseMVCActionCommand {
 
 		for (long curSelPlid : selPlids) {
 			_deleteLayout(curSelPlid, actionRequest, actionResponse);
+		}
+
+		if (ParamUtil.getBoolean(actionRequest, "hideDefaultSuccessMessage")) {
+			hideDefaultSuccessMessage(actionRequest);
 		}
 	}
 

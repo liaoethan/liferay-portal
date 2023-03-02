@@ -16,7 +16,7 @@ package com.liferay.layout.page.template.admin.web.internal.portlet.action.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
@@ -54,13 +54,13 @@ import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import java.io.File;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -320,21 +320,20 @@ public class ExportDisplayPagesMVCResourceCommandTest {
 
 	private long _getClassTypeId(String className) {
 		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormVariationsProvider.class, className);
 
-		Collection<InfoItemFormVariation> infoItemFormVariations =
+		List<InfoItemFormVariation> infoItemFormVariations = new ArrayList<>(
 			infoItemFormVariationsProvider.getInfoItemFormVariations(
-				_group.getGroupId());
+				_group.getGroupId()));
 
-		Assert.assertTrue(!infoItemFormVariations.isEmpty());
+		Assert.assertFalse(infoItemFormVariations.isEmpty());
 
-		Stream<InfoItemFormVariation> stream = infoItemFormVariations.stream();
+		infoItemFormVariations.sort(
+			Comparator.comparing(InfoItemFormVariation::getKey));
 
-		InfoItemFormVariation infoItemFormVariation = stream.sorted(
-			Comparator.comparing(InfoItemFormVariation::getKey)
-		).findFirst(
-		).get();
+		InfoItemFormVariation infoItemFormVariation =
+			infoItemFormVariations.get(0);
 
 		return GetterUtil.getLong(infoItemFormVariation.getKey());
 	}
@@ -478,7 +477,7 @@ public class ExportDisplayPagesMVCResourceCommandTest {
 	private Group _group;
 
 	@Inject
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Inject
 	private LayoutPageTemplateEntryLocalService

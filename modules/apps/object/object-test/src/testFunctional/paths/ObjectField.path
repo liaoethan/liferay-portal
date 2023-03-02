@@ -8,6 +8,11 @@
 <thead><tr><td rowspan="1" colspan="3">ObjectField</td></tr></thead>
 <tbody>
 	<tr>
+		<td>ANY_DROPDOWN_LABEL</td>
+		<td>//*[@class='form-group' and contains(.,'${dropdownLabel}')] //*[@class="dropdown"]</td>
+		<td></td>
+	</tr>
+	<tr>
 		<td>DOCUMENT_NAME</td>
 		<td>//p[contains(@class,'card-title text-truncate')]//a</td>
 		<td></td>
@@ -98,8 +103,13 @@
 		<td></td>
 	</tr>
 	<tr>
+		<td>SELECT_FORMULA_FIELD_OPTION</td>
+		<td>//*[contains(@class,'menu show')]//button[contains(@class,'dropdown-item')]//div[text()='${key_dropdownItem}']</td>
+		<td></td>
+	</tr>
+	<tr>
 		<td>SEARCHABLE_LANGUAGE_SELECT</td>
-		<td>//select[@name="indexedLanguageId"]</td>
+		<td>//div[@class="lfr-objects__card"]//input[@value="${selected}"]</td>
 		<td></td>
 	</tr>
 	<tr>

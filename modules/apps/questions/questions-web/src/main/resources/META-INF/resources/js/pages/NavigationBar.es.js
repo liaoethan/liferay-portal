@@ -47,10 +47,10 @@ export default withRouter(({history, location}) => {
 			return Liferay.Language.get('tags');
 		}
 		else if (location.pathname.includes('activity')) {
-			return Liferay.Language.get('my-activity');
+			return Liferay.Language.get('activity');
 		}
 		else if (location.pathname.includes('subscriptions')) {
-			return Liferay.Language.get('my-subscriptions');
+			return Liferay.Language.get('subscriptions');
 		}
 
 		return Liferay.Language.get('questions');
@@ -59,7 +59,7 @@ export default withRouter(({history, location}) => {
 	const historyPushParser = historyPushWithSlug(history.push);
 
 	return (
-		<section className="questions-section questions-section-nav">
+		<section className="border-bottom pb-0 questions-section questions-section-nav">
 			<div className="questions-container row">
 				<div className="align-items-center col d-flex justify-content-between">
 					<ClayNavigationBar
@@ -114,7 +114,7 @@ export default withRouter(({history, location}) => {
 							}
 						>
 							<ClayLink>
-								{Liferay.Language.get('my-subscriptions')}
+								{Liferay.Language.get('subscriptions')}
 							</ClayLink>
 						</ClayNavigationBar.Item>
 
@@ -138,7 +138,7 @@ export default withRouter(({history, location}) => {
 							}
 						>
 							<ClayLink>
-								{Liferay.Language.get('my-activity')}
+								{Liferay.Language.get('activity')}
 							</ClayLink>
 						</ClayNavigationBar.Item>
 					</ClayNavigationBar>

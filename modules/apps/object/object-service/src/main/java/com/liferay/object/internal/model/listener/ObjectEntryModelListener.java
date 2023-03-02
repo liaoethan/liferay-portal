@@ -21,17 +21,28 @@ import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.action.engine.ObjectActionEngine;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
+import com.liferay.object.internal.entry.util.ObjectEntryUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
+import com.liferay.object.model.ObjectFieldTable;
+import com.liferay.object.model.ObjectRelationshipTable;
+import com.liferay.object.model.ObjectViewFilterColumn;
+import com.liferay.object.model.ObjectViewFilterColumnTable;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
+import com.liferay.object.service.ObjectViewFilterColumnLocalService;
+import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.json.JSONArrayImpl;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -39,23 +50,18 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
-import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.audit.event.generators.constants.EventTypes;
 import com.liferay.portal.security.audit.event.generators.util.Attribute;
 import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
-import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
-import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 
 import java.io.Serializable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,8 +92,15 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 		_route(EventTypes.DELETE, null, objectEntry);
 
+		try {
+			_updateObjectViewFilterColumn(StringPool.BLANK, objectEntry);
+		}
+		catch (PortalException portalException) {
+			throw new ModelListenerException(portalException);
+		}
+
 		_executeObjectActions(
-			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE, null,
+			ObjectActionTriggerConstants.KEY_ON_AFTER_DELETE, objectEntry,
 			objectEntry);
 	}
 
@@ -101,13 +114,28 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		_executeObjectActions(
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
 			originalObjectEntry, objectEntry);
+
+		if (StringUtil.equals(
+				originalObjectEntry.getExternalReferenceCode(),
+				objectEntry.getExternalReferenceCode())) {
+
+			return;
+		}
+
+		try {
+			_updateObjectViewFilterColumn(
+				objectEntry.getExternalReferenceCode(), originalObjectEntry);
+		}
+		catch (PortalException portalException) {
+			throw new ModelListenerException(portalException);
+		}
 	}
 
 	@Override
 	public void onBeforeCreate(ObjectEntry objectEntry)
 		throws ModelListenerException {
 
-		_validateObjectEntry(objectEntry);
+		_validateObjectEntry(null, objectEntry);
 	}
 
 	@Override
@@ -115,7 +143,7 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 			ObjectEntry originalObjectEntry, ObjectEntry objectEntry)
 		throws ModelListenerException {
 
-		_validateObjectEntry(objectEntry);
+		_validateObjectEntry(originalObjectEntry, objectEntry);
 	}
 
 	private void _executeObjectActions(
@@ -133,9 +161,12 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 			_objectActionEngine.executeObjectActions(
 				objectEntry.getModelClassName(), objectEntry.getCompanyId(),
 				objectActionTriggerKey,
-				_getPayloadJSONObject(
-					objectActionTriggerKey, originalObjectEntry, objectEntry,
-					userId),
+				ObjectEntryUtil.getPayloadJSONObject(
+					_dtoConverterRegistry, _jsonFactory, objectActionTriggerKey,
+					_objectDefinitionLocalService.getObjectDefinition(
+						objectEntry.getObjectDefinitionId()),
+					objectEntry, originalObjectEntry,
+					_userLocalService.getUser(userId)),
 				userId);
 		}
 		catch (PortalException portalException) {
@@ -265,68 +296,6 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		return attributes;
 	}
 
-	private String _getObjectDefinitionShortName(long objectDefinitionId)
-		throws PortalException {
-
-		ObjectDefinition objectDefinition =
-			_objectDefinitionLocalService.getObjectDefinition(
-				objectDefinitionId);
-
-		return objectDefinition.getShortName();
-	}
-
-	private JSONObject _getPayloadJSONObject(
-			String objectActionTriggerKey, ObjectEntry originalObjectEntry,
-			ObjectEntry objectEntry, long userId)
-		throws PortalException {
-
-		String objectDefinitionShortName = _getObjectDefinitionShortName(
-			objectEntry.getObjectDefinitionId());
-		User user = _userLocalService.getUser(userId);
-
-		return JSONUtil.put(
-			"classPK", objectEntry.getObjectEntryId()
-		).put(
-			"objectActionTriggerKey", objectActionTriggerKey
-		).put(
-			"objectEntry",
-			HashMapBuilder.putAll(
-				objectEntry.getModelAttributes()
-			).put(
-				"creator", user.getFullName()
-			).put(
-				"id", objectEntry.getObjectEntryId()
-			).put(
-				"values", objectEntry.getValues()
-			).build()
-		).put(
-			"objectEntryDTO" + objectDefinitionShortName,
-			_toDTO(objectEntry, user)
-		).put(
-			"originalObjectEntry",
-			() -> {
-				if (originalObjectEntry == null) {
-					return null;
-				}
-
-				return HashMapBuilder.putAll(
-					originalObjectEntry.getModelAttributes()
-				).put(
-					"values", originalObjectEntry.getValues()
-				).build();
-			}
-		).put(
-			"originalObjectEntryDTO" + objectDefinitionShortName,
-			() -> {
-				if (originalObjectEntry == null) {
-					return null;
-				}
-
-				return _toDTO(originalObjectEntry, user);
-			}
-		);
-	}
-
 	private void _route(
 		String eventType, ObjectEntry originalObjectEntry,
 		ObjectEntry objectEntry) {
@@ -359,49 +328,89 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 		}
 	}
 
-	private Map<String, Object> _toDTO(ObjectEntry objectEntry, User user)
+	private void _updateObjectViewFilterColumn(
+			String externalReferenceCode, ObjectEntry objectEntry)
 		throws PortalException {
 
-		DTOConverter<ObjectEntry, ?> dtoConverter =
-			(DTOConverter<ObjectEntry, ?>)_dtoConverterRegistry.getDTOConverter(
-				ObjectEntry.class.getName());
+		List<ObjectViewFilterColumn> objectViewFilterColumns =
+			_objectViewFilterColumnLocalService.dslQuery(
+				DSLQueryFactoryUtil.select(
+					ObjectViewFilterColumnTable.INSTANCE
+				).from(
+					ObjectViewFilterColumnTable.INSTANCE
+				).innerJoinON(
+					ObjectFieldTable.INSTANCE,
+					ObjectFieldTable.INSTANCE.name.eq(
+						ObjectViewFilterColumnTable.INSTANCE.objectFieldName)
+				).innerJoinON(
+					ObjectRelationshipTable.INSTANCE,
+					ObjectRelationshipTable.INSTANCE.objectFieldId2.eq(
+						ObjectFieldTable.INSTANCE.objectFieldId)
+				).where(
+					ObjectRelationshipTable.INSTANCE.objectDefinitionId1.eq(
+						objectEntry.getObjectDefinitionId())
+				));
 
-		if (dtoConverter == null) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"No DTO converter found for " +
-						ObjectEntry.class.getName());
+		for (ObjectViewFilterColumn objectViewFilterColumn :
+				objectViewFilterColumns) {
+
+			JSONArray valueJSONArray = objectViewFilterColumn.getJSONArray();
+
+			JSONArray newValueJSONArray = new JSONArrayImpl();
+
+			for (int i = 0; i < valueJSONArray.length(); i++) {
+				if (StringUtil.equals(
+						(String)valueJSONArray.get(i),
+						objectEntry.getExternalReferenceCode())) {
+
+					if (!StringUtil.equals(
+							externalReferenceCode, StringPool.BLANK)) {
+
+						newValueJSONArray.put(externalReferenceCode);
+					}
+				}
+				else {
+					newValueJSONArray.put((String)valueJSONArray.get(i));
+				}
 			}
 
-			return objectEntry.getModelAttributes();
+			if (newValueJSONArray.length() == 0) {
+				_objectViewFilterColumnLocalService.
+					deleteObjectViewFilterColumn(objectViewFilterColumn);
+
+				continue;
+			}
+
+			objectViewFilterColumn.setJSON(
+				StringBundler.concat(
+					"{\"", objectViewFilterColumn.getFilterType(), "\":",
+					newValueJSONArray, "}"));
+
+			_objectViewFilterColumnLocalService.updateObjectViewFilterColumn(
+				objectViewFilterColumn);
 		}
-
-		DefaultDTOConverterContext defaultDTOConverterContext =
-			new DefaultDTOConverterContext(
-				false, Collections.emptyMap(), _dtoConverterRegistry, null,
-				user.getLocale(), null, user);
-
-		try {
-			JSONObject jsonObject = _jsonFactory.createJSONObject(
-				_jsonFactory.looseSerializeDeep(
-					dtoConverter.toDTO(
-						defaultDTOConverterContext, objectEntry)));
-
-			return jsonObject.toMap();
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-		}
-
-		return objectEntry.getModelAttributes();
 	}
 
-	private void _validateObjectEntry(ObjectEntry objectEntry)
+	private void _validateObjectEntry(
+			ObjectEntry originalObjectEntry, ObjectEntry objectEntry)
 		throws ModelListenerException {
 
 		try {
+			long userId = PrincipalThreadLocal.getUserId();
+
+			if (userId == 0) {
+				userId = objectEntry.getUserId();
+			}
+
 			_objectValidationRuleLocalService.validate(
-				objectEntry, objectEntry.getObjectDefinitionId());
+				objectEntry, objectEntry.getObjectDefinitionId(),
+				ObjectEntryUtil.getPayloadJSONObject(
+					_dtoConverterRegistry, _jsonFactory, null,
+					_objectDefinitionLocalService.getObjectDefinition(
+						objectEntry.getObjectDefinitionId()),
+					objectEntry, originalObjectEntry,
+					_userLocalService.getUser(userId)),
+				userId);
 		}
 		catch (PortalException portalException) {
 			throw new ModelListenerException(portalException);
@@ -440,6 +449,10 @@ public class ObjectEntryModelListener extends BaseModelListener<ObjectEntry> {
 
 	@Reference
 	private ObjectValidationRuleLocalService _objectValidationRuleLocalService;
+
+	@Reference
+	private ObjectViewFilterColumnLocalService
+		_objectViewFilterColumnLocalService;
 
 	@Reference
 	private UserLocalService _userLocalService;

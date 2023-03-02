@@ -27,7 +27,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Wade Cao
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + SearchOptionsPortletKeys.SEARCH_OPTIONS,
 	service = PortletSharedSearchContributor.class
 )
@@ -44,8 +43,7 @@ public class SearchOptionsPortletSharedSearchContributor
 
 		SearchRequestBuilder searchRequestBuilder =
 			portletSharedSearchSettings.getFederatedSearchRequestBuilder(
-				searchOptionsPortletPreferences.
-					getFederatedSearchKeyOptional());
+				searchOptionsPortletPreferences.getFederatedSearchKey());
 
 		searchRequestBuilder.basicFacetSelection(
 			searchOptionsPortletPreferences.isBasicFacetSelection()

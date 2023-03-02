@@ -14,10 +14,12 @@
 
 package com.liferay.commerce.account.internal.util;
 
+import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.constants.AccountPortletKeys;
 import com.liferay.account.manager.CurrentAccountEntryManager;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountGroupRel;
+import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.account.service.AccountGroupRelLocalService;
 import com.liferay.commerce.account.configuration.CommerceAccountGroupServiceConfiguration;
 import com.liferay.commerce.account.constants.CommerceAccountConstants;
@@ -25,10 +27,11 @@ import com.liferay.commerce.account.model.CommerceAccount;
 import com.liferay.commerce.account.model.CommerceAccountModel;
 import com.liferay.commerce.account.model.impl.CommerceAccountImpl;
 import com.liferay.commerce.account.service.CommerceAccountLocalService;
-import com.liferay.commerce.account.service.CommerceAccountService;
+import com.liferay.commerce.account.service.CommerceAccountUserRelLocalService;
 import com.liferay.commerce.account.util.CommerceAccountHelper;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -36,15 +39,16 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.portlet.PortletURLFactory;
+import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.PortalSessionThreadLocal;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
@@ -58,9 +62,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true, service = CommerceAccountHelper.class
-)
+@Component(service = CommerceAccountHelper.class)
 public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 
 	@Override
@@ -105,17 +107,9 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 			return new long[0];
 		}
 
-		Stream<AccountGroupRel> stream = accountGroupRels.stream();
-
-		long[] accountGroupIds = stream.mapToLong(
-			AccountGroupRel::getAccountGroupId
-		).toArray();
-
-		accountGroupIds = ArrayUtil.unique(accountGroupIds);
-
-		Arrays.sort(accountGroupIds);
-
-		return accountGroupIds;
+		return ArrayUtil.sortedUnique(
+			TransformUtil.transformToLongArray(
+				accountGroupRels, AccountGroupRel::getAccountGroupId));
 	}
 
 	/**
@@ -141,15 +135,45 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 		CommerceChannel commerceChannel =
 			_commerceChannelLocalService.getCommerceChannelByGroupId(
 				commerceChannelGroupId);
+		long userId = _portal.getUserId(httpServletRequest);
 
 		CommerceAccount commerceAccount = CommerceAccountImpl.fromAccountEntry(
 			_currentAccountEntryManager.getCurrentAccountEntry(
-				commerceChannel.getSiteGroupId(),
-				_portal.getUserId(httpServletRequest)));
+				commerceChannel.getSiteGroupId(), userId));
 
 		if ((commerceAccount == null) || !commerceAccount.isActive()) {
-			commerceAccount = _getSingleCommerceAccount(
-				commerceChannelGroupId, httpServletRequest);
+			int commerceSiteType = _getCommerceSiteType(commerceChannelGroupId);
+
+			if ((commerceSiteType == CommerceAccountConstants.SITE_TYPE_B2C) ||
+				(commerceSiteType == CommerceAccountConstants.SITE_TYPE_B2X)) {
+
+				AccountEntry accountEntry =
+					_accountEntryLocalService.fetchPersonAccountEntry(userId);
+
+				if (accountEntry == null) {
+					User user = _userLocalService.getUser(userId);
+
+					ServiceContext serviceContext = new ServiceContext();
+
+					serviceContext.setCompanyId(user.getCompanyId());
+					serviceContext.setUserId(userId);
+
+					accountEntry = _accountEntryLocalService.addAccountEntry(
+						userId, AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT,
+						user.getFullName(), null, null, user.getEmailAddress(),
+						null, StringPool.BLANK,
+						AccountConstants.ACCOUNT_ENTRY_TYPE_PERSON,
+						WorkflowConstants.STATUS_APPROVED, serviceContext);
+
+					_commerceAccountUserRelLocalService.
+						addCommerceAccountUserRel(
+							accountEntry.getAccountEntryId(), userId,
+							serviceContext);
+				}
+
+				commerceAccount = CommerceAccountImpl.fromAccountEntry(
+					accountEntry);
+			}
 
 			if (commerceAccount == null) {
 				setCurrentCommerceAccount(
@@ -251,38 +275,8 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 		return commerceAccountGroupServiceConfiguration.commerceSiteType();
 	}
 
-	private CommerceAccount _getSingleCommerceAccount(
-			long commerceChannelGroupId, HttpServletRequest httpServletRequest)
-		throws PortalException {
-
-		User user = _portal.getUser(httpServletRequest);
-
-		if ((user == null) || user.isDefaultUser()) {
-			return _commerceAccountLocalService.getGuestCommerceAccount(
-				_portal.getCompanyId(httpServletRequest));
-		}
-
-		int commerceSiteType = _getCommerceSiteType(commerceChannelGroupId);
-
-		if ((commerceSiteType == CommerceAccountConstants.SITE_TYPE_B2C) ||
-			(commerceSiteType == CommerceAccountConstants.SITE_TYPE_B2X)) {
-
-			return _commerceAccountService.getPersonalCommerceAccount(
-				user.getUserId());
-		}
-
-		List<CommerceAccount> userCommerceAccounts =
-			_commerceAccountService.getUserCommerceAccounts(
-				user.getUserId(),
-				CommerceAccountConstants.DEFAULT_PARENT_ACCOUNT_ID,
-				commerceSiteType, StringPool.BLANK, true, 0, 1);
-
-		if (userCommerceAccounts.size() == 1) {
-			return userCommerceAccounts.get(0);
-		}
-
-		return null;
-	}
+	@Reference
+	private AccountEntryLocalService _accountEntryLocalService;
 
 	@Reference
 	private AccountGroupRelLocalService _accountGroupRelLocalService;
@@ -291,7 +285,8 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 	private CommerceAccountLocalService _commerceAccountLocalService;
 
 	@Reference
-	private CommerceAccountService _commerceAccountService;
+	private CommerceAccountUserRelLocalService
+		_commerceAccountUserRelLocalService;
 
 	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;
@@ -307,5 +302,8 @@ public class CommerceAccountHelperImpl implements CommerceAccountHelper {
 
 	@Reference
 	private PortletURLFactory _portletURLFactory;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

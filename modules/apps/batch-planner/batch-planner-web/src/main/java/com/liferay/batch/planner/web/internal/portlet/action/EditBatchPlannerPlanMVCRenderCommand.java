@@ -49,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Matija Petanjek
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + BatchPlannerPortletKeys.BATCH_PLANNER,
 		"mvc.command.name=/batch_planner/edit_export_batch_planner_plan",
@@ -152,7 +151,7 @@ public class EditBatchPlannerPlanMVCRenderCommand implements MVCRenderCommand {
 						_batchPlannerPlanService.getBatchPlannerPlans(
 							_portal.getCompanyId(renderRequest), true, true,
 							QueryUtil.ALL_POS, QueryUtil.ALL_POS, null),
-						internalClassNameCategories, null));
+						internalClassNameCategories, renderRequest, null));
 
 				return "/export/edit_batch_planner_plan.jsp";
 			}
@@ -163,7 +162,7 @@ public class EditBatchPlannerPlanMVCRenderCommand implements MVCRenderCommand {
 					_batchPlannerPlanService.getBatchPlannerPlans(
 						_portal.getCompanyId(renderRequest), false, true,
 						QueryUtil.ALL_POS, QueryUtil.ALL_POS, null),
-					internalClassNameCategories, null));
+					internalClassNameCategories, renderRequest, null));
 
 			return "/import/edit_batch_planner_plan.jsp";
 		}
@@ -178,7 +177,8 @@ public class EditBatchPlannerPlanMVCRenderCommand implements MVCRenderCommand {
 					_batchPlannerPlanService.getBatchPlannerPlans(
 						_portal.getCompanyId(renderRequest), true, true,
 						QueryUtil.ALL_POS, QueryUtil.ALL_POS, null),
-					internalClassNameCategories, batchPlannerPlan));
+					internalClassNameCategories, renderRequest,
+					batchPlannerPlan));
 
 			return "/export/edit_batch_planner_plan.jsp";
 		}
@@ -189,7 +189,7 @@ public class EditBatchPlannerPlanMVCRenderCommand implements MVCRenderCommand {
 				_batchPlannerPlanService.getBatchPlannerPlans(
 					_portal.getCompanyId(renderRequest), false, true,
 					QueryUtil.ALL_POS, QueryUtil.ALL_POS, null),
-				internalClassNameCategories, batchPlannerPlan));
+				internalClassNameCategories, renderRequest, batchPlannerPlan));
 
 		return "/import/edit_batch_planner_plan.jsp";
 	}

@@ -66,13 +66,8 @@
 		<td></td>
 	</tr>
 	<tr>
-		<td>ADD_PICKLIST_ITEM_NAME</td>
-		<td>//input[@id='locale']</td>
-		<td></td>
-	</tr>
-	<tr>
-		<td>ADD_PICKLIST_ITEM_KEY</td>
-		<td>//input[(@name='name' and @class='form-control' and @type='text')]</td>
+		<td>ADD_PICKLIST_ITEM_NAME_AND_KEY</td>
+		<td>//*[contains(@class,'modal-body')] //label[text()='${key_selectField}']/..//input</td>
 		<td></td>
 	</tr>
 	<tr>
@@ -127,7 +122,7 @@
 	</tr>
 	<tr>
 		<td>SELECT_FIELD_RELATIONSHIP_OBJECT</td>
-		<td>//div[(@class='form-builder-select-field input-group-container')and contains(.,'${key_selectField}')]/div[@class='form-control results-chosen select-field-trigger']</td>
+		<td>//div[contains(@class, 'form-builder-select-field input-group-container')and contains(.,'${key_selectField}')]/div[@class='form-control results-chosen select-field-trigger']</td>
 		<td></td>
 	</tr>
 	<tr>

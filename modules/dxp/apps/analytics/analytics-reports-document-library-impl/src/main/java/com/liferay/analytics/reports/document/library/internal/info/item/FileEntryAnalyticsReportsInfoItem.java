@@ -16,20 +16,18 @@ package com.liferay.analytics.reports.document.library.internal.info.item;
 
 import com.liferay.analytics.reports.info.item.AnalyticsReportsInfoItem;
 import com.liferay.analytics.reports.layout.display.page.info.item.LayoutDisplayPageObjectProviderAnalyticsReportsInfoItem;
-import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.type.WebImage;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileEntry;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.Portal;
 
@@ -37,7 +35,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -57,30 +54,30 @@ public class FileEntryAnalyticsReportsInfoItem
 
 	@Override
 	public String getAuthorName(FileEntry fileEntry) {
-		return _getUser(
-			fileEntry
-		).map(
-			User::getFullName
-		).orElse(
-			StringPool.BLANK
-		);
+		User user = _getUser(fileEntry);
+
+		if (user == null) {
+			return StringPool.BLANK;
+		}
+
+		return user.getFullName();
 	}
 
 	@Override
 	public long getAuthorUserId(FileEntry fileEntity) {
-		return _getUser(
-			fileEntity
-		).map(
-			User::getUserId
-		).orElse(
-			0L
-		);
+		User user = _getUser(fileEntity);
+
+		if (user == null) {
+			return 0L;
+		}
+
+		return user.getUserId();
 	}
 
 	@Override
 	public WebImage getAuthorWebImage(FileEntry fileEntry, Locale locale) {
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, FileEntry.class.getName());
 
 		InfoItemFieldValues infoItemFieldValues =
@@ -133,7 +130,7 @@ public class FileEntryAnalyticsReportsInfoItem
 		_getLayoutDisplayPageObjectProvider(FileEntry fileEntry) {
 
 		LayoutDisplayPageProvider<?> layoutDisplayPageProvider =
-			_layoutDisplayPageProviderTracker.
+			_layoutDisplayPageProviderRegistry.
 				getLayoutDisplayPageProviderByClassName(
 					FileEntry.class.getName());
 
@@ -147,26 +144,20 @@ public class FileEntryAnalyticsReportsInfoItem
 					FileEntry.class.getName(), fileEntry.getPrimaryKey()));
 	}
 
-	private Optional<User> _getUser(FileEntry fileEntry) {
-		return Optional.ofNullable(
-			_userLocalService.fetchUser(fileEntry.getUserId()));
+	private User _getUser(FileEntry fileEntry) {
+		return _userLocalService.fetchUser(fileEntry.getUserId());
 	}
 
 	@Reference
-	private DLFileEntryLocalService _dlFileEntryLocalService;
-
-	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private LayoutDisplayPageObjectProviderAnalyticsReportsInfoItem
 		_layoutDisplayPageObjectProviderAnalyticsReportsInfoItem;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
-
-	@Reference
-	private LayoutLocalService _layoutLocalService;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private Portal _portal;

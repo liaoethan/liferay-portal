@@ -21,6 +21,7 @@ import com.liferay.document.library.test.util.BaseWebServerTestCase;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portlet.constants.FriendlyURLResolverConstants;
 import com.liferay.portal.kernel.repository.friendly.url.resolver.FileEntryFriendlyURLResolver;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -58,45 +59,66 @@ public class WebServerFriendlyURLTest extends BaseWebServerTestCase {
 		new LiferayIntegrationTestRule();
 
 	@Test
-	public void testExistingFileEntryFriendlyURLHasFiles() throws Exception {
-		String urlTitle = RandomTestUtil.randomString();
-
-		_addFileEntry(urlTitle);
-
-		MockHttpServletRequest mockHttpServletRequest =
-			_createMockHttpServletRequest(_getFileEntryFriendlyURL(urlTitle));
-
-		Assert.assertTrue(WebServerServlet.hasFiles(mockHttpServletRequest));
-	}
-
-	@Test
-	public void testExistingFileEntryFriendlyURLReturns200() throws Exception {
-		String urlTitle = RandomTestUtil.randomString();
-
-		_addFileEntry(urlTitle);
-
-		MockHttpServletResponse mockHttpServletResponse = service(
-			Method.GET, _getFileEntryFriendlyURL(urlTitle),
-			Collections.emptyMap(), Collections.emptyMap(),
-			TestPropsValues.getUser(), null);
-
-		Assert.assertEquals(
-			HttpServletResponse.SC_OK, mockHttpServletResponse.getStatus());
-	}
-
-	@Test
-	public void testNonexistantFileEntryFriendlyURLHasNoFiles()
+	public void testHasFilesWithFileEntryFriendlyURLSeparator()
 		throws Exception {
 
-		MockHttpServletRequest mockHttpServletRequest =
-			_createMockHttpServletRequest(
-				_getFileEntryFriendlyURL(RandomTestUtil.randomString()));
+		Assert.assertFalse(
+			WebServerServlet.hasFiles(
+				_createMockHttpServletRequest(
+					_getFileEntryFriendlyURL(RandomTestUtil.randomString()))));
 
-		Assert.assertFalse(WebServerServlet.hasFiles(mockHttpServletRequest));
+		String urlTitle = RandomTestUtil.randomString();
+
+		_addFileEntry(RandomTestUtil.randomString(), urlTitle);
+
+		Assert.assertTrue(
+			WebServerServlet.hasFiles(
+				_createMockHttpServletRequest(
+					_getFileEntryFriendlyURL(urlTitle))));
 	}
 
 	@Test
-	public void testNonexistantFileEntryFriendlyURLReturns404()
+	public void testHasFilesWithFileEntryNameHasSpecialChars()
+		throws Exception {
+
+		String fileName = RandomTestUtil.randomString() + "+ .txt";
+
+		Assert.assertFalse(
+			WebServerServlet.hasFiles(
+				_createMockHttpServletRequest(
+					String.format("/%s/0/%s", group.getGroupId(), fileName))));
+
+		_addFileEntry(fileName, RandomTestUtil.randomString());
+
+		Assert.assertTrue(
+			WebServerServlet.hasFiles(
+				_createMockHttpServletRequest(
+					String.format("/%s/0/%s", group.getGroupId(), fileName))));
+	}
+
+	@Test
+	public void testHasFilesWithGroupIdUUIDFriendlyURL() throws Exception {
+		Assert.assertFalse(
+			WebServerServlet.hasFiles(
+				_createMockHttpServletRequest(
+					String.format(
+						"/%s/%s", group.getGroupId(),
+						RandomTestUtil.randomString()))));
+
+		String urlTitle = RandomTestUtil.randomString();
+
+		FileEntry fileEntry = _addFileEntry(
+			RandomTestUtil.randomString(), urlTitle);
+
+		Assert.assertTrue(
+			WebServerServlet.hasFiles(
+				_createMockHttpServletRequest(
+					String.format(
+						"/%s/%s", group.getGroupId(), fileEntry.getUuid()))));
+	}
+
+	@Test
+	public void testServiceWithFileEntryFriendlyURLSeparator()
 		throws Exception {
 
 		MockHttpServletResponse mockHttpServletResponse = service(
@@ -107,13 +129,26 @@ public class WebServerFriendlyURLTest extends BaseWebServerTestCase {
 		Assert.assertEquals(
 			HttpServletResponse.SC_NOT_FOUND,
 			mockHttpServletResponse.getStatus());
+
+		String urlTitle = RandomTestUtil.randomString();
+
+		_addFileEntry(RandomTestUtil.randomString(), urlTitle);
+
+		mockHttpServletResponse = service(
+			Method.GET, _getFileEntryFriendlyURL(urlTitle),
+			Collections.emptyMap(), Collections.emptyMap(),
+			TestPropsValues.getUser(), null);
+
+		Assert.assertEquals(
+			HttpServletResponse.SC_OK, mockHttpServletResponse.getStatus());
 	}
 
-	private void _addFileEntry(String urlTitle) throws Exception {
-		_dlAppLocalService.addFileEntry(
+	private FileEntry _addFileEntry(String fileName, String urlTitle)
+		throws Exception {
+
+		return _dlAppLocalService.addFileEntry(
 			null, TestPropsValues.getUserId(), group.getGroupId(),
-			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
-			RandomTestUtil.randomString(),
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, fileName,
 			ContentTypes.APPLICATION_OCTET_STREAM,
 			RandomTestUtil.randomString(), urlTitle,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),

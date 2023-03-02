@@ -125,18 +125,9 @@ request.setAttribute("view.jsp-eventName", eventName);
 			<liferay-ui:search-container-column-text
 				cssClass="table-cell-expand-smallest table-cell-minw-150"
 				name="scope"
+				value="<%= segmentsDisplayContext.getScopeName(segmentsEntry) %>"
 			>
-				<c:choose>
-					<c:when test="<%= segmentsEntry.getGroupId() == themeDisplay.getCompanyGroupId() %>">
-						<liferay-ui:message key="global" />
-					</c:when>
-					<c:when test="<%= segmentsEntry.getGroupId() == themeDisplay.getScopeGroupId() %>">
-						<liferay-ui:message key="current-site" />
-					</c:when>
-					<c:otherwise>
-						<liferay-ui:message key="parent-site" />
-					</c:otherwise>
-				</c:choose>
+
 			</liferay-ui:search-container-column-text>
 
 			<liferay-ui:search-container-column-date
@@ -166,12 +157,12 @@ request.setAttribute("view.jsp-eventName", eventName);
 	<aui:input name="siteRoleIds" type="hidden" />
 </aui:form>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
+
 	var form = document.getElementById(
 		'<portlet:namespace />updateSegmentsEntrySiteRolesFm'
 	);
-
-	var delegate = delegateModule.default;
 
 	var delegateHandler = delegate(
 		document,

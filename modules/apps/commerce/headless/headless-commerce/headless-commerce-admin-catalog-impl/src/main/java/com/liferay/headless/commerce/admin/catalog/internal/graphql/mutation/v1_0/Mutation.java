@@ -20,6 +20,7 @@ import com.liferay.headless.commerce.admin.catalog.dto.v1_0.AttachmentUrl;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Catalog;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Category;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Diagram;
+import com.liferay.headless.commerce.admin.catalog.dto.v1_0.GroupedProduct;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.MappedProduct;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Option;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.OptionCategory;
@@ -42,6 +43,7 @@ import com.liferay.headless.commerce.admin.catalog.resource.v1_0.AttachmentResou
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.CatalogResource;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.CategoryResource;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.DiagramResource;
+import com.liferay.headless.commerce.admin.catalog.resource.v1_0.GroupedProductResource;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.MappedProductResource;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.OptionCategoryResource;
 import com.liferay.headless.commerce.admin.catalog.resource.v1_0.OptionResource;
@@ -122,6 +124,14 @@ public class Mutation {
 
 		_diagramResourceComponentServiceObjects =
 			diagramResourceComponentServiceObjects;
+	}
+
+	public static void setGroupedProductResourceComponentServiceObjects(
+		ComponentServiceObjects<GroupedProductResource>
+			groupedProductResourceComponentServiceObjects) {
+
+		_groupedProductResourceComponentServiceObjects =
+			groupedProductResourceComponentServiceObjects;
 	}
 
 	public static void setMappedProductResourceComponentServiceObjects(
@@ -389,7 +399,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createProductIdAttachmentBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -399,7 +408,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			attachmentResource ->
 				attachmentResource.postProductIdAttachmentBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -506,7 +515,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteCatalogBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -515,7 +523,7 @@ public class Mutation {
 			_catalogResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			catalogResource -> catalogResource.deleteCatalogBatch(
-				id, callbackURL, object));
+				callbackURL, object));
 	}
 
 	@GraphQLField
@@ -617,6 +625,77 @@ public class Mutation {
 			this::_populateResourceContext,
 			diagramResource -> diagramResource.postProductIdDiagram(
 				productId, diagram));
+	}
+
+	@GraphQLField
+	public boolean deleteGroupedProduct(
+			@GraphQLName("groupedProductId") Long groupedProductId)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_groupedProductResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			groupedProductResource ->
+				groupedProductResource.deleteGroupedProduct(groupedProductId));
+
+		return true;
+	}
+
+	@GraphQLField
+	public Response deleteGroupedProductBatch(
+			@GraphQLName("callbackURL") String callbackURL,
+			@GraphQLName("object") Object object)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_groupedProductResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			groupedProductResource ->
+				groupedProductResource.deleteGroupedProductBatch(
+					callbackURL, object));
+	}
+
+	@GraphQLField
+	public GroupedProduct patchGroupedProduct(
+			@GraphQLName("groupedProductId") Long groupedProductId,
+			@GraphQLName("groupedProduct") GroupedProduct groupedProduct)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_groupedProductResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			groupedProductResource ->
+				groupedProductResource.patchGroupedProduct(
+					groupedProductId, groupedProduct));
+	}
+
+	@GraphQLField
+	public GroupedProduct createProductByExternalReferenceCodeGroupedProduct(
+			@GraphQLName("externalReferenceCode") String externalReferenceCode,
+			@GraphQLName("groupedProduct") GroupedProduct groupedProduct)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_groupedProductResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			groupedProductResource ->
+				groupedProductResource.
+					postProductByExternalReferenceCodeGroupedProduct(
+						externalReferenceCode, groupedProduct));
+	}
+
+	@GraphQLField
+	public GroupedProduct createProductIdGroupedProduct(
+			@GraphQLName("productId") Long productId,
+			@GraphQLName("groupedProduct") GroupedProduct groupedProduct)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_groupedProductResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			groupedProductResource ->
+				groupedProductResource.postProductIdGroupedProduct(
+					productId, groupedProduct));
 	}
 
 	@GraphQLField
@@ -748,7 +827,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteOptionBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -757,7 +835,7 @@ public class Mutation {
 			_optionResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			optionResource -> optionResource.deleteOptionBatch(
-				id, callbackURL, object));
+				callbackURL, object));
 	}
 
 	@GraphQLField
@@ -810,7 +888,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteOptionCategoryBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -820,7 +897,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			optionCategoryResource ->
 				optionCategoryResource.deleteOptionCategoryBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -875,7 +952,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteOptionValueBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -884,7 +960,7 @@ public class Mutation {
 			_optionValueResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			optionValueResource -> optionValueResource.deleteOptionValueBatch(
-				id, callbackURL, object));
+				callbackURL, object));
 	}
 
 	@GraphQLField
@@ -930,7 +1006,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createOptionIdOptionValueBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -940,7 +1015,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			optionValueResource ->
 				optionValueResource.postOptionIdOptionValueBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1093,7 +1168,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteProductBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1102,7 +1176,7 @@ public class Mutation {
 			_productResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			productResource -> productResource.deleteProductBatch(
-				id, callbackURL, object));
+				callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1157,7 +1231,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteProductAccountGroupBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1167,7 +1240,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			productAccountGroupResource ->
 				productAccountGroupResource.deleteProductAccountGroupBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1185,7 +1258,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteProductChannelBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1195,7 +1267,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			productChannelResource ->
 				productChannelResource.deleteProductChannelBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1298,7 +1370,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteProductGroupBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1308,7 +1379,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			productGroupResource ->
 				productGroupResource.deleteProductGroupBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1339,7 +1410,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteProductGroupProductBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1349,7 +1419,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			productGroupProductResource ->
 				productGroupProductResource.deleteProductGroupProductBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1388,7 +1458,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createProductGroupIdProductGroupProductBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1399,7 +1468,7 @@ public class Mutation {
 			productGroupProductResource ->
 				productGroupProductResource.
 					postProductGroupIdProductGroupProductBatch(
-						id, callbackURL, object));
+						callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1415,7 +1484,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteProductOptionBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1425,7 +1493,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			productOptionResource ->
 				productOptionResource.deleteProductOptionBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1499,7 +1567,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createProductOptionIdProductOptionValueBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1510,7 +1577,7 @@ public class Mutation {
 			productOptionValueResource ->
 				productOptionValueResource.
 					postProductOptionIdProductOptionValueBatch(
-						id, callbackURL, object));
+						callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1546,6 +1613,48 @@ public class Mutation {
 	}
 
 	@GraphQLField
+	public boolean deleteProductSpecification(@GraphQLName("id") Long id)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_productSpecificationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			productSpecificationResource ->
+				productSpecificationResource.deleteProductSpecification(id));
+
+		return true;
+	}
+
+	@GraphQLField
+	public Response deleteProductSpecificationBatch(
+			@GraphQLName("callbackURL") String callbackURL,
+			@GraphQLName("object") Object object)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_productSpecificationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			productSpecificationResource ->
+				productSpecificationResource.deleteProductSpecificationBatch(
+					callbackURL, object));
+	}
+
+	@GraphQLField
+	public ProductSpecification patchProductSpecification(
+			@GraphQLName("id") Long id,
+			@GraphQLName("productSpecification") ProductSpecification
+				productSpecification)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_productSpecificationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			productSpecificationResource ->
+				productSpecificationResource.patchProductSpecification(
+					id, productSpecification));
+	}
+
+	@GraphQLField
 	public ProductSpecification createProductIdProductSpecification(
 			@GraphQLName("id") Long id,
 			@GraphQLName("productSpecification") ProductSpecification
@@ -1562,7 +1671,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createProductIdProductSpecificationBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1573,7 +1681,7 @@ public class Mutation {
 			productSpecificationResource ->
 				productSpecificationResource.
 					postProductIdProductSpecificationBatch(
-						id, callbackURL, object));
+						callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1675,7 +1783,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createProductIdRelatedProductBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1685,7 +1792,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			relatedProductResource ->
 				relatedProductResource.postProductIdRelatedProductBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1701,7 +1808,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteRelatedProductBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1711,7 +1817,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			relatedProductResource ->
 				relatedProductResource.deleteRelatedProductBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1738,7 +1844,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response createProductIdSkuBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1746,7 +1851,7 @@ public class Mutation {
 		return _applyComponentServiceObjects(
 			_skuResourceComponentServiceObjects, this::_populateResourceContext,
 			skuResource -> skuResource.postProductIdSkuBatch(
-				id, callbackURL, object));
+				callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1761,7 +1866,7 @@ public class Mutation {
 	}
 
 	@GraphQLField
-	public Response patchSkuByExternalReferenceCode(
+	public Sku patchSkuByExternalReferenceCode(
 			@GraphQLName("externalReferenceCode") String externalReferenceCode,
 			@GraphQLName("sku") Sku sku)
 		throws Exception {
@@ -1781,19 +1886,17 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteSkuBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
 
 		return _applyComponentServiceObjects(
 			_skuResourceComponentServiceObjects, this::_populateResourceContext,
-			skuResource -> skuResource.deleteSkuBatch(id, callbackURL, object));
+			skuResource -> skuResource.deleteSkuBatch(callbackURL, object));
 	}
 
 	@GraphQLField
-	public Response patchSku(
-			@GraphQLName("id") Long id, @GraphQLName("sku") Sku sku)
+	public Sku patchSku(@GraphQLName("id") Long id, @GraphQLName("sku") Sku sku)
 		throws Exception {
 
 		return _applyComponentServiceObjects(
@@ -1840,7 +1943,6 @@ public class Mutation {
 
 	@GraphQLField
 	public Response deleteSpecificationBatch(
-			@GraphQLName("id") Long id,
 			@GraphQLName("callbackURL") String callbackURL,
 			@GraphQLName("object") Object object)
 		throws Exception {
@@ -1850,7 +1952,7 @@ public class Mutation {
 			this::_populateResourceContext,
 			specificationResource ->
 				specificationResource.deleteSpecificationBatch(
-					id, callbackURL, object));
+					callbackURL, object));
 	}
 
 	@GraphQLField
@@ -1963,6 +2065,25 @@ public class Mutation {
 		diagramResource.setContextUser(_user);
 		diagramResource.setGroupLocalService(_groupLocalService);
 		diagramResource.setRoleLocalService(_roleLocalService);
+	}
+
+	private void _populateResourceContext(
+			GroupedProductResource groupedProductResource)
+		throws Exception {
+
+		groupedProductResource.setContextAcceptLanguage(_acceptLanguage);
+		groupedProductResource.setContextCompany(_company);
+		groupedProductResource.setContextHttpServletRequest(
+			_httpServletRequest);
+		groupedProductResource.setContextHttpServletResponse(
+			_httpServletResponse);
+		groupedProductResource.setContextUriInfo(_uriInfo);
+		groupedProductResource.setContextUser(_user);
+		groupedProductResource.setGroupLocalService(_groupLocalService);
+		groupedProductResource.setRoleLocalService(_roleLocalService);
+
+		groupedProductResource.setVulcanBatchEngineImportTaskResource(
+			_vulcanBatchEngineImportTaskResource);
 	}
 
 	private void _populateResourceContext(
@@ -2333,6 +2454,8 @@ public class Mutation {
 		_categoryResourceComponentServiceObjects;
 	private static ComponentServiceObjects<DiagramResource>
 		_diagramResourceComponentServiceObjects;
+	private static ComponentServiceObjects<GroupedProductResource>
+		_groupedProductResourceComponentServiceObjects;
 	private static ComponentServiceObjects<MappedProductResource>
 		_mappedProductResourceComponentServiceObjects;
 	private static ComponentServiceObjects<OptionResource>

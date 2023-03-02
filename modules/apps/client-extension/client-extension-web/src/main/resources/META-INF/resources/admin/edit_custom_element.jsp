@@ -17,23 +17,35 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<CustomElementCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<CustomElementCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-CustomElementCET customElementCET = editClientExtensionEntryPartDisplayContext.getCET();
+CustomElementCET customElementCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input label="html-element-name" name="htmlElementName" type="text" value="<%= customElementCET.getHTMLElementName() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="html-element-name" name="htmlElementName" required="<%= true %>" type="text" value="<%= customElementCET.getHTMLElementName() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="specify-the-name-for-the-custom-element-thats-declared-in-its-javascript-file" />
+	</div>
+</aui:field-wrapper>
 
 <aui:input label="use-esm" name="useESM" type="checkbox" value="<%= customElementCET.isUseESM() %>" />
 
 <div class="lfr-form-rows" id="<portlet:namespace />_urls_field">
 
 	<%
-	for (String url : editClientExtensionEntryPartDisplayContext.getStrings(customElementCET.getURLs())) {
+	for (String url : editClientExtensionEntryDisplayContext.getStrings(customElementCET.getURLs())) {
 	%>
 
 		<div class="lfr-form-row">
-			<aui:input ignoreRequestValue="<%= true %>" label="url" name="urls" type="text" value="<%= url %>" />
+			<aui:field-wrapper cssClass="form-group">
+				<aui:input ignoreRequestValue="<%= true %>" label="js-url" name="urls" required="<%= true %>" type="text" value="<%= url %>" />
+
+				<div class="form-text form-text-repeat">
+					<liferay-ui:message key="enter-individual-urls-for-each-of-your-client-extension-javascript-files" />
+				</div>
+			</aui:field-wrapper>
 		</div>
 
 	<%
@@ -45,11 +57,17 @@ CustomElementCET customElementCET = editClientExtensionEntryPartDisplayContext.g
 <div class="lfr-form-rows" id="<portlet:namespace />_cssURLs_field">
 
 	<%
-	for (String cssURL : editClientExtensionEntryPartDisplayContext.getStrings(customElementCET.getCSSURLs())) {
+	for (String cssURL : editClientExtensionEntryDisplayContext.getStrings(customElementCET.getCSSURLs())) {
 	%>
 
 		<div class="lfr-form-row">
-			<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="cssURLs" type="text" value="<%= cssURL %>" />
+			<aui:field-wrapper cssClass="form-group">
+				<aui:input ignoreRequestValue="<%= true %>" label="css-url" name="cssURLs" type="text" value="<%= cssURL %>" />
+
+				<div class="form-text form-text-repeat">
+					<liferay-ui:message key="enter-individual-urls-for-each-of-your-client-extension-css-files" />
+				</div>
+			</aui:field-wrapper>
 		</div>
 
 	<%
@@ -59,7 +77,7 @@ CustomElementCET customElementCET = editClientExtensionEntryPartDisplayContext.g
 </div>
 
 <c:choose>
-	<c:when test="<%= editClientExtensionEntryPartDisplayContext.isNew() %>">
+	<c:when test="<%= editClientExtensionEntryDisplayContext.isNew() %>">
 		<aui:input label="instanceable" name="instanceable" type="checkbox" value="<%= customElementCET.isInstanceable() %>" />
 	</c:when>
 	<c:otherwise>
@@ -71,10 +89,16 @@ CustomElementCET customElementCET = editClientExtensionEntryPartDisplayContext.g
 <clay:select
 	label="portlet-category-name"
 	name="portletCategoryName"
-	options="<%= editClientExtensionEntryPartDisplayContext.getPortletCategoryNameSelectOptions(customElementCET.getPortletCategoryName()) %>"
+	options="<%= editClientExtensionEntryDisplayContext.getPortletCategoryNameSelectOptions(customElementCET.getPortletCategoryName()) %>"
 />
 
-<aui:input label="friendly-url-mapping" name="friendlyURLMapping" type="text" value="<%= customElementCET.getFriendlyURLMapping() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="friendly-url-mapping" name="friendlyURLMapping" type="text" value="<%= customElementCET.getFriendlyURLMapping() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="define-the-widgets-friendly-url-mapping-so-you-can-refer-to-it-using-a-more-user-readable-url" />
+	</div>
+</aui:field-wrapper>
 
 <aui:script use="liferay-auto-fields">
 	new Liferay.AutoFields({

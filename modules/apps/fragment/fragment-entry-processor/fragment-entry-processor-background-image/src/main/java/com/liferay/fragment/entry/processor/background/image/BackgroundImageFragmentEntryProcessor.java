@@ -14,20 +14,18 @@
 
 package com.liferay.fragment.entry.processor.background.image;
 
-import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
 import com.liferay.fragment.exception.FragmentEntryContentException;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.FragmentEntryProcessor;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
-import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.item.InfoItemFieldValues;
-import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
+import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.type.WebImage;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -37,12 +35,8 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -56,7 +50,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true, property = "fragment.entry.processor.priority:Integer=5",
+	property = "fragment.entry.processor.priority:Integer=5",
 	service = FragmentEntryProcessor.class
 )
 public class BackgroundImageFragmentEntryProcessor
@@ -67,7 +61,7 @@ public class BackgroundImageFragmentEntryProcessor
 		String html, String configuration) {
 
 		JSONObject defaultEditableValuesJSONObject =
-			JSONFactoryUtil.createJSONObject();
+			_jsonFactory.createJSONObject();
 
 		Document document = _getDocument(html);
 
@@ -77,7 +71,7 @@ public class BackgroundImageFragmentEntryProcessor
 			String id = element.attr("data-lfr-background-image-id");
 
 			defaultEditableValuesJSONObject.put(
-				id, JSONFactoryUtil.createJSONObject());
+				id, _jsonFactory.createJSONObject());
 		}
 
 		return defaultEditableValuesJSONObject;
@@ -89,7 +83,7 @@ public class BackgroundImageFragmentEntryProcessor
 			FragmentEntryProcessorContext fragmentEntryProcessorContext)
 		throws PortalException {
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
 			fragmentEntryLink.getEditableValues());
 
 		Document document = _getDocument(html);
@@ -118,7 +112,7 @@ public class BackgroundImageFragmentEntryProcessor
 
 			String value = StringPool.BLANK;
 
-			Object fieldValue = _getFieldValue(
+			Object fieldValue = _fragmentEntryProcessorHelper.getFieldValue(
 				editableValueJSONObject, infoDisplaysFieldValues,
 				fragmentEntryProcessorContext);
 
@@ -136,8 +130,8 @@ public class BackgroundImageFragmentEntryProcessor
 				long fileEntryId = 0;
 
 				if (JSONUtil.isValid(value)) {
-					JSONObject valueJSONObject =
-						JSONFactoryUtil.createJSONObject(value);
+					JSONObject valueJSONObject = _jsonFactory.createJSONObject(
+						value);
 
 					fileEntryId = valueJSONObject.getLong("fileEntryId");
 
@@ -165,21 +159,23 @@ public class BackgroundImageFragmentEntryProcessor
 						fragmentEntryProcessorContext.getLocale());
 				}
 
-				Optional<Object> displayObjectOptional =
-					fragmentEntryProcessorContext.getDisplayObjectOptional();
+				InfoItemReference contextInfoItemReference =
+					fragmentEntryProcessorContext.getContextInfoItemReference();
 
-				if ((fileEntryId == 0) && displayObjectOptional.isPresent()) {
+				if ((fileEntryId == 0) && (contextInfoItemReference != null)) {
 					fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-						displayObjectOptional.get(),
+						contextInfoItemReference,
 						editableValueJSONObject.getString("collectionFieldId"),
 						fragmentEntryProcessorContext.getLocale());
-				}
 
-				if ((fileEntryId == 0) && displayObjectOptional.isPresent()) {
-					fileEntryId = _fragmentEntryProcessorHelper.getFileEntryId(
-						displayObjectOptional.get(),
-						editableValueJSONObject.getString("mappedField"),
-						fragmentEntryProcessorContext.getLocale());
+					if (fileEntryId == 0) {
+						fileEntryId =
+							_fragmentEntryProcessorHelper.getFileEntryId(
+								contextInfoItemReference,
+								editableValueJSONObject.getString(
+									"mappedField"),
+								fragmentEntryProcessorContext.getLocale());
+					}
 				}
 
 				if (fileEntryId > 0) {
@@ -192,13 +188,7 @@ public class BackgroundImageFragmentEntryProcessor
 			}
 		}
 
-		if (Objects.equals(
-				fragmentEntryProcessorContext.getMode(),
-				FragmentEntryLinkConstants.ASSET_DISPLAY_PAGE) ||
-			Objects.equals(
-				fragmentEntryProcessorContext.getMode(),
-				FragmentEntryLinkConstants.VIEW)) {
-
+		if (fragmentEntryProcessorContext.isViewMode()) {
 			for (Element element :
 					document.select("[data-lfr-background-image-id]")) {
 
@@ -249,58 +239,6 @@ public class BackgroundImageFragmentEntryProcessor
 		return document;
 	}
 
-	private Object _getFieldValue(
-			JSONObject editableValueJSONObject,
-			Map<Long, InfoItemFieldValues> infoDisplaysFieldValues,
-			FragmentEntryProcessorContext fragmentEntryProcessorContext)
-		throws PortalException {
-
-		if (_fragmentEntryProcessorHelper.isAssetDisplayPage(
-				fragmentEntryProcessorContext.getMode())) {
-
-			HttpServletRequest httpServletRequest =
-				fragmentEntryProcessorContext.getHttpServletRequest();
-
-			if (httpServletRequest == null) {
-				return null;
-			}
-
-			String mappedField = editableValueJSONObject.getString(
-				"mappedField");
-
-			Object infoItem = httpServletRequest.getAttribute(
-				InfoDisplayWebKeys.INFO_ITEM);
-
-			InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-				(InfoItemFieldValuesProvider)httpServletRequest.getAttribute(
-					InfoDisplayWebKeys.INFO_ITEM_FIELD_VALUES_PROVIDER);
-
-			return _fragmentEntryProcessorHelper.getMappedInfoItemFieldValue(
-				mappedField, infoItemFieldValuesProvider,
-				fragmentEntryProcessorContext.getLocale(), infoItem);
-		}
-		else if (_fragmentEntryProcessorHelper.isMapped(
-					editableValueJSONObject)) {
-
-			return _fragmentEntryProcessorHelper.getMappedInfoItemFieldValue(
-				editableValueJSONObject, infoDisplaysFieldValues,
-				fragmentEntryProcessorContext.getLocale(),
-				fragmentEntryProcessorContext.getMode(),
-				fragmentEntryProcessorContext.getPreviewClassPK(),
-				fragmentEntryProcessorContext.getPreviewVersion());
-		}
-		else if (_fragmentEntryProcessorHelper.isMappedCollection(
-					editableValueJSONObject)) {
-
-			return _fragmentEntryProcessorHelper.getMappedCollectionValue(
-				fragmentEntryProcessorContext.getDisplayObjectOptional(),
-				editableValueJSONObject,
-				fragmentEntryProcessorContext.getLocale());
-		}
-
-		return null;
-	}
-
 	private String _getImageURL(Object fieldValue) {
 		if (fieldValue instanceof JSONObject) {
 			JSONObject fieldValueJSONObject = (JSONObject)fieldValue;
@@ -319,6 +257,9 @@ public class BackgroundImageFragmentEntryProcessor
 
 	@Reference
 	private FragmentEntryProcessorHelper _fragmentEntryProcessorHelper;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

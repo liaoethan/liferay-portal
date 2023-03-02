@@ -21,12 +21,14 @@ import com.liferay.info.field.InfoFieldValue;
 import com.liferay.info.field.type.BooleanInfoFieldType;
 import com.liferay.info.field.type.DateInfoFieldType;
 import com.liferay.info.field.type.FileInfoFieldType;
+import com.liferay.info.field.type.HTMLInfoFieldType;
+import com.liferay.info.field.type.MultiselectInfoFieldType;
 import com.liferay.info.field.type.NumberInfoFieldType;
 import com.liferay.info.field.type.RelationshipInfoFieldType;
 import com.liferay.info.field.type.SelectInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.form.InfoForm;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.localized.InfoLocalizedValue;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -58,7 +60,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -68,9 +69,9 @@ import javax.servlet.http.HttpServletRequest;
 public class InfoRequestFieldValuesProviderHelper {
 
 	public InfoRequestFieldValuesProviderHelper(
-		InfoItemServiceTracker infoItemServiceTracker) {
+		InfoItemServiceRegistry infoItemServiceRegistry) {
 
-		_infoItemServiceTracker = infoItemServiceTracker;
+		_infoItemServiceRegistry = infoItemServiceRegistry;
 	}
 
 	public List<InfoFieldValue<Object>> getInfoFieldValues(
@@ -122,6 +123,15 @@ public class InfoRequestFieldValuesProviderHelper {
 						infoFieldValues.add(infoFieldValue);
 					}
 				}
+			}
+
+			if (infoField.getInfoFieldType() instanceof
+					MultiselectInfoFieldType) {
+
+				infoFieldValues.add(
+					_getInfoFieldValue(
+						infoField, themeDisplay.getLocale(),
+						regularParameterMap.get(infoField.getName())));
 			}
 
 			List<String> regularParameters = regularParameterMap.get(
@@ -207,7 +217,7 @@ public class InfoRequestFieldValuesProviderHelper {
 		String className, String formVariationKey, long groupId) {
 
 		InfoItemFormProvider<T> infoItemFormProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFormProvider.class, className);
 
 		if (infoItemFormProvider == null) {
@@ -266,6 +276,7 @@ public class InfoRequestFieldValuesProviderHelper {
 		}
 
 		if (infoField.getInfoFieldType() instanceof FileInfoFieldType ||
+			infoField.getInfoFieldType() instanceof HTMLInfoFieldType ||
 			infoField.getInfoFieldType() instanceof RelationshipInfoFieldType ||
 			infoField.getInfoFieldType() instanceof SelectInfoFieldType ||
 			infoField.getInfoFieldType() instanceof TextInfoFieldType) {
@@ -281,10 +292,9 @@ public class InfoRequestFieldValuesProviderHelper {
 
 		Object objectValue = null;
 
-		Optional<Boolean> decimalOptional = infoField.getAttributeOptional(
-			NumberInfoFieldType.DECIMAL);
+		if (GetterUtil.getBoolean(
+				infoField.getAttribute(NumberInfoFieldType.DECIMAL))) {
 
-		if (decimalOptional.orElse(false)) {
 			objectValue = new BigDecimal(value);
 		}
 		else {
@@ -297,6 +307,6 @@ public class InfoRequestFieldValuesProviderHelper {
 	private static final Log _log = LogFactoryUtil.getLog(
 		InfoRequestFieldValuesProviderHelper.class);
 
-	private final InfoItemServiceTracker _infoItemServiceTracker;
+	private final InfoItemServiceRegistry _infoItemServiceRegistry;
 
 }

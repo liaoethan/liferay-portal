@@ -68,16 +68,27 @@ const CaseForm = () => {
 	} = useOutletContext();
 
 	useHeader({
+		tabs: [],
 		timeout: 100,
-		useTabs: [],
 	});
 
 	const {data: testrayComponentsData} = useFetch<
 		APIResponse<TestrayComponent>
-	>('/components?fields=id,name&pageSize=1000');
+	>('/components', {
+		params: {
+			fields: 'id,name',
+			pageSize: 1000,
+		},
+	});
 
 	const {data: testrayCaseTypesData} = useFetch<APIResponse<TestrayCaseType>>(
-		'/casetypes?fields=id,name&pageSize=1000'
+		'/casetypes',
+		{
+			params: {
+				fields: 'id,name',
+				pageSize: 1000,
+			},
+		}
 	);
 
 	const testrayCaseTypes = testrayCaseTypesData?.items || [];
@@ -92,7 +103,6 @@ const CaseForm = () => {
 		formState: {errors},
 		handleSubmit,
 		register,
-		reset,
 		setValue,
 		watch,
 	} = useForm<CaseFormData>({
@@ -116,16 +126,16 @@ const CaseForm = () => {
 		onSubmit(
 			{...form, projectId},
 			{
-				create: (...params) => testrayCaseRest.create(...params),
-				update: (...params) => testrayCaseRest.update(...params),
+				create: (data) => testrayCaseRest.create(data),
+				update: (id, data) => testrayCaseRest.update(id, data),
 			}
 		)
 			.then(mutateTestrayCase)
 			.then(() => {
 				if (addAnother) {
-					onSuccess();
+					setValue('name', i18n.sub('copy-x', form.name));
 
-					return reset();
+					return onSuccess();
 				}
 
 				return onSave();
@@ -133,11 +143,11 @@ const CaseForm = () => {
 			.catch(onError);
 	};
 
+	const addAnother = watch('addAnother');
 	const caseTypeId = watch('caseTypeId');
 	const componentId = watch('componentId');
 	const description = watch('description');
 	const steps = watch('steps');
-	const addAnother = watch('addAnother');
 
 	const inputProps = {
 		errors,
@@ -250,13 +260,15 @@ const CaseForm = () => {
 
 				<Form.Divider />
 
-				<div className="my-5">
-					<ClayCheckbox
-						checked={addAnother}
-						label={i18n.translate('add-another')}
-						onChange={() => setValue('addAnother', !addAnother)}
-					/>
-				</div>
+				{!testrayCase && (
+					<div className="my-5">
+						<ClayCheckbox
+							checked={addAnother}
+							label={i18n.translate('add-another')}
+							onChange={() => setValue('addAnother', !addAnother)}
+						/>
+					</div>
+				)}
 
 				<Form.Footer
 					onClose={onClose}

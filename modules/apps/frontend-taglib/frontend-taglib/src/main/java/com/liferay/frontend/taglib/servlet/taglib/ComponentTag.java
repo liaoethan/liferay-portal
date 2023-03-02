@@ -21,7 +21,6 @@ import com.liferay.frontend.js.module.launcher.JSModuleResolver;
 import com.liferay.frontend.taglib.internal.util.ServicesProvider;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.frontend.icons.FrontendIconsUtil;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONSerializer;
 import com.liferay.portal.kernel.log.Log;
@@ -43,7 +42,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -208,11 +206,11 @@ public class ComponentTag extends ParamAndPropertyAncestorTagImpl {
 
 		sb.append("Liferay.component('");
 
-		String componentId = Optional.ofNullable(
-			getComponentId()
-		).orElse(
-			_UNNAMED_COMPONENT_NAME + PortalUUIDUtil.generate()
-		);
+		String componentId = getComponentId();
+
+		if (componentId == null) {
+			componentId = _UNNAMED_COMPONENT_NAME + PortalUUIDUtil.generate();
+		}
 
 		sb.append(componentId);
 
@@ -237,7 +235,7 @@ public class ComponentTag extends ParamAndPropertyAncestorTagImpl {
 				).put(
 					"namespace", portletDisplay.getNamespace()
 				).put(
-					"spritemap", FrontendIconsUtil.getSpritemap(themeDisplay)
+					"spritemap", themeDisplay.getPathThemeSpritemap()
 				).build()));
 
 		String containerId = getContainerId();

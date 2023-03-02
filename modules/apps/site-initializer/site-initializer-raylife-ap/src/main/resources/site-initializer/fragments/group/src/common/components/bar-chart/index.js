@@ -18,10 +18,14 @@ import React from 'react';
 import './index.css';
 
 const BarChart = ({
+	barRatio = 0.2,
+	barWidth = 20,
 	colors,
 	dataColumns,
-	height = 200,
+	format = false,
+	height = 100,
 	labelColumns,
+	labelRef,
 	showLegend = false,
 	showTooltip = false,
 	titleTotal = true,
@@ -29,7 +33,7 @@ const BarChart = ({
 	width = 300,
 }) => {
 	return (
-		<div className="align-items-center bar-chart d-flex justify-content-between mb-3 mt-2">
+		<div className="align-items-center bar-chart d-flex justify-content-between mt-2">
 			{titleTotal && (
 				<div className="bar-chart-title px-4">
 					<h6 className="mb-0 text-neutral-6">Total</h6>
@@ -49,10 +53,10 @@ const BarChart = ({
 				}}
 				bar={{
 					radius: {
-						ratio: 0.2,
+						ratio: barRatio,
 					},
 					width: {
-						data: 20,
+						data: barWidth,
 					},
 				}}
 				data={{
@@ -62,8 +66,22 @@ const BarChart = ({
 					columns: [labelColumns, dataColumns],
 					labels: {
 						colors: '#272833',
+						format: {
+							data: (value) => {
+								if (format) {
+									return new Intl.NumberFormat('en-us', {
+										currency: 'USD',
+										maximumFractionDigits: 0,
+										minimumFractionDigits: 0,
+										style: 'currency',
+									}).format(value);
+								}
+
+								return value;
+							},
+						},
 						position: {
-							y: -10,
+							y: -1,
 						},
 					},
 					type: 'bar',
@@ -80,6 +98,7 @@ const BarChart = ({
 				legend={{
 					show: showLegend,
 				}}
+				ref={labelRef}
 				size={{
 					height,
 					width,

@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.service.permission.PortletPermission;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.search.engine.SearchEngineInformation;
 import com.liferay.portal.search.searcher.SearchResponse;
 import com.liferay.portal.search.web.internal.search.insights.constants.SearchInsightsPortletKeys;
 import com.liferay.portal.search.web.internal.search.insights.display.context.SearchInsightsDisplayContext;
@@ -48,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Bryan Engler
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-search-insights",
@@ -114,8 +114,7 @@ public class SearchInsightsPortlet extends MVCPortlet {
 
 		SearchResponse searchResponse =
 			portletSharedSearchResponse.getFederatedSearchResponse(
-				searchInsightsPortletPreferences.
-					getFederatedSearchKeyOptional());
+				searchInsightsPortletPreferences.getFederatedSearchKey());
 
 		if (_isCompanyAdmin() &&
 			(_isRequestStringPresent(searchResponse) ||
@@ -123,9 +122,10 @@ public class SearchInsightsPortlet extends MVCPortlet {
 
 			searchInsightsDisplayContext.setRequestString(
 				_buildRequestString(searchResponse));
-
 			searchInsightsDisplayContext.setResponseString(
 				_buildResponseString(searchResponse));
+			searchInsightsDisplayContext.setSearchEngineVendor(
+				_searchEngineInformation.getVendorString());
 		}
 		else {
 			searchInsightsDisplayContext.setHelpMessage(
@@ -188,5 +188,8 @@ public class SearchInsightsPortlet extends MVCPortlet {
 
 	@Reference
 	private PortletSharedSearchRequest _portletSharedSearchRequest;
+
+	@Reference
+	private SearchEngineInformation _searchEngineInformation;
 
 }

@@ -13,9 +13,9 @@
  */
 
 import ListView from '../../../components/ListView';
+import SearchBuilder from '../../../core/SearchBuilder';
 import i18n from '../../../i18n';
 import {TestrayTeam, testrayComponentImpl} from '../../../services/rest';
-import {searchUtil} from '../../../util/search';
 import TeamFormModal from './ComponentsFormModal';
 import useComponentActions from './useComponentActions';
 
@@ -52,7 +52,7 @@ const ComponentsModal: React.FC<ComponentsModalProps> = ({projectId}) => {
 				transformData={(response) =>
 					testrayComponentImpl.transformDataFromList(response)
 				}
-				variables={{filter: searchUtil.eq('projectId', projectId)}}
+				variables={{filter: SearchBuilder.eq('projectId', projectId)}}
 			/>
 
 			<TeamFormModal modal={formModal.modal} projectId={projectId} />

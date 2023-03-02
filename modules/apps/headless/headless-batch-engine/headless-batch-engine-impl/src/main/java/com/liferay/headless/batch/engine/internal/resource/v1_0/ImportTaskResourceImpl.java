@@ -23,6 +23,7 @@ import com.liferay.batch.engine.BatchEngineTaskOperation;
 import com.liferay.batch.engine.ItemClassRegistry;
 import com.liferay.batch.engine.configuration.BatchEngineTaskCompanyConfiguration;
 import com.liferay.batch.engine.constants.BatchEngineImportTaskConstants;
+import com.liferay.batch.engine.constants.CreateStrategy;
 import com.liferay.batch.engine.model.BatchEngineImportTask;
 import com.liferay.batch.engine.model.BatchEngineImportTaskError;
 import com.liferay.batch.engine.service.BatchEngineImportTaskErrorLocalService;
@@ -43,7 +44,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.multipart.BinaryFile;
 import com.liferay.portal.vulcan.multipart.MultipartBody;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -132,7 +132,7 @@ public class ImportTaskResourceImpl extends BaseImportTaskResourceImpl {
 		return _toImportTask(
 			_batchEngineImportTaskLocalService.
 				getBatchEngineImportTaskByExternalReferenceCode(
-					contextCompany.getCompanyId(), externalReferenceCode));
+					externalReferenceCode, contextCompany.getCompanyId()));
 	}
 
 	@Override
@@ -143,7 +143,7 @@ public class ImportTaskResourceImpl extends BaseImportTaskResourceImpl {
 		return _getImportTaskContent(
 			_batchEngineImportTaskLocalService.
 				getBatchEngineImportTaskByExternalReferenceCode(
-					contextCompany.getCompanyId(), externalReferenceCode));
+					externalReferenceCode, contextCompany.getCompanyId()));
 	}
 
 	@Override
@@ -154,7 +154,7 @@ public class ImportTaskResourceImpl extends BaseImportTaskResourceImpl {
 		BatchEngineImportTask batchEngineImportTask =
 			_batchEngineImportTaskLocalService.
 				getBatchEngineImportTaskByExternalReferenceCode(
-					contextCompany.getCompanyId(), externalReferenceCode);
+					externalReferenceCode, contextCompany.getCompanyId());
 
 		return _getImportTaskFailedItemReport(
 			batchEngineImportTask.getBatchEngineImportTaskId());
@@ -455,7 +455,11 @@ public class ImportTaskResourceImpl extends BaseImportTaskResourceImpl {
 			contextUriInfo, _ignoredParameters);
 
 		if (createStrategy != null) {
-			parameters.put("createStrategy", createStrategy);
+			CreateStrategy createStrategyEnum = CreateStrategy.valueOf(
+				createStrategy);
+
+			parameters.put(
+				"createStrategy", createStrategyEnum.getDBOperation());
 		}
 
 		if (updateStrategy != null) {
@@ -521,7 +525,7 @@ public class ImportTaskResourceImpl extends BaseImportTaskResourceImpl {
 					batchEngineImportTask.getExecuteStatus());
 				externalReferenceCode =
 					batchEngineImportTask.getExternalReferenceCode();
-				failedItems = TransformUtil.transformToArray(
+				failedItems = transformToArray(
 					batchEngineImportTask.getBatchEngineImportTaskErrors(),
 					batchEngineImportTaskError -> _toFailedItem(
 						batchEngineImportTaskError),

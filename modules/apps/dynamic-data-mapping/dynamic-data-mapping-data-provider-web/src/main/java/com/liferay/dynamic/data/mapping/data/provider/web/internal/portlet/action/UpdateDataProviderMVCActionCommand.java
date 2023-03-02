@@ -38,10 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -53,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leonardo Barros
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING_DATA_PROVIDER,
 		"mvc.command.name=/dynamic_data_mapping_data_provider/update_data_provider"
@@ -108,7 +104,7 @@ public class UpdateDataProviderMVCActionCommand
 		return ddmFormValuesDeserializerDeserializeResponse.getDDMFormValues();
 	}
 
-	private Optional<DDMFormFieldValue> _findStoredDDMFormFieldValue(
+	private DDMFormFieldValue _findStoredDDMFormFieldValue(
 		String name, String instanceId, DDMFormValues storedDDMFormValues) {
 
 		Set<DDMFormFieldValue> storedDDMFormFieldValues = new HashSet<>();
@@ -117,16 +113,15 @@ public class UpdateDataProviderMVCActionCommand
 			storedDDMFormValues.getDDMFormFieldValues(),
 			storedDDMFormFieldValues);
 
-		Stream<DDMFormFieldValue> storedDDMFormFieldValuesStream =
-			storedDDMFormFieldValues.stream();
+		for (DDMFormFieldValue ddmFormFieldValue : storedDDMFormFieldValues) {
+			if (Objects.equals(ddmFormFieldValue.getName(), name) &&
+				Objects.equals(ddmFormFieldValue.getInstanceId(), instanceId)) {
 
-		Predicate<DDMFormFieldValue> predicate = ddmFormFieldValue ->
-			Objects.equals(ddmFormFieldValue.getName(), name) &&
-			Objects.equals(ddmFormFieldValue.getInstanceId(), instanceId);
+				return ddmFormFieldValue;
+			}
+		}
 
-		return storedDDMFormFieldValuesStream.filter(
-			predicate
-		).findFirst();
+		return null;
 	}
 
 	private void _flattenDDMFormFieldValues(
@@ -148,7 +143,7 @@ public class UpdateDataProviderMVCActionCommand
 		DDMDataProviderInstance dataProviderInstance) {
 
 		DDMDataProvider ddmDataProvider =
-			ddmDataProviderTracker.getDDMDataProvider(
+			ddmDataProviderRegistry.getDDMDataProvider(
 				dataProviderInstance.getType());
 
 		Class<?> clazz = ddmDataProvider.getSettings();
@@ -188,14 +183,13 @@ public class UpdateDataProviderMVCActionCommand
 		DDMFormFieldValue ddmFormFieldValue,
 		DDMFormValues storedDDMFormValues) {
 
-		Optional<DDMFormFieldValue> storedFormFieldValueOptional =
-			_findStoredDDMFormFieldValue(
-				ddmFormFieldValue.getName(), ddmFormFieldValue.getInstanceId(),
-				storedDDMFormValues);
+		DDMFormFieldValue storedFormFieldValue = _findStoredDDMFormFieldValue(
+			ddmFormFieldValue.getName(), ddmFormFieldValue.getInstanceId(),
+			storedDDMFormValues);
 
-		storedFormFieldValueOptional.ifPresent(
-			storedDDMFormFieldValue -> _restoreDDMFormFieldValue(
-				ddmFormFieldValue, storedDDMFormFieldValue));
+		if (storedFormFieldValue != null) {
+			_restoreDDMFormFieldValue(ddmFormFieldValue, storedFormFieldValue);
+		}
 	}
 
 	private void _restoreDDMFormFieldValues(

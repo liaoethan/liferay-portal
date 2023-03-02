@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
+
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.dom4j.Node;
@@ -79,11 +81,29 @@ public class ForPoshiElement extends PoshiElement {
 		if (matcher.find()) {
 			addAttribute("param", matcher.group(1));
 
-			addAttribute(matcher.group(2), matcher.group(3));
+			String value = matcher.group(3);
+
+			if (value.startsWith("\"") && value.endsWith("\"")) {
+				value = getDoubleQuotedContent(value);
+			}
+
+			if (value.contains("\"")) {
+				int escapedQuoteCount = StringUtils.countMatches(value, "\\\"");
+				int quoteCount = StringUtils.countMatches(value, "\"");
+
+				if (escapedQuoteCount != quoteCount) {
+					throw new PoshiScriptParserException(
+						"Unescaped quotes in list value: " + value, poshiScript,
+						(PoshiElement)getParent());
+				}
+			}
+
+			addAttribute(matcher.group(2), value);
 		}
 		else {
-			throw new RuntimeException(
-				"Invalid parameter syntax:\n" + parentheticalContent);
+			throw new PoshiScriptParserException(
+				"Invalid parameter syntax: " + parentheticalContent,
+				poshiScript, (PoshiElement)getParent());
 		}
 
 		String blockContent = getBlockContent(poshiScript);
@@ -127,9 +147,16 @@ public class ForPoshiElement extends PoshiElement {
 		sb.append(attributeValue("param"));
 		sb.append(" : ");
 		sb.append(typeAttributeName);
-		sb.append(" \"");
-		sb.append(attributeValue(typeAttributeName));
-		sb.append("\")");
+		sb.append(" ");
+
+		String typeAttributeValue = attributeValue(typeAttributeName);
+
+		if (isQuotedContent(typeAttributeValue)) {
+			typeAttributeValue = "\"" + typeAttributeValue + "\"";
+		}
+
+		sb.append(typeAttributeValue);
+		sb.append(")");
 
 		return sb.toString();
 	}
@@ -181,6 +208,6 @@ public class ForPoshiElement extends PoshiElement {
 		"^" + _POSHI_SCRIPT_KEYWORD + BLOCK_NAME_PARAMETER_REGEX,
 		Pattern.DOTALL);
 	private static final Pattern _blockParameterPattern = Pattern.compile(
-		"var[\\s]*([\\w]*)[\\s]*:[\\s]*([\\w]*)[\\s]*\"(.*)\"");
+		"var[\\s]*([\\w]*)[\\s]*:[\\s]*([\\w]*)[\\s]*(?:(\\$\\{.*}|.*))");
 
 }

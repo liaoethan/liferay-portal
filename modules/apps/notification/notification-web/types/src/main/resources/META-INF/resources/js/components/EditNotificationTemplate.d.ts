@@ -15,30 +15,34 @@
 /// <reference types="react" />
 
 import './EditNotificationTemplate.scss';
-export default function EditNotificationTemplate({
-	baseResourceURL,
-	editorConfig,
-	notificationTemplateId,
-	notificationTemplateType,
-}: IProps): JSX.Element;
-interface IProps {
+export declare type NotificationTemplateError = {
+	bcc?: string;
+	body?: string;
+	cc?: string;
+	description?: string;
+	from?: string;
+	fromName?: string;
+	name?: string;
+	subject?: string;
+	to?: string;
+	type?: string;
+};
+interface EditNotificationTemplateProps {
+	backURL: string;
 	baseResourceURL: string;
 	editorConfig: object;
+	externalReferenceCode: string;
 	notificationTemplateId: number;
 	notificationTemplateType: string;
+	portletNamespace: string;
 }
-export declare type TNotificationTemplate = {
-	attachmentObjectFieldIds: string[] | number[];
-	bcc: string;
-	body: LocalizedValue<string>;
-	cc: string;
-	description: string;
-	from: string;
-	fromName: LocalizedValue<string>;
-	name: string;
-	objectDefinitionId: number | null;
-	subject: LocalizedValue<string>;
-	to: LocalizedValue<string>;
-	type: string;
-};
+export default function EditNotificationTemplate({
+	backURL,
+	baseResourceURL,
+	editorConfig,
+	externalReferenceCode,
+	notificationTemplateId,
+	notificationTemplateType,
+	portletNamespace,
+}: EditNotificationTemplateProps): JSX.Element;
 export {};

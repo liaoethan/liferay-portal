@@ -22,7 +22,7 @@ import com.liferay.adaptive.media.image.internal.configuration.AMImageConfigurat
 import com.liferay.adaptive.media.image.internal.scaler.AMImageScaledImageImpl;
 import com.liferay.adaptive.media.image.model.AMImageEntry;
 import com.liferay.adaptive.media.image.scaler.AMImageScaler;
-import com.liferay.adaptive.media.image.scaler.AMImageScalerTracker;
+import com.liferay.adaptive.media.image.scaler.AMImageScalerRegistry;
 import com.liferay.adaptive.media.image.service.AMImageEntryLocalService;
 import com.liferay.adaptive.media.image.validator.AMImageValidator;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -38,7 +38,6 @@ import java.io.InputStream;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -66,8 +65,8 @@ public class AMImageProcessorImplTest {
 			_amImageProcessorImpl, "_amImageEntryLocalService",
 			_amImageEntryLocalService);
 		ReflectionTestUtil.setFieldValue(
-			_amImageProcessorImpl, "_amImageScalerTracker",
-			_amImageScalerTracker);
+			_amImageProcessorImpl, "_amImageScalerRegistry",
+			_amImageScalerRegistry);
 		ReflectionTestUtil.setFieldValue(
 			_amImageProcessorImpl, "_amImageValidator", _amImageValidator);
 
@@ -162,10 +161,9 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(
-				new AMImageConfigurationEntryImpl(
-					RandomTestUtil.randomString(),
-					RandomTestUtil.randomString(), Collections.emptyMap()))
+			new AMImageConfigurationEntryImpl(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				Collections.emptyMap())
 		);
 
 		Mockito.when(
@@ -230,10 +228,9 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(
-				new AMImageConfigurationEntryImpl(
-					RandomTestUtil.randomString(),
-					RandomTestUtil.randomString(), Collections.emptyMap()))
+			new AMImageConfigurationEntryImpl(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				Collections.emptyMap())
 		);
 
 		Mockito.when(
@@ -274,7 +271,7 @@ public class AMImageProcessorImplTest {
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			_amImageScaler
@@ -319,10 +316,9 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(
-				new AMImageConfigurationEntryImpl(
-					RandomTestUtil.randomString(),
-					RandomTestUtil.randomString(), Collections.emptyMap()))
+			new AMImageConfigurationEntryImpl(
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				Collections.emptyMap())
 		);
 
 		Mockito.when(
@@ -345,7 +341,7 @@ public class AMImageProcessorImplTest {
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			_amImageScaler
@@ -402,11 +398,11 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(amImageConfigurationEntry)
+			amImageConfigurationEntry
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			null
@@ -438,7 +434,7 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.empty()
+			null
 		);
 
 		_amImageProcessorImpl.process(
@@ -496,11 +492,11 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(amImageConfigurationEntry)
+			amImageConfigurationEntry
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			_amImageScaler
@@ -549,11 +545,11 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(amImageConfigurationEntry)
+			amImageConfigurationEntry
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			_amImageScaler
@@ -625,11 +621,11 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(amImageConfigurationEntry)
+			amImageConfigurationEntry
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			_amImageScaler
@@ -670,11 +666,11 @@ public class AMImageProcessorImplTest {
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				Mockito.anyLong(), Mockito.nullable(String.class))
 		).thenReturn(
-			Optional.of(amImageConfigurationEntry)
+			amImageConfigurationEntry
 		);
 
 		Mockito.when(
-			_amImageScalerTracker.getAMImageScaler(
+			_amImageScalerRegistry.getAMImageScaler(
 				Mockito.nullable(String.class))
 		).thenReturn(
 			_amImageScaler
@@ -760,8 +756,8 @@ public class AMImageProcessorImplTest {
 		new AMImageProcessorImpl();
 	private final AMImageScaler _amImageScaler = Mockito.mock(
 		AMImageScaler.class);
-	private final AMImageScalerTracker _amImageScalerTracker = Mockito.mock(
-		AMImageScalerTracker.class);
+	private final AMImageScalerRegistry _amImageScalerRegistry = Mockito.mock(
+		AMImageScalerRegistry.class);
 	private final AMImageValidator _amImageValidator = Mockito.mock(
 		AMImageValidator.class);
 	private final FileEntry _fileEntry = Mockito.mock(FileEntry.class);

@@ -48,22 +48,31 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Julio Camarero
  */
-@Component(immediate = true, service = GroupSearchProvider.class)
+@Component(service = GroupSearchProvider.class)
 public class GroupSearchProvider {
 
 	public GroupSearch getGroupSearch(
 			PortletRequest portletRequest, PortletURL portletURL)
 		throws PortalException {
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
 		GroupSearch groupSearch = new GroupSearch(portletRequest, portletURL);
+
+		setResultsAndTotal(groupSearch, portletRequest);
+
+		return groupSearch;
+	}
+
+	public void setResultsAndTotal(
+			GroupSearch groupSearch, PortletRequest portletRequest)
+		throws PortalException {
 
 		GroupSearchTerms searchTerms =
 			(GroupSearchTerms)groupSearch.getSearchTerms();
 
 		long parentGroupId = getParentGroupId(portletRequest);
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 
 		Company company = themeDisplay.getCompany();
 
@@ -107,8 +116,6 @@ public class GroupSearchProvider {
 					getGroupParams(
 						portletRequest, searchTerms, parentGroupId)));
 		}
-
-		return groupSearch;
 	}
 
 	@Activate

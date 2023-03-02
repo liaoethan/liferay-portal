@@ -62,9 +62,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Luca Pellizzon
  */
-@Component(
-	enabled = false, immediate = true, service = CommercePaymentEngine.class
-)
+@Component(service = CommercePaymentEngine.class)
 public class CommercePaymentEngineImpl implements CommercePaymentEngine {
 
 	@Override
@@ -544,7 +542,8 @@ public class CommercePaymentEngineImpl implements CommercePaymentEngine {
 				_commercePaymentMethodRegistry.getCommercePaymentMethod(
 					commercePaymentMethodGroupRel.getEngineKey());
 
-			if (!permissionChecker.hasPermission(
+			if ((commercePaymentMethod == null) ||
+				!permissionChecker.hasPermission(
 					commercePaymentMethodGroupRel.getGroupId(),
 					CommercePaymentMethodGroupRel.class.getName(),
 					commercePaymentMethodGroupRel.

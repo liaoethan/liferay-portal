@@ -45,7 +45,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CommerceSubscriptionEntryIndexer
 	extends BaseIndexer<CommerceSubscriptionEntry> {
 
@@ -181,7 +181,7 @@ public class CommerceSubscriptionEntryIndexer
 
 		_indexWriterHelper.updateDocument(
 			commerceSubscriptionEntry.getCompanyId(),
-			getDocument(commerceSubscriptionEntry), isCommitImmediately());
+			getDocument(commerceSubscriptionEntry));
 	}
 
 	@Override

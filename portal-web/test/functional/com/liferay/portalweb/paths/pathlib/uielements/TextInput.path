@@ -161,6 +161,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>DESTINATION_URL</td>
+	<td>//input[contains(@name,'destinationURL_${key_index}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>INPUT_CONTAINS_TITLE</td>
 	<td>//input[contains(@title,'${key_titleName}')]</td>
 	<td></td>
@@ -336,6 +341,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>GENERIC_TEXT_INPUT_WITH_ICON</td>
+	<td>//div[label[*[name()='svg'][contains(@class,'lexicon-icon-${key_text}')]]]//preceding-sibling::input</td>
+	<td></td>
+</tr>
+<tr>
 	<td>GENERIC_TEXT_INPUT_N</td>
 	<td>xpath=(//div[label[contains(.,'${key_fieldLabel}')]]//input[@type='text'] | //div[contains(@class,'ddm-field') and contains(.,'${key_fieldLabel}')]//input[@type='text'])[${key_indexNumber}]</td>
 	<td></td>
@@ -401,6 +411,31 @@
 	<td></td>
 </tr>
 <tr>
+	<td>VIRTUAL_INSTANCE_SCREEN_NAME</td>
+	<td>//input[contains(@id,'screenNameAdmin')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VIRTUAL_INSTANCE_EMAIL</td>
+	<td>//input[contains(@id,'emailAdmin')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VIRTUAL_INSTANCE_PASSWORD</td>
+	<td>//input[contains(@id,'passwordAdmin')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VIRTUAL_INSTANCE_FIRST_NAME</td>
+	<td>//input[contains(@id,'firstNameAdmin')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>VIRTUAL_INSTANCE_LAST_NAME</td>
+	<td>//input[contains(@id,'lastNameAdmin')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>MAX_HEIGHT</td>
 	<td>//input[contains(@id,'maxHeight')]</td>
 	<td></td>
@@ -452,7 +487,7 @@
 </tr>
 <tr>
 	<td>NUMERIC</td>
-	<td>//label[contains(.,'${key_fieldLabel}')]/following-sibling::input[1]</td>
+	<td>//label[contains(.,'${key_fieldLabel}')]/following-sibling::input[1] | //label[contains(.,'${key_fieldLabel}')]//..//input[1]</td>
 	<td></td>
 </tr>
 <tr>
@@ -508,6 +543,11 @@
 <tr>
 	<td>PASSWORD_TYPE</td>
 	<td>//input[@type='password']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>PATTERN</td>
+	<td>//input[contains(@name,'pattern_${key_index}')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -611,6 +651,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>SPECIFIC_REQUIRED_ALERT</td>
+	<td>//div[contains(@class,'has-error')][contains(.,'${key_fieldName}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>SPECIFIC_LABEL_TEXT_INPUT</td>
 	<td>//label[contains(text(),'${key_labelName}')]//following::input[contains(@type,'text')]</td>
 	<td></td>
@@ -623,6 +668,11 @@
 <tr>
 	<td>SEARCH</td>
 	<td>//input[contains(@title,'S') or contains(@title,'s')][contains(@title,'earch')] | //input[contains(@aria-label,'S') or contains(@title,'s')][contains(@aria-label,'earch')] | //input[contains(@name,'keywords')] | //input[(ancestor::header[@id='banner'])][contains(@data-qa-id,'searchInput')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SEARCH_DISABLED</td>
+	<td>//input[@disabled and contains(@name,'keywords')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -692,7 +742,7 @@
 </tr>
 <tr>
 	<td>TEXT_SPECIFIC</td>
-	<td>//label[contains(.,'Text')]/following-sibling::input[1]</td>
+	<td>//label[contains(.,'Text')]/following-sibling::input[1] | //label[contains(.,'Text')]//..//input[1]</td>
 	<td></td>
 </tr>
 <tr>

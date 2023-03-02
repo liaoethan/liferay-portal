@@ -14,7 +14,7 @@
 
 package com.liferay.document.library.web.internal.portlet.toolbar.contributor.helper;
 
-import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.document.library.display.context.DLUIItemKeys;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
@@ -63,7 +63,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Adolfo Pérez
  */
-@Component(immediate = true, service = MenuItemProvider.class)
+@Component(service = MenuItemProvider.class)
 public class MenuItemProvider {
 
 	public List<MenuItem> getAddDocumentTypesMenuItems(
@@ -416,7 +416,7 @@ public class MenuItemProvider {
 
 		try {
 			return _dlFileEntryTypeService.getFolderFileEntryTypes(
-				SiteConnectedGroupGroupProviderUtil.
+				_siteConnectedGroupGroupProvider.
 					getCurrentAndAncestorSiteAndDepotGroupIds(groupId, true),
 				folderId, inherited);
 		}
@@ -557,5 +557,8 @@ public class MenuItemProvider {
 
 	private ServiceTrackerMap<String, List<DLFileEntryTypeVisibilityController>>
 		_serviceTrackerMap;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
 
 }

@@ -20,9 +20,10 @@ import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateVariableGroup;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.search.web.internal.facet.display.context.BucketDisplayContext;
 import com.liferay.portal.search.web.internal.facet.display.context.UserSearchFacetDisplayContext;
-import com.liferay.portal.search.web.internal.facet.display.context.UserSearchFacetTermDisplayContext;
 import com.liferay.portal.search.web.internal.user.facet.constants.UserFacetPortletKeys;
+import com.liferay.portal.search.web.internal.user.facet.portlet.UserFacetPortlet;
 import com.liferay.portlet.display.template.constants.PortletDisplayTemplateConstants;
 
 import java.util.List;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -39,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.web.internal.user.facet.configuration.UserFacetTemplateConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = "javax.portlet.name=" + UserFacetPortletKeys.USER_FACET,
 	service = TemplateHandler.class
 )
@@ -48,7 +47,7 @@ public class UserFacetPortletDisplayTemplateHandler
 
 	@Override
 	public String getClassName() {
-		return UserSearchFacetTermDisplayContext.class.getName();
+		return UserFacetPortlet.class.getName();
 	}
 
 	@Override
@@ -86,11 +85,11 @@ public class UserFacetPortletDisplayTemplateHandler
 			PortletDisplayTemplateConstants.ENTRY, "getFrequency()");
 		templateVariableGroup.addVariable(
 			"term-name", String.class, PortletDisplayTemplateConstants.ENTRY,
-			"getUserName()");
+			"getBucketText()");
 		templateVariableGroup.addCollectionVariable(
 			"terms", List.class, PortletDisplayTemplateConstants.ENTRIES,
-			"term", UserSearchFacetTermDisplayContext.class,
-			PortletDisplayTemplateConstants.ENTRY, "getUserName()");
+			"term", BucketDisplayContext.class,
+			PortletDisplayTemplateConstants.ENTRY, "getBucketText()");
 		templateVariableGroup.addVariable(
 			"user-facet-display-context", UserSearchFacetDisplayContext.class,
 			"userSearchFacetDisplayContext");

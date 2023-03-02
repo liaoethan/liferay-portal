@@ -18,10 +18,10 @@ import com.liferay.account.configuration.AccountEntryEmailDomainsConfiguration;
 import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
 import com.liferay.account.model.AccountEntryUserRel;
-import com.liferay.account.model.AccountEntryUserRelModel;
 import com.liferay.account.service.AccountEntryLocalServiceUtil;
 import com.liferay.account.service.AccountEntryUserRelLocalServiceUtil;
 import com.liferay.account.service.AccountRoleLocalServiceUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -36,14 +36,11 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -163,38 +160,36 @@ public class AccountUserDisplay {
 	}
 
 	public String getValidDomainsString() {
-		List<Set<String>> accountEntryDomains = Stream.of(
-			_getAccountEntryUserRels(getUserId())
-		).flatMap(
-			List::stream
-		).map(
-			AccountEntryUserRelModel::getAccountEntryId
-		).map(
-			AccountEntryLocalServiceUtil::fetchAccountEntry
-		).filter(
-			Objects::nonNull
-		).map(
-			AccountEntry::getDomains
-		).map(
-			StringUtil::split
-		).map(
-			SetUtil::fromArray
-		).collect(
-			Collectors.toList()
-		);
+		Set<String> commonDomains = null;
 
-		if (ListUtil.isEmpty(accountEntryDomains)) {
-			return StringPool.BLANK;
-		}
+		for (AccountEntryUserRel accountEntryUserRel :
+				_getAccountEntryUserRels(getUserId())) {
 
-		Set<String> commonDomains = accountEntryDomains.remove(0);
+			AccountEntry accountEntry =
+				AccountEntryLocalServiceUtil.fetchAccountEntry(
+					accountEntryUserRel.getAccountUserId());
 
-		for (Set<String> domains : accountEntryDomains) {
-			commonDomains = SetUtil.intersect(commonDomains, domains);
+			if (accountEntry == null) {
+				continue;
+			}
 
-			if (SetUtil.isEmpty(commonDomains)) {
+			Set<String> domains = SetUtil.fromArray(
+				StringUtil.split(accountEntry.getDomains()));
+
+			if (commonDomains == null) {
+				commonDomains = domains;
+			}
+			else {
+				commonDomains = SetUtil.intersect(commonDomains, domains);
+			}
+
+			if (commonDomains.isEmpty()) {
 				return StringPool.BLANK;
 			}
+		}
+
+		if (commonDomains == null) {
+			return StringPool.BLANK;
 		}
 
 		return StringUtil.merge(commonDomains, StringPool.COMMA);

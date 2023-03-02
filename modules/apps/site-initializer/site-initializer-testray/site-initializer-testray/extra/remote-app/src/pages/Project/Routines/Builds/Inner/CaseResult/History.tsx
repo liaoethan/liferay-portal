@@ -12,8 +12,40 @@
  * details.
  */
 
-const CaseResultHistory = () => {
-	return <div>CaseResultHistory</div>;
+import {useOutletContext, useParams} from 'react-router-dom';
+
+import Container from '../../../../../../components/Layout/Container';
+import SearchBuilder from '../../../../../../core/SearchBuilder';
+import {TestrayCaseResult} from '../../../../../../services/rest';
+import CaseResultHistory from '../../../../Cases/CaseResultHistory';
+
+type OutletContext = {
+	caseResult: TestrayCaseResult;
 };
 
-export default CaseResultHistory;
+const History = () => {
+	const {caseResult} = useOutletContext<OutletContext>();
+
+	const {projectId} = useParams();
+
+	return (
+		<Container>
+			<CaseResultHistory
+				listViewProps={{
+					variables: {
+						filter: SearchBuilder.eq(
+							'caseId',
+							caseResult.case?.id as number
+						),
+					},
+				}}
+				tableProps={{
+					navigateTo: ({build, id}) =>
+						`/project/${projectId}/routines/${build?.routine?.id}/build/${build?.id}/case-result/${id}`,
+				}}
+			/>
+		</Container>
+	);
+};
+
+export default History;

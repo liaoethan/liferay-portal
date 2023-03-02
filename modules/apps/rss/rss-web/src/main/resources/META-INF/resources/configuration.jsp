@@ -40,13 +40,13 @@
 					<%
 					ValidatorException ve = (ValidatorException)errorException;
 
-					Enumeration<String> enu = ve.getFailedKeys();
+					Enumeration<String> enumeration = ve.getFailedKeys();
 
-					while (enu.hasMoreElements()) {
-						String url = enu.nextElement();
+					while (enumeration.hasMoreElements()) {
+						String url = enumeration.nextElement();
 					%>
 
-						<strong><%= HtmlUtil.escape(url) %></strong><%= enu.hasMoreElements() ? ", " : "." %>
+						<strong><%= HtmlUtil.escape(url) %></strong><%= enumeration.hasMoreElements() ? ", " : "." %>
 
 					<%
 					}
@@ -146,9 +146,7 @@
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons />
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>
 

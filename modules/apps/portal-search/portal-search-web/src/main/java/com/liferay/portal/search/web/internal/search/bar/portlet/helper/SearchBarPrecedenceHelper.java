@@ -38,7 +38,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Bryan Engler
  */
-@Component(immediate = true, service = SearchBarPrecedenceHelper.class)
+@Component(service = SearchBarPrecedenceHelper.class)
 public class SearchBarPrecedenceHelper {
 
 	public Portlet findHeaderSearchBarPortlet(ThemeDisplay themeDisplay) {
@@ -116,8 +116,8 @@ public class SearchBarPrecedenceHelper {
 			_getSearchBarPortletPreferences(portletId, themeDisplay);
 
 		if (!Objects.equals(
-				searchBarPortletPreferences1.getFederatedSearchKeyString(),
-				searchBarPortletPreferences2.getFederatedSearchKeyString())) {
+				searchBarPortletPreferences1.getFederatedSearchKey(),
+				searchBarPortletPreferences2.getFederatedSearchKey())) {
 
 			return false;
 		}

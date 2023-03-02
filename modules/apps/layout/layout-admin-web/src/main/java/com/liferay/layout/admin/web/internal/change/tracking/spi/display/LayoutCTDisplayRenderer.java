@@ -18,9 +18,6 @@ import com.liferay.change.tracking.spi.display.BaseCTDisplayRenderer;
 import com.liferay.change.tracking.spi.display.CTDisplayRenderer;
 import com.liferay.change.tracking.spi.display.context.DisplayContext;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
-import com.liferay.layout.crawler.LayoutCrawler;
-import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
-import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.ColorScheme;
@@ -31,6 +28,7 @@ import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -50,7 +48,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author David Truong
  */
-@Component(immediate = true, service = CTDisplayRenderer.class)
+@Component(service = CTDisplayRenderer.class)
 public class LayoutCTDisplayRenderer extends BaseCTDisplayRenderer<Layout> {
 
 	@Override
@@ -129,13 +127,24 @@ public class LayoutCTDisplayRenderer extends BaseCTDisplayRenderer<Layout> {
 			(ThemeDisplay)httpServletRequest.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
+		String url = null;
+
+		if (!layout.isDenied() && !layout.isPending()) {
+			url = _portal.getLayoutFriendlyURL(layout, themeDisplay);
+		}
+		else {
+			url = _portal.getLayoutFriendlyURL(
+				layout.fetchDraftLayout(), themeDisplay);
+		}
+
+		url = HttpComponentsUtil.addParameter(url, "p_l_mode", "preview");
+		url = HttpComponentsUtil.addParameter(
+			url, "previewCTCollectionId", layout.getCtCollectionId());
+
 		return StringBundler.concat(
-			"<div style=\"pointer-events: none;\"><iframe frameborder=\"0\" ",
-			"onload=\"this.style.height = (this.contentWindow.document.body.",
-			"scrollHeight+20) + 'px';\" src=\"",
-			_portal.getLayoutFullURL(layout, themeDisplay),
-			"?p_l_mode=preview&previewCTCollectionId=",
-			layout.getCtCollectionId(), "\" width=\"100%\"></iframe></div>");
+			"<iframe frameborder=\"0\" onload=\"this.style.height = ",
+			"(this.contentWindow.document.body.scrollHeight+20) + 'px';\" ",
+			"src=\"", url, "\" width=\"100%\"></iframe>");
 	}
 
 	@Override
@@ -225,17 +234,6 @@ public class LayoutCTDisplayRenderer extends BaseCTDisplayRenderer<Layout> {
 			"priority", layout.getPriority()
 		);
 	}
-
-	@Reference
-	private LayoutCrawler _layoutCrawler;
-
-	@Reference
-	private LayoutPageTemplateEntryLocalService
-		_layoutPageTemplateEntryLocalService;
-
-	@Reference
-	private LayoutPageTemplateStructureLocalService
-		_layoutPageTemplateStructureLocalService;
 
 	@Reference
 	private LayoutPermission _layoutPermission;

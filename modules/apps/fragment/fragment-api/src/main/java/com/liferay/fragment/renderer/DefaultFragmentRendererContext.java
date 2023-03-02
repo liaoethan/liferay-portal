@@ -17,11 +17,12 @@ package com.liferay.fragment.renderer;
 import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.info.form.InfoForm;
+import com.liferay.info.item.InfoItemReference;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.uuid.PortalUUIDUtil;
 
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Objects;
 
 /**
  * @author Jorge Ferrer
@@ -35,8 +36,8 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 	}
 
 	@Override
-	public Optional<Object> getDisplayObjectOptional() {
-		return Optional.ofNullable(_displayObject);
+	public InfoItemReference getContextInfoItemReference() {
+		return _infoItemReference;
 	}
 
 	@Override
@@ -50,8 +51,8 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 	}
 
 	@Override
-	public Optional<InfoForm> getInfoFormOptional() {
-		return Optional.ofNullable(_infoForm);
+	public InfoForm getInfoForm() {
+		return _infoForm;
 	}
 
 	@Override
@@ -90,12 +91,41 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 	}
 
 	@Override
+	public boolean isEditMode() {
+		if (Objects.equals(getMode(), FragmentEntryLinkConstants.EDIT)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isIndexMode() {
+		if (Objects.equals(getMode(), FragmentEntryLinkConstants.INDEX)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	@Override
 	public boolean isUseCachedContent() {
 		return _useCachedContent;
 	}
 
-	public void setDisplayObject(Object object) {
-		_displayObject = object;
+	@Override
+	public boolean isViewMode() {
+		if (Objects.equals(getMode(), FragmentEntryLinkConstants.VIEW)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public void setContextInfoItemReference(
+		InfoItemReference infoItemReference) {
+
+		_infoItemReference = infoItemReference;
 	}
 
 	public void setInfoForm(InfoForm infoForm) {
@@ -134,10 +164,10 @@ public class DefaultFragmentRendererContext implements FragmentRendererContext {
 		_useCachedContent = useCachedContent;
 	}
 
-	private Object _displayObject;
 	private final String _fragmentEntryElementId;
 	private final FragmentEntryLink _fragmentEntryLink;
 	private InfoForm _infoForm;
+	private InfoItemReference _infoItemReference;
 	private Locale _locale = LocaleUtil.getMostRelevantLocale();
 	private String _mode = FragmentEntryLinkConstants.VIEW;
 	private long _previewClassNameId;

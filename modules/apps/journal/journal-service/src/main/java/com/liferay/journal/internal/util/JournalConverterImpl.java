@@ -29,11 +29,11 @@ import com.liferay.journal.exception.ArticleContentException;
 import com.liferay.journal.util.JournalConverter;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.petra.xml.XMLUtil;
+import com.liferay.petra.xml.Dom4jUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -49,11 +49,11 @@ import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.DocumentException;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
+import com.liferay.portal.kernel.xml.XMLUtil;
 
 import java.io.Serializable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -68,7 +68,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marcellus Tavares
  * @author Bruno Basto
  */
-@Component(immediate = true, service = JournalConverter.class)
+@Component(service = JournalConverter.class)
 public class JournalConverterImpl implements JournalConverter {
 
 	@Override
@@ -106,7 +106,7 @@ public class JournalConverterImpl implements JournalConverter {
 		try {
 			String content = XMLUtil.stripInvalidChars(document.asXML());
 
-			return XMLUtil.formatXML(content);
+			return Dom4jUtil.toString(content);
 		}
 		catch (Exception exception) {
 			throw new ArticleContentException(
@@ -115,42 +115,35 @@ public class JournalConverterImpl implements JournalConverter {
 	}
 
 	@Override
-	public Fields getDDMFields(DDMStructure ddmStructure, Document document)
-		throws PortalException {
-
-		Fields ddmFields = new Fields();
-
-		ddmFields.put(
-			new Field(
-				ddmStructure.getStructureId(), DDM.FIELDS_DISPLAY_NAME,
-				StringPool.BLANK));
-
-		DDMForm ddmForm = ddmStructure.getDDMForm();
-
-		Element rootElement = document.getRootElement();
-
-		String[] availableLanguageIds = StringUtil.split(
-			rootElement.attributeValue("available-locales"));
-		String defaultLanguageId = rootElement.attributeValue("default-locale");
-
-		Map<String, List<Element>> dynamicElementElementsMap =
-			_getDynamicElements(rootElement);
-
-		for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
-			_addDDMFields(
-				availableLanguageIds, defaultLanguageId, ddmFields,
-				ddmFormField, ddmStructure, dynamicElementElementsMap);
-		}
-
-		return ddmFields;
-	}
-
-	@Override
 	public Fields getDDMFields(DDMStructure ddmStructure, String content)
 		throws PortalException {
 
 		try {
-			return getDDMFields(ddmStructure, SAXReaderUtil.read(content));
+			Document document = SAXReaderUtil.read(content);
+
+			Fields ddmFields = new Fields();
+
+			ddmFields.put(
+				new Field(
+					ddmStructure.getStructureId(), DDM.FIELDS_DISPLAY_NAME,
+					StringPool.BLANK));
+
+			DDMForm ddmForm = ddmStructure.getDDMForm();
+
+			Element rootElement = document.getRootElement();
+
+			String[] availableLanguageIds = StringUtil.split(
+				rootElement.attributeValue("available-locales"));
+			String defaultLanguageId = rootElement.attributeValue(
+				"default-locale");
+
+			for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
+				_addDDMFields(
+					availableLanguageIds, defaultLanguageId, ddmFields,
+					ddmFormField, ddmStructure, rootElement);
+			}
+
+			return ddmFields;
 		}
 		catch (DocumentException documentException) {
 			throw new PortalException(documentException);
@@ -160,12 +153,11 @@ public class JournalConverterImpl implements JournalConverter {
 	private void _addDDMFields(
 			String[] availableLanguageIds, String defaultLanguageId,
 			Fields ddmFields, DDMFormField ddmFormField,
-			DDMStructure ddmStructure,
-			Map<String, List<Element>> dynamicElementElementsMap)
+			DDMStructure ddmStructure, Element element)
 		throws PortalException {
 
-		List<Element> dynamicElementElements = dynamicElementElementsMap.get(
-			ddmFormField.getName());
+		List<Element> dynamicElementElements = _getDynamicElementElements(
+			element, ddmFormField.getName());
 
 		if (dynamicElementElements == null) {
 			if (Objects.equals(
@@ -179,7 +171,7 @@ public class JournalConverterImpl implements JournalConverter {
 
 			_addNestedDDMFields(
 				availableLanguageIds, defaultLanguageId, ddmFields,
-				ddmFormField, ddmStructure, dynamicElementElementsMap);
+				ddmFormField, ddmStructure, element);
 
 			return;
 		}
@@ -211,8 +203,7 @@ public class JournalConverterImpl implements JournalConverter {
 
 			_addNestedDDMFields(
 				availableLanguageIds, defaultLanguageId, ddmFields,
-				ddmFormField, ddmStructure,
-				_getDynamicElements(dynamicElementElement));
+				ddmFormField, ddmStructure, dynamicElementElement);
 		}
 	}
 
@@ -238,8 +229,7 @@ public class JournalConverterImpl implements JournalConverter {
 	private void _addNestedDDMFields(
 			String[] availableLanguageIds, String defaultLanguageId,
 			Fields ddmFields, DDMFormField ddmFormField,
-			DDMStructure ddmStructure,
-			Map<String, List<Element>> dynamicElementElementsMap)
+			DDMStructure ddmStructure, Element element)
 		throws PortalException {
 
 		for (DDMFormField nestedDDMFormField :
@@ -247,7 +237,7 @@ public class JournalConverterImpl implements JournalConverter {
 
 			_addDDMFields(
 				availableLanguageIds, defaultLanguageId, ddmFields,
-				nestedDDMFormField, ddmStructure, dynamicElementElementsMap);
+				nestedDDMFormField, ddmStructure, element);
 		}
 	}
 
@@ -352,21 +342,32 @@ public class JournalConverterImpl implements JournalConverter {
 		}
 	}
 
-	private Map<String, List<Element>> _getDynamicElements(
-		Element rootElement) {
+	private List<Element> _getDynamicElementElements(
+		Element element, String name) {
 
-		Map<String, List<Element>> dynamicElementElementsMap = new HashMap<>();
+		Element parentElement = _getParentElement(element, name);
 
-		for (Element dynamicElement : rootElement.elements("dynamic-element")) {
-			List<Element> dynamicElementElements =
-				dynamicElementElementsMap.computeIfAbsent(
-					dynamicElement.attributeValue("name"),
-					key -> new ArrayList<>());
+		if (parentElement == null) {
+			return null;
+		}
+
+		List<Element> dynamicElementElements = null;
+
+		for (Element dynamicElement :
+				parentElement.elements("dynamic-element")) {
+
+			if (!Objects.equals(dynamicElement.attributeValue("name"), name)) {
+				continue;
+			}
+
+			if (dynamicElementElements == null) {
+				dynamicElementElements = new ArrayList<>();
+			}
 
 			dynamicElementElements.add(dynamicElement);
 		}
 
-		return dynamicElementElementsMap;
+		return dynamicElementElements;
 	}
 
 	private Field _getField(
@@ -486,8 +487,24 @@ public class JournalConverterImpl implements JournalConverter {
 			ddmFormField.getDataType(), value.trim());
 	}
 
+	private Element _getParentElement(Element element, String name) {
+		for (Element dynamicElement : element.elements("dynamic-element")) {
+			if (Objects.equals(dynamicElement.attributeValue("name"), name)) {
+				return element;
+			}
+
+			Element parentElement = _getParentElement(dynamicElement, name);
+
+			if (parentElement != null) {
+				return parentElement;
+			}
+		}
+
+		return null;
+	}
+
 	private String _getSelectValue(Element dynamicContentElement) {
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		List<Element> optionElements = dynamicContentElement.elements("option");
 
@@ -560,7 +577,7 @@ public class JournalConverterImpl implements JournalConverter {
 					return;
 				}
 
-				JSONArray fieldValueJSONArray = JSONFactoryUtil.createJSONArray(
+				JSONArray fieldValueJSONArray = _jsonFactory.createJSONArray(
 					fieldValue);
 
 				if (fieldValueJSONArray.length() == 1) {
@@ -587,7 +604,7 @@ public class JournalConverterImpl implements JournalConverter {
 			JSONArray jsonArray = null;
 
 			try {
-				jsonArray = JSONFactoryUtil.createJSONArray(fieldValue);
+				jsonArray = _jsonFactory.createJSONArray(fieldValue);
 			}
 			catch (JSONException jsonException) {
 				if (_log.isDebugEnabled()) {
@@ -694,6 +711,9 @@ public class JournalConverterImpl implements JournalConverter {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		JournalConverterImpl.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

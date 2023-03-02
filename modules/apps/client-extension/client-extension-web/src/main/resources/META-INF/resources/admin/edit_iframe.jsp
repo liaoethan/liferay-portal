@@ -17,15 +17,21 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<IFrameCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<IFrameCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-IFrameCET iFrameCET = editClientExtensionEntryPartDisplayContext.getCET();
+IFrameCET iFrameCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input label="url" name="url" type="text" value="<%= iFrameCET.getURL() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="url" name="url" required="<%= true %>" type="text" value="<%= iFrameCET.getURL() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="specify-the-url-that-will-be-rendered-in-the-iframe" />
+	</div>
+</aui:field-wrapper>
 
 <c:choose>
-	<c:when test="<%= editClientExtensionEntryPartDisplayContext.isNew() %>">
+	<c:when test="<%= editClientExtensionEntryDisplayContext.isNew() %>">
 		<aui:input label="instanceable" name="instanceable" type="checkbox" value="<%= iFrameCET.isInstanceable() %>" />
 	</c:when>
 	<c:otherwise>
@@ -35,10 +41,16 @@ IFrameCET iFrameCET = editClientExtensionEntryPartDisplayContext.getCET();
 	</c:otherwise>
 </c:choose>
 
-<clay:select
-	label="portlet-category-name"
-	name="portletCategoryName"
-	options="<%= editClientExtensionEntryPartDisplayContext.getPortletCategoryNameSelectOptions(iFrameCET.getPortletCategoryName()) %>"
-/>
+<aui:field-wrapper cssClass="form-group">
+	<aui:input label="friendly-url-mapping" name="friendlyURLMapping" type="text" value="<%= iFrameCET.getFriendlyURLMapping() %>" />
 
-<aui:input label="friendly-url-mapping" name="friendlyURLMapping" type="text" value="<%= iFrameCET.getFriendlyURLMapping() %>" />
+	<div class="form-text">
+		<liferay-ui:message key="define-the-widgets-friendly-url-mapping-so-you-can-refer-to-it-using-a-more-user-readable-url" />
+	</div>
+</aui:field-wrapper>
+
+<clay:select
+	label="widget-category-name"
+	name="portletCategoryName"
+	options="<%= editClientExtensionEntryDisplayContext.getPortletCategoryNameSelectOptions(iFrameCET.getPortletCategoryName()) %>"
+/>

@@ -20,7 +20,7 @@ import com.liferay.fragment.renderer.FragmentRendererContext;
 import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -42,9 +42,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pablo Molina
  */
-@Component(
-	enabled = false, immediate = true, service = FragmentCollectionFilter.class
-)
+@Component(enabled = false, service = FragmentCollectionFilter.class)
 public class FragmentCollectionFilterDate implements FragmentCollectionFilter {
 
 	@Override
@@ -59,7 +57,7 @@ public class FragmentCollectionFilterDate implements FragmentCollectionFilter {
 					"/configuration.json");
 
 			return _fragmentEntryConfigurationParser.translateConfiguration(
-				JSONFactoryUtil.createJSONObject(json), resourceBundle);
+				_jsonFactory.createJSONObject(json), resourceBundle);
 		}
 		catch (JSONException jsonException) {
 			if (_log.isDebugEnabled()) {
@@ -109,6 +107,9 @@ public class FragmentCollectionFilterDate implements FragmentCollectionFilter {
 
 	@Reference
 	private FragmentEntryConfigurationParser _fragmentEntryConfigurationParser;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

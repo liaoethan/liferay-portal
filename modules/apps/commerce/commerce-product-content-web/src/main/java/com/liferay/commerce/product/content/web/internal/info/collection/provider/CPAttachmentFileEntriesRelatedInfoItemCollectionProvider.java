@@ -34,7 +34,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -42,10 +41,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true,
-	service = RelatedInfoItemCollectionProvider.class
-)
+@Component(service = RelatedInfoItemCollectionProvider.class)
 public class CPAttachmentFileEntriesRelatedInfoItemCollectionProvider
 	implements RelatedInfoItemCollectionProvider
 		<CPDefinition, CPAttachmentFileEntry> {
@@ -54,10 +50,7 @@ public class CPAttachmentFileEntriesRelatedInfoItemCollectionProvider
 	public InfoPage<CPAttachmentFileEntry> getCollectionInfoPage(
 		CollectionQuery collectionQuery) {
 
-		Optional<Object> relatedItemOptional =
-			collectionQuery.getRelatedItemObjectOptional();
-
-		Object relatedItem = relatedItemOptional.orElse(null);
+		Object relatedItem = collectionQuery.getRelatedItem();
 
 		Pagination pagination = collectionQuery.getPagination();
 

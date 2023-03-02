@@ -15,10 +15,10 @@
 package com.liferay.users.admin.web.internal.upgrade.registry;
 
 import com.liferay.portal.configuration.upgrade.PrefsPropsToConfigurationUpgradeHelper;
-import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.upgrade.BasePortletIdUpgradeProcess;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
+import com.liferay.portal.upgrade.release.ReleaseRenamingUpgradeStep;
 import com.liferay.users.admin.constants.UsersAdminPortletKeys;
 import com.liferay.users.admin.web.internal.upgrade.v1_0_0.FileUploadsConfigurationUpgradeProcess;
 
@@ -28,22 +28,18 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Drew Brokke
  */
-@Component(immediate = true, service = UpgradeStepRegistrator.class)
+@Component(service = UpgradeStepRegistrator.class)
 public class UsersAdminWebUpgradeStepRegistrator
 	implements UpgradeStepRegistrator {
 
 	@Override
 	public void register(Registry registry) {
-		Release release = _releaseLocalService.fetchRelease(
-			"com.liferay.users.admin.service");
-
-		if (release != null) {
-			release.setServletContextName("com.liferay.users.admin.web");
-
-			_releaseLocalService.updateRelease(release);
-		}
-
 		registry.registerInitialization();
+
+		registry.registerReleaseCreationUpgradeSteps(
+			new ReleaseRenamingUpgradeStep(
+				"com.liferay.users.admin.service",
+				"com.liferay.users.admin.web", _releaseLocalService));
 
 		registry.register(
 			"0.0.1", "1.0.0",

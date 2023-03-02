@@ -22,19 +22,6 @@ import org.junit.Test;
 public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 
 	@Test
-	public void testAttributeOrder() throws Exception {
-		test(
-			"AttributeOrder.testjava",
-			new String[] {
-				"Attribute 'dataDefinitionId' should come after attribute " +
-					"'appDeployments'",
-				"Attribute 'type' should come after attribute 'settings'",
-				"Attribute 'type' should come after attribute 'settings'"
-			},
-			new Integer[] {29, 33, 45});
-	}
-
-	@Test
 	public void testAnnotationParameterImports() throws Exception {
 		test("AnnotationParameterImports.testjava");
 	}
@@ -44,6 +31,20 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 		test(
 			"AssertUsage.testjava",
 			"Use org.junit.Assert instead of org.testng.Assert, see LPS-55690");
+	}
+
+	@Test
+	public void testAssignmentsAndSetCallsOrder() throws Exception {
+		test(
+			"AssignmentsAndSetCallsOrder.testjava",
+			new String[] {
+				"The variable assignment for 'appDeployments' should come before the variable assignment for 'dataDefinitionId'",
+				"The variable assignment for 'settings' should come before the variable assignment for 'type'",
+				"The variable assignment for 'type' shoud come before the method calling 'setName'",
+				"The variable assignment for 'settings' should come before the variable assignment for 'type'",
+				"The method calling 'setCompany' should come before the method calling 'setName'"
+			},
+			new Integer[] {29, 33, 42, 48, 54});
 	}
 
 	@Test
@@ -183,6 +184,14 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testFormatReturnStatements() throws Exception {
 		test("FormatReturnStatements.testjava");
+	}
+
+	@Test
+	public void testGetFeatureFlag() throws Exception {
+		test(
+			"GetFeatureFlag.testjava",
+			"Use 'FeatureFlagManagerUtil.isEnabled' instead of " +
+				"'PropsUtil.get' for feature flag" ,26);
 	}
 
 	@Test
@@ -365,6 +374,11 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testMapBuilderGenerics() throws Exception {
+		test("MapBuilderGenerics.testjava");
+	}
+
+	@Test
 	public void testMissingAuthor() throws Exception {
 		test("MissingAuthor.testjava", "Missing author", 20);
 	}
@@ -448,6 +462,19 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 		test(
 			"MissingSerialVersionUID.testjava",
 			"Assign ProcessCallable implementation a serialVersionUID");
+	}
+
+	@Test
+	public void testMoveUpgradeSteps() throws Exception {
+		test(
+			"MoveUpgradeSteps.testjava",
+			new String[] {
+				"Move 'alterTableAddColumn' call inside 'getPreUpgradeSteps' " +
+					"method",
+				"Move 'alterTableAddColumn' call inside " +
+					"'getPostUpgradeSteps' method"
+			},
+			new Integer[] {26, 30});
 	}
 
 	@Test
@@ -558,6 +585,11 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testSortChainedMethodCalls() throws Exception {
+		test("SortChainedMethodCalls.testjava");
+	}
+
+	@Test
 	public void testSortExceptions() throws Exception {
 		test("SortExceptions.testjava");
 	}
@@ -606,6 +638,15 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testUnnecessaryConfigurationPolicy() throws Exception {
+		test(
+			"UnnecessaryConfigurationPolicy.testjava",
+			"Remove 'configurationPolicy = ConfigurationPolicy.OPTIONAL' " +
+			"as it is unnecessary",
+			23);
+	}
+
+	@Test
 	public void testUnnecessaryMethodCalls() throws Exception {
 		test(
 			"UnnecessaryMethodCalls.testjava",
@@ -617,6 +658,16 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 				"Use 'webCachePool_1' instead of calling method 'getWebCachePool'"
 			},
 			new Integer[] {35, 43, 47, 53, 79});
+	}
+
+	@Test
+	public void testUnnecessaryUpgradeProcessClass() throws Exception {
+		test(
+			"UnnecessaryUpgradeProcessClass.testjava",
+			"No need to create 'UnnecessaryUpgradeProcessClass' class. " +
+				"Replace it by inline calls to the 'UpgradeProcessFactory' " +
+					"class in the registrator class",
+			22);
 	}
 
 	@Test
@@ -654,6 +705,20 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testUpgradeDropTable() throws Exception {
 		test("UpgradeDropTable.testjava");
+	}
+
+	@Test
+	public void testUpgradeProcessUnnecessaryIfStatement() throws Exception {
+		test(
+			"UpgradeProcessUnnecessaryIfStatement1.testjava",
+			"No need to use if-statement to wrap 'alterColumn*' and " +
+				"'alterTable*' calls",
+			26);
+		test(
+			"UpgradeProcessUnnecessaryIfStatement2.testjava",
+			"No need to use if-statement to wrap 'alterColumn*' and " +
+				"'alterTable*' calls",
+			26);
 	}
 
 }

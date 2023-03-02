@@ -116,12 +116,8 @@ import com.liferay.portal.kernel.workflow.comparator.WorkflowComparatorFactoryUt
 import com.liferay.portal.kernel.workflow.search.WorkflowModelSearchResult;
 import com.liferay.portal.search.test.util.SearchTestRule;
 import com.liferay.portal.security.permission.SimplePermissionChecker;
-import com.liferay.portal.test.log.LogCapture;
-import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.util.PortalInstances;
-
-import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,9 +140,6 @@ import org.junit.runner.RunWith;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
-import org.springframework.core.io.FileSystemResourceLoader;
-import org.springframework.mock.web.MockServletContext;
-
 /**
  * @author Inácio Nery
  */
@@ -157,12 +150,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	public static void setUpClass() throws Exception {
 		_company = CompanyTestUtil.addCompany();
 
-		File file = new File("portal-web/docroot");
-
-		MockServletContext mockServletContext = new MockServletContext(
-			"file:" + file.getAbsolutePath(), new FileSystemResourceLoader());
-
-		PortalInstances.initCompany(mockServletContext, _company.getWebId());
+		PortalInstances.initCompany(_company.getWebId());
 
 		_companyAdminUser = UserTestUtil.addCompanyAdminUser(_company);
 
@@ -1342,7 +1330,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 
 	private Folder _addFolder() throws Exception {
 		return _dlAppService.addFolder(
-			_group.getGroupId(), 0, RandomTestUtil.randomString(),
+			null, _group.getGroupId(), 0, RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), _serviceContext);
 	}
 
@@ -1528,9 +1516,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	}
 
 	private void _createJoinXorWorkflow() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PROXY_MESSAGE_LISTENER, LoggerTestUtil.OFF)) {
-
+		try {
 			_workflowDefinitionManager.getWorkflowDefinition(
 				_adminUser.getCompanyId(), _JOIN_XOR, 1);
 		}
@@ -1562,9 +1548,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	}
 
 	private void _createScriptedAssignmentWorkflow() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PROXY_MESSAGE_LISTENER, LoggerTestUtil.OFF)) {
-
+		try {
 			_workflowDefinitionManager.getWorkflowDefinition(
 				_adminUser.getCompanyId(), _SCRIPTED_SINGLE_APPROVER, 1);
 		}
@@ -1584,9 +1568,7 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 	}
 
 	private void _createSiteMemberWorkflow() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PROXY_MESSAGE_LISTENER, LoggerTestUtil.OFF)) {
-
+		try {
 			_workflowDefinitionManager.getWorkflowDefinition(
 				_adminUser.getCompanyId(), _SITE_MEMBER_SINGLE_APPROVER, 1);
 		}
@@ -1902,9 +1884,6 @@ public class WorkflowTaskManagerImplTest extends BaseWorkflowManagerTestCase {
 
 		return _updateFolder(folder, restrictionType, -1, dlFileEntryTypeMap);
 	}
-
-	private static final String _CLASS_NAME_PROXY_MESSAGE_LISTENER =
-		"com.liferay.portal.kernel.messaging.proxy.ProxyMessageListener";
 
 	private static final String _JOIN_XOR = "Join Xor";
 

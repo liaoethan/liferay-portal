@@ -422,11 +422,11 @@ public class PortletDataContextImpl implements PortletDataContext {
 		String referenceKey = _getReferenceKey(classedModel);
 
 		if (missing) {
+			referenceElement.addAttribute("missing", Boolean.TRUE.toString());
+
 			if (_references.contains(referenceKey)) {
 				return referenceElement;
 			}
-
-			referenceElement.addAttribute("missing", Boolean.TRUE.toString());
 
 			if (!_missingReferences.contains(referenceKey)) {
 				_missingReferences.add(referenceKey);
@@ -596,7 +596,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 		Element element, ClassedModel classedModel) {
 
 		return createServiceContext(
-			element, null, classedModel, classedModel.getModelClass());
+			element, classedModel, classedModel.getModelClass());
 	}
 
 	@Override
@@ -609,8 +609,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 		StagedModel stagedModel, Class<?> clazz) {
 
 		return createServiceContext(
-			getImportDataStagedModelElement(stagedModel),
-			ExportImportPathUtil.getModelPath(stagedModel), stagedModel, clazz);
+			getImportDataStagedModelElement(stagedModel), stagedModel, clazz);
 	}
 
 	@Override
@@ -618,7 +617,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 		String path, ClassedModel classedModel) {
 
 		return createServiceContext(
-			null, path, classedModel, classedModel.getModelClass());
+			null, classedModel, classedModel.getModelClass());
 	}
 
 	@Override
@@ -1497,6 +1496,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 	public void importPortletPermissions(String resourceName)
 		throws PortalException {
 
+		if (getGroupId() != getScopeGroupId()) {
+			return;
+		}
+
 		importPermissions(resourceName, getSourceGroupId(), getScopeGroupId());
 	}
 
@@ -1904,8 +1907,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 	}
 
 	protected ServiceContext createServiceContext(
-		Element element, String path, ClassedModel classedModel,
-		Class<?> clazz) {
+		Element element, ClassedModel classedModel, Class<?> clazz) {
 
 		ServiceContext serviceContext = new ServiceContext();
 
@@ -1922,6 +1924,12 @@ public class PortletDataContextImpl implements PortletDataContext {
 			serviceContext.setCreateDate(auditedModel.getCreateDate());
 			serviceContext.setModifiedDate(auditedModel.getModifiedDate());
 			serviceContext.setUserId(getUserId(auditedModel));
+		}
+		else if (classedModel instanceof StagedModel) {
+			StagedModel stagedModel = (StagedModel)classedModel;
+
+			serviceContext.setCreateDate(stagedModel.getCreateDate());
+			serviceContext.setModifiedDate(stagedModel.getModifiedDate());
 		}
 
 		// Permissions
@@ -1969,7 +1977,10 @@ public class PortletDataContextImpl implements PortletDataContext {
 			expandoPath = element.attributeValue("expando-path");
 		}
 		else {
-			expandoPath = ExportImportPathUtil.getExpandoPath(path);
+			expandoPath = ExportImportPathUtil.getExpandoPath(
+				ExportImportPathUtil.getModelPath(
+					this, classedModel.getModelClassName(),
+					ExportImportClassedModelUtil.getClassPK(classedModel)));
 		}
 
 		if (Validator.isNotNull(expandoPath)) {

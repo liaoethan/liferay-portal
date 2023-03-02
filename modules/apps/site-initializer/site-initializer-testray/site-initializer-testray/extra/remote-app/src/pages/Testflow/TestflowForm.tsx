@@ -15,12 +15,14 @@
 import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 import {ClayInput} from '@clayui/form';
-import {useEffect, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {useForm} from 'react-hook-form';
-import {useParams} from 'react-router-dom';
+import {useNavigate, useOutletContext, useParams} from 'react-router-dom';
+import {KeyedMutator} from 'swr';
 
 import Form from '../../components/Form';
 import Container from '../../components/Layout/Container';
+import SearchBuilder from '../../core/SearchBuilder';
 import {useHeader} from '../../hooks';
 import {useFetch} from '../../hooks/useFetch';
 import useFormActions from '../../hooks/useFormActions';
@@ -29,36 +31,79 @@ import i18n from '../../i18n';
 import yupSchema, {yupResolver} from '../../schema/yup';
 import {Liferay} from '../../services/liferay';
 import {
-	TestrayBuild,
+	APIResponse,
 	TestrayCaseType,
-	testrayBuildImpl,
+	TestrayTask,
+	TestrayTaskCaseTypes,
+	TestrayTaskUser,
 	testrayTaskImpl,
+	testrayTaskUsersImpl,
 } from '../../services/rest';
-import {searchUtil} from '../../util/search';
+import {TaskStatuses} from '../../util/statuses';
 import {UserListView} from '../Manage/User';
 import useTestFlowAssign from './TestflowFormAssignUserActions';
-import TestflowAssignUserModal from './modal';
+import TestflowAssignUserModal, {TestflowAssigUserType} from './modal';
 
 type TestflowFormType = typeof yupSchema.task.__outputType;
 
+type OutletContext = {
+	data: {
+		testrayTask: TestrayTask;
+		testrayTaskCaseTypes: TestrayTaskCaseTypes[];
+		testrayTaskUser: TestrayTaskUser[];
+	};
+	mutate: {
+		mutateTask: KeyedMutator<TestrayTask>;
+		mutateTaskUser: KeyedMutator<APIResponse<TestrayTaskUser>>;
+	};
+	revalidate: {revalidateTaskUser: () => void};
+};
+
 const TestflowForm = () => {
 	const {
-		form: {onClose, onError, onSave, onSubmit},
+		form: {onClose, onError, onSubmit, onSuccess},
 	} = useFormActions();
 
-	const [modalType, setModalType] = useState('assign-users');
-	const [users, setUsers] = useState<number[]>([]);
+	const [modalType, setModalType] = useState<TestflowAssigUserType>(
+		'select-users'
+	);
+	const [userIds, setUserIds] = useState<number[]>([]);
 	const {modal} = useFormModal({
-		onSave: (selectedUsers) => {
-			setUsers(selectedUsers);
+		onSave: setUserIds,
+	});
+	const {buildId, taskId} = useParams();
+	const {actions} = useTestFlowAssign({setUserIds});
+	const navigate = useNavigate();
+
+	const outletContext = useOutletContext<OutletContext>();
+
+	const {setHeading} = useHeader({timeout: 210});
+
+	const {
+		data: {
+			testrayTaskCaseTypes = [],
+			testrayTaskUser = undefined,
+			testrayTask = undefined,
+		} = {},
+		mutate: {mutateTask = () => null} = {mutateTask: undefined},
+		revalidate: {revalidateTaskUser = () => null} = {
+			revalidateTaskUser: undefined,
+		},
+	} = outletContext;
+
+	const {data} = useFetch('/casetypes', {
+		params: {
+			fields: 'id,name',
+			pageSize: 100,
 		},
 	});
-	const {buildId} = useParams();
-	const {actions} = useTestFlowAssign({setUsers});
 
-	const {data} = useFetch('/casetypes');
-	const {data: testrayBuild} = useFetch<TestrayBuild>(
-		testrayBuildImpl.getResource(buildId as string)
+	const caseTypes = useMemo(() => data?.items || [], [
+		data?.items,
+	]) as TestrayCaseType[];
+
+	const taskCaseTypeIds = testrayTaskCaseTypes.map(
+		({caseType}) => caseType?.id
 	);
 
 	const {
@@ -69,32 +114,23 @@ const TestflowForm = () => {
 		watch,
 	} = useForm<TestflowFormType>({
 		defaultValues: {
-			buildId: Number(buildId ?? 0),
-			caseTypes: [],
-			dueStatus: 1,
-			users: [],
+			buildId: Number(testrayTask?.build?.id ?? buildId),
+			caseTypes: taskCaseTypeIds,
+			dueStatus: TaskStatuses.IN_ANALYSIS,
+			id: Number(taskId ?? 0),
+			name: testrayTask?.name,
+			userIds: [],
 		},
 		resolver: yupResolver(yupSchema.task),
 	});
 
-	useHeader({
-		useHeading: [
-			{
-				category: i18n.translate('task'),
-				title: i18n.translate('testflow'),
-			},
-		],
-	});
-
-	const caseTypes = data?.items || [];
-
 	const onOpenModal = (option: 'select-users' | 'select-user-groups') => {
 		setModalType(option);
 
-		modal.open(users);
+		modal.open(userIds);
 	};
 
-	const _onSubmit = (form: TestflowFormType) => {
+	const _onSubmit = async (form: TestflowFormType) => {
 		let hasError = false;
 
 		if (!form.caseTypes?.length) {
@@ -108,7 +144,7 @@ const TestflowForm = () => {
 			});
 		}
 
-		if (!form.users?.length) {
+		if (!form.userIds?.length) {
 			hasError = true;
 
 			Liferay.Util.openToast({
@@ -123,12 +159,27 @@ const TestflowForm = () => {
 			return;
 		}
 
-		onSubmit(form, {
-			create: (data) => testrayTaskImpl.create(data),
-			update: (id, data) => testrayTaskImpl.update(id, data),
-		})
-			.then(onSave)
-			.catch(onError);
+		try {
+			const response = await onSubmit(form, {
+				create: (data) => testrayTaskImpl.create(data),
+				update: (id, data) => testrayTaskImpl.update(id, data),
+			});
+
+			await testrayTaskUsersImpl.assign(response.id, userIds);
+
+			if (form.id) {
+				mutateTask(response);
+
+				revalidateTaskUser();
+			}
+
+			onSuccess();
+
+			navigate(`/testflow/${response.id}`);
+		}
+		catch (error) {
+			onError(error);
+		}
 	};
 
 	const inputProps = {
@@ -149,14 +200,26 @@ const TestflowForm = () => {
 	};
 
 	useEffect(() => {
-		if (testrayBuild?.name) {
-			setValue('name', testrayBuild?.name);
-		}
-	}, [testrayBuild, setValue]);
+		setHeading(
+			[
+				{
+					category: i18n.translate('task'),
+					title: i18n.translate('testflow'),
+				},
+			],
+			true
+		);
+	}, [setHeading]);
 
 	useEffect(() => {
-		setValue('users', users);
-	}, [setValue, users]);
+		if (testrayTaskUser) {
+			setUserIds(testrayTaskUser.map(({user}) => user?.id as number));
+		}
+	}, [setUserIds, testrayTaskUser]);
+
+	useEffect(() => {
+		setValue('userIds', userIds);
+	}, [setValue, userIds]);
 
 	return (
 		<Container>
@@ -176,21 +239,18 @@ const TestflowForm = () => {
 				</label>
 
 				<div className="d-flex flex-wrap">
-					{caseTypes.map(
-						(caseType: TestrayCaseType, index: number) => (
-							<div className="col-4" key={index}>
-								<Form.Checkbox
-									checked={caseTypesWatch.includes(
-										caseType.id
-									)}
-									label={caseType.name}
-									name={caseType.name}
-									onChange={onClickCaseType}
-									value={caseType.id}
-								/>
-							</div>
-						)
-					)}
+					{caseTypes.map((caseType, index: number) => (
+						<div className="col-4" key={index}>
+							<Form.Checkbox
+								checked={caseTypesWatch.includes(caseType.id)}
+								disabled={!!taskId}
+								label={caseType.name}
+								name={caseType.name}
+								onChange={onClickCaseType}
+								value={caseType.id}
+							/>
+						</div>
+					))}
 				</div>
 			</Form.Clay.Group>
 
@@ -217,20 +277,20 @@ const TestflowForm = () => {
 				</ClayButton>
 			</Form.Clay.Group>
 
-			{!users.length && (
+			{!userIds.length && (
 				<ClayAlert>
 					{i18n.translate('there-are-no-linked-users')}
 				</ClayAlert>
 			)}
 
-			{!!users.length && (
+			{!!userIds.length && (
 				<UserListView
 					actions={actions}
 					listViewProps={{
 						managementToolbarProps: {
 							visible: false,
 						},
-						variables: {filter: searchUtil.in('id', users)},
+						variables: {filter: SearchBuilder.in('id', userIds)},
 					}}
 				/>
 			)}
@@ -242,7 +302,7 @@ const TestflowForm = () => {
 				onSubmit={handleSubmit(_onSubmit)}
 			/>
 
-			<TestflowAssignUserModal modal={modal} type={modalType as any} />
+			<TestflowAssignUserModal modal={modal} type={modalType} />
 		</Container>
 	);
 };

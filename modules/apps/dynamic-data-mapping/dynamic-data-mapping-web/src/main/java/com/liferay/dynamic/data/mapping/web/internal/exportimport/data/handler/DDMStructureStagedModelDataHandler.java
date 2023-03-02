@@ -18,7 +18,6 @@ import com.liferay.data.engine.model.DEDataDefinitionFieldLink;
 import com.liferay.data.engine.service.DEDataDefinitionFieldLinkLocalService;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
-import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeRequest;
 import com.liferay.dynamic.data.mapping.io.DDMFormLayoutDeserializerDeserializeResponse;
@@ -62,6 +61,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -69,10 +69,10 @@ import com.liferay.portal.kernel.xml.Element;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -82,7 +82,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Daniel Kocsis
  */
 @Component(
-	immediate = true,
 	property = "javax.portlet.name=" + DDMPortletKeys.DYNAMIC_DATA_MAPPING,
 	service = StagedModelDataHandler.class
 )
@@ -229,8 +228,16 @@ public class DDMStructureStagedModelDataHandler
 		}
 
 		List<DEDataDefinitionFieldLink> deDataDefinitionFieldLinks =
-			_deDataDefinitionFieldLinkLocalService.
-				getDEDataDefinitionFieldLinks(structure.getStructureId());
+			ListUtil.concat(
+				_deDataDefinitionFieldLinkLocalService.
+					getDEDataDefinitionFieldLinksByClassNameIdAndClassPK(
+						_portal.getClassNameId(DDMStructure.class.getName()),
+						structure.getStructureId()),
+				_deDataDefinitionFieldLinkLocalService.
+					getDEDataDefinitionFieldLinksByClassNameIdAndClassPK(
+						_portal.getClassNameId(
+							DDMStructureLayout.class.getName()),
+						structure.getDefaultDDMStructureLayoutId()));
 
 		for (DEDataDefinitionFieldLink deDataDefinitionFieldLink :
 				deDataDefinitionFieldLinks) {
@@ -829,27 +836,24 @@ public class DDMStructureStagedModelDataHandler
 	private void _updateDDMFormFieldsPredefinedValues(
 		DDMForm ddmForm, long groupId, long sourceId) {
 
-		List<DDMFormField> ddmFormFields = ddmForm.getDDMFormFields();
+		for (DDMFormField ddmFormField : ddmForm.getDDMFormFields()) {
+			LocalizedValue localizedValue = ddmFormField.getPredefinedValue();
 
-		Stream<DDMFormField> stream = ddmFormFields.stream();
+			Map<Locale, String> values = localizedValue.getValues();
 
-		stream.map(
-			DDMFormField::getPredefinedValue
-		).map(
-			LocalizedValue::getValues
-		).map(
-			Map::entrySet
-		).flatMap(
-			entries -> entries.stream()
-		).filter(
-			entry -> StringUtil.contains(
-				entry.getValue(), String.valueOf(sourceId))
-		).forEach(
-			entry -> entry.setValue(
-				StringUtil.replace(
-					entry.getValue(), String.valueOf(sourceId),
-					String.valueOf(groupId)))
-		);
+			for (Map.Entry<Locale, String> entry : values.entrySet()) {
+				if (!StringUtil.contains(
+						entry.getValue(), String.valueOf(sourceId))) {
+
+					continue;
+				}
+
+				entry.setValue(
+					StringUtil.replace(
+						entry.getValue(), String.valueOf(sourceId),
+						String.valueOf(groupId)));
+			}
+		}
 	}
 
 	private static final String _DDM_DATA_PROVIDER_INSTANCE_IDS =
@@ -884,9 +888,6 @@ public class DDMStructureStagedModelDataHandler
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	@Reference(target = "(ddm.form.deserializer.type=json)")
-	private DDMFormDeserializer _jsonDDMFormDeserializer;
 
 	@Reference(target = "(ddm.form.layout.deserializer.type=json)")
 	private DDMFormLayoutDeserializer _jsonDDMFormLayoutDeserializer;

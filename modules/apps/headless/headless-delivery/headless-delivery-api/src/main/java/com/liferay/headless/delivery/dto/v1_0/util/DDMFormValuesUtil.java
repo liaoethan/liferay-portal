@@ -29,14 +29,15 @@ import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.headless.delivery.dto.v1_0.ContentField;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.SetUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,10 +45,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.ws.rs.BadRequestException;
 
@@ -86,13 +84,8 @@ public class DDMFormValuesUtil {
 		LayoutLocalService layoutLocalService, Locale locale,
 		List<DDMFormField> rootDDMFormFields) {
 
-		Map<String, List<ContentField>> contentFieldMap = Optional.ofNullable(
-			contentFields
-		).map(
-			fields -> _toContentFieldsMap(Stream.of(fields))
-		).orElse(
-			new HashMap<>()
-		);
+		Map<String, List<ContentField>> contentFieldMap = _toContentFieldsMap(
+			contentFields);
 
 		return new DDMFormValues(ddmForm) {
 			{
@@ -121,25 +114,21 @@ public class DDMFormValuesUtil {
 			return Collections.emptyList();
 		}
 
-		Stream<DDMFormField> stream = ddmFormFields.stream();
+		List<DDMFormFieldValue> ddmFormFieldValues = new ArrayList<>();
 
-		return stream.map(
-			ddmFormField -> {
-				try {
-					return unsafeFunction.apply(ddmFormField);
-				}
-				catch (RuntimeException runtimeException) {
-					throw runtimeException;
-				}
-				catch (Exception exception) {
-					throw new RuntimeException(exception);
-				}
+		for (DDMFormField ddmFormField : ddmFormFields) {
+			try {
+				ddmFormFieldValues.addAll(unsafeFunction.apply(ddmFormField));
 			}
-		).flatMap(
-			List::stream
-		).collect(
-			Collectors.toList()
-		);
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		}
+
+		return ddmFormFieldValues;
 	}
 
 	private static Set<Locale> _getAvailableLocales(
@@ -174,24 +163,40 @@ public class DDMFormValuesUtil {
 	}
 
 	private static Map<String, List<ContentField>> _toContentFieldsMap(
-		Stream<ContentField> stream) {
+		ContentField[] contentFields) {
 
-		return stream.collect(Collectors.groupingBy(ContentField::getName));
+		if (contentFields == null) {
+			return Collections.emptyMap();
+		}
+
+		Map<String, List<ContentField>> contentFieldsMap = new HashMap<>();
+
+		for (ContentField contentField : contentFields) {
+			String contentFieldName = contentField.getName();
+
+			List<ContentField> contentFieldsList =
+				contentFieldsMap.computeIfAbsent(
+					contentFieldName, key -> new ArrayList<>());
+
+			contentFieldsList.add(contentField);
+		}
+
+		return contentFieldsMap;
 	}
 
 	private static DDMFormFieldValue _toDDMFormFieldValue(
-		List<ContentField> contentFields, DDMFormField ddmFormField,
+		ContentField[] contentFields, DDMFormField ddmFormField,
 		DLAppService dlAppService, long groupId,
 		JournalArticleService journalArticleService,
 		LayoutLocalService layoutLocalService, Locale locale, Value value) {
 
 		Map<String, List<ContentField>> contentFieldMap = _toContentFieldsMap(
-			contentFields.stream());
+			contentFields);
 
 		return new DDMFormFieldValue() {
 			{
-				setName(ddmFormField.getName());
 				setFieldReference(ddmFormField.getFieldReference());
+				setName(ddmFormField.getName());
 				setNestedDDMFormFields(
 					_flattenDDMFormFieldValues(
 						ddmFormField.getNestedDDMFormFields(),
@@ -219,16 +224,16 @@ public class DDMFormValuesUtil {
 
 			return Collections.singletonList(
 				_toDDMFormFieldValue(
-					Collections.emptyList(), ddmFormField, dlAppService,
-					groupId, journalArticleService, layoutLocalService, locale,
+					new ContentField[0], ddmFormField, dlAppService, groupId,
+					journalArticleService, layoutLocalService, locale,
 					_toPredefinedValue(ddmFormField, locale)));
 		}
 
 		return TransformUtil.transform(
 			contentFields,
 			contentField -> _toDDMFormFieldValue(
-				ListUtil.fromArray(contentField.getNestedContentFields()),
-				ddmFormField, dlAppService, groupId, journalArticleService,
+				contentField.getNestedContentFields(), ddmFormField,
+				dlAppService, groupId, journalArticleService,
 				layoutLocalService, locale,
 				DDMValueUtil.toDDMValue(
 					contentField, ddmFormField, dlAppService, groupId,

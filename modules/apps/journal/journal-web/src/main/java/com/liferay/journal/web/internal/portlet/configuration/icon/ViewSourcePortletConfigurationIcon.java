@@ -15,23 +15,21 @@
 package com.liferay.journal.web.internal.portlet.configuration.icon;
 
 import com.liferay.journal.constants.JournalPortletKeys;
+import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.web.internal.portlet.action.ActionUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.portlet.configuration.icon.BaseJSPPortletConfigurationIcon;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.configuration.icon.BasePortletConfigurationIcon;
 import com.liferay.portal.kernel.portlet.configuration.icon.PortletConfigurationIcon;
-import com.liferay.portal.kernel.util.JavaConstants;
+import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
-
-import java.io.IOException;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletResponse;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -40,7 +38,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Daniel Kocsis
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + JournalPortletKeys.JOURNAL,
 		"path=/edit_article.jsp"
@@ -48,24 +45,48 @@ import org.osgi.service.component.annotations.Reference;
 	service = PortletConfigurationIcon.class
 )
 public class ViewSourcePortletConfigurationIcon
-	extends BaseJSPPortletConfigurationIcon {
-
-	@Override
-	public String getJspPath() {
-		return "/configuration/icon/view_source_icon.jsp";
-	}
+	extends BasePortletConfigurationIcon {
 
 	@Override
 	public String getMessage(PortletRequest portletRequest) {
-		return _language.get(
-			getResourceBundle(getLocale(portletRequest)), "view-source");
+		return _language.get(getLocale(portletRequest), "view-source");
 	}
 
 	@Override
 	public String getURL(
 		PortletRequest portletRequest, PortletResponse portletResponse) {
 
-		return "javascript:void(0);";
+		try {
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)portletRequest.getAttribute(
+					WebKeys.THEME_DISPLAY);
+
+			JournalArticle article = ActionUtil.getArticle(
+				_portal.getHttpServletRequest(portletRequest));
+
+			return PortletURLBuilder.createRenderURL(
+				_portal.getLiferayPortletResponse(portletResponse)
+			).setMVCPath(
+				"/configuration/icon/view_source.jsp"
+			).setRedirect(
+				themeDisplay.getURLCurrent()
+			).setParameter(
+				"articleId", article.getArticleId()
+			).setParameter(
+				"groupId", article.getGroupId()
+			).setParameter(
+				"status", article.getStatus()
+			).setWindowState(
+				LiferayWindowState.POP_UP
+			).buildString();
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
+
+		return null;
 	}
 
 	@Override
@@ -74,32 +95,12 @@ public class ViewSourcePortletConfigurationIcon
 	}
 
 	@Override
-	public boolean include(
-			HttpServletRequest httpServletRequest,
-			HttpServletResponse httpServletResponse)
-		throws IOException {
-
-		try {
-			PortletRequest portletRequest =
-				(PortletRequest)httpServletRequest.getAttribute(
-					JavaConstants.JAVAX_PORTLET_REQUEST);
-
-			httpServletRequest.setAttribute(
-				WebKeys.JOURNAL_ARTICLE, ActionUtil.getArticle(portletRequest));
-		}
-		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
-			}
-		}
-
-		return super.include(httpServletRequest, httpServletResponse);
-	}
-
-	@Override
 	public boolean isShow(PortletRequest portletRequest) {
 		try {
-			if (ActionUtil.getArticle(portletRequest) != null) {
+			JournalArticle article = ActionUtil.getArticle(
+				_portal.getHttpServletRequest(portletRequest));
+
+			if (article != null) {
 				return true;
 			}
 		}
@@ -113,8 +114,8 @@ public class ViewSourcePortletConfigurationIcon
 	}
 
 	@Override
-	protected ServletContext getServletContext() {
-		return _servletContext;
+	public boolean isUseDialog() {
+		return true;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -123,7 +124,7 @@ public class ViewSourcePortletConfigurationIcon
 	@Reference
 	private Language _language;
 
-	@Reference(target = "(osgi.web.symbolicname=com.liferay.journal.web)")
-	private ServletContext _servletContext;
+	@Reference
+	private Portal _portal;
 
 }

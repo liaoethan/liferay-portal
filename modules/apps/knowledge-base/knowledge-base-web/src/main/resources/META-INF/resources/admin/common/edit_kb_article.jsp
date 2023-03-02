@@ -129,6 +129,19 @@ if (editKBArticleDisplayContext.isPortletTitleBasedNavigation()) {
 						</aui:fieldset>
 					</c:if>
 
+					<liferay-frontend:fieldset
+						collapsed="<%= true %>"
+						collapsible="<%= true %>"
+						label="display-page"
+					>
+						<liferay-asset:select-asset-display-page
+							classNameId="<%= PortalUtil.getClassNameId(KBArticle.class) %>"
+							classPK="<%= editKBArticleDisplayContext.getResourcePrimKey() %>"
+							groupId="<%= scopeGroupId %>"
+							showViewInContextLink="<%= true %>"
+						/>
+					</liferay-frontend:fieldset>
+
 					<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="categorization">
 						<liferay-asset:asset-categories-selector
 							className="<%= KBArticle.class.getName() %>"
@@ -141,6 +154,24 @@ if (editKBArticleDisplayContext.isPortletTitleBasedNavigation()) {
 							classPK="<%= editKBArticleDisplayContext.getKBArticleClassPK() %>"
 						/>
 					</aui:fieldset>
+
+					<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPS-165476") %>'>
+						<liferay-frontend:fieldset
+							collapsed="<%= true %>"
+							collapsible="<%= true %>"
+							label="expiration-date"
+						>
+							<aui:model-context bean="<%= editKBArticleDisplayContext.getKBArticle() %>" model="<%= KBArticle.class %>" />
+
+							<p class="text-secondary">
+								<liferay-ui:message key="including-an-expiration-date-will-allow-your-articles-to-expire-automatically-and-become-unpublished" />
+							</p>
+
+							<aui:input dateTogglerCheckboxLabel="never-expire" disabled="<%= editKBArticleDisplayContext.isNeverExpire() %>" formName="fm" name="expirationDate" wrapperCssClass="expiration-date mb-3" />
+
+							<aui:input dateTogglerCheckboxLabel="never-review" disabled="<%= editKBArticleDisplayContext.isNeverReview() %>" formName="fm" name="reviewDate" wrapperCssClass="mb-3 review-date" />
+						</liferay-frontend:fieldset>
+					</c:if>
 
 					<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="related-assets">
 						<liferay-asset:input-asset-links
@@ -156,9 +187,7 @@ if (editKBArticleDisplayContext.isPortletTitleBasedNavigation()) {
 							<aui:input cssClass="input-medium" data-custom-url="<%= false %>" disabled="<%= editKBArticleDisplayContext.isURLTitleDisabled() %>" ignoreRequestValue="<%= true %>" label="" name="urlTitle" placeholder="sample-article-url-title" type="text" value="<%= editKBArticleDisplayContext.getKBArticleURLTitle() %>" />
 						</aui:field-wrapper>
 
-						<c:if test="<%= editKBArticleDisplayContext.isKBArticleDescriptionEnabled() %>">
-							<aui:input name="description" value="<%= editKBArticleDisplayContext.getKBArticleDescription() %>" />
-						</c:if>
+						<aui:input name="description" value="<%= editKBArticleDisplayContext.getKBArticleDescription() %>" />
 
 						<c:if test="<%= editKBArticleDisplayContext.isSourceURLEnabled() %>">
 							<aui:input label="source-url" name="sourceURL" value="<%= editKBArticleDisplayContext.getKBArticleSourceURL() %>" />
@@ -210,6 +239,8 @@ if (editKBArticleDisplayContext.isPortletTitleBasedNavigation()) {
 				</c:if>
 
 				<liferay-ui:error exception="<%= FileNameException.class %>" message="please-enter-a-file-with-a-valid-file-name" />
+				<liferay-ui:error exception="<%= KBArticleExpirationDateException.class %>" message="please-enter-a-valid-expiration-date" />
+				<liferay-ui:error exception="<%= KBArticleReviewDateException.class %>" message="please-enter-a-valid-review-date" />
 				<liferay-ui:error exception="<%= KBArticleStatusException.class %>" message="this-article-cannot-be-published-because-its-parent-has-not-been-published" />
 				<liferay-ui:error exception="<%= KBArticleUrlTitleException.MustNotBeDuplicate.class %>" message="please-enter-a-unique-friendly-url" />
 
@@ -242,7 +273,7 @@ if (editKBArticleDisplayContext.isPortletTitleBasedNavigation()) {
 				<liferay-ui:error exception="<%= NoSuchFileException.class %>" message="the-document-could-not-be-found" />
 
 				<liferay-ui:error exception="<%= UploadRequestSizeException.class %>">
-					<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(UploadServletRequestConfigurationHelperUtil.getMaxSize(), locale) %>" key="request-is-larger-than-x-and-could-not-be-processed" translateArguments="<%= false %>" />
+					<liferay-ui:message arguments="<%= LanguageUtil.formatStorageSize(UploadServletRequestConfigurationProviderUtil.getMaxSize(), locale) %>" key="request-is-larger-than-x-and-could-not-be-processed" translateArguments="<%= false %>" />
 				</liferay-ui:error>
 
 				<liferay-asset:asset-categories-error />
@@ -264,112 +295,48 @@ if (editKBArticleDisplayContext.isPortletTitleBasedNavigation()) {
 
 				<aui:model-context bean="<%= editKBArticleDisplayContext.getKBArticle() %>" model="<%= KBArticle.class %>" />
 
-				<aui:fieldset-group markupView="lexicon">
-					<aui:fieldset>
-						<div class="kb-entity-body">
-							<liferay-editor:editor
-								contents="<%= editKBArticleDisplayContext.getContent() %>"
-								editorName="<%= kbGroupServiceConfiguration.getEditorName() %>"
-								fileBrowserParams='<%=
-									HashMapBuilder.put(
-										"resourcePrimKey", String.valueOf(editKBArticleDisplayContext.getResourcePrimKey())
-									).build()
-								%>'
-								name="contentEditor"
-								placeholder="content"
-								required="<%= true %>"
-							>
-								<aui:validator name="required" />
-							</liferay-editor:editor>
+				<div class="sheet">
+					<div class="panel-group panel-group-flush">
+						<aui:fieldset>
+							<div class="kb-entity-body">
+								<liferay-editor:editor
+									contents="<%= editKBArticleDisplayContext.getContent() %>"
+									editorName="<%= kbGroupServiceConfiguration.getEditorName() %>"
+									fileBrowserParams='<%=
+										HashMapBuilder.put(
+											"resourcePrimKey", String.valueOf(editKBArticleDisplayContext.getResourcePrimKey())
+										).build()
+									%>'
+									name="contentEditor"
+									placeholder="content"
+									required="<%= true %>"
+								>
+									<aui:validator errorMessage='<%= LanguageUtil.format(resourceBundle, "the-x-field-is-required", "content", true) %>' name="required" />
+								</liferay-editor:editor>
 
-							<aui:input name="content" type="hidden" />
-						</div>
-					</aui:fieldset>
+								<aui:input name="content" type="hidden" />
+							</div>
+						</aui:fieldset>
 
-					<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="attachments">
-						<div id="<portlet:namespace />attachments">
-							<liferay-util:include page="/admin/common/attachments.jsp" servletContext="<%= application %>" />
-						</div>
-					</aui:fieldset>
-				</aui:fieldset-group>
+						<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="attachments">
+							<div id="<portlet:namespace />attachments">
+								<liferay-util:include page="/admin/common/attachments.jsp" servletContext="<%= application %>" />
+							</div>
+						</aui:fieldset>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
 </aui:form>
 
 <liferay-frontend:component
+	context='<%=
+		HashMapBuilder.<String, Object>put(
+			"kbArticle", editKBArticleDisplayContext.getKBArticle()
+		).put(
+			"publishAction", WorkflowConstants.ACTION_PUBLISH
+		).build()
+	%>'
 	module="admin/js/EditKBArticle"
 />
-
-<script>
-	<c:if test="<%= editKBArticleDisplayContext.getKBArticle() == null %>">
-		var titleInput = document.getElementById('<portlet:namespace />title');
-		var urlTitleInput = document.getElementById('<portlet:namespace />urlTitle');
-
-		titleInput.addEventListener('input', (event) => {
-			var customUrl = urlTitleInput.dataset.customUrl;
-
-			if (customUrl === 'false') {
-				var title = event.target.value;
-
-				urlTitleInput.value = Liferay.Util.normalizeFriendlyURL(title);
-			}
-		});
-
-		urlTitleInput.addEventListener('input', (event) => {
-			event.currentTarget.dataset.customUrl = urlTitleInput.value !== '';
-		});
-	</c:if>
-
-	document
-		.getElementById('<portlet:namespace />publishButton')
-		.addEventListener('click', () => {
-			var workflowActionInput = document.getElementById(
-				'<portlet:namespace />workflowAction'
-			);
-
-			if (workflowActionInput) {
-				workflowActionInput.value =
-					'<%= WorkflowConstants.ACTION_PUBLISH %>';
-			}
-
-			<c:if test="<%= editKBArticleDisplayContext.getKBArticle() == null %>">
-				var customUrl = urlTitleInput.dataset.customUrl;
-
-				if (customUrl === 'false') {
-					urlTitleInput.value = '';
-				}
-			</c:if>
-		});
-
-	var form = document.getElementById('<portlet:namespace />fm');
-
-	var updateMultipleKBArticleAttachments = function () {
-		var selectedFileNameContainer = document.getElementById(
-			'<portlet:namespace />selectedFileNameContainer'
-		);
-		var buffer = [];
-		var filesChecked = form.querySelectorAll(
-			'input[name=<portlet:namespace />selectUploadedFile]:checked'
-		);
-
-		for (var i = 0; i < filesChecked.length; i++) {
-			buffer.push(
-				'<input id="<portlet:namespace />selectedFileName' +
-					i +
-					'" name="<portlet:namespace />selectedFileName" type="hidden" value="' +
-					filesChecked[i].value +
-					'" />'
-			);
-		}
-
-		selectedFileNameContainer.innerHTML = buffer.join('');
-	};
-
-	form.addEventListener('submit', () => {
-		document.getElementById(
-			'<portlet:namespace />content'
-		).value = window.<portlet:namespace />contentEditor.getHTML();
-		updateMultipleKBArticleAttachments();
-	});
-</script>

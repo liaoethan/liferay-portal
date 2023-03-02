@@ -24,7 +24,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = TransactionLifecycleListener.class)
+@Component(service = TransactionLifecycleListener.class)
 public class IndexerRequestBufferTransactionLifecycleListener
 	implements TransactionLifecycleListener {
 
@@ -37,11 +37,7 @@ public class IndexerRequestBufferTransactionLifecycleListener
 			IndexerRequestBuffer.remove();
 
 		if ((indexerRequestBuffer != null) && !indexerRequestBuffer.isEmpty()) {
-			IndexerRequestBufferExecutor indexerRequestBufferExecutor =
-				_indexerRequestBufferExecutorWatcher.
-					getIndexerRequestBufferExecutor();
-
-			indexerRequestBufferExecutor.execute(indexerRequestBuffer);
+			_indexerRequestBufferExecutor.execute(indexerRequestBuffer);
 		}
 	}
 
@@ -67,7 +63,6 @@ public class IndexerRequestBufferTransactionLifecycleListener
 	}
 
 	@Reference
-	private IndexerRequestBufferExecutorWatcher
-		_indexerRequestBufferExecutorWatcher;
+	private IndexerRequestBufferExecutor _indexerRequestBufferExecutor;
 
 }

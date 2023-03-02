@@ -17,12 +17,12 @@ package com.liferay.object.internal.instance.lifecycle;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.ItemSelectorViewDescriptorRenderer;
 import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
-import com.liferay.notification.term.contributor.NotificationTermContributor;
-import com.liferay.notification.type.NotificationType;
+import com.liferay.notification.handler.NotificationHandler;
+import com.liferay.notification.term.evaluator.NotificationTermEvaluator;
 import com.liferay.object.constants.ObjectSAPConstants;
 import com.liferay.object.internal.item.selector.SystemObjectEntryItemSelectorView;
-import com.liferay.object.internal.notification.term.contributor.ObjectDefinitionNotificationTermContributor;
-import com.liferay.object.internal.notification.type.ObjectDefinitionNotificationType;
+import com.liferay.object.internal.notification.handler.ObjectDefinitionNotificationHandler;
+import com.liferay.object.internal.notification.term.contributor.ObjectDefinitionNotificationTermEvaluator;
 import com.liferay.object.internal.persistence.ObjectDefinitionTableArgumentsResolver;
 import com.liferay.object.internal.related.models.SystemObject1toMObjectRelatedModelsProviderImpl;
 import com.liferay.object.internal.related.models.SystemObjectMtoMObjectRelatedModelsProviderImpl;
@@ -36,8 +36,10 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
+import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
-import com.liferay.object.system.SystemObjectDefinitionMetadataTracker;
+import com.liferay.object.system.SystemObjectDefinitionMetadataRegistry;
+import com.liferay.osgi.service.tracker.collections.EagerServiceTrackerCustomizer;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.petra.string.StringBundler;
@@ -66,7 +68,6 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 /**
  * @author Marco Leo
@@ -109,7 +110,7 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 
 		_serviceTrackerList = ServiceTrackerListFactory.open(
 			bundleContext, SystemObjectDefinitionMetadata.class, null,
-			new ServiceTrackerCustomizer
+			new EagerServiceTrackerCustomizer
 				<SystemObjectDefinitionMetadata,
 				 SystemObjectDefinitionMetadata>() {
 
@@ -213,37 +214,34 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 				ItemSelectorView.class,
 				new SystemObjectEntryItemSelectorView(
 					_itemSelectorViewDescriptorRenderer, objectDefinition,
-					_objectEntryLocalService, _objectFieldLocalService,
-					_objectRelatedModelsProviderRegistry, _portal,
-					systemObjectDefinitionMetadata),
+					_objectFieldLocalService,
+					_objectRelatedModelsProviderRegistry, _portal),
 				HashMapDictionaryBuilder.<String, Object>put(
 					"item.selector.view.order", 500
 				).build());
 			_bundleContext.registerService(
-				NotificationTermContributor.class,
-				new ObjectDefinitionNotificationTermContributor(
+				NotificationTermEvaluator.class,
+				new ObjectDefinitionNotificationTermEvaluator(
 					objectDefinition, _objectFieldLocalService,
 					_userLocalService),
 				HashMapDictionaryBuilder.<String, Object>put(
-					"notification.term.contributor.key",
-					objectDefinition.getClassName()
-				).put(
-					"notification.type.key", objectDefinition.getClassName()
+					"class.name", objectDefinition.getClassName()
 				).build());
 			_bundleContext.registerService(
-				NotificationType.class,
-				new ObjectDefinitionNotificationType(objectDefinition),
+				NotificationHandler.class,
+				new ObjectDefinitionNotificationHandler(objectDefinition),
 				HashMapDictionaryBuilder.<String, Object>put(
-					"notification.type.key", objectDefinition.getClassName()
+					"class.name", objectDefinition.getClassName()
 				).build());
 			_bundleContext.registerService(
 				ObjectRelatedModelsProvider.class,
 				new SystemObject1toMObjectRelatedModelsProviderImpl(
-					objectDefinition, _objectEntryLocalService,
-					_objectFieldLocalService, _objectRelationshipLocalService,
+					objectDefinition, _objectDefinitionLocalService,
+					_objectEntryLocalService, _objectFieldLocalService,
+					_objectRelationshipLocalService,
 					_persistedModelLocalServiceRegistry,
 					systemObjectDefinitionMetadata,
-					_systemObjectDefinitionMetadataTracker),
+					_systemObjectDefinitionMetadataRegistry),
 				null);
 			_bundleContext.registerService(
 				ObjectRelatedModelsProvider.class,
@@ -252,12 +250,16 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 					_objectFieldLocalService, _objectRelationshipLocalService,
 					_persistedModelLocalServiceRegistry,
 					systemObjectDefinitionMetadata,
-					_systemObjectDefinitionMetadataTracker),
+					_systemObjectDefinitionMetadataRegistry),
 				null);
+
+			JaxRsApplicationDescriptor jaxRsApplicationDescriptor =
+				systemObjectDefinitionMetadata.getJaxRsApplicationDescriptor();
+
 			_bundleContext.registerService(
 				RESTContextPathResolver.class,
 				new RESTContextPathResolverImpl(
-					"/o/" + systemObjectDefinitionMetadata.getRESTContextPath(),
+					"/o/" + jaxRsApplicationDescriptor.getRESTContextPath(),
 					_objectScopeProviderRegistry.getObjectScopeProvider(
 						objectDefinition.getScope()),
 					true),
@@ -320,8 +322,8 @@ public class SystemObjectDefinitionMetadataPortalInstanceLifecycleListener
 		_serviceTrackerList;
 
 	@Reference
-	private SystemObjectDefinitionMetadataTracker
-		_systemObjectDefinitionMetadataTracker;
+	private SystemObjectDefinitionMetadataRegistry
+		_systemObjectDefinitionMetadataRegistry;
 
 	@Reference
 	private UserLocalService _userLocalService;

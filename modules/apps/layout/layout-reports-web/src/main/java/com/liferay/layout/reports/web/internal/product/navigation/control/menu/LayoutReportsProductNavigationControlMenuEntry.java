@@ -17,7 +17,6 @@ package com.liferay.layout.reports.web.internal.product.navigation.control.menu;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
-import com.liferay.journal.constants.JournalConstants;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.layout.reports.web.internal.configuration.provider.LayoutReportsGooglePageSpeedConfigurationProvider;
 import com.liferay.layout.reports.web.internal.constants.LayoutReportsPortletKeys;
@@ -35,7 +34,6 @@ import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
-import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
@@ -46,8 +44,6 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Html;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.SessionClicks;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -67,7 +63,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import javax.portlet.PortletRequest;
@@ -86,7 +81,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sarai Díaz
  */
 @Component(
-	immediate = true,
 	property = {
 		"product.navigation.control.menu.category.key=" + ProductNavigationControlMenuCategoryKeys.USER,
 		"product.navigation.control.menu.entry.order:Integer=550"
@@ -277,65 +271,48 @@ public class LayoutReportsProductNavigationControlMenuEntry
 		return true;
 	}
 
-	private boolean _isEmbeddedPersonalApplicationLayout(Layout layout) {
-		if (layout.isTypeControlPanel()) {
+	private boolean _isShow(ThemeDisplay themeDisplay) {
+		Layout layout = _layoutLocalService.fetchLayout(themeDisplay.getPlid());
+
+		if (layout == null) {
 			return false;
 		}
 
-		String layoutFriendlyURL = layout.getFriendlyURL();
+		if ((layout.isTypeAssetDisplay() || layout.isTypeContent() ||
+			 layout.isTypePortlet()) &&
+			!layout.isEmbeddedPersonalApplication()) {
 
-		if (layout.isSystem() &&
-			layoutFriendlyURL.equals(
-				PropsUtil.get(PropsKeys.CONTROL_PANEL_LAYOUT_FRIENDLY_URL))) {
+			PermissionChecker permissionChecker =
+				themeDisplay.getPermissionChecker();
 
-			return true;
+			try {
+				if (permissionChecker.hasPermission(
+						themeDisplay.getScopeGroup(),
+						BlogsEntry.class.getName(), BlogsEntry.class.getName(),
+						ActionKeys.UPDATE) ||
+					permissionChecker.hasPermission(
+						themeDisplay.getScopeGroup(),
+						DLFileEntry.class.getName(),
+						DLFileEntry.class.getName(), ActionKeys.UPDATE) ||
+					permissionChecker.hasPermission(
+						themeDisplay.getScopeGroup(),
+						JournalArticle.class.getName(),
+						JournalArticle.class.getName(), ActionKeys.UPDATE)) {
+
+					return true;
+				}
+
+				return _hasEditPermission(
+					layout, PermissionThreadLocal.getPermissionChecker());
+			}
+			catch (PortalException portalException) {
+				_log.error(portalException);
+
+				return false;
+			}
 		}
 
 		return false;
-	}
-
-	private boolean _isShow(ThemeDisplay themeDisplay) {
-		PermissionChecker permissionChecker =
-			themeDisplay.getPermissionChecker();
-
-		return Optional.ofNullable(
-			_layoutLocalService.fetchLayout(themeDisplay.getPlid())
-		).filter(
-			layout ->
-				layout.isTypeAssetDisplay() || layout.isTypeContent() ||
-				layout.isTypePortlet()
-		).filter(
-			layout -> !_isEmbeddedPersonalApplicationLayout(layout)
-		).filter(
-			layout -> {
-				try {
-					if (permissionChecker.hasPermission(
-							themeDisplay.getScopeGroup(),
-							BlogsEntry.class.getName(),
-							BlogsEntry.class.getName(), ActionKeys.UPDATE) ||
-						permissionChecker.hasPermission(
-							themeDisplay.getScopeGroup(),
-							DLFileEntry.class.getName(),
-							DLFileEntry.class.getName(), ActionKeys.UPDATE) ||
-						permissionChecker.hasPermission(
-							themeDisplay.getScopeGroup(),
-							JournalArticle.class.getName(),
-							JournalArticle.class.getName(),
-							ActionKeys.UPDATE)) {
-
-						return true;
-					}
-
-					return _hasEditPermission(
-						layout, PermissionThreadLocal.getPermissionChecker());
-				}
-				catch (PortalException portalException) {
-					_log.error(portalException);
-
-					return false;
-				}
-			}
-		).isPresent();
 	}
 
 	private boolean _isShowPanel(HttpServletRequest httpServletRequest) {
@@ -374,9 +351,11 @@ public class LayoutReportsProductNavigationControlMenuEntry
 
 		JspWriter jspWriter = pageContext.getOut();
 
-		StringBundler sb = new StringBundler(20);
+		StringBundler sb = new StringBundler(23);
 
-		sb.append("<div class=\"");
+		sb.append("<div aria-label=\"");
+		sb.append(_html.escape(_language.get(resourceBundle, "page-audit")));
+		sb.append("\" class=\"");
 
 		if (isPanelStateOpen(httpServletRequest)) {
 			sb.append("lfr-has-layout-reports-panel open-admin-panel ");
@@ -386,7 +365,8 @@ public class LayoutReportsProductNavigationControlMenuEntry
 		sb.append("lfr-product-menu-panel lfr-layout-reports-panel ");
 		sb.append("sidenav-fixed sidenav-menu-slider sidenav-right\" id=\"");
 		sb.append(_portletNamespace);
-		sb.append("layoutReportsPanelId\"><div class=\"sidebar sidebar-light ");
+		sb.append("layoutReportsPanelId\" tabindex=\"0\">");
+		sb.append("<div class=\"sidebar sidebar-light ");
 		sb.append("sidenav-menu sidebar-sm\"><div class=\"sidebar-header\">");
 		sb.append("<div class=\"autofit-row autofit-row-center\"><div ");
 		sb.append("class=\"autofit-col autofit-col-expand\">");
@@ -465,11 +445,6 @@ public class LayoutReportsProductNavigationControlMenuEntry
 	private Portal _portal;
 
 	private String _portletNamespace;
-
-	@Reference(
-		target = "(resource.name=" + JournalConstants.RESOURCE_NAME + ")"
-	)
-	private PortletResourcePermission _portletResourcePermission;
 
 	@Reference
 	private PortletURLFactory _portletURLFactory;

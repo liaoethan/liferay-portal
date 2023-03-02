@@ -32,6 +32,8 @@ import Case from './pages/Project/Cases/Case';
 import CaseForm from './pages/Project/Cases/CaseForm';
 import CaseOutlet from './pages/Project/Cases/CaseOutlet';
 import CaseRequirement from './pages/Project/Cases/CaseRequirement';
+import Export from './pages/Project/Cases/Export';
+import ExportPage from './pages/Project/Cases/ExportPage';
 import Overview from './pages/Project/Overview';
 import ProjectForm from './pages/Project/ProjectForm';
 import ProjectOutlet from './pages/Project/ProjectOutlet';
@@ -62,15 +64,20 @@ import SuiteForm from './pages/Project/Suites/SuiteForm';
 import SuiteOutlet from './pages/Project/Suites/SuiteOutlet';
 import Testflow from './pages/Testflow';
 import Subtasks from './pages/Testflow/Subtask';
+import SubtaskOutlet from './pages/Testflow/Subtask/SubtaskOutlet';
 import TestflowArchived from './pages/Testflow/TestflowArchived';
 import TestflowForm from './pages/Testflow/TestflowForm';
-import TestflowOutlet from './pages/Testflow/TestflowOutlet';
+import TestflowOutlet, {
+	TestflowNavigationOutlet,
+} from './pages/Testflow/TestflowOutlet';
 import TestFlowTasks from './pages/Testflow/TestflowTasks';
 
 const TestrayRoute = () => (
 	<HashRouter>
 		<ClayModalProvider>
 			<Routes>
+				<Route element={<Export />} path="/export/:id" />
+
 				<Route element={<Layout />} path="/">
 					<Route element={<Projects />} index />
 
@@ -120,6 +127,8 @@ const TestrayRoute = () => (
 										path="requirements"
 									/>
 								</Route>
+
+								<Route element={<ExportPage />} path="export" />
 							</Route>
 
 							<Route path="requirements">
@@ -173,6 +182,16 @@ const TestrayRoute = () => (
 									/>
 
 									<Route
+										element={<BuildForm />}
+										path="create/:buildTemplateId"
+									/>
+
+									<Route
+										element={<BuildForm />}
+										path="create/template/:buildTemplate"
+									/>
+
+									<Route
 										element={<RoutineArchived />}
 										path="archived"
 									/>
@@ -182,6 +201,7 @@ const TestrayRoute = () => (
 											<BuildOutlet
 												ignorePaths={[
 													'case-result',
+													'testflow/create',
 													'update',
 												]}
 											/>
@@ -189,6 +209,11 @@ const TestrayRoute = () => (
 										path="build/:buildId"
 									>
 										<Route element={<Build />} index />
+
+										<Route
+											element={<TestflowForm />}
+											path="testflow/create"
+										/>
 
 										<Route
 											element={<BuildForm />}
@@ -265,22 +290,33 @@ const TestrayRoute = () => (
 						</Route>
 					</Route>
 
-					<Route element={<TestflowOutlet />} path="testflow">
-						<Route element={<Testflow />} index />
+					<Route element={<OutletBridge />} path="testflow">
+						<Route element={<TestflowNavigationOutlet />}>
+							<Route element={<Testflow />} index />
 
-						<Route element={<TestflowArchived />} path="archived" />
+							<Route
+								element={<TestflowArchived />}
+								path="archived"
+							/>
+						</Route>
 
 						<Route
 							element={<TestflowForm />}
 							path=":buildId/create"
 						/>
 
-						<Route element={<Subtasks />} path="subtasks" />
+						<Route element={<TestflowOutlet />} path=":taskId">
+							<Route element={<TestFlowTasks />} index />
 
-						<Route
-							element={<TestFlowTasks />}
-							path=":testrayTaskId"
-						/>
+							<Route element={<TestflowForm />} path="update" />
+
+							<Route
+								element={<SubtaskOutlet />}
+								path="subtasks/:subtaskId"
+							>
+								<Route element={<Subtasks />} index />
+							</Route>
+						</Route>
 					</Route>
 
 					<Route element={<CompareRunsOutlet />} path="compare-runs">

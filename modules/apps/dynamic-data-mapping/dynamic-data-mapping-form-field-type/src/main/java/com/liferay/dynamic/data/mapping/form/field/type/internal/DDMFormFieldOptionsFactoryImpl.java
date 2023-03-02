@@ -27,7 +27,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.Html;
 import com.liferay.portal.kernel.util.KeyValuePair;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -38,7 +38,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -48,7 +47,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormFieldOptionsFactory.class)
+@Component(service = DDMFormFieldOptionsFactory.class)
 public class DDMFormFieldOptionsFactoryImpl
 	implements DDMFormFieldOptionsFactory {
 
@@ -151,7 +150,7 @@ public class DDMFormFieldOptionsFactoryImpl
 					ddmFormFieldRenderingContext.getLocale()
 				).withParameter(
 					"filterParameterValue",
-					HtmlUtil.escapeURL(
+					_html.escapeURL(
 						String.valueOf(ddmFormFieldRenderingContext.getValue()))
 				).withParameter(
 					"httpServletRequest", httpServletRequest
@@ -165,15 +164,15 @@ public class DDMFormFieldOptionsFactoryImpl
 					ddmFormField.getProperty("ddmDataProviderInstanceOutput"),
 					"Default-Output"));
 
-			Optional<List<KeyValuePair>> keyValuesPairsOptional =
-				ddmDataProviderResponse.getOutputOptional(
+			List<KeyValuePair> keyValuesPairs =
+				ddmDataProviderResponse.getOutput(
 					ddmDataProviderInstanceOutput, List.class);
 
-			if (!keyValuesPairsOptional.isPresent()) {
+			if (keyValuesPairs == null) {
 				return ddmFormFieldOptions;
 			}
 
-			for (KeyValuePair keyValuePair : keyValuesPairsOptional.get()) {
+			for (KeyValuePair keyValuePair : keyValuesPairs) {
 				ddmFormFieldOptions.addOptionLabel(
 					keyValuePair.getKey(),
 					ddmFormFieldRenderingContext.getLocale(),
@@ -221,5 +220,8 @@ public class DDMFormFieldOptionsFactoryImpl
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMFormFieldOptionsFactoryImpl.class);
+
+	@Reference
+	private Html _html;
 
 }

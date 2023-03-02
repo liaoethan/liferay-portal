@@ -54,6 +54,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -207,7 +208,16 @@ public abstract class BaseCalendarResourceTestCase {
 
 		assertContains(calendar1, (List<Calendar>)page.getItems());
 		assertContains(calendar2, (List<Calendar>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetCalendarsPage_getExpectedActions());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetCalendarsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	protected Calendar testGetCalendarsPage_addCalendar(Calendar calendar)
@@ -324,6 +334,12 @@ public abstract class BaseCalendarResourceTestCase {
 	}
 
 	protected void assertValid(Page<Calendar> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Calendar> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Calendar> calendars = page.getItems();
@@ -338,6 +354,20 @@ public abstract class BaseCalendarResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -497,6 +527,10 @@ public abstract class BaseCalendarResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

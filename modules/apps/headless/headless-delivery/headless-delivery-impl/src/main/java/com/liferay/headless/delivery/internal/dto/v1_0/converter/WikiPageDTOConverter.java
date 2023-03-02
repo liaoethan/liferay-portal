@@ -27,6 +27,7 @@ import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.AggregateRatingUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RelatedContentUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.TaxonomyCategoryBriefUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -34,7 +35,6 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
 import com.liferay.subscription.service.SubscriptionLocalService;
 import com.liferay.wiki.service.WikiPageService;
@@ -101,13 +101,6 @@ public class WikiPageDTOConverter
 						BlogsEntry.class.getName(), wikiPage.getPageId()),
 					AssetTag.NAME_ACCESSOR);
 				numberOfAttachments = wikiPage.getAttachmentsFileEntriesCount();
-				numberOfWikiPages = Optional.ofNullable(
-					wikiPage.getChildPages()
-				).map(
-					List::size
-				).orElse(
-					0
-				);
 				relatedContents = RelatedContentUtil.toRelatedContents(
 					_assetEntryLocalService, _assetLinkLocalService,
 					_dtoConverterRegistry, wikiPage.getModelClassName(),
@@ -134,7 +127,19 @@ public class WikiPageDTOConverter
 								uriInfoOptional.orElse(null),
 								dtoConverterContext.getUser())),
 					TaxonomyCategoryBrief.class);
+				wikiNodeId = wikiPage.getNodeId();
 
+				setNumberOfWikiPages(
+					() -> {
+						List<com.liferay.wiki.model.WikiPage> wikiPages =
+							wikiPage.getChildPages();
+
+						if (wikiPages != null) {
+							return wikiPages.size();
+						}
+
+						return 0;
+					});
 				setParentWikiPageId(
 					() -> {
 						com.liferay.wiki.model.WikiPage parentWikiPage =
@@ -148,7 +153,6 @@ public class WikiPageDTOConverter
 
 						return parentWikiPage.getResourcePrimKey();
 					});
-				wikiNodeId = wikiPage.getNodeId();
 			}
 		};
 	}

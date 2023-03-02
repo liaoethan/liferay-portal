@@ -16,21 +16,27 @@
 
 import './PredefinedValuesTable.scss';
 export default function PredefinedValuesTable({
+	creationLanguageId,
 	currentObjectDefinitionFields,
+	disableRequiredChecked,
 	errors,
 	objectFieldsMap,
 	setValues,
+	title,
 	validateExpressionURL,
 	values,
 }: IProps): JSX.Element;
 interface IProps {
+	creationLanguageId: Liferay.Language.Locale;
 	currentObjectDefinitionFields: ObjectField[];
+	disableRequiredChecked?: boolean;
 	errors: {
 		[key: string]: string;
 	};
 	objectFieldsMap: Map<string, ObjectField>;
 	predefinedValues?: PredefinedValue[];
 	setValues: (params: Partial<ObjectAction>) => void;
+	title?: string;
 	validateExpressionURL: string;
 	values: Partial<ObjectAction>;
 }

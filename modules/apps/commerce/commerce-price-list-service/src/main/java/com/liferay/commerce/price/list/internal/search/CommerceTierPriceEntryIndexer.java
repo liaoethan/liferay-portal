@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alessio Antonio Rendina
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CommerceTierPriceEntryIndexer
 	extends BaseIndexer<CommerceTierPriceEntry> {
 
@@ -162,7 +162,7 @@ public class CommerceTierPriceEntryIndexer
 
 		_indexWriterHelper.updateDocument(
 			commerceTierPriceEntry.getCompanyId(),
-			getDocument(commerceTierPriceEntry), isCommitImmediately());
+			getDocument(commerceTierPriceEntry));
 	}
 
 	@Override

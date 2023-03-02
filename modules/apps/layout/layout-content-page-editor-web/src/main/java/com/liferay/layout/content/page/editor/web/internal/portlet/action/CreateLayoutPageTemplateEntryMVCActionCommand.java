@@ -16,10 +16,16 @@ package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.exception.LayoutPageTemplateEntryNameException;
+import com.liferay.layout.page.template.model.LayoutPageTemplateCollection;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.layout.page.template.service.LayoutPageTemplateCollectionService;
+import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -39,6 +45,8 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
+import java.util.Locale;
+
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletRequest;
@@ -50,7 +58,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/create_layout_page_template_entry"
@@ -72,20 +79,40 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 			actionRequest, "segmentsExperienceId");
 		Layout sourceLayout = _layoutLocalService.getLayout(
 			themeDisplay.getPlid());
-		String name = ParamUtil.getString(actionRequest, "name");
 		long layoutPageTemplateCollectionId = ParamUtil.getLong(
 			actionRequest, "layoutPageTemplateCollectionId");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			LayoutPageTemplateEntry.class.getName(), actionRequest);
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		if (layoutPageTemplateCollectionId <= 0) {
+			String layoutPageTemplateCollectionName = ParamUtil.getString(
+				actionRequest, "layoutPageTemplateCollectionName");
+			String layoutPageTemplateCollectionDescription =
+				ParamUtil.getString(
+					actionRequest, "layoutPageTemplateCollectionDescription");
+
+			LayoutPageTemplateCollection layoutPageTemplateCollection =
+				_layoutPageTemplateCollectionService.
+					addLayoutPageTemplateCollection(
+						themeDisplay.getScopeGroupId(),
+						layoutPageTemplateCollectionName,
+						layoutPageTemplateCollectionDescription,
+						serviceContext);
+
+			layoutPageTemplateCollectionId =
+				layoutPageTemplateCollection.
+					getLayoutPageTemplateCollectionId();
+		}
+
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				_layoutPageTemplateEntryService.
 					createLayoutPageTemplateEntryFromLayout(
-						segmentsExperienceId, sourceLayout, name,
+						segmentsExperienceId, sourceLayout,
+						_getUniqueName(sourceLayout, themeDisplay.getLocale()),
 						layoutPageTemplateCollectionId, serviceContext);
 
 			jsonObject.put(
@@ -165,14 +192,49 @@ public class CreateLayoutPageTemplateEntryMVCActionCommand
 			actionRequest, actionResponse, jsonObject);
 	}
 
+	private String _getUniqueName(Layout layout, Locale locale) {
+		String name = StringBundler.concat(
+			layout.getName(locale), " - ",
+			_language.get(locale, "page-template"));
+
+		for (int i = 2;; i++) {
+			LayoutPageTemplateEntry targetLayoutPageTemplateEntry =
+				_layoutPageTemplateEntryLocalService.
+					fetchLayoutPageTemplateEntry(
+						layout.getGroupId(), name,
+						LayoutPageTemplateEntryTypeConstants.TYPE_BASIC);
+
+			if (targetLayoutPageTemplateEntry == null) {
+				break;
+			}
+
+			name = StringBundler.concat(
+				layout.getName(locale), " - ",
+				_language.get(locale, "page-template"), StringPool.SPACE, i);
+		}
+
+		return name;
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		CreateLayoutPageTemplateEntryMVCActionCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private LayoutPageTemplateCollectionService
+		_layoutPageTemplateCollectionService;
+
+	@Reference
+	private LayoutPageTemplateEntryLocalService
+		_layoutPageTemplateEntryLocalService;
 
 	@Reference
 	private LayoutPageTemplateEntryService _layoutPageTemplateEntryService;

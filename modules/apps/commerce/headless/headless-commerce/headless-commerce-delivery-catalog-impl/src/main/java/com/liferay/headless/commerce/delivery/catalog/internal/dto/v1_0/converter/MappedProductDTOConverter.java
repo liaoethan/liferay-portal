@@ -49,7 +49,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
@@ -71,7 +70,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.commerce.shop.by.diagram.model.CSDiagramEntry",
 	service = {DTOConverter.class, MappedProductDTOConverter.class}
 )
@@ -141,7 +139,6 @@ public class MappedProductDTOConverter
 					mappedProductDTOConverterContext.getLocale(), 1);
 				quantity = csDiagramEntry.getQuantity();
 				sequence = csDiagramEntry.getSequence();
-				sku = csDiagramEntry.getSku();
 				skuOptions = _getSkuOptions(cpInstance);
 
 				setAvailability(
@@ -318,6 +315,14 @@ public class MappedProductDTOConverter
 
 						return null;
 					});
+				setSku(
+					() -> {
+						if (cpInstance == null) {
+							return csDiagramEntry.getSku();
+						}
+
+						return cpInstance.getSku();
+					});
 				setSkuExternalReferenceCode(
 					() -> {
 						if (cpInstance == null) {
@@ -382,7 +387,8 @@ public class MappedProductDTOConverter
 		if (_cpDefinitionInventoryEngine.isDisplayAvailability(cpInstance)) {
 			if (Objects.equals(
 					_commerceInventoryEngine.getAvailabilityStatus(
-						cpInstance.getCompanyId(), commerceChannelGroupId,
+						cpInstance.getCompanyId(), cpInstance.getGroupId(),
+						commerceChannelGroupId,
 						_cpDefinitionInventoryEngine.getMinStockQuantity(
 							cpInstance),
 						cpInstance.getSku()),
@@ -401,7 +407,8 @@ public class MappedProductDTOConverter
 		if (_cpDefinitionInventoryEngine.isDisplayStockQuantity(cpInstance)) {
 			availability.setStockQuantity(
 				_commerceInventoryEngine.getStockQuantity(
-					companyId, commerceChannelGroupId, sku));
+					companyId, cpInstance.getGroupId(), commerceChannelGroupId,
+					sku));
 		}
 
 		return availability;
@@ -555,9 +562,6 @@ public class MappedProductDTOConverter
 
 	@Reference
 	private CommerceProductViewPermission _commerceProductViewPermission;
-
-	@Reference
-	private CompanyLocalService _companyLocalService;
 
 	@Reference
 	private CPDefinitionInventoryEngine _cpDefinitionInventoryEngine;

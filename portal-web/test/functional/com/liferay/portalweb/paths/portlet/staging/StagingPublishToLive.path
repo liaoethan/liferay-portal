@@ -118,27 +118,27 @@
 
 <tr>
 	<td>PAGES_CHOOSE_PAGE_DELETION_CHECKBOX</td>
-	<td>//span[contains(.,'Publish Page Deletions')]//span[contains(@class,'deletions')]/../../input</td>
+	<td>//input[contains(@data-qa-id,'DELETE_LAYOUTS')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PAGES_TO_PUBLISH_CHECKBOX_CHECKED</td>
-	<td>//div[@class='pages-selector']//div[normalize-space()='${key_entryName}' and contains(@class,'checked')]//span[contains(@class,'icon-check')]</td>
+	<td>//div[contains(@class,'layout-selector')]//div[contains(@class,'treeview-link')][*//div[normalize-space()='${key_entryName}']]//input[@type='checkbox'][@checked]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PAGES_TO_PUBLISH_CHECKBOX_UNCHECKED</td>
-	<td>//div[@class='pages-selector']//div[normalize-space()='${key_entryName}' and not(contains(@class,'checked'))]//span[contains(@class,'icon-check')]</td>
+	<td>//div[contains(@class,'layout-selector')]//div[contains(@class,'treeview-link')][*//div[normalize-space()='${key_entryName}']]//input[@type='checkbox'][not(@checked)]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PAGES_TO_PUBLISH_PAGE_NAME</td>
-	<td>//span[contains(@class,'tree-label') and contains(.,'${key_pageName}')]</td>
+	<td>//span[contains(@id,'pages-tree') and contains(.,'${key_pageName}')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PAGES_TO_PUBLISH_PAGE_NAME_SPAN_TITLE</td>
-	<td>//span[contains(@class,'tree-label') and contains(.,'${key_pageName}')]//span[contains(@title,'${key_title}')]</td>
+	<td>//span[contains(@data-restore-title,'${key_title}')]</td>
 	<td></td>
 </tr>
 <tr>

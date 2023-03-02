@@ -30,12 +30,20 @@ public class CETLabelUtil {
 			locale, "add-x", _getCETTypeLanguageKey(type));
 	}
 
+	public static String getHelpLabel(Locale locale, String type) {
+		return LanguageUtil.get(locale, "help-" + _getCETTypeLanguageKey(type));
+	}
+
+	public static String getLearnResourceKey(String type) {
+		return "learn-" + _getCETTypeLanguageKey(type);
+	}
+
 	public static String getNewLabel(Locale locale, String type) {
 		return LanguageUtil.format(
 			locale, "new-x", _getCETTypeLanguageKey(type));
 	}
 
-	public static String getTypeNameLabel(Locale locale, String type) {
+	public static String getTypeLabel(Locale locale, String type) {
 		return LanguageUtil.get(locale, _getCETTypeLanguageKey(type));
 	}
 
@@ -61,6 +69,11 @@ public class CETLabelUtil {
 			return "iframe";
 		}
 		else if (Objects.equals(
+					type, ClientExtensionEntryConstants.TYPE_STATIC_CONTENT)) {
+
+			return "static-content";
+		}
+		else if (Objects.equals(
 					type, ClientExtensionEntryConstants.TYPE_THEME_CSS)) {
 
 			return "theme-css";
@@ -74,6 +87,11 @@ public class CETLabelUtil {
 					type, ClientExtensionEntryConstants.TYPE_THEME_JS)) {
 
 			return "theme-js";
+		}
+		else if (Objects.equals(
+					type, ClientExtensionEntryConstants.TYPE_THEME_SPRITEMAP)) {
+
+			return "theme-svg";
 		}
 
 		return type;

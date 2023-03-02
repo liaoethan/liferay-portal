@@ -27,9 +27,10 @@ import useDidUpdateEffect from '../../hooks/useDidUpdateEffect';
 import ErrorListItem from '../../shared/ErrorListItem';
 import {PreviewModalWithCopyDownload} from '../../shared/PreviewModal';
 import SearchInput from '../../shared/SearchInput';
-import {sub} from '../../utils/language';
+import isDefined from '../../utils/functions/is_defined';
+import parseAndPrettifyJSON from '../../utils/functions/parse_and_prettify_json';
+import sub from '../../utils/language/sub';
 import {TEST_IDS} from '../../utils/testIds';
-import {isDefined, parseAndPrettifyJSON} from '../../utils/utils';
 import PreviewAttributesModal from './PreviewAttributesModal';
 import ResultListItem from './ResultListItem';
 
@@ -43,6 +44,7 @@ function PreviewSidebar({
 	onFetchCancel,
 	onFetchResults,
 	onFocusSXPElement,
+	requestString = '',
 	responseString = '',
 	totalHits,
 	visible,
@@ -168,7 +170,28 @@ function PreviewSidebar({
 			<ManagementToolbar.ItemList>
 				<ManagementToolbar.Item>
 					<PreviewModalWithCopyDownload
+						fileName="raw_request.json"
+						lineWrapping={false}
+						size="lg"
+						text={parseAndPrettifyJSON(requestString)}
+						title={Liferay.Language.get('raw-request')}
+					>
+						<ClayButton
+							borderless
+							className="raw-request"
+							disabled={loading}
+							displayType="secondary"
+							small
+						>
+							{Liferay.Language.get('view-raw-request')}
+						</ClayButton>
+					</PreviewModalWithCopyDownload>
+				</ManagementToolbar.Item>
+
+				<ManagementToolbar.Item>
+					<PreviewModalWithCopyDownload
 						fileName="raw_response.json"
+						foldInitializationDelay={200}
 						folded
 						lineWrapping={false}
 						size="lg"
@@ -316,6 +339,7 @@ PreviewSidebar.propTypes = {
 	onFetchCancel: PropTypes.func,
 	onFetchResults: PropTypes.func,
 	onFocusSXPElement: PropTypes.func,
+	requestString: PropTypes.string,
 	responseString: PropTypes.string,
 	totalHits: PropTypes.number,
 	visible: PropTypes.bool,

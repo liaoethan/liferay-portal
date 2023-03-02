@@ -22,6 +22,7 @@ import sortConfigurationSchema from '../../../schemas/sort-configuration.schema.
 import CodeMirrorEditor from '../../shared/CodeMirrorEditor';
 import LearnMessage from '../../shared/LearnMessage';
 import ThemeContext from '../../shared/ThemeContext';
+import {DEFAULT_INDEX_CONFIGURATION} from '../../utils/constants';
 
 const CONFIGURATION_SCHEMAS = {
 	advancedConfig: advancedConfigurationSchema,
@@ -46,8 +47,52 @@ function ConfigurationTab({
 }) {
 	const {featureFlagLps153813, isCompanyAdmin} = useContext(ThemeContext);
 
-	const _handleIndexConfigRadioChange = (value) => {
-		setFieldValue('indexConfig', value ? '' : searchIndexes[0]);
+	/**
+	 * Gets the `external` value using the `searchIndexes` array.
+	 * @param {string} name The index name.
+	 * @returns {boolean}
+	 */
+	const _getExternalValue = (name) => {
+		return searchIndexes.find((searchIndex) => searchIndex.name === name)
+			.external;
+	};
+
+	/**
+	 * Called when the Index Configuration radio selection is changed.
+	 * @param {boolean} value
+	 * 	true = 'Default Company Index',
+	 * 	false = 'Configure a Different Index'
+	 */
+	const _handleIndexConfigurationRadioChange = (value) => {
+		setFieldValue(
+			'indexConfig',
+			value
+				? DEFAULT_INDEX_CONFIGURATION
+				: {
+						external: searchIndexes[0].external,
+						indexName: searchIndexes[0].name,
+				  }
+		);
+	};
+
+	/**
+	 * Called when the Index Configuration "Configure a Different Index"
+	 * selector is changed.
+	 * @param {string} event.target.value
+	 */
+	const _handleIndexConfigurationSelectChange = (event) => {
+		setFieldValue('indexConfig', {
+			external: _getExternalValue(event.target.value),
+			indexName: event.target.value,
+		});
+	};
+
+	/**
+	 * Checks if company index is selected.
+	 * @returns {boolean}
+	 */
+	const _isCompanyIndex = () => {
+		return indexConfig.indexName === '';
 	};
 
 	const _renderEditor = (configName, configValue) => (
@@ -76,8 +121,8 @@ function ConfigurationTab({
 	);
 
 	return (
-		<ClayLayout.ContainerFluid className="builder" size="xl">
-			<div className="builder-content-shift">
+		<ClayLayout.ContainerFluid className="layout-section-main" size="xl">
+			<div className="layout-section-main-shift">
 				<div className="sheet sheet-lg">
 					<h2 className="sheet-title">
 						{Liferay.Language.get('configuration')}
@@ -200,12 +245,12 @@ function ConfigurationTab({
 							</div>
 
 							<ClayRadioGroup
-								onChange={_handleIndexConfigRadioChange}
-								value={!indexConfig}
+								onChange={_handleIndexConfigurationRadioChange}
+								value={_isCompanyIndex()}
 							>
 								<ClayRadio
 									label={Liferay.Language.get(
-										'default-company-index'
+										'company-index'
 									)}
 									value={true}
 								/>
@@ -219,24 +264,21 @@ function ConfigurationTab({
 								/>
 							</ClayRadioGroup>
 
-							{!!indexConfig && (
+							{!_isCompanyIndex() && (
 								<ClaySelect
 									aria-label={Liferay.Language.get(
 										'index-configuration'
 									)}
-									onChange={(event) =>
-										setFieldValue(
-											'indexConfig',
-											event.target.value
-										)
+									onChange={
+										_handleIndexConfigurationSelectChange
 									}
-									value={indexConfig}
+									value={indexConfig.indexName}
 								>
-									{searchIndexes.map((index) => (
+									{searchIndexes.map((searchIndex) => (
 										<ClaySelect.Option
-											key={index}
-											label={index}
-											value={index}
+											key={searchIndex.name}
+											label={searchIndex.name}
+											value={searchIndex.name}
 										/>
 									))}
 								</ClaySelect>

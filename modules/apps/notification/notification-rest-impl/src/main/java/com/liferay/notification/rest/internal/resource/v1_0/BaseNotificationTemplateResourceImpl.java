@@ -19,15 +19,21 @@ import com.liferay.notification.rest.resource.v1_0.NotificationTemplateResource;
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.GroupedModel;
+import com.liferay.portal.kernel.model.ResourceAction;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.ResourceLocalServiceUtil;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -43,13 +49,20 @@ import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
+import com.liferay.portal.vulcan.permission.Permission;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.ActionUtil;
 import com.liferay.portal.vulcan.util.TransformUtil;
 
 import java.io.Serializable;
 
+import java.lang.reflect.Method;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -137,7 +150,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/notification/v1.0/notification-templates' -d $'{"attachmentObjectFieldIds": ___, "bcc": ___, "body": ___, "cc": ___, "description": ___, "from": ___, "fromName": ___, "name": ___, "name_i18n": ___, "objectDefinitionId": ___, "recipientType": ___, "subject": ___, "to": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/notification/v1.0/notification-templates' -d $'{"attachmentObjectFieldExternalReferenceCodes": ___, "attachmentObjectFieldIds": ___, "body": ___, "description": ___, "editorType": ___, "externalReferenceCode": ___, "name": ___, "name_i18n": ___, "objectDefinitionExternalReferenceCode": ___, "objectDefinitionId": ___, "recipientType": ___, "recipients": ___, "subject": ___, "type": ___, "typeLabel": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {
@@ -204,6 +217,80 @@ public abstract class BaseNotificationTemplateResourceImpl
 			vulcanBatchEngineImportTaskResource.postImportTask(
 				NotificationTemplate.class.getName(), callbackURL, null, object)
 		).build();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/notification/v1.0/notification-templates/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "NotificationTemplate"
+			)
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path(
+		"/notification-templates/by-external-reference-code/{externalReferenceCode}"
+	)
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public NotificationTemplate getNotificationTemplateByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode)
+		throws Exception {
+
+		return new NotificationTemplate();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PUT' 'http://localhost:8080/o/notification/v1.0/notification-templates/by-external-reference-code/{externalReferenceCode}' -d $'{"attachmentObjectFieldExternalReferenceCodes": ___, "attachmentObjectFieldIds": ___, "body": ___, "description": ___, "editorType": ___, "externalReferenceCode": ___, "name": ___, "name_i18n": ___, "objectDefinitionExternalReferenceCode": ___, "objectDefinitionId": ___, "recipientType": ___, "recipients": ___, "subject": ___, "type": ___, "typeLabel": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "NotificationTemplate"
+			)
+		}
+	)
+	@javax.ws.rs.Consumes({"application/json", "application/xml"})
+	@javax.ws.rs.Path(
+		"/notification-templates/by-external-reference-code/{externalReferenceCode}"
+	)
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@javax.ws.rs.PUT
+	@Override
+	public NotificationTemplate putNotificationTemplateByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode,
+			NotificationTemplate notificationTemplate)
+		throws Exception {
+
+		return new NotificationTemplate();
 	}
 
 	/**
@@ -323,7 +410,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/notification/v1.0/notification-templates/{notificationTemplateId}' -d $'{"attachmentObjectFieldIds": ___, "bcc": ___, "body": ___, "cc": ___, "description": ___, "from": ___, "fromName": ___, "name": ___, "name_i18n": ___, "objectDefinitionId": ___, "recipientType": ___, "subject": ___, "to": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/notification/v1.0/notification-templates/{notificationTemplateId}' -d $'{"attachmentObjectFieldExternalReferenceCodes": ___, "attachmentObjectFieldIds": ___, "body": ___, "description": ___, "editorType": ___, "externalReferenceCode": ___, "name": ___, "name_i18n": ___, "objectDefinitionExternalReferenceCode": ___, "objectDefinitionId": ___, "recipientType": ___, "recipients": ___, "subject": ___, "type": ___, "typeLabel": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -361,22 +448,23 @@ public abstract class BaseNotificationTemplateResourceImpl
 				notificationTemplate.getActions());
 		}
 
+		if (notificationTemplate.
+				getAttachmentObjectFieldExternalReferenceCodes() != null) {
+
+			existingNotificationTemplate.
+				setAttachmentObjectFieldExternalReferenceCodes(
+					notificationTemplate.
+						getAttachmentObjectFieldExternalReferenceCodes());
+		}
+
 		if (notificationTemplate.getAttachmentObjectFieldIds() != null) {
 			existingNotificationTemplate.setAttachmentObjectFieldIds(
 				notificationTemplate.getAttachmentObjectFieldIds());
 		}
 
-		if (notificationTemplate.getBcc() != null) {
-			existingNotificationTemplate.setBcc(notificationTemplate.getBcc());
-		}
-
 		if (notificationTemplate.getBody() != null) {
 			existingNotificationTemplate.setBody(
 				notificationTemplate.getBody());
-		}
-
-		if (notificationTemplate.getCc() != null) {
-			existingNotificationTemplate.setCc(notificationTemplate.getCc());
 		}
 
 		if (notificationTemplate.getDateCreated() != null) {
@@ -394,14 +482,14 @@ public abstract class BaseNotificationTemplateResourceImpl
 				notificationTemplate.getDescription());
 		}
 
-		if (notificationTemplate.getFrom() != null) {
-			existingNotificationTemplate.setFrom(
-				notificationTemplate.getFrom());
+		if (notificationTemplate.getEditorType() != null) {
+			existingNotificationTemplate.setEditorType(
+				notificationTemplate.getEditorType());
 		}
 
-		if (notificationTemplate.getFromName() != null) {
-			existingNotificationTemplate.setFromName(
-				notificationTemplate.getFromName());
+		if (notificationTemplate.getExternalReferenceCode() != null) {
+			existingNotificationTemplate.setExternalReferenceCode(
+				notificationTemplate.getExternalReferenceCode());
 		}
 
 		if (notificationTemplate.getName() != null) {
@@ -412,6 +500,15 @@ public abstract class BaseNotificationTemplateResourceImpl
 		if (notificationTemplate.getName_i18n() != null) {
 			existingNotificationTemplate.setName_i18n(
 				notificationTemplate.getName_i18n());
+		}
+
+		if (notificationTemplate.getObjectDefinitionExternalReferenceCode() !=
+				null) {
+
+			existingNotificationTemplate.
+				setObjectDefinitionExternalReferenceCode(
+					notificationTemplate.
+						getObjectDefinitionExternalReferenceCode());
 		}
 
 		if (notificationTemplate.getObjectDefinitionId() != null) {
@@ -429,13 +526,14 @@ public abstract class BaseNotificationTemplateResourceImpl
 				notificationTemplate.getSubject());
 		}
 
-		if (notificationTemplate.getTo() != null) {
-			existingNotificationTemplate.setTo(notificationTemplate.getTo());
-		}
-
 		if (notificationTemplate.getType() != null) {
 			existingNotificationTemplate.setType(
 				notificationTemplate.getType());
+		}
+
+		if (notificationTemplate.getTypeLabel() != null) {
+			existingNotificationTemplate.setTypeLabel(
+				notificationTemplate.getTypeLabel());
 		}
 
 		preparePatch(notificationTemplate, existingNotificationTemplate);
@@ -447,7 +545,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/notification/v1.0/notification-templates/{notificationTemplateId}' -d $'{"attachmentObjectFieldIds": ___, "bcc": ___, "body": ___, "cc": ___, "description": ___, "from": ___, "fromName": ___, "name": ___, "name_i18n": ___, "objectDefinitionId": ___, "recipientType": ___, "subject": ___, "to": ___, "type": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/notification/v1.0/notification-templates/{notificationTemplateId}' -d $'{"attachmentObjectFieldExternalReferenceCodes": ___, "attachmentObjectFieldIds": ___, "body": ___, "description": ___, "editorType": ___, "externalReferenceCode": ___, "name": ___, "name_i18n": ___, "objectDefinitionExternalReferenceCode": ___, "objectDefinitionId": ___, "recipientType": ___, "recipients": ___, "subject": ___, "type": ___, "typeLabel": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -528,10 +626,44 @@ public abstract class BaseNotificationTemplateResourceImpl
 		).build();
 	}
 
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/notification/v1.0/notification-templates/{notificationTemplateId}/copy'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "notificationTemplateId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(
+				name = "NotificationTemplate"
+			)
+		}
+	)
+	@javax.ws.rs.Path("/notification-templates/{notificationTemplateId}/copy")
+	@javax.ws.rs.POST
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public NotificationTemplate postNotificationTemplateCopy(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("notificationTemplateId")
+			Long notificationTemplateId)
+		throws Exception {
+
+		return new NotificationTemplate();
+	}
+
 	@Override
 	@SuppressWarnings("PMD.UnusedLocalVariable")
 	public void create(
-			java.util.Collection<NotificationTemplate> notificationTemplates,
+			Collection<NotificationTemplate> notificationTemplates,
 			Map<String, Serializable> parameters)
 		throws Exception {
 
@@ -544,6 +676,13 @@ public abstract class BaseNotificationTemplateResourceImpl
 		if ("INSERT".equalsIgnoreCase(createStrategy)) {
 			notificationTemplateUnsafeConsumer =
 				notificationTemplate -> postNotificationTemplate(
+					notificationTemplate);
+		}
+
+		if ("UPSERT".equalsIgnoreCase(createStrategy)) {
+			notificationTemplateUnsafeConsumer = notificationTemplate ->
+				putNotificationTemplateByExternalReferenceCode(
+					notificationTemplate.getExternalReferenceCode(),
 					notificationTemplate);
 		}
 
@@ -568,7 +707,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 
 	@Override
 	public void delete(
-			java.util.Collection<NotificationTemplate> notificationTemplates,
+			Collection<NotificationTemplate> notificationTemplates,
 			Map<String, Serializable> parameters)
 		throws Exception {
 
@@ -580,7 +719,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
-		return SetUtil.fromArray("INSERT");
+		return SetUtil.fromArray("UPSERT", "INSERT");
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
@@ -640,7 +779,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 
 	@Override
 	public void update(
-			java.util.Collection<NotificationTemplate> notificationTemplates,
+			Collection<NotificationTemplate> notificationTemplates,
 			Map<String, Serializable> parameters)
 		throws Exception {
 
@@ -697,7 +836,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 
 	public void setContextBatchUnsafeConsumer(
 		UnsafeBiConsumer
-			<java.util.Collection<NotificationTemplate>,
+			<Collection<NotificationTemplate>,
 			 UnsafeConsumer<NotificationTemplate, Exception>, Exception>
 				contextBatchUnsafeConsumer) {
 
@@ -881,8 +1020,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> List<R> transform(
-		java.util.Collection<T> collection,
-		UnsafeFunction<T, R, E> unsafeFunction) {
+		Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction) {
 
 		return TransformUtil.transform(collection, unsafeFunction);
 	}
@@ -894,8 +1032,8 @@ public abstract class BaseNotificationTemplateResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> R[] transformToArray(
-		java.util.Collection<T> collection,
-		UnsafeFunction<T, R, E> unsafeFunction, Class<?> clazz) {
+		Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction,
+		Class<?> clazz) {
 
 		return TransformUtil.transformToArray(
 			collection, unsafeFunction, clazz);
@@ -908,8 +1046,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> List<R> unsafeTransform(
-			java.util.Collection<T> collection,
-			UnsafeFunction<T, R, E> unsafeFunction)
+			Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction)
 		throws E {
 
 		return TransformUtil.unsafeTransform(collection, unsafeFunction);
@@ -923,8 +1060,8 @@ public abstract class BaseNotificationTemplateResourceImpl
 	}
 
 	protected <T, R, E extends Throwable> R[] unsafeTransformToArray(
-			java.util.Collection<T> collection,
-			UnsafeFunction<T, R, E> unsafeFunction, Class<?> clazz)
+			Collection<T> collection, UnsafeFunction<T, R, E> unsafeFunction,
+			Class<?> clazz)
 		throws E {
 
 		return TransformUtil.unsafeTransformToArray(
@@ -940,7 +1077,7 @@ public abstract class BaseNotificationTemplateResourceImpl
 
 	protected AcceptLanguage contextAcceptLanguage;
 	protected UnsafeBiConsumer
-		<java.util.Collection<NotificationTemplate>,
+		<Collection<NotificationTemplate>,
 		 UnsafeConsumer<NotificationTemplate, Exception>, Exception>
 			contextBatchUnsafeConsumer;
 	protected com.liferay.portal.kernel.model.Company contextCompany;
@@ -958,6 +1095,118 @@ public abstract class BaseNotificationTemplateResourceImpl
 	protected SortParserProvider sortParserProvider;
 	protected VulcanBatchEngineImportTaskResource
 		vulcanBatchEngineImportTaskResource;
+
+	private void _checkResources(
+			long companyId, long resourceId, String resourceName)
+		throws PortalException {
+
+		int count = resourcePermissionLocalService.getResourcePermissionsCount(
+			companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(resourceId));
+
+		if (count == 0) {
+			ResourceLocalServiceUtil.addResources(
+				companyId, resourceId, 0, resourceName,
+				String.valueOf(resourceId), false, true, true);
+		}
+	}
+
+	private Collection<Permission> _getPermissions(
+			long companyId, List<ResourceAction> resourceActions,
+			long resourceId, String resourceName, String[] roleNames)
+		throws Exception {
+
+		_checkResources(companyId, resourceId, resourceName);
+
+		Map<String, Permission> permissions = new LinkedHashMap<>();
+
+		List<ResourcePermission> resourcePermissions = new ArrayList<>();
+
+		try {
+			Method method = ResourcePermissionLocalService.class.getMethod(
+				"getResourcePermissions", String.class);
+
+			resourcePermissions = (List<ResourcePermission>)method.invoke(
+				resourcePermissionLocalService, resourceName);
+		}
+		catch (NoSuchMethodException noSuchMethodException) {
+			resourcePermissions =
+				resourcePermissionLocalService.getResourcePermissions(
+					companyId, resourceName, ResourceConstants.SCOPE_INDIVIDUAL,
+					String.valueOf(resourceId));
+		}
+
+		for (ResourcePermission resourcePermission : resourcePermissions) {
+			if ((resourcePermission.getPrimKeyId() == 0) ||
+				(resourcePermission.getPrimKeyId() == resourceId)) {
+
+				com.liferay.portal.kernel.model.Role role =
+					roleLocalService.getRole(resourcePermission.getRoleId());
+
+				if ((roleNames == null) ||
+					((roleNames != null) &&
+					 ArrayUtil.contains(roleNames, role.getName()))) {
+
+					Permission permission = permissions.get(role.getName());
+
+					if (permission == null) {
+						permission = _toPermission(
+							resourceActions, resourcePermission, role);
+
+						if (permission != null) {
+							permissions.put(role.getName(), permission);
+						}
+					}
+					else {
+						Set<String> actionsIdsSet = new HashSet<>();
+
+						Collections.addAll(
+							actionsIdsSet, permission.getActionIds());
+
+						Permission newPermission = _toPermission(
+							resourceActions, resourcePermission, role);
+
+						Collections.addAll(
+							actionsIdsSet, newPermission.getActionIds());
+
+						permission.setActionIds(
+							actionsIdsSet.toArray(new String[0]));
+					}
+				}
+			}
+		}
+
+		return permissions.values();
+	}
+
+	private Permission _toPermission(
+		List<ResourceAction> resourceActions,
+		ResourcePermission resourcePermission,
+		com.liferay.portal.kernel.model.Role role) {
+
+		Set<String> actionsIdsSet = new HashSet<>();
+
+		long actionIds = resourcePermission.getActionIds();
+
+		for (ResourceAction resourceAction : resourceActions) {
+			long bitwiseValue = resourceAction.getBitwiseValue();
+
+			if ((actionIds & bitwiseValue) == bitwiseValue) {
+				actionsIdsSet.add(resourceAction.getActionId());
+			}
+		}
+
+		if (actionsIdsSet.isEmpty()) {
+			return null;
+		}
+
+		return new Permission() {
+			{
+				actionIds = actionsIdsSet.toArray(new String[0]);
+				roleName = role.getName();
+			}
+		};
+	}
 
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseNotificationTemplateResourceImpl.class);

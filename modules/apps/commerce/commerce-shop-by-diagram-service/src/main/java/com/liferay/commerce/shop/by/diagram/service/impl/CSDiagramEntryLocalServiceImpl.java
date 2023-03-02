@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.search.IndexableType;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
+import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,7 +47,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.shop.by.diagram.model.CSDiagramEntry",
 	service = AopService.class
 )
@@ -152,6 +152,16 @@ public class CSDiagramEntryLocalServiceImpl
 		}
 
 		return new ArrayList<>(csDiagramEntries);
+	}
+
+	@Override
+	public List<CSDiagramEntry> getCProductCSDiagramEntries(
+			long cProductId, int start, int end,
+			OrderByComparator<CSDiagramEntry> orderByComparator)
+		throws PortalException {
+
+		return csDiagramEntryPersistence.findByCProductId(
+			cProductId, start, end, orderByComparator);
 	}
 
 	@Override

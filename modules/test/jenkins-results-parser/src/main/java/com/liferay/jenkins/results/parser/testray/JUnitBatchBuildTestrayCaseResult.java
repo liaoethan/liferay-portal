@@ -24,6 +24,7 @@ import com.liferay.jenkins.results.parser.test.clazz.TestClass;
 import com.liferay.jenkins.results.parser.test.clazz.group.AxisTestClassGroup;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +111,7 @@ public class JUnitBatchBuildTestrayCaseResult
 				errorMessage = "Failed for unknown reason";
 			}
 
-			String testName = testResult.getDisplayName();
+			String testName = testResult.getTestName();
 
 			errorMessages.put(
 				testName,
@@ -155,7 +156,8 @@ public class JUnitBatchBuildTestrayCaseResult
 		if ((testClassResults == null) || testClassResults.isEmpty()) {
 			String result = build.getResult();
 
-			if ((result == null) || result.equals("SUCCESS") ||
+			if ((result == null) || result.equals("ABORTED") ||
+				result.equals("FAILURE") || result.equals("SUCCESS") ||
 				result.equals("UNSTABLE")) {
 
 				return Status.UNTESTED;
@@ -169,6 +171,60 @@ public class JUnitBatchBuildTestrayCaseResult
 		}
 
 		return Status.PASSED;
+	}
+
+	@Override
+	public List<TestrayAttachment> getTestrayAttachments() {
+		List<TestrayAttachment> testrayAttachments =
+			super.getTestrayAttachments();
+
+		testrayAttachments.add(getFailureMessagesTestrayAttachment());
+		testrayAttachments.addAll(getLiferayLogTestrayAttachments());
+		testrayAttachments.addAll(getLiferayOSGiLogTestrayAttachments());
+
+		testrayAttachments.removeAll(Collections.singleton(null));
+
+		return testrayAttachments;
+	}
+
+	protected TestrayAttachment getFailureMessagesTestrayAttachment() {
+		List<TestClassResult> testClassResults = _getTestClassResults();
+
+		if ((testClassResults == null) || testClassResults.isEmpty()) {
+			return null;
+		}
+
+		TestrayAttachment testrayAttachment = getTestrayAttachment(
+			getBuild(), "Failure Messages",
+			getAxisBuildURLPath() + "/" + getName() + ".txt.gz");
+
+		if (testrayAttachment == null) {
+			return null;
+		}
+
+		return testrayAttachment;
+	}
+
+	@Override
+	protected List<TestrayAttachment> getLiferayLogTestrayAttachments() {
+		List<TestClassResult> testClassResults = _getTestClassResults();
+
+		if ((testClassResults == null) || testClassResults.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		return super.getLiferayLogTestrayAttachments();
+	}
+
+	@Override
+	protected List<TestrayAttachment> getLiferayOSGiLogTestrayAttachments() {
+		List<TestClassResult> testClassResults = _getTestClassResults();
+
+		if ((testClassResults == null) || testClassResults.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		return super.getLiferayLogTestrayAttachments();
 	}
 
 	private List<TestClassResult> _getTestClassResults() {
@@ -191,6 +247,20 @@ public class JUnitBatchBuildTestrayCaseResult
 				testClassName.startsWith(getName() + "$")) {
 
 				_testClassResults.add(testClassResult);
+
+				continue;
+			}
+
+			if (testClassName.equals("junit.framework.TestSuite")) {
+				for (TestResult testResult : testClassResult.getTestResults()) {
+					String testName = testResult.getTestName();
+
+					if (testName.equals(getName())) {
+						_testClassResults.add(testClassResult);
+
+						break;
+					}
+				}
 			}
 		}
 
@@ -201,7 +271,21 @@ public class JUnitBatchBuildTestrayCaseResult
 		List<TestResult> testResults = new ArrayList<>();
 
 		for (TestClassResult testClassResult : _getTestClassResults()) {
-			testResults.addAll(testClassResult.getTestResults());
+			String testClassName = testClassResult.getClassName();
+
+			if (!testClassName.equals("junit.framework.TestSuite")) {
+				testResults.addAll(testClassResult.getTestResults());
+
+				continue;
+			}
+
+			for (TestResult testResult : testClassResult.getTestResults()) {
+				String testName = testResult.getTestName();
+
+				if (testName.equals(getName())) {
+					testResults.add(testResult);
+				}
+			}
 		}
 
 		return testResults;

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 import React, {useMemo} from 'react';
 
 import {config} from '../../app/config/index';
-import {useId} from '../../core/hooks/useId';
+import {useId} from '../hooks/useId';
 
 export default function ColorPalette({
 	label,
@@ -63,7 +63,7 @@ export default function ColorPalette({
 								)}
 								displayType="unstyled"
 								onClick={() => onColorSelect(color)}
-								small
+								size="sm"
 								title={color.cssClass}
 							/>
 						</li>
@@ -76,7 +76,7 @@ export default function ColorPalette({
 					disabled={!selectedColor}
 					displayType="secondary"
 					onClick={onClear}
-					small
+					size="sm"
 				>
 					{Liferay.Language.get('clear')}
 				</ClayButton>

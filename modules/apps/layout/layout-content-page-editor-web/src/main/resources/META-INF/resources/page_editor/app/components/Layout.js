@@ -13,27 +13,20 @@
  */
 
 import ClayAlert from '@clayui/alert';
-import {useIsMounted} from '@liferay/frontend-js-react-web';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
 
 import {
 	LayoutDataPropTypes,
 	getLayoutDataItemPropTypes,
-} from '../../prop-types/index';
-import {ITEM_ACTIVATION_ORIGINS} from '../config/constants/itemActivationOrigins';
+} from '../../prop_types/index';
 import {LAYOUT_DATA_ITEM_TYPES} from '../config/constants/layoutDataItemTypes';
 import {config} from '../config/index';
-import {useSetCollectionActiveItemContext} from '../contexts/CollectionActiveItemContext';
-import {
-	useActivationOrigin,
-	useIsActive,
-	useSelectItem,
-} from '../contexts/ControlsContext';
+import {useSelectItem} from '../contexts/ControlsContext';
 import {useSelector} from '../contexts/StoreContext';
 import {deepEqual} from '../utils/checkDeepEqual';
-import {useDropContainerId} from '../utils/drag-and-drop/useDragAndDrop';
-import FragmentWithControls from './layout-data-items/FragmentWithControls';
+import useDropContainerId from '../utils/useDropContainerId';
+import FragmentWithControls from './layout_data_items/FragmentWithControls';
 import {
 	CollectionItemWithControls,
 	CollectionWithControls,
@@ -43,7 +36,7 @@ import {
 	FormWithControls,
 	Root,
 	RowWithControls,
-} from './layout-data-items/index';
+} from './layout_data_items/index';
 
 const LAYOUT_DATA_ITEMS = {
 	[LAYOUT_DATA_ITEM_TYPES.collection]: CollectionWithControls,
@@ -222,11 +215,6 @@ function LayoutDataItemContent({item, layoutData}) {
 
 	return (
 		<>
-			<LayoutDataItemInteractionFilter
-				componentRef={componentRef}
-				item={item}
-			/>
-
 			<Component item={item} layoutData={layoutData} ref={componentRef}>
 				{item.children.map((childId) => {
 					return (
@@ -245,36 +233,6 @@ function LayoutDataItemContent({item, layoutData}) {
 LayoutDataItemContent.propTypes = {
 	item: getLayoutDataItemPropTypes().isRequired,
 	layoutData: LayoutDataPropTypes.isRequired,
-};
-
-const LayoutDataItemInteractionFilter = ({componentRef, item}) => {
-	useSetCollectionActiveItemContext(item.itemId);
-
-	const activationOrigin = useActivationOrigin();
-	const isActive = useIsActive()(item.itemId);
-	const isMounted = useIsMounted();
-
-	useEffect(() => {
-		if (
-			isActive &&
-			componentRef.current &&
-			isMounted() &&
-			activationOrigin === ITEM_ACTIVATION_ORIGINS.sidebar
-		) {
-			componentRef.current.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-				inline: 'nearest',
-			});
-		}
-	}, [activationOrigin, componentRef, isActive, isMounted]);
-
-	return null;
-};
-
-LayoutDataItemInteractionFilter.propTypes = {
-	componentRef: PropTypes.object.isRequired,
-	item: getLayoutDataItemPropTypes().isRequired,
 };
 
 function LayoutClassManager({layoutRef}) {

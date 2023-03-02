@@ -1,6 +1,7 @@
 @component-name = "portal-staging"
 definition {
 
+	property ci.retries.disabled = "true";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Staging";
@@ -35,7 +36,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -44,7 +45,7 @@ definition {
 	}
 
 	@description = "Verify if is possible add an event that repeats daily."
-	@priority = "4"
+	@priority = 4
 	test AddEventRepeatDaily {
 		task ("When: I add a daily repeating event") {
 			Staging.addRepeatEvent(
@@ -63,7 +64,7 @@ definition {
 	}
 
 	@description = "Verify is possible add a page variation."
-	@priority = "5"
+	@priority = 5
 	test AddPageVariation {
 		property portal.acceptance = "true";
 		property test.assert.warning.exceptions = "true";
@@ -107,7 +108,7 @@ definition {
 	}
 
 	@description = "Verify is possible add page with versioning enabled."
-	@priority = "5"
+	@priority = 5
 	test AddPageWithPageVersioningEnabled {
 		property portal.acceptance = "true";
 
@@ -142,26 +143,45 @@ definition {
 		}
 	}
 
-	@description = "Verify is possible add site pages variation."
-	@priority = "5"
+	@description = "This is a test for LPS-36620. Verified that navigation is visible when clicking the site page variation."
+	@priority = 5
 	test AddSitePagesVariation {
 		property portal.acceptance = "true";
 
-		task ("Give: I add a site page variation") {
+		task ("Give: Add a new site page") {
+			JSONLayout.addPublicLayout(
+				groupName = "Site Name (Staging)",
+				layoutName = "Test Page",
+				site = "false");
+		}
+
+		task ("And: Add a site page variation") {
+			Navigator.openStagingSiteURL(siteName = "Site Name");
+
 			Staging.addSitePagesVariationPG(sitePagesVariationName = "Site Pages Variation Name");
 		}
 
-		task ("When: I go to Publish To Live screen") {
+		task ("When: Go to Publish To Live screen") {
 			Navigator.openStagingSiteURL(siteName = "Site Name");
 		}
 
 		task ("Then: I can see the site page variation there") {
 			Staging.viewSitePagesVariationPG(sitePagesVariationName = "Site Pages Variation Name");
 		}
+
+		task ("When: Click the newly added site page variation") {
+			Click(locator1 = "Staging#SITE_PAGES_VARIATION");
+		}
+
+		task ("Then: Assert the freshly added site page is visible") {
+			AssertVisible(
+				key_pageName = "Test Page",
+				locator1 = "Home#PAGE");
+		}
 	}
 
 	@description = "This is a use case for LPS-123156. Verify is possible see the variation info on Staging."
-	@priority = "4"
+	@priority = 4
 	test AssertStagingVariationInfo {
 		task ("Given: I have Site Page Variation") {
 			Page.viewWithWorkflowPG(workflowStatus = "Ready for Publication");
@@ -170,9 +190,9 @@ definition {
 				key_tooltipInfo = "Page variations allow you to work in parallel in different versions of the same page inside this pages variation. When publishing to live, the version marked as ready to publish is the one that is processed.",
 				locator1 = "Staging#STAGING_TOOLTIP");
 
-			AssertVisible(
-				key_content = "Page variations allow you to work in parallel in different versions of the same page inside this pages variation. When publishing to live, the version marked as ready to publish is the one that is processed.",
-				locator1 = "Tooltip#FLOATING_TOOLTIP_CONTENT");
+			AssertTextPresent(
+				locator1 = "Staging#FLOATING_TOOLTIP_CONTENT",
+				value1 = "Page variations allow you to work in parallel in different versions of the same page inside this pages variation. When publishing to live, the version marked as ready to publish is the one that is processed.");
 
 			Staging.addSitePagesVariationPG(
 				copySitePagesVariationName = "All Site Pages Variations",
@@ -183,7 +203,7 @@ definition {
 			PagesAdmin.openPagesAdmin(siteURLKey = "site-name-staging");
 
 			PagesAdmin.addChildPage(
-				childPageName = "Child Page",
+				childPageName = "Child Test Page",
 				parentPageName = "Staging Test Page");
 
 			Navigator.openStagingSiteURL(siteName = "Site Name");
@@ -193,7 +213,7 @@ definition {
 			Staging.markAsReadyForPublication();
 
 			Navigator.gotoStagedSitePage(
-				pageName = "Child Page",
+				pageName = "Child Test Page",
 				siteName = "Site Name");
 
 			Staging.addPageVariationPG(pageVariationName = "Child Page Variation Name");
@@ -212,22 +232,22 @@ definition {
 				key_tooltipInfo = "Child pages cannot be published independently of their parent pages by default. You are able to configure this in System Settings. This process will automatically publish the parent pages even if they are not selected.",
 				locator1 = "Staging#STAGING_TOOLTIP");
 
-			AssertVisible(
-				key_content = "Child pages cannot be published independently of their parent pages by default. You are able to configure this in System Settings. This process will automatically publish the parent pages even if they are not selected.",
-				locator1 = "Tooltip#FLOATING_TOOLTIP_CONTENT");
+			AssertTextPresent(
+				locator1 = "Staging#FLOATING_TOOLTIP_CONTENT",
+				value1 = "Child pages cannot be published independently of their parent pages by default. You are able to configure this in System Settings. This process will automatically publish the parent pages even if they are not selected.");
 
 			Staging.viewVariationTooltipMessage(
 				pageName = "Staging Test Page",
-				title = "This is the page variation that is marked as ready for the publish process.");
+				title = "This is the page variation that is marked as ready for publication.");
 
 			Staging.viewVariationTooltipMessage(
-				pageName = "Child Page",
-				title = "There is not a version of this page marked as ready for the publish process.");
+				pageName = "Child Test Page",
+				title = "There is no version of this page marked as ready for publication.");
 		}
 	}
 
 	@description = "This is a use case for LPS-123156. Verify is possible see the variation info on publish screen."
-	@priority = "4"
+	@priority = 4
 	test AssertVariationInfoInPublishScreen {
 		task ("Given: I add a Site Page Variation") {
 			Staging.addSitePagesVariationPG(

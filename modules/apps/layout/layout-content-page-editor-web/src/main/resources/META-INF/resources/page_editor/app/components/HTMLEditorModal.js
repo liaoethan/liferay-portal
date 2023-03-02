@@ -43,7 +43,11 @@ const HTMLEditorModal = ({
 
 	return (
 		visible && (
-			<ClayModal observer={observer} size="full-screen">
+			<ClayModal
+				containerProps={{className: 'cadmin'}}
+				observer={observer}
+				size="full-screen"
+			>
 				<ClayModal.Header>
 					{Liferay.Language.get('edit-content')}
 				</ClayModal.Header>
@@ -52,9 +56,12 @@ const HTMLEditorModal = ({
 					<div className="d-flex justify-content-end pr-2 w-100">
 						<ClayButton.Group>
 							<ClayButtonWithIcon
+								aria-label={Liferay.Language.get(
+									'display-vertically'
+								)}
 								displayType="secondary"
 								onClick={() => setViewType(VIEW_TYPES.columns)}
-								small
+								size="sm"
 								symbol="columns"
 								title={Liferay.Language.get(
 									'display-vertically'
@@ -62,9 +69,12 @@ const HTMLEditorModal = ({
 							/>
 
 							<ClayButtonWithIcon
+								aria-label={Liferay.Language.get(
+									'display-horizontally'
+								)}
 								displayType="secondary"
 								onClick={() => setViewType(VIEW_TYPES.rows)}
-								small
+								size="sm"
 								symbol="cards"
 								title={Liferay.Language.get(
 									'display-horizontally'
@@ -72,11 +82,12 @@ const HTMLEditorModal = ({
 							/>
 
 							<ClayButtonWithIcon
+								aria-label={Liferay.Language.get('full-screen')}
 								displayType="secondary"
 								onClick={() =>
 									setViewType(VIEW_TYPES.fullscreen)
 								}
-								small
+								size="sm"
 								symbol="expand"
 								title={Liferay.Language.get('full-screen')}
 							/>

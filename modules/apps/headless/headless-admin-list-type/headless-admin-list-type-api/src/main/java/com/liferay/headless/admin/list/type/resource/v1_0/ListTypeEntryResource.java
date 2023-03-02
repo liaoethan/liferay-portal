@@ -56,6 +56,18 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface ListTypeEntryResource {
 
+	public Page<ListTypeEntry>
+			getListTypeDefinitionByExternalReferenceCodeListTypeEntriesPage(
+				String externalReferenceCode, String search,
+				com.liferay.portal.vulcan.aggregation.Aggregation aggregation,
+				Filter filter, Pagination pagination, Sort[] sorts)
+		throws Exception;
+
+	public ListTypeEntry
+			postListTypeDefinitionByExternalReferenceCodeListTypeEntry(
+				String externalReferenceCode, ListTypeEntry listTypeEntry)
+		throws Exception;
+
 	public Page<ListTypeEntry> getListTypeDefinitionListTypeEntriesPage(
 			Long listTypeDefinitionId, String search,
 			com.liferay.portal.vulcan.aggregation.Aggregation aggregation,

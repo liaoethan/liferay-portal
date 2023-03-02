@@ -25,9 +25,7 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
-import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.object.system.SystemObjectDefinitionMetadata;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
@@ -40,6 +38,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.io.IOException;
@@ -71,21 +70,17 @@ public class SystemObjectEntryItemSelectorView
 		ItemSelectorViewDescriptorRenderer<InfoItemItemSelectorCriterion>
 			itemSelectorViewDescriptorRenderer,
 		ObjectDefinition objectDefinition,
-		ObjectEntryLocalService objectEntryLocalService,
 		ObjectFieldLocalService objectFieldLocalService,
 		ObjectRelatedModelsProviderRegistry objectRelatedModelsProviderRegistry,
-		Portal portal,
-		SystemObjectDefinitionMetadata systemObjectDefinitionMetadata) {
+		Portal portal) {
 
 		_itemSelectorViewDescriptorRenderer =
 			itemSelectorViewDescriptorRenderer;
 		_objectDefinition = objectDefinition;
-		_objectEntryLocalService = objectEntryLocalService;
 		_objectFieldLocalService = objectFieldLocalService;
 		_objectRelatedModelsProviderRegistry =
 			objectRelatedModelsProviderRegistry;
 		_portal = portal;
-		_systemObjectDefinitionMetadata = systemObjectDefinitionMetadata;
 	}
 
 	@Override
@@ -121,9 +116,9 @@ public class SystemObjectEntryItemSelectorView
 			servletRequest, servletResponse, infoItemItemSelectorCriterion,
 			portletURL, itemSelectedEventName, search,
 			new SystemObjectItemSelectorViewDescriptor(
-				(HttpServletRequest)servletRequest, _objectDefinition,
-				_objectEntryLocalService, _objectRelatedModelsProviderRegistry,
-				portletURL));
+				(HttpServletRequest)servletRequest,
+				infoItemItemSelectorCriterion, _objectDefinition,
+				_objectRelatedModelsProviderRegistry, portletURL));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -136,13 +131,10 @@ public class SystemObjectEntryItemSelectorView
 	private final ItemSelectorViewDescriptorRenderer
 		<InfoItemItemSelectorCriterion> _itemSelectorViewDescriptorRenderer;
 	private final ObjectDefinition _objectDefinition;
-	private final ObjectEntryLocalService _objectEntryLocalService;
 	private final ObjectFieldLocalService _objectFieldLocalService;
 	private final ObjectRelatedModelsProviderRegistry
 		_objectRelatedModelsProviderRegistry;
 	private final Portal _portal;
-	private final SystemObjectDefinitionMetadata
-		_systemObjectDefinitionMetadata;
 
 	private class SystemObjectEntryItemDescriptor
 		implements ItemSelectorViewDescriptor.ItemDescriptor {
@@ -240,15 +232,15 @@ public class SystemObjectEntryItemSelectorView
 
 		public SystemObjectItemSelectorViewDescriptor(
 			HttpServletRequest httpServletRequest,
+			InfoItemItemSelectorCriterion infoItemItemSelectorCriterion,
 			ObjectDefinition objectDefinition,
-			ObjectEntryLocalService objectEntryLocalService,
 			ObjectRelatedModelsProviderRegistry
 				objectRelatedModelsProviderRegistry,
 			PortletURL portletURL) {
 
 			_httpServletRequest = httpServletRequest;
+			_infoItemItemSelectorCriterion = infoItemItemSelectorCriterion;
 			_objectDefinition = objectDefinition;
-			_objectEntryLocalService = objectEntryLocalService;
 			_objectRelatedModelsProviderRegistry =
 				objectRelatedModelsProviderRegistry;
 			_portletURL = portletURL;
@@ -284,13 +276,21 @@ public class SystemObjectEntryItemSelectorView
 					_portletRequest, _portletURL, null,
 					"no-entries-were-found");
 
+			searchContainer.setResultsAndTotal(ArrayList::new, 0);
+
+			String objectRelationshipType = ParamUtil.getString(
+				_portletRequest, "objectRelationshipType");
+
+			if (Validator.isNull(objectRelationshipType)) {
+				return searchContainer;
+			}
+
 			try {
 				ObjectRelatedModelsProvider objectRelatedModelsProvider =
 					_objectRelatedModelsProviderRegistry.
 						getObjectRelatedModelsProvider(
 							_objectDefinition.getClassName(),
-							ParamUtil.getString(
-								_portletRequest, "objectRelationshipType"));
+							objectRelationshipType);
 
 				List<BaseModel<?>> baseModels =
 					objectRelatedModelsProvider.getUnrelatedModels(
@@ -305,16 +305,20 @@ public class SystemObjectEntryItemSelectorView
 			}
 			catch (Exception exception) {
 				_log.error(exception);
-
-				searchContainer.setResultsAndTotal(ArrayList::new, 0);
 			}
 
 			return searchContainer;
 		}
 
+		@Override
+		public boolean isMultipleSelection() {
+			return _infoItemItemSelectorCriterion.isMultiSelection();
+		}
+
 		private final HttpServletRequest _httpServletRequest;
+		private final InfoItemItemSelectorCriterion
+			_infoItemItemSelectorCriterion;
 		private final ObjectDefinition _objectDefinition;
-		private final ObjectEntryLocalService _objectEntryLocalService;
 		private final ObjectRelatedModelsProviderRegistry
 			_objectRelatedModelsProviderRegistry;
 		private final PortletRequest _portletRequest;

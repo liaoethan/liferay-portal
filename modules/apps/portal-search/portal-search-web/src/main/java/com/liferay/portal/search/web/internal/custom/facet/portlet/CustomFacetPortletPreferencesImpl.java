@@ -61,14 +61,10 @@ public class CustomFacetPortletPreferencesImpl
 	}
 
 	@Override
-	public Optional<String> getFederatedSearchKeyOptional() {
+	public String getFederatedSearchKey() {
 		return _portletPreferencesHelper.getString(
-			CustomFacetPortletPreferences.PREFERENCE_KEY_FEDERATED_SEARCH_KEY);
-	}
-
-	@Override
-	public String getFederatedSearchKeyString() {
-		return getFederatedSearchKeyOptional().orElse(StringPool.BLANK);
+			CustomFacetPortletPreferences.PREFERENCE_KEY_FEDERATED_SEARCH_KEY,
+			StringPool.BLANK);
 	}
 
 	@Override
@@ -82,6 +78,13 @@ public class CustomFacetPortletPreferencesImpl
 	public int getMaxTerms() {
 		return _portletPreferencesHelper.getInteger(
 			CustomFacetPortletPreferences.PREFERENCE_KEY_MAX_TERMS, 10);
+	}
+
+	@Override
+	public String getOrder() {
+		return _portletPreferencesHelper.getString(
+			CustomFacetPortletPreferencesImpl.PREFERENCE_KEY_ORDER,
+			"count:desc");
 	}
 
 	@Override

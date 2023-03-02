@@ -120,24 +120,6 @@ public class CPDisplayLayoutModelImpl
 	public static final String TX_MANAGER = "liferayTransactionManager";
 
 	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean ENTITY_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean FINDER_CACHE_ENABLED = true;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public static final boolean COLUMN_BITMASK_ENABLED = true;
-
-	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
@@ -180,9 +162,19 @@ public class CPDisplayLayoutModelImpl
 	@Deprecated
 	public static final long CPDISPLAYLAYOUTID_COLUMN_BITMASK = 64L;
 
-	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
-		com.liferay.commerce.product.service.util.ServiceProps.get(
-			"lock.expiration.time.com.liferay.commerce.product.model.CPDisplayLayout"));
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setEntityCacheEnabled(boolean entityCacheEnabled) {
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
+	 */
+	@Deprecated
+	public static void setFinderCacheEnabled(boolean finderCacheEnabled) {
+	}
 
 	public CPDisplayLayoutModelImpl() {
 	}
@@ -260,96 +252,120 @@ public class CPDisplayLayoutModelImpl
 	public Map<String, Function<CPDisplayLayout, Object>>
 		getAttributeGetterFunctions() {
 
-		return _attributeGetterFunctions;
+		return AttributeGetterFunctionsHolder._attributeGetterFunctions;
 	}
 
 	public Map<String, BiConsumer<CPDisplayLayout, Object>>
 		getAttributeSetterBiConsumers() {
 
-		return _attributeSetterBiConsumers;
+		return AttributeSetterBiConsumersHolder._attributeSetterBiConsumers;
 	}
 
-	private static final Map<String, Function<CPDisplayLayout, Object>>
-		_attributeGetterFunctions;
-	private static final Map<String, BiConsumer<CPDisplayLayout, Object>>
-		_attributeSetterBiConsumers;
+	private static class AttributeGetterFunctionsHolder {
 
-	static {
-		Map<String, Function<CPDisplayLayout, Object>>
-			attributeGetterFunctions =
-				new LinkedHashMap<String, Function<CPDisplayLayout, Object>>();
-		Map<String, BiConsumer<CPDisplayLayout, ?>> attributeSetterBiConsumers =
-			new LinkedHashMap<String, BiConsumer<CPDisplayLayout, ?>>();
+		private static final Map<String, Function<CPDisplayLayout, Object>>
+			_attributeGetterFunctions;
 
-		attributeGetterFunctions.put(
-			"mvccVersion", CPDisplayLayout::getMvccVersion);
-		attributeSetterBiConsumers.put(
-			"mvccVersion",
-			(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setMvccVersion);
-		attributeGetterFunctions.put(
-			"ctCollectionId", CPDisplayLayout::getCtCollectionId);
-		attributeSetterBiConsumers.put(
-			"ctCollectionId",
-			(BiConsumer<CPDisplayLayout, Long>)
-				CPDisplayLayout::setCtCollectionId);
-		attributeGetterFunctions.put("uuid", CPDisplayLayout::getUuid);
-		attributeSetterBiConsumers.put(
-			"uuid",
-			(BiConsumer<CPDisplayLayout, String>)CPDisplayLayout::setUuid);
-		attributeGetterFunctions.put(
-			"CPDisplayLayoutId", CPDisplayLayout::getCPDisplayLayoutId);
-		attributeSetterBiConsumers.put(
-			"CPDisplayLayoutId",
-			(BiConsumer<CPDisplayLayout, Long>)
-				CPDisplayLayout::setCPDisplayLayoutId);
-		attributeGetterFunctions.put("groupId", CPDisplayLayout::getGroupId);
-		attributeSetterBiConsumers.put(
-			"groupId",
-			(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setGroupId);
-		attributeGetterFunctions.put(
-			"companyId", CPDisplayLayout::getCompanyId);
-		attributeSetterBiConsumers.put(
-			"companyId",
-			(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setCompanyId);
-		attributeGetterFunctions.put("userId", CPDisplayLayout::getUserId);
-		attributeSetterBiConsumers.put(
-			"userId",
-			(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setUserId);
-		attributeGetterFunctions.put("userName", CPDisplayLayout::getUserName);
-		attributeSetterBiConsumers.put(
-			"userName",
-			(BiConsumer<CPDisplayLayout, String>)CPDisplayLayout::setUserName);
-		attributeGetterFunctions.put(
-			"createDate", CPDisplayLayout::getCreateDate);
-		attributeSetterBiConsumers.put(
-			"createDate",
-			(BiConsumer<CPDisplayLayout, Date>)CPDisplayLayout::setCreateDate);
-		attributeGetterFunctions.put(
-			"modifiedDate", CPDisplayLayout::getModifiedDate);
-		attributeSetterBiConsumers.put(
-			"modifiedDate",
-			(BiConsumer<CPDisplayLayout, Date>)
-				CPDisplayLayout::setModifiedDate);
-		attributeGetterFunctions.put(
-			"classNameId", CPDisplayLayout::getClassNameId);
-		attributeSetterBiConsumers.put(
-			"classNameId",
-			(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setClassNameId);
-		attributeGetterFunctions.put("classPK", CPDisplayLayout::getClassPK);
-		attributeSetterBiConsumers.put(
-			"classPK",
-			(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setClassPK);
-		attributeGetterFunctions.put(
-			"layoutUuid", CPDisplayLayout::getLayoutUuid);
-		attributeSetterBiConsumers.put(
-			"layoutUuid",
-			(BiConsumer<CPDisplayLayout, String>)
-				CPDisplayLayout::setLayoutUuid);
+		static {
+			Map<String, Function<CPDisplayLayout, Object>>
+				attributeGetterFunctions =
+					new LinkedHashMap
+						<String, Function<CPDisplayLayout, Object>>();
 
-		_attributeGetterFunctions = Collections.unmodifiableMap(
-			attributeGetterFunctions);
-		_attributeSetterBiConsumers = Collections.unmodifiableMap(
-			(Map)attributeSetterBiConsumers);
+			attributeGetterFunctions.put(
+				"mvccVersion", CPDisplayLayout::getMvccVersion);
+			attributeGetterFunctions.put(
+				"ctCollectionId", CPDisplayLayout::getCtCollectionId);
+			attributeGetterFunctions.put("uuid", CPDisplayLayout::getUuid);
+			attributeGetterFunctions.put(
+				"CPDisplayLayoutId", CPDisplayLayout::getCPDisplayLayoutId);
+			attributeGetterFunctions.put(
+				"groupId", CPDisplayLayout::getGroupId);
+			attributeGetterFunctions.put(
+				"companyId", CPDisplayLayout::getCompanyId);
+			attributeGetterFunctions.put("userId", CPDisplayLayout::getUserId);
+			attributeGetterFunctions.put(
+				"userName", CPDisplayLayout::getUserName);
+			attributeGetterFunctions.put(
+				"createDate", CPDisplayLayout::getCreateDate);
+			attributeGetterFunctions.put(
+				"modifiedDate", CPDisplayLayout::getModifiedDate);
+			attributeGetterFunctions.put(
+				"classNameId", CPDisplayLayout::getClassNameId);
+			attributeGetterFunctions.put(
+				"classPK", CPDisplayLayout::getClassPK);
+			attributeGetterFunctions.put(
+				"layoutUuid", CPDisplayLayout::getLayoutUuid);
+
+			_attributeGetterFunctions = Collections.unmodifiableMap(
+				attributeGetterFunctions);
+		}
+
+	}
+
+	private static class AttributeSetterBiConsumersHolder {
+
+		private static final Map<String, BiConsumer<CPDisplayLayout, Object>>
+			_attributeSetterBiConsumers;
+
+		static {
+			Map<String, BiConsumer<CPDisplayLayout, ?>>
+				attributeSetterBiConsumers =
+					new LinkedHashMap<String, BiConsumer<CPDisplayLayout, ?>>();
+
+			attributeSetterBiConsumers.put(
+				"mvccVersion",
+				(BiConsumer<CPDisplayLayout, Long>)
+					CPDisplayLayout::setMvccVersion);
+			attributeSetterBiConsumers.put(
+				"ctCollectionId",
+				(BiConsumer<CPDisplayLayout, Long>)
+					CPDisplayLayout::setCtCollectionId);
+			attributeSetterBiConsumers.put(
+				"uuid",
+				(BiConsumer<CPDisplayLayout, String>)CPDisplayLayout::setUuid);
+			attributeSetterBiConsumers.put(
+				"CPDisplayLayoutId",
+				(BiConsumer<CPDisplayLayout, Long>)
+					CPDisplayLayout::setCPDisplayLayoutId);
+			attributeSetterBiConsumers.put(
+				"groupId",
+				(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setGroupId);
+			attributeSetterBiConsumers.put(
+				"companyId",
+				(BiConsumer<CPDisplayLayout, Long>)
+					CPDisplayLayout::setCompanyId);
+			attributeSetterBiConsumers.put(
+				"userId",
+				(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setUserId);
+			attributeSetterBiConsumers.put(
+				"userName",
+				(BiConsumer<CPDisplayLayout, String>)
+					CPDisplayLayout::setUserName);
+			attributeSetterBiConsumers.put(
+				"createDate",
+				(BiConsumer<CPDisplayLayout, Date>)
+					CPDisplayLayout::setCreateDate);
+			attributeSetterBiConsumers.put(
+				"modifiedDate",
+				(BiConsumer<CPDisplayLayout, Date>)
+					CPDisplayLayout::setModifiedDate);
+			attributeSetterBiConsumers.put(
+				"classNameId",
+				(BiConsumer<CPDisplayLayout, Long>)
+					CPDisplayLayout::setClassNameId);
+			attributeSetterBiConsumers.put(
+				"classPK",
+				(BiConsumer<CPDisplayLayout, Long>)CPDisplayLayout::setClassPK);
+			attributeSetterBiConsumers.put(
+				"layoutUuid",
+				(BiConsumer<CPDisplayLayout, String>)
+					CPDisplayLayout::setLayoutUuid);
+
+			_attributeSetterBiConsumers = Collections.unmodifiableMap(
+				(Map)attributeSetterBiConsumers);
+		}
+
 	}
 
 	@JSON
@@ -824,7 +840,7 @@ public class CPDisplayLayoutModelImpl
 	@Deprecated
 	@Override
 	public boolean isEntityCacheEnabled() {
-		return ENTITY_CACHE_ENABLED;
+		return true;
 	}
 
 	/**
@@ -833,7 +849,7 @@ public class CPDisplayLayoutModelImpl
 	@Deprecated
 	@Override
 	public boolean isFinderCacheEnabled() {
-		return FINDER_CACHE_ENABLED;
+		return true;
 	}
 
 	@Override
@@ -988,7 +1004,8 @@ public class CPDisplayLayoutModelImpl
 		columnName = _attributeNames.getOrDefault(columnName, columnName);
 
 		Function<CPDisplayLayout, Object> function =
-			_attributeGetterFunctions.get(columnName);
+			AttributeGetterFunctionsHolder._attributeGetterFunctions.get(
+				columnName);
 
 		if (function == null) {
 			throw new IllegalArgumentException(

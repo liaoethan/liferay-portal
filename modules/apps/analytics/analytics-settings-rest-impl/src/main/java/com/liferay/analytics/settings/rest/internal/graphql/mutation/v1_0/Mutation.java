@@ -15,9 +15,13 @@
 package com.liferay.analytics.settings.rest.internal.graphql.mutation.v1_0;
 
 import com.liferay.analytics.settings.rest.dto.v1_0.Channel;
+import com.liferay.analytics.settings.rest.dto.v1_0.ContactConfiguration;
 import com.liferay.analytics.settings.rest.dto.v1_0.DataSourceToken;
+import com.liferay.analytics.settings.rest.dto.v1_0.Field;
 import com.liferay.analytics.settings.rest.resource.v1_0.ChannelResource;
+import com.liferay.analytics.settings.rest.resource.v1_0.ContactConfigurationResource;
 import com.liferay.analytics.settings.rest.resource.v1_0.DataSourceResource;
+import com.liferay.analytics.settings.rest.resource.v1_0.FieldResource;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.portal.kernel.search.Sort;
@@ -53,12 +57,38 @@ public class Mutation {
 			channelResourceComponentServiceObjects;
 	}
 
+	public static void setContactConfigurationResourceComponentServiceObjects(
+		ComponentServiceObjects<ContactConfigurationResource>
+			contactConfigurationResourceComponentServiceObjects) {
+
+		_contactConfigurationResourceComponentServiceObjects =
+			contactConfigurationResourceComponentServiceObjects;
+	}
+
 	public static void setDataSourceResourceComponentServiceObjects(
 		ComponentServiceObjects<DataSourceResource>
 			dataSourceResourceComponentServiceObjects) {
 
 		_dataSourceResourceComponentServiceObjects =
 			dataSourceResourceComponentServiceObjects;
+	}
+
+	public static void setFieldResourceComponentServiceObjects(
+		ComponentServiceObjects<FieldResource>
+			fieldResourceComponentServiceObjects) {
+
+		_fieldResourceComponentServiceObjects =
+			fieldResourceComponentServiceObjects;
+	}
+
+	@GraphQLField
+	public Channel patchChannel(@GraphQLName("channel") Channel channel)
+		throws Exception {
+
+		return _applyComponentServiceObjects(
+			_channelResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			channelResource -> channelResource.patchChannel(channel));
 	}
 
 	@GraphQLField
@@ -69,6 +99,22 @@ public class Mutation {
 			_channelResourceComponentServiceObjects,
 			this::_populateResourceContext,
 			channelResource -> channelResource.postChannel(channel));
+	}
+
+	@GraphQLField
+	public boolean updateContactConfiguration(
+			@GraphQLName("contactConfiguration") ContactConfiguration
+				contactConfiguration)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_contactConfigurationResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			contactConfigurationResource ->
+				contactConfigurationResource.putContactConfiguration(
+					contactConfiguration));
+
+		return true;
 	}
 
 	@GraphQLField
@@ -91,6 +137,54 @@ public class Mutation {
 			this::_populateResourceContext,
 			dataSourceResource -> dataSourceResource.postDataSource(
 				dataSourceToken));
+
+		return true;
+	}
+
+	@GraphQLField
+	public boolean patchFieldAccount(@GraphQLName("fields") Field[] fields)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_fieldResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			fieldResource -> fieldResource.patchFieldAccount(fields));
+
+		return true;
+	}
+
+	@GraphQLField
+	public boolean patchFieldOrder(@GraphQLName("fields") Field[] fields)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_fieldResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			fieldResource -> fieldResource.patchFieldOrder(fields));
+
+		return true;
+	}
+
+	@GraphQLField
+	public boolean patchFieldPeople(@GraphQLName("fields") Field[] fields)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_fieldResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			fieldResource -> fieldResource.patchFieldPeople(fields));
+
+		return true;
+	}
+
+	@GraphQLField
+	public boolean patchFieldProduct(@GraphQLName("fields") Field[] fields)
+		throws Exception {
+
+		_applyVoidComponentServiceObjects(
+			_fieldResourceComponentServiceObjects,
+			this::_populateResourceContext,
+			fieldResource -> fieldResource.patchFieldProduct(fields));
 
 		return true;
 	}
@@ -146,6 +240,22 @@ public class Mutation {
 		channelResource.setRoleLocalService(_roleLocalService);
 	}
 
+	private void _populateResourceContext(
+			ContactConfigurationResource contactConfigurationResource)
+		throws Exception {
+
+		contactConfigurationResource.setContextAcceptLanguage(_acceptLanguage);
+		contactConfigurationResource.setContextCompany(_company);
+		contactConfigurationResource.setContextHttpServletRequest(
+			_httpServletRequest);
+		contactConfigurationResource.setContextHttpServletResponse(
+			_httpServletResponse);
+		contactConfigurationResource.setContextUriInfo(_uriInfo);
+		contactConfigurationResource.setContextUser(_user);
+		contactConfigurationResource.setGroupLocalService(_groupLocalService);
+		contactConfigurationResource.setRoleLocalService(_roleLocalService);
+	}
+
 	private void _populateResourceContext(DataSourceResource dataSourceResource)
 		throws Exception {
 
@@ -159,10 +269,27 @@ public class Mutation {
 		dataSourceResource.setRoleLocalService(_roleLocalService);
 	}
 
+	private void _populateResourceContext(FieldResource fieldResource)
+		throws Exception {
+
+		fieldResource.setContextAcceptLanguage(_acceptLanguage);
+		fieldResource.setContextCompany(_company);
+		fieldResource.setContextHttpServletRequest(_httpServletRequest);
+		fieldResource.setContextHttpServletResponse(_httpServletResponse);
+		fieldResource.setContextUriInfo(_uriInfo);
+		fieldResource.setContextUser(_user);
+		fieldResource.setGroupLocalService(_groupLocalService);
+		fieldResource.setRoleLocalService(_roleLocalService);
+	}
+
 	private static ComponentServiceObjects<ChannelResource>
 		_channelResourceComponentServiceObjects;
+	private static ComponentServiceObjects<ContactConfigurationResource>
+		_contactConfigurationResourceComponentServiceObjects;
 	private static ComponentServiceObjects<DataSourceResource>
 		_dataSourceResourceComponentServiceObjects;
+	private static ComponentServiceObjects<FieldResource>
+		_fieldResourceComponentServiceObjects;
 
 	private AcceptLanguage _acceptLanguage;
 	private com.liferay.portal.kernel.model.Company _company;

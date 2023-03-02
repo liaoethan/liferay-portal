@@ -26,10 +26,37 @@ RedirectDisplayContext redirectDisplayContext = (RedirectDisplayContext)request.
 />
 
 <c:choose>
+	<c:when test="<%= redirectDisplayContext.isShowRedirectEntries() %>">
+		<liferay-util:include page="/view_redirect_entries.jsp" servletContext="<%= application %>" />
+	</c:when>
 	<c:when test="<%= redirectDisplayContext.isShowRedirectNotFoundEntries() %>">
 		<liferay-util:include page="/view_redirect_not_found_entries.jsp" servletContext="<%= application %>" />
 	</c:when>
 	<c:otherwise>
-		<liferay-util:include page="/view_redirect_entries.jsp" servletContext="<%= application %>" />
+
+		<%
+		RedirectPatternConfigurationDisplayContext redirectPatternConfigurationDisplayContext = (RedirectPatternConfigurationDisplayContext)request.getAttribute(RedirectPatternConfigurationDisplayContext.class.getName());
+		%>
+
+		<div>
+			<react:component
+				module="js/RedirectPatterns"
+				props="<%= redirectPatternConfigurationDisplayContext.getRedirectPatterns() %>"
+			/>
+		</div>
+
+		<c:if test="<%= SessionErrors.contains(renderRequest, ConfigurationModelListenerException.class) %>">
+			<aui:script>
+				Liferay.Util.openToast({
+					message:
+						'<liferay-ui:message key="patterns-must-be-valid-regular-expressions" />',
+					title: '<liferay-ui:message key="error" />',
+					toastProps: {
+						autoClose: 5000,
+					},
+					type: 'danger',
+				});
+			</aui:script>
+		</c:if>
 	</c:otherwise>
 </c:choose>

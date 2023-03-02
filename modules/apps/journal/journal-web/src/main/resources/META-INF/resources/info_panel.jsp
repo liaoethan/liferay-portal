@@ -76,6 +76,7 @@ Map<String, Object> componentContext = journalDisplayContext.getComponentContext
 										"trashEnabled", componentContext.get("trashEnabled")
 									).build()
 								%>'
+								aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 								dropdownItems="<%= journalDisplayContext.getFolderInfoPanelDropdownItems(folder) %>"
 								propsTransformer="js/ElementsDefaultPropsTransformer"
 							/>
@@ -151,6 +152,7 @@ Map<String, Object> componentContext = journalDisplayContext.getComponentContext
 										"trashEnabled", componentContext.get("trashEnabled")
 									).build()
 								%>'
+								aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
 								dropdownItems="<%= journalDisplayContext.getArticleInfoPanelDropdownItems(article) %>"
 								propsTransformer="js/ElementsDefaultPropsTransformer"
 							/>
@@ -179,9 +181,12 @@ Map<String, Object> componentContext = journalDisplayContext.getComponentContext
 
 			<p class="sidebar-dt"><liferay-ui:message key="status" /></p>
 
-			<p class="sidebar-dd">
-				<aui:workflow-status markupView="lexicon" showIcon="<%= false %>" showLabel="<%= false %>" status="<%= article.getStatus() %>" />
-			</p>
+			<div class="sidebar-dd">
+				<liferay-portal-workflow:status
+					showStatusLabel="<%= false %>"
+					status="<%= article.getStatus() %>"
+				/>
+			</div>
 
 			<p class="sidebar-dt"><liferay-ui:message key="title" /></p>
 

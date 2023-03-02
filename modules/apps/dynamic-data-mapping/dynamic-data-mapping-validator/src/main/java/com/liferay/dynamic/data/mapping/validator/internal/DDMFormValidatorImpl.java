@@ -18,7 +18,7 @@ import com.liferay.dynamic.data.mapping.constants.DDMConstants;
 import com.liferay.dynamic.data.mapping.expression.CreateExpressionRequest;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionException;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
-import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesTracker;
+import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTypeServicesRegistry;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldValueValidationException;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
@@ -29,6 +29,7 @@ import com.liferay.dynamic.data.mapping.model.DDMFormFieldValidationExpression;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldName;
+import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustNotDuplicateFieldReference;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetAvailableLocales;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocale;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException.MustSetDefaultLocaleAsAvailableLocale;
@@ -70,7 +71,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Marcellus Tavares
  */
-@Component(immediate = true, service = DDMFormValidator.class)
+@Component(service = DDMFormValidator.class)
 public class DDMFormValidatorImpl implements DDMFormValidator {
 
 	@Override
@@ -90,6 +91,16 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 		}
 
 		_validateDDMFormFieldNames(ddmFormFields);
+
+		Set<String> duplicatedDDMFormFieldReferences = new HashSet<>();
+
+		_addDuplicatedDDMFormFieldReferences(
+			ddmFormFields, new HashSet<>(), duplicatedDDMFormFieldReferences);
+
+		if (SetUtil.isNotEmpty(duplicatedDDMFormFieldReferences)) {
+			throw new MustNotDuplicateFieldReference(
+				duplicatedDDMFormFieldReferences);
+		}
 
 		_validateDDMFormFields(
 			ddmFormFields, new HashSet<String>(),
@@ -146,6 +157,24 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 			throw new MustSetValidValidationExpression(
 				ddmFormField.getName(),
 				ddmFormFieldValidationExpression.getValue());
+		}
+	}
+
+	private void _addDuplicatedDDMFormFieldReferences(
+		List<DDMFormField> ddmFormFields, Set<String> ddmFormFieldReferences,
+		Set<String> duplicatedDDMFormFieldReferences) {
+
+		for (DDMFormField ddmFormField : ddmFormFields) {
+			if (!ddmFormFieldReferences.add(
+					StringUtil.toLowerCase(ddmFormField.getFieldReference()))) {
+
+				duplicatedDDMFormFieldReferences.add(
+					ddmFormField.getFieldReference());
+			}
+
+			_addDuplicatedDDMFormFieldReferences(
+				ddmFormField.getNestedDDMFormFields(), ddmFormFieldReferences,
+				duplicatedDDMFormFieldReferences);
 		}
 	}
 
@@ -374,7 +403,7 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 		}
 
 		Set<String> ddmFormFieldTypeNames = new HashSet<>(
-			_ddmFormFieldTypeServicesTracker.getDDMFormFieldTypeNames());
+			_ddmFormFieldTypeServicesRegistry.getDDMFormFieldTypeNames());
 
 		ddmFormFieldTypeNames.addAll(
 			SetUtil.fromArray(DDMConstants.SUPPORTED_DDM_FORM_FIELD_TYPES));
@@ -475,6 +504,6 @@ public class DDMFormValidatorImpl implements DDMFormValidator {
 	private DDMExpressionFactory _ddmExpressionFactory;
 
 	@Reference
-	private DDMFormFieldTypeServicesTracker _ddmFormFieldTypeServicesTracker;
+	private DDMFormFieldTypeServicesRegistry _ddmFormFieldTypeServicesRegistry;
 
 }

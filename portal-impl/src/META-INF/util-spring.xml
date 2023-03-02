@@ -11,10 +11,7 @@
 	<bean class="com.liferay.expando.kernel.service.permission.ExpandoColumnPermissionUtil" id="com.liferay.expando.kernel.service.permission.ExpandoColumnPermissionUtil">
 		<property name="expandoColumnPermission" ref="com.liferay.expando.kernel.service.permission.ExpandoColumnPermission" />
 	</bean>
-	<bean class="com.liferay.mail.util.DummyHook" id="com.liferay.mail.util.DummyHook" />
 	<bean class="com.liferay.portal.bean.BeanPropertiesImpl" id="com.liferay.portal.bean.BeanPropertiesImpl" />
-	<bean class="com.liferay.portal.convert.documentlibrary.DocumentLibraryConvertProcess" />
-	<bean class="com.liferay.portal.convert.documentlibrary.DocumentLibraryExtraSettingsConvertProcess" />
 	<bean class="com.liferay.portal.dao.jdbc.CurrentConnectionImpl" id="com.liferay.portal.dao.jdbc.CurrentConnectionImpl" />
 	<bean class="com.liferay.portal.format.IdenticalPhoneNumberFormatImpl" id="com.liferay.portal.format.IdenticalPhoneNumberFormatImpl" />
 	<bean class="com.liferay.portal.image.GhostscriptImpl" id="com.liferay.portal.image.GhostscriptImpl" />
@@ -103,11 +100,6 @@
 	<bean class="com.liferay.portal.patcher.PatcherImpl" id="com.liferay.portal.kernel.patcher.Patcher" />
 	<bean class="com.liferay.portal.kernel.patcher.PatcherUtil" id="com.liferay.portal.kernel.patcher.PatcherUtil">
 		<property name="patcher" ref="com.liferay.portal.kernel.patcher.Patcher" />
-	</bean>
-	<bean class="com.liferay.portal.kernel.poller.comet.CometHandlerPoolUtil" id="com.liferay.portal.kernel.poller.comet.CometHandlerPoolUtil">
-		<property name="cometHandlerPool">
-			<bean class="com.liferay.portal.kernel.poller.comet.CometHandlerPool" />
-		</property>
 	</bean>
 	<bean class="com.liferay.portal.kernel.portlet.DefaultControlPanelEntry" id="com.liferay.portal.kernel.portlet.DefaultControlPanelEntry" />
 	<bean class="com.liferay.portal.kernel.portlet.PortletContainerUtil" id="com.liferay.portal.kernel.portlet.PortletContainerUtil">
@@ -200,11 +192,6 @@
 			<bean class="com.liferay.portal.upgrade.util.MemoryValueMapperFactoryImpl" />
 		</property>
 	</bean>
-	<bean class="com.liferay.portal.kernel.util.CalendarFactoryUtil" id="com.liferay.portal.kernel.util.CalendarFactoryUtil">
-		<property name="calendarFactory">
-			<bean class="com.liferay.portal.util.CalendarFactoryImpl" />
-		</property>
-	</bean>
 	<bean class="com.liferay.portal.util.ColorSchemeFactoryImpl" id="com.liferay.portal.kernel.util.ColorSchemeFactory" />
 	<bean class="com.liferay.portal.kernel.util.ColorSchemeFactoryUtil" id="com.liferay.portal.kernel.util.ColorSchemeFactoryUtil">
 		<property name="colorSchemeFactory" ref="com.liferay.portal.kernel.util.ColorSchemeFactory" />
@@ -214,6 +201,7 @@
 			<bean class="com.liferay.portal.util.CustomJspRegistryImpl" />
 		</property>
 	</bean>
+	<bean class="com.liferay.portal.util.DateFormatFactoryImpl" id="com.liferay.portal.kernel.util.DateFormatFactory" />
 	<bean class="com.liferay.portal.kernel.util.DateFormatFactoryUtil" id="com.liferay.portal.kernel.util.DateFormatFactoryUtil">
 		<property name="dateFormatFactory">
 			<bean class="com.liferay.portal.util.DateFormatFactoryImpl" />
@@ -232,8 +220,9 @@
 	<bean class="com.liferay.portal.kernel.util.FileUtil" id="com.liferay.portal.kernel.util.FileUtil">
 		<property name="file" ref="com.liferay.portal.kernel.util.File" />
 	</bean>
+	<bean class="com.liferay.portal.util.HtmlImpl" id="com.liferay.portal.kernel.util.Html" />
 	<bean class="com.liferay.portal.kernel.util.HtmlUtil" id="com.liferay.portal.kernel.util.HtmlUtil">
-		<property name="html" ref="com.liferay.portal.util.HtmlImpl" />
+		<property name="html" ref="com.liferay.portal.kernel.util.Html" />
 	</bean>
 	<bean class="com.liferay.portal.util.LocalizationImpl" id="com.liferay.portal.kernel.util.Localization" />
 	<bean class="com.liferay.portal.kernel.util.LocalizationUtil" id="com.liferay.portal.kernel.util.LocalizationUtil">
@@ -241,11 +230,6 @@
 	</bean>
 	<bean class="com.liferay.portal.kernel.util.PortalUtil" id="com.liferay.portal.kernel.util.PortalUtil">
 		<property name="portal" ref="com.liferay.portal.util.Portal" />
-	</bean>
-	<bean class="com.liferay.portal.kernel.util.PortletListerFactoryUtil" id="com.liferay.portal.kernel.util.PortletListerFactoryUtil">
-		<property name="portletListerFactory">
-			<bean class="com.liferay.portal.util.PortletListerFactoryImpl" />
-		</property>
 	</bean>
 	<bean class="com.liferay.portal.util.ThemeFactoryImpl" id="com.liferay.portal.kernel.util.ThemeFactory" />
 	<bean class="com.liferay.portal.kernel.util.ThemeFactoryUtil" id="com.liferay.portal.kernel.util.ThemeFactoryUtil">
@@ -304,7 +288,6 @@
 	<bean class="com.liferay.portal.template.ClassLoaderResourceParser" id="com.liferay.portal.template.ClassLoaderResourceParser" />
 	<bean class="com.liferay.portal.template.DDMTemplateResourceParser" id="com.liferay.portal.template.DDMTemplateResourceParser" />
 	<bean class="com.liferay.portal.template.ThemeResourceParser" id="com.liferay.portal.template.ThemeResourceParser" />
-	<bean class="com.liferay.portal.util.HtmlImpl" id="com.liferay.portal.util.HtmlImpl" />
 	<bean class="com.liferay.portal.util.PortalImpl" id="com.liferay.portal.util.Portal" />
 
 	<!--

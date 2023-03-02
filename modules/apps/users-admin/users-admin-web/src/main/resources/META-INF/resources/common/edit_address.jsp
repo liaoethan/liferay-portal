@@ -68,7 +68,7 @@ PortalUtil.addPortletBreadcrumbEntry(request, editContactInformationDisplayConte
 
 				<liferay-ui:error key="<%= NoSuchListTypeException.class.getName() + editContactInformationDisplayContext.getClassName() + ListTypeConstants.ADDRESS %>" message="please-select-a-type" />
 
-				<aui:select label="type" listType="<%= editContactInformationDisplayContext.getClassName() + ListTypeConstants.ADDRESS %>" name="addressListTypeId" />
+				<aui:select label="type" listType="<%= editContactInformationDisplayContext.getClassName() + ListTypeConstants.ADDRESS %>" listTypeFieldName="listTypeId" name="addressListTypeId" />
 
 				<liferay-ui:error exception="<%= AddressStreetException.class %>" message="please-enter-a-valid-street" />
 
@@ -109,10 +109,28 @@ PortalUtil.addPortletBreadcrumbEntry(request, editContactInformationDisplayConte
 				<aui:input cssClass="mailing-ctrl" fieldParam="addressMailing" id="addressMailing" name="mailing" />
 			</clay:sheet-section>
 
-			<clay:sheet-footer>
-				<aui:button primary="<%= true %>" type="submit" />
+			<clay:sheet-footer
+				cssClass="sheet-footer-btn-block-sm-down"
+			>
+				<div class="btn-group">
+					<div class="btn-group-item">
+						<clay:button
+							displayType="primary"
+							label='<%= LanguageUtil.get(resourceBundle, "save") %>'
+							type="submit"
+						/>
+					</div>
 
-				<aui:button href="<%= editContactInformationDisplayContext.getRedirect() %>" type="cancel" />
+					<div class="btn-group-item">
+						<clay:link
+							cssClass="btn btn-secondary"
+							displayType="null"
+							href="<%= editContactInformationDisplayContext.getRedirect() %>"
+							label='<%= LanguageUtil.get(resourceBundle, "cancel") %>'
+							role="button"
+						/>
+					</div>
+				</div>
 			</clay:sheet-footer>
 		</clay:sheet>
 	</clay:container-fluid>

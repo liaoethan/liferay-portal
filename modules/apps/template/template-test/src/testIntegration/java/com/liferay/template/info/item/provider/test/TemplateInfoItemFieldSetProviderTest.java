@@ -20,21 +20,31 @@ import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.asset.test.util.AssetTestUtil;
+import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
+import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
+import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.Value;
-import com.liferay.dynamic.data.mapping.service.DDMFieldLocalServiceUtil;
 import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.dynamic.data.mapping.util.DDMFormValuesToFieldsConverter;
 import com.liferay.info.field.InfoField;
 import com.liferay.info.field.InfoFieldSet;
 import com.liferay.info.field.InfoFieldValue;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.test.util.JournalTestUtil;
+import com.liferay.journal.util.JournalConverter;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
@@ -51,6 +61,11 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.DateUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -61,6 +76,10 @@ import com.liferay.portlet.display.template.PortletDisplayTemplate;
 import com.liferay.template.info.item.provider.TemplateInfoItemFieldSetProvider;
 import com.liferay.template.model.TemplateEntry;
 import com.liferay.template.test.util.TemplateTestUtil;
+
+import java.time.chrono.IsoChronology;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.FormatStyle;
 
 import java.util.List;
 import java.util.Locale;
@@ -148,8 +167,11 @@ public class TemplateInfoItemFieldSetProviderTest {
 
 		Assert.assertEquals(infoFields.toString(), 1, infoFields.size());
 
-		InfoField<?> infoField = infoFields.get(0);
+		InfoField infoField = infoFields.get(0);
 
+		Assert.assertTrue(
+			GetterUtil.getBoolean(
+				infoField.getAttribute(TextInfoFieldType.HTML)));
 		Assert.assertEquals(
 			infoFields.toString(),
 			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
@@ -187,8 +209,11 @@ public class TemplateInfoItemFieldSetProviderTest {
 
 		Assert.assertEquals(infoFields.toString(), 1, infoFields.size());
 
-		InfoField<?> infoField = infoFields.get(0);
+		InfoField infoField = infoFields.get(0);
 
+		Assert.assertTrue(
+			GetterUtil.getBoolean(
+				infoField.getAttribute(TextInfoFieldType.HTML)));
 		Assert.assertEquals(
 			infoFields.toString(),
 			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
@@ -210,10 +235,7 @@ public class TemplateInfoItemFieldSetProviderTest {
 	public void testGetInfoFieldValuesByClassNameAndVariationKeyWhenTemplateEntryExists()
 		throws PortalException {
 
-		DDMStructure ddmStructure = _journalArticle.getDDMStructure();
-
-		DDMFormValues ddmFormValues = DDMFieldLocalServiceUtil.getDDMFormValues(
-			ddmStructure.getDDMForm(), _journalArticle.getId());
+		DDMFormValues ddmFormValues = _journalArticle.getDDMFormValues();
 
 		Map<String, List<DDMFormFieldValue>> ddmFormFieldValuesMap =
 			ddmFormValues.getDDMFormFieldValuesMap(false);
@@ -245,8 +267,11 @@ public class TemplateInfoItemFieldSetProviderTest {
 
 		InfoFieldValue<Object> infoFieldValue = infoFieldValues.get(0);
 
-		InfoField<?> infoField = infoFieldValue.getInfoField();
+		InfoField infoField = infoFieldValue.getInfoField();
 
+		Assert.assertTrue(
+			GetterUtil.getBoolean(
+				infoField.getAttribute(TextInfoFieldType.HTML)));
 		Assert.assertEquals(
 			infoField.toString(),
 			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
@@ -371,6 +396,109 @@ public class TemplateInfoItemFieldSetProviderTest {
 	}
 
 	@Test
+	public void testGetInfoFieldValuesRenderingDateInfoFieldType()
+		throws Exception {
+
+		_group = GroupTestUtil.updateDisplaySettings(
+			_group.getGroupId(),
+			ListUtil.fromArray(LocaleUtil.US, LocaleUtil.SPAIN), LocaleUtil.US);
+
+		TemplateEntry journalArticleTemplateEntry =
+			TemplateTestUtil.addTemplateEntry(
+				JournalArticle.class.getName(),
+				_journalArticle.getDDMStructureKey(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				TemplateTestUtil.getSampleScriptFTL("createDate"),
+				_serviceContext);
+
+		List<InfoFieldValue<Object>> infoFieldValues =
+			_templateInfoItemFieldSetProvider.getInfoFieldValues(
+				JournalArticle.class.getName(),
+				_journalArticle.getDDMStructureKey(), _journalArticle);
+
+		Assert.assertEquals(
+			infoFieldValues.toString(), 1, infoFieldValues.size());
+
+		InfoFieldValue<Object> infoFieldValue = infoFieldValues.get(0);
+
+		InfoField<?> infoField = infoFieldValue.getInfoField();
+
+		Assert.assertEquals(
+			infoField.toString(),
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				journalArticleTemplateEntry.getTemplateEntryId(),
+			infoField.getName());
+
+		String value = (String)infoFieldValue.getValue(LocaleUtil.US);
+
+		Assert.assertNotNull(value);
+
+		Assert.assertEquals(
+			DateUtil.getDate(
+				_journalArticle.getCreateDate(),
+				DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+					FormatStyle.SHORT, FormatStyle.SHORT,
+					IsoChronology.INSTANCE, LocaleUtil.US),
+				LocaleUtil.US),
+			value);
+	}
+
+	@Test
+	public void testGetInfoFieldValuesRenderingDateInfoFieldTypeSpainLocale()
+		throws Exception {
+
+		_group = GroupTestUtil.updateDisplaySettings(
+			_group.getGroupId(),
+			ListUtil.fromArray(LocaleUtil.US, LocaleUtil.SPAIN), LocaleUtil.US);
+
+		TemplateEntry journalArticleTemplateEntry =
+			TemplateTestUtil.addTemplateEntry(
+				JournalArticle.class.getName(),
+				_journalArticle.getDDMStructureKey(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				TemplateTestUtil.getSampleScriptFTL("createDate"),
+				_serviceContext);
+
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
+
+		themeDisplay.setLocale(LocaleUtil.SPAIN);
+
+		List<InfoFieldValue<Object>> infoFieldValues =
+			_templateInfoItemFieldSetProvider.getInfoFieldValues(
+				JournalArticle.class.getName(),
+				_journalArticle.getDDMStructureKey(), _journalArticle);
+
+		Assert.assertEquals(
+			infoFieldValues.toString(), 1, infoFieldValues.size());
+
+		InfoFieldValue<Object> infoFieldValue = infoFieldValues.get(0);
+
+		InfoField<?> infoField = infoFieldValue.getInfoField();
+
+		Assert.assertEquals(
+			infoField.toString(),
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				journalArticleTemplateEntry.getTemplateEntryId(),
+			infoField.getName());
+
+		String value = (String)infoFieldValue.getValue(LocaleUtil.SPAIN);
+
+		Assert.assertNotNull(value);
+
+		Assert.assertEquals(
+			DateUtil.getDate(
+				_journalArticle.getCreateDate(),
+				DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+					FormatStyle.SHORT, FormatStyle.SHORT,
+					IsoChronology.INSTANCE, LocaleUtil.SPAIN),
+				LocaleUtil.SPAIN),
+			value);
+	}
+
+	@Test
 	public void testGetInfoFieldValuesRenderingOtherListInfoFieldType()
 		throws Exception {
 
@@ -414,9 +542,193 @@ public class TemplateInfoItemFieldSetProviderTest {
 			infoField.getName());
 
 		_assertExpectedNames(
-			(String)infoFieldValue.getValue(
-				_portal.getSiteDefaultLocale(_group.getGroupId())),
+			(String)infoFieldValue.getValue(LocaleUtil.US),
 			StringUtil.toLowerCase(tagName1), StringUtil.toLowerCase(tagName2));
+	}
+
+	@Test
+	public void testGetInfoFieldValuesRenderingSelectInfoFieldTypeMultipleSelection()
+		throws Exception {
+
+		_group = GroupTestUtil.updateDisplaySettings(
+			_group.getGroupId(),
+			ListUtil.fromArray(LocaleUtil.US, LocaleUtil.SPAIN), LocaleUtil.US);
+
+		String expectedKey1 = RandomTestUtil.randomString(10);
+		String expectedKey2 = RandomTestUtil.randomString(10);
+
+		DDMFormField ddmFormField = _createDDMFormField(
+			true,
+			HashMapBuilder.put(
+				expectedKey1, RandomTestUtil.randomString()
+			).put(
+				expectedKey2, RandomTestUtil.randomString()
+			).build(),
+			DDMFormFieldTypeConstants.SELECT);
+
+		JournalArticle journalArticle = JournalTestUtil.addJournalArticle(
+			_dataDefinitionResourceFactory, ddmFormField,
+			_ddmFormValuesToFieldsConverter,
+			JSONUtil.putAll(
+				expectedKey1, expectedKey2
+			).toString(),
+			_group.getGroupId(), _journalConverter);
+
+		TemplateEntry journalArticleTemplateEntry =
+			TemplateTestUtil.addTemplateEntry(
+				JournalArticle.class.getName(),
+				journalArticle.getDDMStructureKey(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				TemplateTestUtil.getSampleScriptFTL(
+					DDMStructure.class.getSimpleName() + StringPool.UNDERLINE +
+						ddmFormField.getName()),
+				_serviceContext);
+
+		List<InfoFieldValue<Object>> infoFieldValues =
+			_templateInfoItemFieldSetProvider.getInfoFieldValues(
+				JournalArticle.class.getName(),
+				journalArticle.getDDMStructureKey(), journalArticle);
+
+		Assert.assertEquals(
+			infoFieldValues.toString(), 1, infoFieldValues.size());
+
+		InfoFieldValue<Object> infoFieldValue = infoFieldValues.get(0);
+
+		InfoField<?> infoField = infoFieldValue.getInfoField();
+
+		Assert.assertEquals(
+			infoField.toString(),
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				journalArticleTemplateEntry.getTemplateEntryId(),
+			infoField.getName());
+
+		String value = (String)infoFieldValue.getValue(LocaleUtil.US);
+
+		Assert.assertNotNull(value);
+
+		JSONArray jsonArray = _jsonFactory.createJSONArray(value);
+
+		Assert.assertEquals(jsonArray.toString(), 2, jsonArray.length());
+
+		String[] expectedKeys = {expectedKey1, expectedKey2};
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			Assert.assertTrue(
+				ArrayUtil.contains(expectedKeys, jsonArray.getString(i)));
+		}
+	}
+
+	@Test
+	public void testGetInfoFieldValuesRenderingSelectInfoFieldTypeNoSelection()
+		throws Exception {
+
+		_group = GroupTestUtil.updateDisplaySettings(
+			_group.getGroupId(),
+			ListUtil.fromArray(LocaleUtil.US, LocaleUtil.SPAIN), LocaleUtil.US);
+
+		DDMFormField ddmFormField = _createDDMFormField(
+			false,
+			HashMapBuilder.put(
+				RandomTestUtil.randomString(10), RandomTestUtil.randomString()
+			).put(
+				RandomTestUtil.randomString(10), RandomTestUtil.randomString()
+			).build(),
+			DDMFormFieldTypeConstants.SELECT);
+
+		JournalArticle journalArticle = JournalTestUtil.addJournalArticle(
+			_dataDefinitionResourceFactory, ddmFormField,
+			_ddmFormValuesToFieldsConverter, StringPool.BLANK,
+			_group.getGroupId(), _journalConverter);
+
+		TemplateEntry journalArticleTemplateEntry =
+			TemplateTestUtil.addTemplateEntry(
+				JournalArticle.class.getName(),
+				journalArticle.getDDMStructureKey(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				TemplateTestUtil.getSampleScriptFTL(
+					DDMStructure.class.getSimpleName() + StringPool.UNDERLINE +
+						ddmFormField.getName()),
+				_serviceContext);
+
+		List<InfoFieldValue<Object>> infoFieldValues =
+			_templateInfoItemFieldSetProvider.getInfoFieldValues(
+				JournalArticle.class.getName(),
+				journalArticle.getDDMStructureKey(), journalArticle);
+
+		Assert.assertEquals(
+			infoFieldValues.toString(), 1, infoFieldValues.size());
+
+		InfoFieldValue<Object> infoFieldValue = infoFieldValues.get(0);
+
+		InfoField<?> infoField = infoFieldValue.getInfoField();
+
+		Assert.assertEquals(
+			infoField.toString(),
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				journalArticleTemplateEntry.getTemplateEntryId(),
+			infoField.getName());
+
+		Assert.assertEquals(
+			StringPool.BLANK, infoFieldValue.getValue(LocaleUtil.US));
+	}
+
+	@Test
+	public void testGetInfoFieldValuesRenderingSelectInfoFieldTypeSingleSelection()
+		throws Exception {
+
+		_group = GroupTestUtil.updateDisplaySettings(
+			_group.getGroupId(),
+			ListUtil.fromArray(LocaleUtil.US, LocaleUtil.SPAIN), LocaleUtil.US);
+
+		String expectedKey = RandomTestUtil.randomString(10);
+
+		DDMFormField ddmFormField = _createDDMFormField(
+			false,
+			HashMapBuilder.put(
+				RandomTestUtil.randomString(10), RandomTestUtil.randomString()
+			).put(
+				expectedKey, RandomTestUtil.randomString()
+			).build(),
+			DDMFormFieldTypeConstants.SELECT);
+
+		JournalArticle journalArticle = JournalTestUtil.addJournalArticle(
+			_dataDefinitionResourceFactory, ddmFormField,
+			_ddmFormValuesToFieldsConverter,
+			JSONUtil.put(
+				expectedKey
+			).toString(),
+			_group.getGroupId(), _journalConverter);
+
+		TemplateEntry journalArticleTemplateEntry =
+			TemplateTestUtil.addTemplateEntry(
+				JournalArticle.class.getName(),
+				journalArticle.getDDMStructureKey(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				TemplateTestUtil.getSampleScriptFTL(
+					DDMStructure.class.getSimpleName() + StringPool.UNDERLINE +
+						ddmFormField.getName()),
+				_serviceContext);
+
+		List<InfoFieldValue<Object>> infoFieldValues =
+			_templateInfoItemFieldSetProvider.getInfoFieldValues(
+				JournalArticle.class.getName(),
+				journalArticle.getDDMStructureKey(), journalArticle);
+
+		Assert.assertEquals(
+			infoFieldValues.toString(), 1, infoFieldValues.size());
+
+		InfoFieldValue<Object> infoFieldValue = infoFieldValues.get(0);
+
+		InfoField<?> infoField = infoFieldValue.getInfoField();
+
+		Assert.assertEquals(
+			infoField.toString(),
+			PortletDisplayTemplate.DISPLAY_STYLE_PREFIX +
+				journalArticleTemplateEntry.getTemplateEntryId(),
+			infoField.getName());
+
+		Assert.assertEquals(
+			expectedKey, infoFieldValue.getValue(LocaleUtil.US));
 	}
 
 	private void _assertExpectedNames(
@@ -432,6 +744,38 @@ public class TemplateInfoItemFieldSetProviderTest {
 		for (String expectedName : expectedNames) {
 			Assert.assertTrue(ArrayUtil.contains(currentNames, expectedName));
 		}
+	}
+
+	private DDMFormField _createDDMFormField(
+		boolean multiple, Map<String, String> optionsMap, String type) {
+
+		DDMFormField ddmFormField = new DDMFormField(
+			RandomTestUtil.randomString(10), type);
+
+		ddmFormField.setDataType("text");
+		ddmFormField.setIndexType("text");
+		ddmFormField.setLocalizable(true);
+		ddmFormField.setMultiple(multiple);
+
+		LocalizedValue localizedValue = new LocalizedValue(LocaleUtil.US);
+
+		localizedValue.addString(
+			LocaleUtil.US, RandomTestUtil.randomString(10));
+
+		ddmFormField.setLabel(localizedValue);
+
+		DDMFormFieldOptions ddmFormFieldOptions =
+			ddmFormField.getDDMFormFieldOptions();
+
+		for (Map.Entry<String, String> entry : optionsMap.entrySet()) {
+			String optionKey = entry.getKey();
+			String optionLabel = entry.getValue();
+
+			ddmFormFieldOptions.addOptionLabel(
+				optionKey, LocaleUtil.US, optionLabel);
+		}
+
+		return ddmFormField;
 	}
 
 	private MockHttpServletRequest _getMockHttpServletRequest(
@@ -458,6 +802,8 @@ public class TemplateInfoItemFieldSetProviderTest {
 		themeDisplay.setLayoutSet(layoutSet);
 		themeDisplay.setLookAndFeel(
 			layoutSet.getTheme(), layoutSet.getColorScheme());
+
+		themeDisplay.setLocale(_portal.getSiteDefaultLocale(_group));
 
 		themeDisplay.setPermissionChecker(
 			PermissionThreadLocal.getPermissionChecker());
@@ -486,13 +832,26 @@ public class TemplateInfoItemFieldSetProviderTest {
 	@Inject
 	private CompanyLocalService _companyLocalService;
 
+	@Inject
+	private DataDefinitionResource.Factory _dataDefinitionResourceFactory;
+
+	@Inject
+	private DDMFormValuesToFieldsConverter _ddmFormValuesToFieldsConverter;
+
 	@DeleteAfterTestRun
 	private Group _group;
 
-	@Inject
-	private InfoItemServiceTracker _infoItemServiceTracker;
-
 	private JournalArticle _journalArticle;
+
+	@Inject
+	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Inject
+	private JournalConverter _journalConverter;
+
+	@Inject
+	private JSONFactory _jsonFactory;
+
 	private Layout _layout;
 
 	@Inject

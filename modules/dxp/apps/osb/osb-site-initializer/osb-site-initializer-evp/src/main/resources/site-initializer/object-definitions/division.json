@@ -1,6 +1,6 @@
 {
 	"accountEntryRestricted": false,
-	"accountEntryRestrictedObjectFieldId": 0,
+	"accountEntryRestrictedObjectFieldName": "",
 	"actions": {
 		"delete": {
 		},
@@ -190,7 +190,7 @@
 	],
 	"objectViews": [
 	],
-	"panelCategoryKey": "control_panel.users",
+	"panelCategoryKey": "control_panel.object",
 	"parameterRequired": false,
 	"pluralLabel": {
 		"en_US": "EVP Divisions"

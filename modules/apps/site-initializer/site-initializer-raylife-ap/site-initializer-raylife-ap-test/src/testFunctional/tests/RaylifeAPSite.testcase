@@ -1,6 +1,7 @@
 @component-name = "portal-solutions"
 definition {
 
+	property custom.properties = "feature.flag.LPS-165493=true";
 	property osgi.modules.includes = "site-initializer-raylife-ap";
 	property portal.release = "false";
 	property portal.upstream = "true";
@@ -20,9 +21,9 @@ definition {
 		task ("Create a new Raylife AP Site") {
 			Site.openSitesAdmin();
 
-			TeamExtranet.addSiteTemplateCP(
-				siteName = "${testSiteName}",
-				siteTemplateName = "Raylife AP");
+			Raylife.createRaylifeSite(siteName = "Raylife D2C");
+
+			Raylife.createRaylifeSite(siteName = "Raylife AP");
 		}
 	}
 
@@ -31,7 +32,7 @@ definition {
 
 		RaylifeAP.tearDownCP();
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -40,12 +41,17 @@ definition {
 	}
 
 	@description = "Verify if Raylife AP can be created"
-	@priority = "5"
+	@priority = 5
 	test CanRaylifeAPCreated {
+		property test.name.skip.portal.instance = "RaylifeAPSite#CanRaylifeAPCreated";
+
+		// Skip portal instance due to LRQA-79129. Unskip after it is resolved
+
 		property portal.acceptance = "true";
+		property solutions.acceptance = "true";
 
 		task ("Go to Raylife AP Site") {
-			ApplicationsMenu.gotoSite(site = "${testSiteName}");
+			RaylifeAP.goToRaylifeAPSiteWithRefresh();
 		}
 
 		task ("Assert the Raylife AP Welcome Page is present") {

@@ -18,7 +18,7 @@ definition {
 		SearchAdministration.executeReindex();
 	}
 
-	@priority = "4"
+	@priority = 4
 	@refactorneeded
 	test ViewRedirectArchive73101 {
 		property data.archive.type = "data-archive-redirection";
@@ -31,7 +31,12 @@ definition {
 
 		FormFields.enableCheckbox(fieldName = "enabled");
 
-		PortletEntry.update();
+		if (IsElementPresent(key_text = "Save", locator1 = "Button#ANY")) {
+			PortletEntry.save();
+		}
+		else {
+			PortletEntry.update();
+		}
 
 		Upgrade.viewAndAccessRedirects();
 

@@ -43,13 +43,13 @@ isbnsString = StringUtil.merge(isbns, StringPool.SPACE);
 				<liferay-ui:message key="the-following-are-invalid-isbn-numbers" />
 
 				<%
-				Enumeration<String> enu = ve.getFailedKeys();
+				Enumeration<String> enumeration = ve.getFailedKeys();
 
-				while (enu.hasMoreElements()) {
-					String isbn = enu.nextElement();
+				while (enumeration.hasMoreElements()) {
+					String isbn = enumeration.nextElement();
 				%>
 
-					<strong><%= HtmlUtil.escape(isbn) %></strong><%= enu.hasMoreElements() ? ", " : "." %>
+					<strong><%= HtmlUtil.escape(isbn) %></strong><%= enumeration.hasMoreElements() ? ", " : "." %>
 
 				<%
 				}
@@ -58,7 +58,7 @@ isbnsString = StringUtil.merge(isbns, StringPool.SPACE);
 			</liferay-ui:error>
 
 			<aui:fieldset>
-				<aui:input autoFocus="<%= windowState.equals(WindowState.MAXIMIZED) || windowState.equals(LiferayWindowState.POP_UP) %>" cssClass="lfr-textarea-container" label="add-all-isbn-numbers-separated-by-spaces" name="preferences--isbns--" type="textarea" value="<%= isbnsString %>" wrap="soft" />
+				<aui:input cssClass="lfr-textarea-container" label="add-all-isbn-numbers-separated-by-spaces" name="preferences--isbns--" type="textarea" value="<%= isbnsString %>" wrap="soft" />
 			</aui:fieldset>
 		</div>
 	</div>

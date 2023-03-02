@@ -16,7 +16,7 @@ package com.liferay.translation.web.internal.servlet;
 
 import com.liferay.info.exception.NoSuchInfoItemException;
 import com.liferay.info.item.InfoItemReference;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.info.item.provider.InfoItemPermissionProvider;
@@ -44,7 +44,7 @@ import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporter;
-import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterTracker;
+import com.liferay.translation.exporter.TranslationInfoItemFieldValuesExporterRegistry;
 import com.liferay.translation.web.internal.helper.InfoItemHelper;
 import com.liferay.translation.web.internal.helper.TranslationRequestHelper;
 
@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.Servlet;
@@ -96,7 +95,7 @@ public class ExportTranslationServlet extends HttpServlet {
 
 			TranslationRequestHelper translationRequestHelper =
 				new TranslationRequestHelper(
-					httpServletRequest, _infoItemServiceTracker,
+					httpServletRequest, _infoItemServiceRegistry,
 					_segmentsExperienceLocalService);
 
 			String className = translationRequestHelper.getClassName(
@@ -117,7 +116,7 @@ public class ExportTranslationServlet extends HttpServlet {
 					translationRequestHelper));
 
 			InfoItemPermissionProvider infoItemPermissionProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemPermissionProvider.class, className);
 
 			PermissionChecker permissionChecker =
@@ -170,38 +169,36 @@ public class ExportTranslationServlet extends HttpServlet {
 			String[] targetLanguageIds, Locale locale)
 		throws IOException, PortalException {
 
+		TranslationInfoItemFieldValuesExporter
+			translationInfoItemFieldValuesExporter =
+				_translationInfoItemFieldValuesExporterRegistry.
+					getTranslationInfoItemFieldValuesExporter(exportMimeType);
+
+		if (translationInfoItemFieldValuesExporter == null) {
+			throw new PortalException(
+				"Unknown export mime type: " + exportMimeType);
+		}
+
 		InfoItemHelper infoItemHelper = new InfoItemHelper(
-			className, _infoItemServiceTracker);
+			className, _infoItemServiceRegistry);
 
-		Optional<String> infoItemTitleOptional =
-			infoItemHelper.getInfoItemTitleOptional(classPK, locale);
+		String infoItemTitle = infoItemHelper.getInfoItemTitle(classPK, locale);
 
-		String infoItemTitle = infoItemTitleOptional.orElseGet(
-			() ->
+		if (infoItemTitle == null) {
+			infoItemTitle =
 				_language.get(locale, "model.resource." + className) +
-					StringPool.SPACE + classPK);
-
-		Optional<TranslationInfoItemFieldValuesExporter>
-			exportFileFormatOptional =
-				_translationInfoItemFieldValuesExporterTracker.
-					getTranslationInfoItemFieldValuesExporterOptional(
-						exportMimeType);
+					StringPool.SPACE + classPK;
+		}
 
 		InfoItemFieldValuesProvider<Object> infoItemFieldValuesProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemFieldValuesProvider.class, className);
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
-			_infoItemServiceTracker.getFirstInfoItemService(
+			_infoItemServiceRegistry.getFirstInfoItemService(
 				InfoItemObjectProvider.class, className);
 
 		Object object = infoItemObjectProvider.getInfoItem(classPK);
-
-		TranslationInfoItemFieldValuesExporter
-			translationInfoItemFieldValuesExporter =
-				exportFileFormatOptional.orElseThrow(
-					() -> new PortalException(
-						"Unknown export mime type: " + exportMimeType));
 
 		for (String targetLanguageId : targetLanguageIds) {
 			zipWriter.addEntry(
@@ -254,17 +251,19 @@ public class ExportTranslationServlet extends HttpServlet {
 	}
 
 	private String _getPrefixName(
-		long classPK, String classNameTitle,
-		Optional<String> infoItemTitleOptional, boolean multipleModels,
-		Locale locale) {
+		long classPK, String classNameTitle, String infoItemTitle,
+		boolean multipleModels, Locale locale) {
 
 		if (multipleModels) {
 			return classNameTitle + StringPool.SPACE +
 				_language.get(locale, "translations");
 		}
 
-		return infoItemTitleOptional.orElseGet(
-			() -> classNameTitle + StringPool.SPACE + classPK);
+		if (infoItemTitle != null) {
+			return infoItemTitle;
+		}
+
+		return classNameTitle + StringPool.SPACE + classPK;
 	}
 
 	private String _getXLIFFFileName(
@@ -284,16 +283,15 @@ public class ExportTranslationServlet extends HttpServlet {
 		throws NoSuchInfoItemException {
 
 		InfoItemHelper infoItemHelper = new InfoItemHelper(
-			className, _infoItemServiceTracker);
+			className, _infoItemServiceRegistry);
 
-		Optional<String> infoItemTitleOptional =
-			infoItemHelper.getInfoItemTitleOptional(classPK, locale);
+		String infoItemTitle = infoItemHelper.getInfoItemTitle(classPK, locale);
 
 		return StringBundler.concat(
 			StringUtil.removeSubstrings(
 				_getPrefixName(
-					classPK, classNameTitle, infoItemTitleOptional,
-					multipleModels, locale),
+					classPK, classNameTitle, infoItemTitle, multipleModels,
+					locale),
 				PropsValues.DL_CHAR_BLACKLIST),
 			StringPool.DASH, sourceLanguageId, ".zip");
 	}
@@ -307,7 +305,7 @@ public class ExportTranslationServlet extends HttpServlet {
 	}
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private Language _language;
@@ -325,8 +323,8 @@ public class ExportTranslationServlet extends HttpServlet {
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
 
 	@Reference
-	private TranslationInfoItemFieldValuesExporterTracker
-		_translationInfoItemFieldValuesExporterTracker;
+	private TranslationInfoItemFieldValuesExporterRegistry
+		_translationInfoItemFieldValuesExporterRegistry;
 
 	@Reference
 	private ZipWriterFactory _zipWriterFactory;

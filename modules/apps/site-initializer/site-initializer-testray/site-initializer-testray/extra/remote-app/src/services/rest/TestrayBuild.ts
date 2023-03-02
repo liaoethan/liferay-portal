@@ -12,13 +12,14 @@
  * details.
  */
 
+import TestrayError from '../../TestrayError';
+import Rest from '../../core/Rest';
+import SearchBuilder from '../../core/SearchBuilder';
 import i18n from '../../i18n';
 import {CategoryOptions} from '../../pages/Project/Routines/Builds/BuildForm/Stack/StackList';
 import yupSchema from '../../schema/yup';
-import {TEST_STATUS} from '../../util/constants';
-import {SearchBuilder, searchUtil} from '../../util/search';
-import Rest from './Rest';
-import {testrayCaseResultRest} from './TestrayCaseResult';
+import {BuildStatuses, CaseResultStatuses} from '../../util/statuses';
+import {testrayCaseResultImpl} from './TestrayCaseResult';
 import {testrayFactorRest} from './TestrayFactor';
 import {testrayRunImpl} from './TestrayRun';
 
@@ -44,9 +45,11 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 				promoted,
 				routineId: r_routineToBuilds_c_routineId,
 				template,
+				templateTestrayBuildId,
 			}) => ({
 				active,
 				description,
+				dueStatus: BuildStatuses.ACTIVE,
 				gitHash,
 				name,
 				promoted,
@@ -54,13 +57,15 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 				r_projectToBuilds_c_projectId,
 				r_routineToBuilds_c_routineId,
 				template,
+				templateTestrayBuildId,
 			}),
-			nestedFields: 'productVersion&nestedFieldsDepth=2',
+			nestedFields: 'buildToTasks,productVersion',
 			transformData: (testrayBuild) => ({
 				...testrayBuild,
 				creator: testrayBuild?.creator || {},
 				productVersion:
 					testrayBuild?.r_productVersionToBuilds_c_productVersion,
+				tasks: testrayBuild.buildToTasks ?? [],
 			}),
 			uri: 'builds',
 		});
@@ -112,16 +117,18 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 				}
 			}
 
-			await testrayCaseResultRest.createBatch(
+			await testrayCaseResultImpl.createBatch(
 				caseIds.map((caseId) => ({
 					buildId: build.id,
 					caseId,
-					commentMBMessage: undefined,
-					dueStatus: TEST_STATUS.Untested.toString(),
+					comment: undefined,
+					dueStatus: CaseResultStatuses.UNTESTED,
 					issues: undefined,
+					mbMessageId: 0,
+					mbThreadId: 0,
 					runId: testrayRun.id,
 					startDate: undefined,
-					userId: 0,
+					userId: testrayCaseResultImpl.UNASSIGNED_USER_ID,
 				}))
 			);
 
@@ -133,7 +140,7 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 
 	public async hasBuildsInProjectId(projectId: number): Promise<boolean> {
 		const routineResponse = await this.fetcher<APIResponse<TestrayRoutine>>(
-			`/routines?filter=${searchUtil.eq(
+			`/routines?filter=${SearchBuilder.eq(
 				'projectId',
 				projectId
 			)}&fields=id`
@@ -146,7 +153,7 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 		}
 
 		const buildResponse = await this.fetcher<APIResponse<TestrayBuild>>(
-			`/${this.uri}?filter=${searchUtil.eq(
+			`/${this.uri}?filter=${SearchBuilder.eq(
 				'routineId',
 				routine.id
 			)}&fields=id`
@@ -162,7 +169,7 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 			searchBuilder.ne('id', id).and();
 		}
 
-		const filters = searchBuilder
+		const filter = searchBuilder
 			.eq('name', build.name)
 			.and()
 			.eq('projectId', build.projectId)
@@ -171,11 +178,13 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 			.build();
 
 		const response = await this.fetcher<APIResponse<TestrayBuild>>(
-			`/builds?filter=${filters}`
+			`/builds?filter=${filter}`
 		);
 
 		if (response?.totalCount) {
-			throw new Error(i18n.sub('the-x-name-already-exists', 'build'));
+			throw new TestrayError(
+				i18n.sub('the-x-name-already-exists', 'build')
+			);
 		}
 	}
 
@@ -189,7 +198,7 @@ class TestrayBuildImpl extends Rest<Build, TestrayBuild> {
 
 	public async getCurrentCaseIds(buildId: string | number) {
 		const response = await this.fetcher(
-			`/caseresults?filter=${searchUtil.eq(
+			`/caseresults?filter=${SearchBuilder.eq(
 				'buildId',
 				buildId
 			)}&pageSize=1000&fields=r_caseToCaseResult_c_caseId`

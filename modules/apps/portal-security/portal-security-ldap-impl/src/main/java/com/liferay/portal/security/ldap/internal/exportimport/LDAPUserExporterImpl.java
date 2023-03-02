@@ -44,7 +44,6 @@ import java.util.Date;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 
 import javax.naming.Binding;
@@ -71,7 +70,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  * @author Wesley Gong
  * @author Vilmos Papp
  */
-@Component(immediate = true, service = UserExporter.class)
+@Component(service = UserExporter.class)
 public class LDAPUserExporterImpl implements UserExporter {
 
 	@Override
@@ -444,14 +443,11 @@ public class LDAPUserExporterImpl implements UserExporter {
 			return null;
 		}
 
-		Optional<Configuration> configurationOptional = Optional.of(
-			configurations[0]);
+		Configuration configuration = configurations[0];
 
-		if (!configurationOptional.isPresent()) {
+		if (configuration == null) {
 			return null;
 		}
-
-		Configuration configuration = configurationOptional.get();
 
 		Dictionary<String, Object> properties = configuration.getProperties();
 

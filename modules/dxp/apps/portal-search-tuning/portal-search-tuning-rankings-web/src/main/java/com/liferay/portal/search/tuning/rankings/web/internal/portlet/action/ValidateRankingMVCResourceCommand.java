@@ -16,7 +16,7 @@ package com.liferay.portal.search.tuning.rankings.web.internal.portlet.action;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -28,24 +28,19 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.index.IndexNameBuilder;
 import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.tuning.rankings.web.internal.constants.ResultRankingsPortletKeys;
 import com.liferay.portal.search.tuning.rankings.web.internal.index.DuplicateQueryStringsDetector;
 import com.liferay.portal.search.tuning.rankings.web.internal.index.name.RankingIndexName;
 import com.liferay.portal.search.tuning.rankings.web.internal.index.name.RankingIndexNameBuilder;
+import com.liferay.portal.search.tuning.rankings.web.internal.util.RankingUtil;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
@@ -57,7 +52,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Kevin Tan
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ResultRankingsPortletKeys.RESULT_RANKINGS,
 		"mvc.command.name=/result_rankings/validate_ranking"
@@ -88,7 +82,7 @@ public class ValidateRankingMVCResourceCommand implements MVCResourceCommand {
 		ValidateRankingMVCResourceRequest validateRankingMVCResourceRequest =
 			new ValidateRankingMVCResourceRequest(resourceRequest);
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		List<String> duplicateQueryStrings = _getDuplicateQueryStrings(
 			resourceRequest, validateRankingMVCResourceRequest);
@@ -144,18 +138,9 @@ public class ValidateRankingMVCResourceCommand implements MVCResourceCommand {
 	private List<String> _getAliases(
 		ValidateRankingMVCResourceRequest validateRankingMVCResourceRequest) {
 
-		List<String> strings = new ArrayList<>(
-			validateRankingMVCResourceRequest.getAliases());
-
-		Stream<String> stream = strings.stream();
-
-		Predicate<String> predicate = this::_isUpdateSpecial;
-
-		return stream.filter(
-			predicate.negate()
-		).collect(
-			Collectors.toList()
-		);
+		return ListUtil.filter(
+			validateRankingMVCResourceRequest.getAliases(),
+			alias -> !_isUpdateSpecial(alias));
 	}
 
 	private long _getCompanyId(ResourceRequest resourceRequest) {
@@ -166,25 +151,14 @@ public class ValidateRankingMVCResourceCommand implements MVCResourceCommand {
 		ResourceRequest resourceRequest,
 		ValidateRankingMVCResourceRequest validateRankingMVCResourceRequest) {
 
-		List<String> aliases = _getAliases(validateRankingMVCResourceRequest);
-
-		Collection<String> queryStrings = Stream.concat(
-			Stream.of(validateRankingMVCResourceRequest.getQueryString()),
-			aliases.stream()
-		).filter(
-			string -> !Validator.isBlank(string)
-		).distinct(
-		).sorted(
-		).collect(
-			Collectors.toList()
-		);
-
 		return duplicateQueryStringsDetector.detect(
 			duplicateQueryStringsDetector.builder(
 			).index(
 				_getIndexName(resourceRequest)
 			).queryStrings(
-				queryStrings
+				RankingUtil.getQueryStrings(
+					validateRankingMVCResourceRequest.getQueryString(),
+					_getAliases(validateRankingMVCResourceRequest))
 			).rankingIndexName(
 				_getRankingIndexName(resourceRequest)
 			).unlessRankingDocumentId(
@@ -211,6 +185,9 @@ public class ValidateRankingMVCResourceCommand implements MVCResourceCommand {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ValidateRankingMVCResourceCommand.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

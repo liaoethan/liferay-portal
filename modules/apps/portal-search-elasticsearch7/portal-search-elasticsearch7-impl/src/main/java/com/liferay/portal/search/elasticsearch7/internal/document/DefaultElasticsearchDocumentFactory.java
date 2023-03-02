@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -45,7 +44,7 @@ import org.osgi.service.component.annotations.Component;
  * @author Michael C. Han
  * @author Milen Dyankov
  */
-@Component(immediate = true, service = ElasticsearchDocumentFactory.class)
+@Component(service = ElasticsearchDocumentFactory.class)
 public class DefaultElasticsearchDocumentFactory
 	implements ElasticsearchDocumentFactory {
 
@@ -296,13 +295,13 @@ public class DefaultElasticsearchDocumentFactory
 			Field field, List<Object> values, XContentBuilder xContentBuilder)
 		throws IOException {
 
-		Stream<Object> stream = values.stream();
+		Object[] elasticsearchValues = new Object[values.size()];
 
-		xContentBuilder.array(
-			field.getName(),
-			stream.map(
-				this::_toElasticsearchValue
-			).toArray());
+		for (int i = 0; i < values.size(); i++) {
+			elasticsearchValues[i] = _toElasticsearchValue(values.get(i));
+		}
+
+		xContentBuilder.array(field.getName(), elasticsearchValues);
 	}
 
 	private void _addNestedField(

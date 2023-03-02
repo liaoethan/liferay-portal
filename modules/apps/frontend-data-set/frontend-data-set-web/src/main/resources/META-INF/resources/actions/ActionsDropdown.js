@@ -19,7 +19,7 @@ import ClayLink from '@clayui/link';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useIsMounted} from '@liferay/frontend-js-react-web';
 import PropTypes from 'prop-types';
-import React, {useContext, useState} from 'react';
+import React, {useContext} from 'react';
 
 import FrontendDataSetContext from '../FrontendDataSetContext';
 import {formatActionURL} from '../utils/index';
@@ -67,23 +67,32 @@ function ActionsDropdown({
 	itemData,
 	itemId,
 	loading,
+	menuActive,
 	onClick,
+	onMenuActiveChange,
 	setLoading,
 }) {
-	const context = useContext(FrontendDataSetContext);
-	const [menuActive, setMenuActive] = useState(false);
+	const frontendDataSetContext = useContext(FrontendDataSetContext);
+
+	const {
+		inlineEditingSettings,
+		loadData,
+		openSidePanel,
+		uniformActionsDisplay,
+	} = frontendDataSetContext;
 
 	const inlineEditingAvailable =
-		context.inlineEditingSettings && itemData.actions?.update;
+		inlineEditingSettings && itemData.actions?.update;
 	const inlineEditingAlwaysOn =
-		inlineEditingAvailable && context.inlineEditingSettings.alwaysOn;
+		inlineEditingAvailable && inlineEditingSettings.alwaysOn;
 
 	const isMounted = useIsMounted();
 
-	const editModeActive = !!context.itemsChanges[itemId];
+	const editModeActive = !!frontendDataSetContext.itemsChanges[itemId];
 	const itemChanges =
-		editModeActive && Object.keys(context.itemsChanges[itemId]).length
-			? context.itemsChanges[itemId]
+		editModeActive &&
+		Object.keys(frontendDataSetContext.itemsChanges[itemId]).length
+			? frontendDataSetContext.itemsChanges[itemId]
 			: null;
 
 	const inlineEditingActions = (
@@ -92,24 +101,28 @@ function ActionsDropdown({
 				className="mr-1"
 				disabled={inlineEditingAlwaysOn && !itemChanges}
 				displayType="secondary"
-				onClick={() => context.toggleItemInlineEdit(itemId)}
+				onClick={() =>
+					frontendDataSetContext.toggleItemInlineEdit(itemId)
+				}
 				small
 				symbol="times-small"
 			/>
 
 			{loading ? (
-				<ClayLoadingIndicator small />
+				<ClayLoadingIndicator className="mb-2 mt-2" />
 			) : (
 				<ClayButtonWithIcon
 					disabled={!itemChanges}
 					monospaced
 					onClick={() => {
 						setLoading(true);
-						context.applyItemInlineUpdates(itemId).finally(() => {
-							if (isMounted()) {
-								setLoading(false);
-							}
-						});
+						frontendDataSetContext
+							.applyItemInlineUpdates(itemId)
+							.finally(() => {
+								if (isMounted()) {
+									setLoading(false);
+								}
+							});
 					}}
 					small
 					symbol="check"
@@ -126,7 +139,11 @@ function ActionsDropdown({
 		return null;
 	}
 
-	if (!inlineEditingAlwaysOn && actions.length === 1) {
+	if (
+		!inlineEditingAlwaysOn &&
+		!uniformActionsDisplay &&
+		actions.length === 1
+	) {
 		const [action] = actions;
 		const {data: actionData} = action;
 
@@ -135,7 +152,7 @@ function ActionsDropdown({
 		}
 
 		if (loading) {
-			return <ClayLoadingIndicator small />;
+			return <ClayLoadingIndicator className="mb-2 mt-2" />;
 		}
 
 		const content = action.icon ? (
@@ -144,7 +161,8 @@ function ActionsDropdown({
 			action.label
 		);
 
-		const onActionDropdownItemClick = context.onActionDropdownItemClick;
+		const onActionDropdownItemClick =
+			frontendDataSetContext.onActionDropdownItemClick;
 
 		const url = formatActionURL(action.href, itemData);
 
@@ -167,6 +185,8 @@ function ActionsDropdown({
 							action,
 							event,
 							itemData,
+							loadData,
+							openSidePanel,
 						});
 					}
 				}}
@@ -186,11 +206,14 @@ function ActionsDropdown({
 							action,
 							event,
 							itemData,
+							loadData,
+							openSidePanel,
 						});
 					}
 
 					handleAction(
 						{
+							errorMessage: actionData?.errorMessage,
 							event,
 							itemId,
 							method: action.method ?? actionData?.method,
@@ -199,7 +222,7 @@ function ActionsDropdown({
 							url,
 							...action,
 						},
-						context
+						frontendDataSetContext
 					);
 				}}
 			>
@@ -209,7 +232,7 @@ function ActionsDropdown({
 	}
 
 	if (loading && !inlineEditingAlwaysOn) {
-		return <ClayLoadingIndicator small />;
+		return <ClayLoadingIndicator className="mb-2 mt-2" />;
 	}
 
 	const renderItems = (items) =>
@@ -227,7 +250,7 @@ function ActionsDropdown({
 			return (
 				<DropdownItem
 					action={item}
-					closeMenu={() => setMenuActive(false)}
+					closeMenu={() => onMenuActiveChange(false)}
 					handleAction={handleAction}
 					itemData={itemData}
 					itemId={itemId}
@@ -240,12 +263,12 @@ function ActionsDropdown({
 		});
 
 	return (
-		<div className="d-flex justify-content-end ml-auto">
+		<div className="d-flex justify-content-end">
 			{inlineEditingAlwaysOn && inlineEditingActions}
 
 			<ClayDropDown
 				active={menuActive}
-				onActiveChange={setMenuActive}
+				onActiveChange={onMenuActiveChange}
 				trigger={
 					<ClayButton
 						className="component-action dropdown-toggle ml-1"

@@ -32,10 +32,11 @@ function InlineEditInputRenderer({
 	valuePath,
 	...otherProps
 }) {
+	const {itemsChanges, updateItem} = useContext(FrontendDataSetContext);
+
 	const [InputRenderer, setInputRenderer] = useState(() =>
 		getInputRendererById(type)
 	);
-	const {itemsChanges, updateItem} = useContext(FrontendDataSetContext);
 
 	useEffect(() => {
 		setInputRenderer(() => getInputRendererById(type));
@@ -75,9 +76,12 @@ function TableCell({
 	valuePath,
 	view,
 }) {
-	const {customDataRenderers, inlineEditingSettings} = useContext(
-		FrontendDataSetContext
-	);
+	const {
+		customDataRenderers,
+		inlineEditingSettings,
+		loadData,
+		openSidePanel,
+	} = useContext(FrontendDataSetContext);
 
 	const [loading, setLoading] = useState(false);
 
@@ -145,6 +149,8 @@ function TableCell({
 					actions={actions}
 					itemData={itemData}
 					itemId={itemId}
+					loadData={loadData}
+					openSidePanel={openSidePanel}
 					options={options}
 					rootPropertyName={rootPropertyName}
 					value={value}

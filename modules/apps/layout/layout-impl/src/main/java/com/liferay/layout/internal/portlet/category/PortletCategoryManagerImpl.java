@@ -19,13 +19,14 @@ import com.liferay.layout.portlet.category.PortletCategoryManager;
 import com.liferay.layout.util.PortalPreferencesUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.PortletApp;
 import com.liferay.portal.kernel.model.PortletCategory;
@@ -33,6 +34,7 @@ import com.liferay.portal.kernel.model.PortletItem;
 import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletConfigFactoryUtil;
+import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactory;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.PortletItemLocalService;
@@ -55,6 +57,7 @@ import com.liferay.portal.util.PortletCategoryUtil;
 import com.liferay.portal.util.WebAppPool;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -76,7 +79,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Lourdes Fernández Besada
  */
-@Component(immediate = true, service = PortletCategoryManager.class)
+@Component(service = PortletCategoryManager.class)
 public class PortletCategoryManagerImpl implements PortletCategoryManager {
 
 	public JSONArray getPortletsJSONArray(
@@ -169,6 +172,24 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 		return highlightedPortletIds;
 	}
 
+	private Set<String> _getLayoutDecodedPortletNames(
+		ThemeDisplay themeDisplay) {
+
+		Set<String> layoutDecodedPortletNames = new HashSet<>();
+
+		LayoutTypePortlet layoutTypePortlet =
+			themeDisplay.getLayoutTypePortlet();
+
+		for (Portlet layoutPortlet : layoutTypePortlet.getPortlets()) {
+			String decodedPortletName = PortletIdCodec.decodePortletName(
+				layoutPortlet.getPortletId());
+
+			layoutDecodedPortletNames.add(decodedPortletName);
+		}
+
+		return layoutDecodedPortletNames;
+	}
+
 	private Map<String, JSONObject> _getPortletCategoryJSONObjectsMap(
 			Set<String> highlightedPortletIds,
 			HttpServletRequest httpServletRequest,
@@ -177,6 +198,9 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 
 		Map<String, JSONObject> portletCategoryJSONObjectsMap =
 			new LinkedHashMap<>();
+
+		Set<String> layoutDecodedPortletNames = _getLayoutDecodedPortletNames(
+			themeDisplay);
 
 		List<PortletCategory> portletCategories = ListUtil.fromCollection(
 			portletCategory.getCategories());
@@ -205,7 +229,8 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 
 			JSONArray portletsJSONArray = _getPortletsJSONArray(
 				highlightedPortletIds, httpServletRequest,
-				currentPortletCategory, themeDisplay);
+				layoutDecodedPortletNames, currentPortletCategory,
+				themeDisplay);
 
 			if ((childPortletCategoriesJSONArray.length() > 0) ||
 				(portletsJSONArray.length() > 0)) {
@@ -276,10 +301,10 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 				PortletPreferences.class.getName());
 
 		if (ListUtil.isEmpty(portletItems)) {
-			return JSONFactoryUtil.createJSONArray();
+			return _jsonFactory.createJSONArray();
 		}
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (PortletItem portletItem : portletItems) {
 			jsonArray.put(
@@ -346,10 +371,11 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 	private JSONArray _getPortletsJSONArray(
 			Set<String> highlightedPortletIds,
 			HttpServletRequest httpServletRequest,
+			Set<String> layoutDecodedPortletNames,
 			PortletCategory portletCategory, ThemeDisplay themeDisplay)
 		throws Exception {
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		HttpSession httpSession = httpServletRequest.getSession();
 
@@ -379,6 +405,30 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 					"title",
 					_portal.getPortletTitle(
 						portlet, servletContext, themeDisplay.getLocale())
+				).put(
+					"used",
+					() -> {
+						Layout layout = themeDisplay.getLayout();
+
+						if (!layout.isTypePortlet() ||
+							portlet.isInstanceable()) {
+
+							return false;
+						}
+
+						LayoutTypePortlet layoutTypePortlet =
+							themeDisplay.getLayoutTypePortlet();
+
+						if (layoutDecodedPortletNames.contains(
+								portlet.getPortletId()) ||
+							layoutTypePortlet.hasPortletId(
+								portlet.getPortletId())) {
+
+							return true;
+						}
+
+						return false;
+					}
 				));
 		}
 
@@ -400,6 +450,9 @@ public class PortletCategoryManagerImpl implements PortletCategoryManager {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortletCategoryManagerImpl.class);
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

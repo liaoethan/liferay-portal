@@ -14,6 +14,7 @@
 
 package com.liferay.headless.commerce.machine.learning.internal.dispatch.executor;
 
+import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
 import com.liferay.dispatch.executor.DispatchTaskExecutor;
 import com.liferay.dispatch.executor.DispatchTaskExecutorOutput;
 import com.liferay.dispatch.executor.DispatchTaskStatus;
@@ -21,6 +22,11 @@ import com.liferay.dispatch.model.DispatchLog;
 import com.liferay.dispatch.model.DispatchTrigger;
 import com.liferay.headless.commerce.machine.learning.dto.v1_0.Order;
 import com.liferay.headless.commerce.machine.learning.internal.batch.engine.v1_0.OrderBatchEngineTaskItemDelegate;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.ArrayUtil;
+
+import java.util.Arrays;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 
@@ -28,7 +34,6 @@ import org.osgi.service.component.annotations.Component;
  * @author Riccardo Ferrari
  */
 @Component(
-	enabled = false, immediate = true,
 	property = {
 		"dispatch.task.executor.name=" + AnalyticsUploadOrderDispatchTaskExecutor.KEY,
 		"dispatch.task.executor.type=" + AnalyticsUploadOrderDispatchTaskExecutor.KEY
@@ -50,10 +55,31 @@ public class AnalyticsUploadOrderDispatchTaskExecutor
 			dispatchLogLocalService.fetchLatestDispatchLog(
 				dispatchTrigger.getDispatchTriggerId(),
 				DispatchTaskStatus.IN_PROGRESS);
+		String filterString = getCommerceChannelFilterString(
+			dispatchTrigger.getCompanyId(),
+			commerceChannelId ->
+				"commerceChannelId eq '" + commerceChannelId + "'");
+
+		if (Objects.equals(StringPool.BLANK, filterString)) {
+			updateDispatchLog(
+				dispatchLog.getDispatchLogId(), dispatchTaskExecutorOutput,
+				"No commerce channels enabled for synchronisation");
+
+			return;
+		}
+
+		AnalyticsConfiguration analyticsConfiguration =
+			analyticsSettingsManager.getAnalyticsConfiguration(
+				dispatchTrigger.getCompanyId());
 
 		analyticsBatchExportImportManager.exportToAnalyticsCloud(
 			OrderBatchEngineTaskItemDelegate.KEY,
-			dispatchTrigger.getCompanyId(), null,
+			dispatchTrigger.getCompanyId(),
+			Arrays.asList(
+				ArrayUtil.append(
+					analyticsConfiguration.syncedOrderFieldNames(),
+					analyticsConfiguration.syncedOrderItemFieldNames())),
+			filterString,
 			message -> updateDispatchLog(
 				dispatchLog.getDispatchLogId(), dispatchTaskExecutorOutput,
 				message),

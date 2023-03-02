@@ -55,7 +55,6 @@ import org.osgi.service.component.annotations.ServiceScope;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	properties = "OSGI-INF/liferay/rest/v1_0/option.properties",
 	scope = ServiceScope.PROTOTYPE, service = OptionResource.class
 )
@@ -195,6 +194,7 @@ public class OptionResourceImpl extends BaseOptionResourceImpl {
 		}
 
 		_optionValueResource.setContextAcceptLanguage(contextAcceptLanguage);
+		_optionValueResource.setContextUriInfo(contextUriInfo);
 
 		for (OptionValue optionValue : optionValues) {
 			_optionValueResource.postOptionIdOptionValue(

@@ -20,7 +20,7 @@ import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.content.dashboard.item.ContentDashboardItem;
 import com.liferay.content.dashboard.item.ContentDashboardItemVersion;
 import com.liferay.content.dashboard.item.action.ContentDashboardItemAction;
-import com.liferay.content.dashboard.item.action.ContentDashboardItemActionProviderTracker;
+import com.liferay.content.dashboard.item.action.ContentDashboardItemActionProviderRegistry;
 import com.liferay.content.dashboard.item.action.exception.ContentDashboardItemActionException;
 import com.liferay.content.dashboard.item.action.provider.ContentDashboardItemActionProvider;
 import com.liferay.content.dashboard.item.type.ContentDashboardItemSubtype;
@@ -32,7 +32,6 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -42,7 +41,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,8 +57,8 @@ public class BlogsEntryContentDashboardItem
 	public BlogsEntryContentDashboardItem(
 		List<AssetCategory> assetCategories, List<AssetTag> assetTags,
 		BlogsEntry blogsEntry,
-		ContentDashboardItemActionProviderTracker
-			contentDashboardItemActionProviderTracker,
+		ContentDashboardItemActionProviderRegistry
+			contentDashboardItemActionProviderRegistry,
 		Group group, Language language, Portal portal) {
 
 		if (ListUtil.isEmpty(assetCategories)) {
@@ -78,8 +76,8 @@ public class BlogsEntryContentDashboardItem
 		}
 
 		_blogsEntry = blogsEntry;
-		_contentDashboardItemActionProviderTracker =
-			contentDashboardItemActionProviderTracker;
+		_contentDashboardItemActionProviderRegistry =
+			contentDashboardItemActionProviderRegistry;
 		_group = group;
 		_language = language;
 		_portal = portal;
@@ -119,7 +117,7 @@ public class BlogsEntryContentDashboardItem
 
 		List<ContentDashboardItemActionProvider>
 			contentDashboardItemActionProviders =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviders(
 						BlogsEntry.class.getName(), types);
 
@@ -182,7 +180,7 @@ public class BlogsEntryContentDashboardItem
 
 			Optional<ContentDashboardItemActionProvider>
 				contentDashboardItemActionProviderOptional =
-					_contentDashboardItemActionProviderTracker.
+					_contentDashboardItemActionProviderRegistry.
 						getContentDashboardItemActionProviderOptional(
 							BlogsEntry.class.getName(),
 							ContentDashboardItemAction.Type.EDIT);
@@ -198,7 +196,7 @@ public class BlogsEntryContentDashboardItem
 
 		Optional<ContentDashboardItemActionProvider>
 			viewContentDashboardItemActionProviderOptional =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviderOptional(
 						BlogsEntry.class.getName(),
 						ContentDashboardItemAction.Type.VIEW);
@@ -210,7 +208,7 @@ public class BlogsEntryContentDashboardItem
 			() -> {
 				Optional<ContentDashboardItemActionProvider>
 					editContentDashboardItemActionProviderOptional =
-						_contentDashboardItemActionProviderTracker.
+						_contentDashboardItemActionProviderRegistry.
 							getContentDashboardItemActionProviderOptional(
 								BlogsEntry.class.getName(),
 								ContentDashboardItemAction.Type.EDIT);
@@ -294,10 +292,13 @@ public class BlogsEntryContentDashboardItem
 	}
 
 	@Override
-	public Map<String, Object> getSpecificInformation(Locale locale) {
-		return HashMapBuilder.<String, Object>put(
-			"display-date", _blogsEntry.getDisplayDate()
-		).build();
+	public List<SpecificInformation<?>> getSpecificInformationList(
+		Locale locale) {
+
+		return Collections.singletonList(
+			new SpecificInformation<>(
+				"display-date", SpecificInformation.Type.DATE,
+				_blogsEntry.getDisplayDate()));
 	}
 
 	@Override
@@ -327,7 +328,7 @@ public class BlogsEntryContentDashboardItem
 	public boolean isViewable(HttpServletRequest httpServletRequest) {
 		Optional<ContentDashboardItemActionProvider>
 			contentDashboardItemActionProviderOptional =
-				_contentDashboardItemActionProviderTracker.
+				_contentDashboardItemActionProviderRegistry.
 					getContentDashboardItemActionProviderOptional(
 						BlogsEntry.class.getName(),
 						ContentDashboardItemAction.Type.VIEW);
@@ -374,8 +375,8 @@ public class BlogsEntryContentDashboardItem
 	private final List<AssetCategory> _assetCategories;
 	private final List<AssetTag> _assetTags;
 	private final BlogsEntry _blogsEntry;
-	private final ContentDashboardItemActionProviderTracker
-		_contentDashboardItemActionProviderTracker;
+	private final ContentDashboardItemActionProviderRegistry
+		_contentDashboardItemActionProviderRegistry;
 	private final Group _group;
 	private final Language _language;
 	private final Portal _portal;

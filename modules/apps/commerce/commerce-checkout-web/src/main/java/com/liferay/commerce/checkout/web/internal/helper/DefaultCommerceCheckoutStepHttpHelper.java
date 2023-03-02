@@ -41,6 +41,7 @@ import com.liferay.commerce.product.constants.CommerceChannelAccountEntryRelCons
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.model.CommerceChannelAccountEntryRel;
 import com.liferay.commerce.product.service.CommerceChannelAccountEntryRelLocalService;
+import com.liferay.commerce.product.service.CommerceChannelAccountEntryRelService;
 import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.service.CommerceAddressService;
 import com.liferay.commerce.service.CommerceOrderLocalService;
@@ -69,7 +70,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import javax.portlet.PortletURL;
 
@@ -82,10 +82,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  * @author Luca Pellizzon
  */
-@Component(
-	enabled = false, immediate = true,
-	service = CommerceCheckoutStepHttpHelper.class
-)
+@Component(service = CommerceCheckoutStepHttpHelper.class)
 public class DefaultCommerceCheckoutStepHttpHelper
 	implements CommerceCheckoutStepHttpHelper {
 
@@ -390,67 +387,71 @@ public class DefaultCommerceCheckoutStepHttpHelper
 
 		CommerceAccount commerceAccount = commerceContext.getCommerceAccount();
 
-		if (commerceAccount != null) {
-			AccountEntry accountEntry =
-				_accountEntryLocalService.fetchAccountEntry(
-					commerceAccount.getCommerceAccountId());
-
-			if (accountEntry != null) {
-				if (Validator.isNull(
-						commerceOrder.getCommercePaymentMethodKey())) {
-
-					Stream<CommercePaymentMethod> commercePaymentMethodsStream =
-						commercePaymentMethods.stream();
-
-					CommercePaymentMethod commercePaymentMethod =
-						commercePaymentMethodsStream.filter(
-							curCommercePaymentMethod -> {
-								String key = curCommercePaymentMethod.getKey();
-
-								return key.equals(
-									accountEntry.getDefaultCPaymentMethodKey());
-							}
-						).findFirst(
-						).orElse(
-							commercePaymentMethods.get(0)
-						);
-
-					_updateCommerceOrder(
-						commerceOrder, commercePaymentMethod.getKey(),
-						httpServletRequest);
-				}
-
-				if (!_hasCommerceOrderPermission(
-						CommerceOrderActionKeys.
-							MANAGE_COMMERCE_ORDER_PAYMENT_METHODS,
-						commerceOrder, httpServletRequest)) {
-
-					return false;
-				}
-			}
-			else {
-				if (Validator.isNull(
-						commerceOrder.getCommercePaymentMethodKey())) {
-
-					CommercePaymentMethod commercePaymentMethod =
-						commercePaymentMethods.get(0);
-
-					_updateCommerceOrder(
-						commerceOrder, commercePaymentMethod.getKey(),
-						httpServletRequest);
-				}
-
-				if (!_hasCommerceOrderPermission(
-						CommerceOrderActionKeys.
-							MANAGE_COMMERCE_ORDER_PAYMENT_METHODS,
-						commerceOrder, httpServletRequest)) {
-
-					return false;
-				}
-			}
+		if (commerceAccount == null) {
+			return true;
 		}
 
-		return true;
+		if (Validator.isNotNull(commerceOrder.getCommercePaymentMethodKey())) {
+			return _hasCommerceOrderPermission(
+				CommerceOrderActionKeys.MANAGE_COMMERCE_ORDER_PAYMENT_METHODS,
+				commerceOrder, httpServletRequest);
+		}
+
+		AccountEntry accountEntry = _accountEntryLocalService.fetchAccountEntry(
+			commerceAccount.getCommerceAccountId());
+
+		if (accountEntry != null) {
+			CommerceChannelAccountEntryRel commerceChannelAccountEntryRel =
+				_commerceChannelAccountEntryRelService.
+					fetchCommerceChannelAccountEntryRel(
+						accountEntry.getAccountEntryId(),
+						commerceContext.getCommerceChannelId(),
+						CommerceChannelAccountEntryRelConstants.TYPE_PAYMENT);
+
+			CommercePaymentMethod commercePaymentMethod =
+				commercePaymentMethods.get(0);
+
+			if (commerceChannelAccountEntryRel != null) {
+				CommercePaymentMethodGroupRel commercePaymentMethodGroupRel =
+					_commercePaymentMethodGroupRelLocalService.
+						fetchCommercePaymentMethodGroupRel(
+							commerceChannelAccountEntryRel.getClassPK());
+
+				if ((commercePaymentMethodGroupRel != null) &&
+					commercePaymentMethodGroupRel.isActive()) {
+
+					for (CommercePaymentMethod curCommercePaymentMethod :
+							commercePaymentMethods) {
+
+						String key = curCommercePaymentMethod.getKey();
+
+						if (key.equals(
+								commercePaymentMethodGroupRel.getEngineKey())) {
+
+							commercePaymentMethod = curCommercePaymentMethod;
+
+							break;
+						}
+					}
+				}
+			}
+
+			_updateCommerceOrder(
+				commerceOrder, commercePaymentMethod.getKey(),
+				httpServletRequest);
+		}
+		else {
+			CommercePaymentMethod commercePaymentMethod =
+				commercePaymentMethods.get(0);
+
+			_updateCommerceOrder(
+				commerceOrder, commercePaymentMethod.getKey(),
+				httpServletRequest);
+		}
+
+		return _hasCommerceOrderPermission(
+			CommerceOrderActionKeys.MANAGE_COMMERCE_ORDER_PAYMENT_METHODS,
+			commerceOrder, httpServletRequest);
 	}
 
 	@Override
@@ -583,6 +584,30 @@ public class DefaultCommerceCheckoutStepHttpHelper
 			return false;
 		}
 
+		CommerceContext commerceContext =
+			(CommerceContext)httpServletRequest.getAttribute(
+				CommerceWebKeys.COMMERCE_CONTEXT);
+
+		List<CommerceShippingMethod> commerceShippingMethods =
+			_commerceShippingMethodLocalService.getCommerceShippingMethods(
+				commerceOrder.getGroupId(), true, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS,
+				new CommerceShippingMethodPriorityComparator());
+
+		CommerceShippingOption singleCommerceShippingOption =
+			_getSingleCommerceShippingOption(
+				commerceContext, commerceOrder, commerceShippingMethods,
+				httpServletRequest);
+
+		if (singleCommerceShippingOption != null) {
+			_updateCommerceOrder(
+				commerceContext, commerceOrder,
+				singleCommerceShippingOption.getCommerceShippingMethodKey(),
+				singleCommerceShippingOption.getKey(), httpServletRequest);
+
+			return false;
+		}
+
 		if (commerceOrder.getCommerceShippingMethodId() > 0) {
 			CommerceShippingMethod commerceShippingMethod =
 				_commerceShippingMethodLocalService.getCommerceShippingMethod(
@@ -596,34 +621,10 @@ public class DefaultCommerceCheckoutStepHttpHelper
 			}
 		}
 
-		CommerceContext commerceContext =
-			(CommerceContext)httpServletRequest.getAttribute(
-				CommerceWebKeys.COMMERCE_CONTEXT);
-
-		List<CommerceShippingMethod> commerceShippingMethods =
-			_commerceShippingMethodLocalService.getCommerceShippingMethods(
-				commerceOrder.getGroupId(), true, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS,
-				new CommerceShippingMethodPriorityComparator());
-
 		if (commerceShippingMethods.isEmpty()) {
 			_updateCommerceOrder(
 				commerceContext, commerceOrder, StringPool.BLANK,
 				StringPool.BLANK, httpServletRequest);
-
-			return false;
-		}
-
-		CommerceShippingOption singleCommerceShippingOption =
-			_getSingleCommerceShippingOption(
-				commerceContext, commerceOrder, commerceShippingMethods,
-				httpServletRequest);
-
-		if (singleCommerceShippingOption != null) {
-			_updateCommerceOrder(
-				commerceContext, commerceOrder,
-				singleCommerceShippingOption.getCommerceShippingMethodKey(),
-				singleCommerceShippingOption.getKey(), httpServletRequest);
 
 			return false;
 		}
@@ -666,7 +667,7 @@ public class DefaultCommerceCheckoutStepHttpHelper
 					commerceShippingMethod.getEngineKey());
 
 			List<CommerceShippingOption> commerceShippingOptions =
-				commerceShippingEngine.getCommerceShippingOptions(
+				commerceShippingEngine.getEnabledCommerceShippingOptions(
 					commerceContext, commerceOrder,
 					_portal.getLocale(httpServletRequest));
 
@@ -824,22 +825,22 @@ public class DefaultCommerceCheckoutStepHttpHelper
 			}
 
 			if (commerceShippingOptionAccountEntryRel != null) {
-				Stream<CommerceShippingOption> commerceShippingOptionsStream =
-					commerceShippingOptions.stream();
+				CommerceShippingOption defaultCommerceShippingOption = null;
 
-				CommerceShippingOption defaultCommerceShippingOption =
-					commerceShippingOptionsStream.filter(
-						commerceShippingOption -> {
-							String key = commerceShippingOption.getKey();
+				for (CommerceShippingOption commerceShippingOption :
+						commerceShippingOptions) {
 
-							return key.equals(
-								commerceShippingOptionAccountEntryRel.
-									getCommerceShippingOptionKey());
-						}
-					).findFirst(
-					).orElse(
-						null
-					);
+					String key = commerceShippingOption.getKey();
+
+					if (key.equals(
+							commerceShippingOptionAccountEntryRel.
+								getCommerceShippingOptionKey())) {
+
+						defaultCommerceShippingOption = commerceShippingOption;
+
+						break;
+					}
+				}
 
 				if (defaultCommerceShippingOption != null) {
 					return _updateCommerceOrder(
@@ -885,6 +886,10 @@ public class DefaultCommerceCheckoutStepHttpHelper
 	@Reference
 	private CommerceChannelAccountEntryRelLocalService
 		_commerceChannelAccountEntryRelLocalService;
+
+	@Reference
+	private CommerceChannelAccountEntryRelService
+		_commerceChannelAccountEntryRelService;
 
 	@Reference
 	private CommerceChannelLocalService _commerceChannelLocalService;

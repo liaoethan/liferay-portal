@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.search.constants.SearchContextAttributes;
 import com.liferay.portal.search.document.Document;
 import com.liferay.portal.search.hits.SearchHit;
 import com.liferay.portal.search.hits.SearchHits;
@@ -77,7 +78,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Petteri Karttunen
  */
 @Component(
-	enabled = false, immediate = true,
+	enabled = false,
 	property = "search.suggestions.contributor.name=sxpBlueprint",
 	service = SuggestionsContributor.class
 )
@@ -106,6 +107,12 @@ public class SXPBlueprintSuggestionsContributor
 			return null;
 		}
 
+		if (!_exceedsCharacterThreshold(
+				(Map<String, Object>)attributes, searchContext.getKeywords())) {
+
+			return null;
+		}
+
 		SearchResponse searchResponse = _searcher.search(
 			_getSearchRequest(
 				searchContext,
@@ -127,6 +134,23 @@ public class SXPBlueprintSuggestionsContributor
 				attributes, liferayPortletRequest, liferayPortletResponse,
 				searchContext, searchHits.getSearchHits())
 		).build();
+	}
+
+	private boolean _exceedsCharacterThreshold(
+		Map<String, Object> attributes, String keywords) {
+
+		int characterThreshold = _getCharacterThreshold(attributes);
+
+		if (Validator.isBlank(keywords)) {
+			if (characterThreshold == 0) {
+				return true;
+			}
+		}
+		else if (keywords.length() >= characterThreshold) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private Layout _fetchLayoutByFriendlyURL(long groupId, String friendlyURL) {
@@ -221,6 +245,15 @@ public class SXPBlueprintSuggestionsContributor
 		return StringPool.BLANK;
 	}
 
+	private int _getCharacterThreshold(Map<String, Object> attributes) {
+		if (attributes == null) {
+			return _CHARACTER_THRESHOLD;
+		}
+
+		return MapUtil.getInteger(
+			attributes, "characterThreshold", _CHARACTER_THRESHOLD);
+	}
+
 	private Map<String, Object> _getFieldValues(
 		Document document, List<String> fieldNames, Locale locale) {
 
@@ -262,6 +295,10 @@ public class SXPBlueprintSuggestionsContributor
 			size
 		).withSearchContext(
 			searchContext2 -> {
+				searchContext2.setAttribute(
+					SearchContextAttributes.ATTRIBUTE_KEY_EMPTY_SEARCH,
+					searchContext1.getAttribute(
+						SearchContextAttributes.ATTRIBUTE_KEY_EMPTY_SEARCH));
 				searchContext2.setAttribute(
 					"search.experiences.blueprint.id", sxpBlueprintId);
 				searchContext2.setAttribute(
@@ -441,6 +478,8 @@ public class SXPBlueprintSuggestionsContributor
 		return StringUtil.replace(
 			fieldName, "${language_id}", LocaleUtil.toLanguageId(locale));
 	}
+
+	private static final int _CHARACTER_THRESHOLD = 2;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SXPBlueprintSuggestionsContributor.class);

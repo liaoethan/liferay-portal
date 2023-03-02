@@ -117,7 +117,7 @@ if (navigation.equals("all-pages") || navigation.equals("categorized-pages") || 
 	headerNames.add(StringPool.BLANK);
 }
 
-WikiListPagesDisplayContext wikiListPagesDisplayContext = wikiDisplayContextProvider.getWikiListPagesDisplayContext(request, response, node);
+WikiListPagesDisplayContext wikiListPagesDisplayContext = new WikiListPagesDisplayContext(request, (TrashHelper)request.getAttribute(TrashWebKeys.TRASH_HELPER), node);
 
 String orderByCol = ParamUtil.getString(request, "orderByCol");
 String orderByType = ParamUtil.getString(request, "orderByType");
@@ -273,7 +273,9 @@ for (int i = 0; i < pages.size(); i++) {
 />
 
 <c:if test='<%= navigation.equals("history") %>'>
-	<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+	<aui:script require="frontend-js-web/index as frontendJsWeb">
+		var {delegate} = frontendJsWeb;
+
 		function <portlet:namespace />initRowsChecked() {
 			var rowIdsNodes = document.querySelectorAll(
 				'input[name=<portlet:namespace />rowIds]'
@@ -364,8 +366,6 @@ for (int i = 0; i < pages.size(); i++) {
 		);
 
 		if (searchContainer) {
-			var delegate = delegateModule.default;
-
 			delegate(
 				searchContainer,
 				'click',

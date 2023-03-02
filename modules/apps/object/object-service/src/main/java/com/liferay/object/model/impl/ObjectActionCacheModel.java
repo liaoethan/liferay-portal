@@ -77,12 +77,14 @@ public class ObjectActionCacheModel
 
 	@Override
 	public String toString() {
-		StringBundler sb = new StringBundler(35);
+		StringBundler sb = new StringBundler(41);
 
 		sb.append("{mvccVersion=");
 		sb.append(mvccVersion);
 		sb.append(", uuid=");
 		sb.append(uuid);
+		sb.append(", externalReferenceCode=");
+		sb.append(externalReferenceCode);
 		sb.append(", objectActionId=");
 		sb.append(objectActionId);
 		sb.append(", companyId=");
@@ -103,6 +105,10 @@ public class ObjectActionCacheModel
 		sb.append(conditionExpression);
 		sb.append(", description=");
 		sb.append(description);
+		sb.append(", errorMessage=");
+		sb.append(errorMessage);
+		sb.append(", label=");
+		sb.append(label);
 		sb.append(", name=");
 		sb.append(name);
 		sb.append(", objectActionExecutorKey=");
@@ -129,6 +135,13 @@ public class ObjectActionCacheModel
 		}
 		else {
 			objectActionImpl.setUuid(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectActionImpl.setExternalReferenceCode("");
+		}
+		else {
+			objectActionImpl.setExternalReferenceCode(externalReferenceCode);
 		}
 
 		objectActionImpl.setObjectActionId(objectActionId);
@@ -173,6 +186,20 @@ public class ObjectActionCacheModel
 			objectActionImpl.setDescription(description);
 		}
 
+		if (errorMessage == null) {
+			objectActionImpl.setErrorMessage("");
+		}
+		else {
+			objectActionImpl.setErrorMessage(errorMessage);
+		}
+
+		if (label == null) {
+			objectActionImpl.setLabel("");
+		}
+		else {
+			objectActionImpl.setLabel(label);
+		}
+
 		if (name == null) {
 			objectActionImpl.setName("");
 		}
@@ -215,6 +242,7 @@ public class ObjectActionCacheModel
 
 		mvccVersion = objectInput.readLong();
 		uuid = objectInput.readUTF();
+		externalReferenceCode = objectInput.readUTF();
 
 		objectActionId = objectInput.readLong();
 
@@ -230,6 +258,8 @@ public class ObjectActionCacheModel
 		active = objectInput.readBoolean();
 		conditionExpression = (String)objectInput.readObject();
 		description = objectInput.readUTF();
+		errorMessage = objectInput.readUTF();
+		label = objectInput.readUTF();
 		name = objectInput.readUTF();
 		objectActionExecutorKey = objectInput.readUTF();
 		objectActionTriggerKey = objectInput.readUTF();
@@ -247,6 +277,13 @@ public class ObjectActionCacheModel
 		}
 		else {
 			objectOutput.writeUTF(uuid);
+		}
+
+		if (externalReferenceCode == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(externalReferenceCode);
 		}
 
 		objectOutput.writeLong(objectActionId);
@@ -283,6 +320,20 @@ public class ObjectActionCacheModel
 			objectOutput.writeUTF(description);
 		}
 
+		if (errorMessage == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(errorMessage);
+		}
+
+		if (label == null) {
+			objectOutput.writeUTF("");
+		}
+		else {
+			objectOutput.writeUTF(label);
+		}
+
 		if (name == null) {
 			objectOutput.writeUTF("");
 		}
@@ -316,6 +367,7 @@ public class ObjectActionCacheModel
 
 	public long mvccVersion;
 	public String uuid;
+	public String externalReferenceCode;
 	public long objectActionId;
 	public long companyId;
 	public long userId;
@@ -326,6 +378,8 @@ public class ObjectActionCacheModel
 	public boolean active;
 	public String conditionExpression;
 	public String description;
+	public String errorMessage;
+	public String label;
 	public String name;
 	public String objectActionExecutorKey;
 	public String objectActionTriggerKey;

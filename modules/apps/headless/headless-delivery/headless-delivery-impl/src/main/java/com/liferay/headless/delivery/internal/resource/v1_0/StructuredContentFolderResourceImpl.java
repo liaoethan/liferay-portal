@@ -32,6 +32,7 @@ import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.journal.service.JournalFolderLocalService;
 import com.liferay.journal.service.JournalFolderService;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -74,6 +75,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	scope = ServiceScope.PROTOTYPE,
 	service = StructuredContentFolderResource.class
 )
+@CTAware
 public class StructuredContentFolderResourceImpl
 	extends BaseStructuredContentFolderResourceImpl {
 
@@ -327,7 +329,7 @@ public class StructuredContentFolderResourceImpl
 		JournalFolder journalFolder =
 			_journalFolderLocalService.
 				fetchJournalFolderByExternalReferenceCode(
-					assetLibraryId, externalReferenceCode);
+					externalReferenceCode, assetLibraryId);
 
 		if (journalFolder != null) {
 			return _updateStructuredContentFolder(
@@ -351,7 +353,7 @@ public class StructuredContentFolderResourceImpl
 		JournalFolder journalFolder =
 			_journalFolderLocalService.
 				fetchJournalFolderByExternalReferenceCode(
-					siteId, externalReferenceCode);
+					externalReferenceCode, siteId);
 
 		if (journalFolder != null) {
 			return _updateStructuredContentFolder(

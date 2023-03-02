@@ -14,27 +14,37 @@
 
 package com.liferay.commerce.service.impl;
 
+import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntry;
+import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.commerce.account.model.CommerceAccount;
-import com.liferay.commerce.account.service.CommerceAccountService;
 import com.liferay.commerce.model.CommerceAddress;
 import com.liferay.commerce.model.CommerceOrder;
 import com.liferay.commerce.service.CommerceOrderService;
 import com.liferay.commerce.service.base.CommerceAddressServiceBaseImpl;
-import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.OrderByComparator;
-import com.liferay.portal.spring.extender.service.ServiceReference;
 
 import java.util.List;
+
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Andrea Di Giorgi
  * @author Alessio Antonio Rendina
  */
+@Component(
+	property = {
+		"json.web.service.context.name=commerce",
+		"json.web.service.context.path=CommerceAddress"
+	},
+	service = AopService.class
+)
 public class CommerceAddressServiceImpl extends CommerceAddressServiceBaseImpl {
 
 	/**
@@ -400,14 +410,19 @@ public class CommerceAddressServiceImpl extends CommerceAddressServiceBaseImpl {
 		else if (className.equals(AccountEntry.class.getName()) ||
 				 className.equals(CommerceAccount.class.getName())) {
 
-			_commerceAccountService.getCommerceAccount(classPK);
+			if (classPK == AccountConstants.ACCOUNT_ENTRY_ID_GUEST) {
+				_accountEntryLocalService.fetchAccountEntry(classPK);
+			}
+			else {
+				_accountEntryLocalService.getAccountEntry(classPK);
+			}
 		}
 	}
 
-	@ServiceReference(type = CommerceAccountService.class)
-	private CommerceAccountService _commerceAccountService;
+	@Reference
+	private AccountEntryLocalService _accountEntryLocalService;
 
-	@BeanReference(type = CommerceOrderService.class)
+	@Reference
 	private CommerceOrderService _commerceOrderService;
 
 }

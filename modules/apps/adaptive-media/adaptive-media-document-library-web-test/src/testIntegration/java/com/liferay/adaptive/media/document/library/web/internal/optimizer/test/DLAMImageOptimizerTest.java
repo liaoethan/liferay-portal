@@ -380,10 +380,11 @@ public class DLAMImageOptimizerTest {
 	}
 
 	private byte[] _getImageBytes() throws Exception {
-		return FileUtil.getBytes(DLAMImageOptimizerTest.class, "image.jpg");
+		return FileUtil.getBytes(
+			DLAMImageOptimizerTest.class, "dependencies/image.jpg");
 	}
 
-	private static final int _WELCOME_SITE_INITIALIZER_IMAGES_COUNT = 1;
+	private static final int _WELCOME_SITE_INITIALIZER_IMAGES_COUNT = 5;
 
 	@Inject
 	private AMImageConfigurationHelper _amImageConfigurationHelper;

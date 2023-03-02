@@ -50,17 +50,27 @@ export default function ({namespace}) {
 					const opener = getOpener();
 
 					opener.Liferay.fire('closeModal', {
-						id: `${namespace}addLayoutDialog`,
+						id: 'addLayoutDialog',
 						redirect: redirectURL.toString(),
 					});
 				}
 				else {
+					addButton.disabled = false;
+
+					if (form.querySelector('.alert')) {
+						return;
+					}
+
+					const alertWrapper = document.createElement('div');
+
+					form.prepend(alertWrapper);
+
 					openToast({
+						autoClose: false,
+						container: alertWrapper,
 						message: response.errorMessage,
 						type: 'danger',
 					});
-
-					addButton.disabled = false;
 				}
 			});
 	});

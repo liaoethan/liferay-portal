@@ -14,11 +14,13 @@
 
 package com.liferay.knowledge.base.internal.upgrade.registry;
 
+import com.liferay.document.library.kernel.store.Store;
 import com.liferay.knowledge.base.internal.upgrade.v2_0_2.KBArticleUpgradeProcess;
 import com.liferay.knowledge.base.internal.upgrade.v3_0_0.util.KBArticleTable;
 import com.liferay.knowledge.base.internal.upgrade.v3_0_0.util.KBCommentTable;
 import com.liferay.knowledge.base.internal.upgrade.v3_0_0.util.KBFolderTable;
 import com.liferay.knowledge.base.internal.upgrade.v3_0_0.util.KBTemplateTable;
+import com.liferay.knowledge.base.internal.upgrade.v4_4_0.KBGroupServiceConfigurationUpgradeProcess;
 import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -30,9 +32,9 @@ import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.upgrade.ViewCountUpgradeProcess;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
 import com.liferay.view.count.service.ViewCountEntryLocalService;
 
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -74,16 +76,14 @@ public class KnowledgeBaseServiceUpgradeStepRegistrator
 		registry.register(
 			"1.1.0", "1.2.0",
 			UpgradeProcessFactory.dropColumns("KBArticle", "kbTemplateId"),
-			new com.liferay.knowledge.base.internal.upgrade.v1_2_0.
-				KBStructureUpgradeProcess(),
+			UpgradeProcessFactory.dropTables("KBStructure"),
 			UpgradeProcessFactory.dropColumns(
 				"KBTemplate", "engineType", "cacheable"));
 
 		registry.register(
 			"1.2.0", "1.3.0",
 			new com.liferay.knowledge.base.internal.upgrade.v1_3_0.
-				KBAttachmentsUpgradeProcess(
-					_companyLocalService, _storeFactory.getStore()),
+				KBAttachmentsUpgradeProcess(_companyLocalService, _store),
 			new com.liferay.knowledge.base.internal.upgrade.v1_3_0.
 				UpgradePortletPreferences());
 
@@ -149,7 +149,7 @@ public class KnowledgeBaseServiceUpgradeStepRegistrator
 			new MVCCVersionUpgradeProcess() {
 
 				@Override
-				protected String[] getModuleTableNames() {
+				protected String[] getTableNames() {
 					return new String[] {
 						"KBArticle", "KBComment", "KBFolder", "KBTemplate"
 					};
@@ -182,10 +182,17 @@ public class KnowledgeBaseServiceUpgradeStepRegistrator
 			UpgradeProcessFactory.addColumns(
 				"KBArticle", "expirationDate DATE null",
 				"reviewDate DATE null"));
+
+		registry.register(
+			"4.3.0", "4.4.0",
+			new KBGroupServiceConfigurationUpgradeProcess(_configurationAdmin));
 	}
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
+
+	@Reference
+	private ConfigurationAdmin _configurationAdmin;
 
 	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
 	private ModuleServiceLifecycle _moduleServiceLifecycle;
@@ -193,8 +200,8 @@ public class KnowledgeBaseServiceUpgradeStepRegistrator
 	@Reference
 	private SettingsFactory _settingsFactory;
 
-	@Reference(target = "(dl.store.impl.enabled=true)")
-	private StoreFactory _storeFactory;
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 	/**
 	 * See LPS-101085. The ViewCount table needs to exist.

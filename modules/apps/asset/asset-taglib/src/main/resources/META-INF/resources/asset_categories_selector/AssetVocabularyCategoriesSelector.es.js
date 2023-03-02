@@ -25,7 +25,7 @@ import {
 	sub,
 } from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 
 function AssetVocabulariesCategoriesSelector({
 	eventName,
@@ -46,6 +46,7 @@ function AssetVocabulariesCategoriesSelector({
 
 	const [invalidItems, setInvalidItems] = useState([]);
 	const [resource, setResource] = useState([]);
+	const selectButtonRef = useRef();
 
 	const previousInputValue = usePrevious(inputValue);
 
@@ -145,6 +146,9 @@ function AssetVocabulariesCategoriesSelector({
 			height: '70vh',
 			iframeBodyCssClass: '',
 			multiple: true,
+			onClose: () => {
+				selectButtonRef.current?.focus();
+			},
 			onSelect: (selectedItems) => {
 				if (selectedItems) {
 					const newValues = Object.keys(selectedItems).reduce(
@@ -152,8 +156,8 @@ function AssetVocabulariesCategoriesSelector({
 							const item = selectedItems[itemKey];
 							if (!item.unchecked) {
 								acc.push({
-									label: item.value,
-									value: item.categoryId,
+									label: item.title,
+									value: item.classPK,
 								});
 							}
 
@@ -210,6 +214,7 @@ function AssetVocabulariesCategoriesSelector({
 				<ClayInput.Group>
 					<ClayInput.GroupItem>
 						<ClayMultiSelect
+							alignmentByViewport
 							id={inputName + '_MultiSelect'}
 							inputName={inputName}
 							items={selectedItems}
@@ -267,8 +272,14 @@ function AssetVocabulariesCategoriesSelector({
 
 					<ClayInput.GroupItem shrink>
 						<ClayButton
+							aria-haspopup="dialog"
+							aria-label={sub(
+								Liferay.Language.get('select-x'),
+								label
+							)}
 							displayType="secondary"
 							onClick={handleSelectButtonClick}
+							ref={selectButtonRef}
 						>
 							{Liferay.Language.get('select')}
 						</ClayButton>

@@ -45,6 +45,7 @@ public class ListTypeEntryWrapper
 
 		attributes.put("mvccVersion", getMvccVersion());
 		attributes.put("uuid", getUuid());
+		attributes.put("externalReferenceCode", getExternalReferenceCode());
 		attributes.put("listTypeEntryId", getListTypeEntryId());
 		attributes.put("companyId", getCompanyId());
 		attributes.put("userId", getUserId());
@@ -71,6 +72,13 @@ public class ListTypeEntryWrapper
 
 		if (uuid != null) {
 			setUuid(uuid);
+		}
+
+		String externalReferenceCode = (String)attributes.get(
+			"externalReferenceCode");
+
+		if (externalReferenceCode != null) {
+			setExternalReferenceCode(externalReferenceCode);
 		}
 
 		Long listTypeEntryId = (Long)attributes.get("listTypeEntryId");
@@ -168,6 +176,16 @@ public class ListTypeEntryWrapper
 	@Override
 	public String getDefaultLanguageId() {
 		return model.getDefaultLanguageId();
+	}
+
+	/**
+	 * Returns the external reference code of this list type entry.
+	 *
+	 * @return the external reference code of this list type entry
+	 */
+	@Override
+	public String getExternalReferenceCode() {
+		return model.getExternalReferenceCode();
 	}
 
 	/**
@@ -397,6 +415,16 @@ public class ListTypeEntryWrapper
 	}
 
 	/**
+	 * Sets the external reference code of this list type entry.
+	 *
+	 * @param externalReferenceCode the external reference code of this list type entry
+	 */
+	@Override
+	public void setExternalReferenceCode(String externalReferenceCode) {
+		model.setExternalReferenceCode(externalReferenceCode);
+	}
+
+	/**
 	 * Sets the key of this list type entry.
 	 *
 	 * @param key the key of this list type entry
@@ -567,6 +595,11 @@ public class ListTypeEntryWrapper
 	@Override
 	public void setUuid(String uuid) {
 		model.setUuid(uuid);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

@@ -14,7 +14,7 @@
 
 package com.liferay.commerce.account.service.impl;
 
-import com.liferay.commerce.account.model.CommerceAccount;
+import com.liferay.account.model.AccountEntry;
 import com.liferay.commerce.account.model.CommerceAccountGroup;
 import com.liferay.commerce.account.model.CommerceAccountGroupCommerceAccountRel;
 import com.liferay.commerce.account.service.base.CommerceAccountGroupCommerceAccountRelServiceBaseImpl;
@@ -33,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = {
 		"json.web.service.context.name=commerce",
 		"json.web.service.context.path=CommerceAccountGroupCommerceAccountRel"
@@ -53,7 +52,7 @@ public class CommerceAccountGroupCommerceAccountRelServiceImpl
 		_commerceAccountGroupModelResourcePermission.check(
 			getPermissionChecker(), commerceAccountGroupId, ActionKeys.UPDATE);
 
-		_commerceAccountModelResourcePermission.check(
+		_accountEntryModelResourcePermission.check(
 			getPermissionChecker(), commerceAccountId, ActionKeys.UPDATE);
 
 		return commerceAccountGroupCommerceAccountRelLocalService.
@@ -77,7 +76,7 @@ public class CommerceAccountGroupCommerceAccountRelServiceImpl
 			commerceAccountGroupCommerceAccountRel.getCommerceAccountGroupId(),
 			ActionKeys.UPDATE);
 
-		_commerceAccountModelResourcePermission.check(
+		_accountEntryModelResourcePermission.check(
 			getPermissionChecker(),
 			commerceAccountGroupCommerceAccountRel.getCommerceAccountId(),
 			ActionKeys.UPDATE);
@@ -96,7 +95,7 @@ public class CommerceAccountGroupCommerceAccountRelServiceImpl
 		_commerceAccountGroupModelResourcePermission.check(
 			getPermissionChecker(), commerceAccountGroupId, ActionKeys.UPDATE);
 
-		_commerceAccountModelResourcePermission.check(
+		_accountEntryModelResourcePermission.check(
 			getPermissionChecker(), commerceAccountId, ActionKeys.UPDATE);
 
 		return commerceAccountGroupCommerceAccountRelLocalService.
@@ -132,15 +131,15 @@ public class CommerceAccountGroupCommerceAccountRelServiceImpl
 	}
 
 	@Reference(
+		target = "(model.class.name=com.liferay.account.model.AccountEntry)"
+	)
+	private ModelResourcePermission<AccountEntry>
+		_accountEntryModelResourcePermission;
+
+	@Reference(
 		target = "(model.class.name=com.liferay.commerce.account.model.CommerceAccountGroup)"
 	)
 	private ModelResourcePermission<CommerceAccountGroup>
 		_commerceAccountGroupModelResourcePermission;
-
-	@Reference(
-		target = "(model.class.name=com.liferay.commerce.account.model.CommerceAccount)"
-	)
-	private ModelResourcePermission<CommerceAccount>
-		_commerceAccountModelResourcePermission;
 
 }

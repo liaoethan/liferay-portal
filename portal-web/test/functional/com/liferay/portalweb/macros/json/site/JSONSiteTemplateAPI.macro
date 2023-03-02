@@ -15,7 +15,7 @@ definition {
 				-d readyForPropagation=${readyForPropagation}
 		''';
 
-		com.liferay.poshi.runner.util.JSONCurlUtil.post("${curl}");
+		com.liferay.poshi.runner.util.JSONCurlUtil.post(${curl});
 	}
 
 	macro _applyTemplateToSite {
@@ -25,18 +25,18 @@ definition {
 
 		var curl = '''
 			${portalURL}/api/jsonws/layoutset/update-layout-set-prototype-link-enabled \
-                           -u test@liferay.com:test \
-                           -d groupId=${groupId}  \
-                           -d privateLayout=${privateLayout} \
-                           -d layoutSetPrototypeLinkEnabled=true \
-                           -d layoutSetPrototypeUuid=${layoutSetPrototypeUuid}
+				-u test@liferay.com:test \
+				-d groupId=${groupId}  \
+				-d privateLayout=${privateLayout} \
+				-d layoutSetPrototypeLinkEnabled=true \
+				-d layoutSetPrototypeUuid=${layoutSetPrototypeUuid}
 		''';
 
-		com.liferay.poshi.runner.util.JSONCurlUtil.post("${curl}");
+		com.liferay.poshi.runner.util.JSONCurlUtil.post(${curl});
 	}
 
 	macro _deleteNonDefaultSiteTemplates {
-		Variables.assertDefined(parameterList = "${companyId}");
+		Variables.assertDefined(parameterList = ${companyId});
 
 		var portalURL = JSONCompany.getPortalURL();
 
@@ -46,11 +46,11 @@ definition {
 				-d companyId=${companyId}
 		''';
 
-		com.liferay.poshi.runner.util.JSONCurlUtil.post("${curl}");
+		com.liferay.poshi.runner.util.JSONCurlUtil.post(${curl});
 	}
 
 	macro _deleteSiteTemplateById {
-		Variables.assertDefined(parameterList = "${layoutSetPrototypeId}");
+		Variables.assertDefined(parameterList = ${layoutSetPrototypeId});
 
 		var portalURL = JSONCompany.getPortalURL();
 
@@ -60,7 +60,7 @@ definition {
 				-d layoutSetPrototypeId=${layoutSetPrototypeId}
 		''';
 
-		com.liferay.poshi.runner.util.JSONCurlUtil.post("${curl}");
+		com.liferay.poshi.runner.util.JSONCurlUtil.post(${curl});
 	}
 
 	macro _getAllNonDefaultSiteTemplateId {
@@ -73,55 +73,55 @@ definition {
 				-d companyId=${companyId}
 		''';
 
-		com.liferay.poshi.runner.util.JSONCurlUtil.post("${curl}");
+		com.liferay.poshi.runner.util.JSONCurlUtil.post(${curl});
 
-		var siteTemplateIds = JSONCurlUtil.post("${curl}", "$..['layoutSetPrototypeId']");
+		var siteTemplateIds = JSONCurlUtil.post(${curl}, "$..['layoutSetPrototypeId']");
 
-		return "${siteTemplateIds}";
+		return ${siteTemplateIds};
 	}
 
 	macro _getSiteTemplateIdByName {
-		Variables.assertDefined(parameterList = "${siteTemplateName}");
+		Variables.assertDefined(parameterList = ${siteTemplateName});
 
 		var portalURL = JSONCompany.getPortalURL();
 		var companyId = JSONCompany.getCompanyId();
 
 		var curl = '''
 			${portalURL}/api/jsonws/layoutsetprototype/get-layout-set-prototypes \
-                          -u test@liferay.com:test \
-                          -d companyId=${companyId}
+				-u test@liferay.com:test \
+				-d companyId=${companyId}
 		''';
 
-		var layoutSetPrototypeId = JSONCurlUtil.post("${curl}", "$.[?(@['nameCurrentValue'] == '${siteTemplateName}')]['layoutSetPrototypeId']");
+		var layoutSetPrototypeId = JSONCurlUtil.post(${curl}, "$.[?(@['nameCurrentValue'] == '${siteTemplateName}')]['layoutSetPrototypeId']");
 
-		if ("${layoutSetPrototypeId}" == "") {
+		if (${layoutSetPrototypeId} == "") {
 			fail("FAIL. Cannot find layout.");
 		}
 
-		return "${layoutSetPrototypeId}";
+		return ${layoutSetPrototypeId};
 	}
 
 	macro _getSiteTemplateUuidByName {
-		Variables.assertDefined(parameterList = "${siteTemplateName}");
+		Variables.assertDefined(parameterList = ${siteTemplateName});
 
 		var portalURL = JSONCompany.getPortalURL();
 		var companyId = JSONCompany.getCompanyId();
 
 		var curl = '''
 			${portalURL}/api/jsonws/layoutsetprototype/get-layout-set-prototypes \
-				 -u test@liferay.com:test \
-				 -d companyId=${companyId}
+				-u test@liferay.com:test \
+				-d companyId=${companyId}
 		''';
 
-		com.liferay.poshi.runner.util.JSONCurlUtil.post("${curl}");
+		com.liferay.poshi.runner.util.JSONCurlUtil.post(${curl});
 
-		var uuid = JSONCurlUtil.post("${curl}", "$.[?(@['nameCurrentValue'] == '${siteTemplateName}')]['uuid']");
+		var uuid = JSONCurlUtil.post(${curl}, "$.[?(@['nameCurrentValue'] == '${siteTemplateName}')]['uuid']");
 
-		if ("${uuid}" == "") {
+		if (${uuid} == "") {
 			fail("FAIL. Cannot find layout.");
 		}
 
-		return "${uuid}";
+		return ${uuid};
 	}
 
 }

@@ -55,8 +55,10 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface ChannelResource {
 
 	public Page<Channel> getChannelsPage(
-			String keywords, Filter filter, Pagination pagination)
+			String keywords, Pagination pagination, Sort[] sorts)
 		throws Exception;
+
+	public Channel patchChannel(Channel channel) throws Exception;
 
 	public Channel postChannel(Channel channel) throws Exception;
 

@@ -34,9 +34,10 @@ import com.liferay.headless.delivery.internal.dto.v1_0.util.DisplayPageRendererU
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RatingUtil;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.BlogPostingEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.BlogPostingResource;
-import com.liferay.info.item.InfoItemServiceTracker;
-import com.liferay.layout.display.page.LayoutDisplayPageProviderTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.layout.display.page.LayoutDisplayPageProviderRegistry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -81,6 +82,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/blog-posting.properties",
 	scope = ServiceScope.PROTOTYPE, service = BlogPostingResource.class
 )
+@CTAware
 public class BlogPostingResourceImpl extends BaseBlogPostingResourceImpl {
 
 	@Override
@@ -102,7 +104,7 @@ public class BlogPostingResourceImpl extends BaseBlogPostingResourceImpl {
 
 		BlogsEntry blogsEntry =
 			_blogsEntryLocalService.getBlogsEntryByExternalReferenceCode(
-				siteId, externalReferenceCode);
+				externalReferenceCode, siteId);
 
 		_blogsEntryService.deleteEntry(blogsEntry.getEntryId());
 	}
@@ -131,8 +133,8 @@ public class BlogPostingResourceImpl extends BaseBlogPostingResourceImpl {
 		return DisplayPageRendererUtil.toHTML(
 			BlogsEntry.class.getName(), 0, displayPageKey,
 			blogsEntry.getGroupId(), contextHttpServletRequest,
-			contextHttpServletResponse, blogsEntry, _infoItemServiceTracker,
-			_layoutDisplayPageProviderTracker, _layoutLocalService,
+			contextHttpServletResponse, blogsEntry, _infoItemServiceRegistry,
+			_layoutDisplayPageProviderRegistry, _layoutLocalService,
 			_layoutPageTemplateEntryService);
 	}
 
@@ -256,7 +258,7 @@ public class BlogPostingResourceImpl extends BaseBlogPostingResourceImpl {
 
 		BlogsEntry blogsEntry =
 			_blogsEntryLocalService.fetchBlogsEntryByExternalReferenceCode(
-				siteId, externalReferenceCode);
+				externalReferenceCode, siteId);
 
 		if (blogsEntry != null) {
 			return _updateBlogPosting(blogsEntry, blogPosting);
@@ -495,10 +497,11 @@ public class BlogPostingResourceImpl extends BaseBlogPostingResourceImpl {
 	private ExpandoTableLocalService _expandoTableLocalService;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
-	private LayoutDisplayPageProviderTracker _layoutDisplayPageProviderTracker;
+	private LayoutDisplayPageProviderRegistry
+		_layoutDisplayPageProviderRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;

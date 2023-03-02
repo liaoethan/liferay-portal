@@ -19,6 +19,7 @@ import {Control, UseFormRegister, useFieldArray} from 'react-hook-form';
 import {useParams} from 'react-router-dom';
 
 import Form from '../../../../../components/Form';
+import SearchBuilder from '../../../../../core/SearchBuilder';
 import {useFetch} from '../../../../../hooks/useFetch';
 import useFormModal from '../../../../../hooks/useFormModal';
 import i18n from '../../../../../i18n';
@@ -30,7 +31,6 @@ import {
 	testrayFactorCategoryRest,
 	testrayFactorRest,
 } from '../../../../../services/rest';
-import {searchUtil} from '../../../../../util/search';
 import FactorOptionsFormModal from '../../../../Standalone/FactorOptions/FactorOptionsFormModal';
 import BuildSelectStacksModal, {FactorStack} from './BuildSelectStacksModal';
 import StackList from './Stack';
@@ -65,11 +65,15 @@ const BuildFormRun: React.FC<BuildFormRunProps> = ({control, register}) => {
 	>([[] as any]);
 
 	const {data: factorsData} = useFetch<APIResponse<TestrayFactor>>(
-		`${testrayFactorRest.resource}&filter=${searchUtil.eq(
-			'routineId',
-			routineId as string
-		)}&pageSize=100`,
-		(response) => testrayFactorRest.transformDataFromList(response)
+		testrayFactorRest.resource,
+		{
+			params: {
+				filter: SearchBuilder.eq('routineId', routineId as string),
+				pageSize: 100,
+			},
+			transformData: (response) =>
+				testrayFactorRest.transformDataFromList(response),
+		}
 	);
 
 	const factorItems = useMemo(() => factorsData?.items || [], [

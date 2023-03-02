@@ -16,14 +16,13 @@ package com.liferay.layout.page.template.item.selector.web.internal;
 
 import com.liferay.info.item.InfoItemClassDetails;
 import com.liferay.info.item.InfoItemFormVariation;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemDetailsProvider;
 import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.item.selector.ItemSelectorReturnType;
 import com.liferay.item.selector.ItemSelectorView;
 import com.liferay.item.selector.ItemSelectorViewDescriptor;
 import com.liferay.item.selector.ItemSelectorViewDescriptorRenderer;
-import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.item.selector.LayoutPageTemplateEntryItemSelectorReturnType;
 import com.liferay.layout.page.template.item.selector.criterion.LayoutPageTemplateEntryItemSelectorCriterion;
@@ -38,8 +37,6 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.security.auth.AuthTokenUtil;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -50,7 +47,6 @@ import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
@@ -65,7 +61,6 @@ import java.util.Objects;
 
 import javax.portlet.PortletRequest;
 import javax.portlet.PortletURL;
-import javax.portlet.ResourceURL;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -79,7 +74,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Lourdes Fernández Besada
  */
-@Component(immediate = true, service = ItemSelectorView.class)
+@Component(service = ItemSelectorView.class)
 public class LayoutPageTemplateEntryItemSelectorView
 	implements ItemSelectorView<LayoutPageTemplateEntryItemSelectorCriterion> {
 
@@ -97,10 +92,7 @@ public class LayoutPageTemplateEntryItemSelectorView
 
 	@Override
 	public String getTitle(Locale locale) {
-		return ResourceBundleUtil.getString(
-			ResourceBundleUtil.getBundle(
-				locale, LayoutPageTemplateEntryItemSelectorView.class),
-			"page-template");
+		return _language.get(locale, "page-template");
 	}
 
 	@Override
@@ -128,7 +120,7 @@ public class LayoutPageTemplateEntryItemSelectorView
 			new LayoutPageTemplateEntryItemSelectorReturnType());
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
 
 	@Reference
 	private ItemSelectorViewDescriptorRenderer
@@ -197,40 +189,28 @@ public class LayoutPageTemplateEntryItemSelectorView
 			).put(
 				"previewURL",
 				() -> {
-					Layout layout = _layoutLocalService.getLayout(
-						_layoutPageTemplateEntry.getPlid());
-
 					if (_layoutPageTemplateEntry.getType() ==
 							LayoutPageTemplateEntryTypeConstants.
 								TYPE_DISPLAY_PAGE) {
 
-						ResourceURL getPagePreviewURL =
-							PortletURLFactoryUtil.create(
-								_httpServletRequest,
-								ContentPageEditorPortletKeys.
-									CONTENT_PAGE_EDITOR_PORTLET,
-								layout, PortletRequest.RESOURCE_PHASE);
-
-						getPagePreviewURL.setParameter(
+						return HttpComponentsUtil.addParameters(
+							_themeDisplay.getPortalURL() +
+								_themeDisplay.getPathMain() +
+									"/portal/get_page_preview",
+							"p_l_mode", Constants.PREVIEW, "selPlid",
+							_layoutPageTemplateEntry.getPlid(),
 							"segmentsExperienceId",
-							String.valueOf(
-								_segmentsExperienceLocalService.
-									fetchDefaultSegmentsExperienceId(
-										_layoutPageTemplateEntry.getPlid())));
-						getPagePreviewURL.setResourceID(
-							"/layout_content_page_editor/get_page_preview");
-
-						return HttpComponentsUtil.addParameter(
-							getPagePreviewURL.toString(), "p_l_mode",
-							Constants.PREVIEW);
+							_segmentsExperienceLocalService.
+								fetchDefaultSegmentsExperienceId(
+									_layoutPageTemplateEntry.getPlid()));
 					}
 
-					String layoutURL = HttpComponentsUtil.addParameter(
-						PortalUtil.getLayoutFullURL(layout, _themeDisplay),
-						"p_l_mode", Constants.PREVIEW);
-
-					return HttpComponentsUtil.addParameter(
-						layoutURL, "p_p_auth",
+					return HttpComponentsUtil.addParameters(
+						PortalUtil.getLayoutFullURL(
+							_layoutLocalService.getLayout(
+								_layoutPageTemplateEntry.getPlid()),
+							_themeDisplay),
+						"p_l_mode", Constants.PREVIEW, "p_p_auth",
 						AuthTokenUtil.getToken(_httpServletRequest));
 				}
 			).put(
@@ -315,7 +295,7 @@ public class LayoutPageTemplateEntryItemSelectorView
 
 		private String _getSubtypeLabel() {
 			InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemFormVariationsProvider.class,
 					_layoutPageTemplateEntry.getClassName());
 
@@ -338,7 +318,7 @@ public class LayoutPageTemplateEntryItemSelectorView
 
 		private String _getTypeLabel() {
 			InfoItemDetailsProvider<?> infoItemDetailsProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemDetailsProvider.class,
 					_layoutPageTemplateEntry.getClassName());
 

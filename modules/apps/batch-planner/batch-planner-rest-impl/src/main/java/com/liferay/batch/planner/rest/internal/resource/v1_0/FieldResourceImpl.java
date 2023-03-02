@@ -71,10 +71,8 @@ public class FieldResourceImpl extends BaseFieldResourceImpl {
 			return _fieldProvider.getFields(internalClassName);
 		}
 
-		String objectDefinitionName = internalClassName.substring(idx + 1);
-
 		return _fieldProvider.getFields(
-			contextCompany.getCompanyId(), objectDefinitionName,
+			contextCompany.getCompanyId(), internalClassName.substring(idx + 1),
 			contextUriInfo);
 	}
 

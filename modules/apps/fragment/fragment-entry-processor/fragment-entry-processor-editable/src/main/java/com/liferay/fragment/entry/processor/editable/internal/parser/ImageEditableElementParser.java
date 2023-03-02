@@ -23,7 +23,7 @@ import com.liferay.layout.responsive.ViewportSize;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -41,7 +41,6 @@ import com.liferay.portal.kernel.util.Validator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,10 +53,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(
-	immediate = true, property = "type=image",
-	service = EditableElementParser.class
-)
+@Component(property = "type=image", service = EditableElementParser.class)
 public class ImageEditableElementParser implements EditableElementParser {
 
 	@Override
@@ -93,13 +89,10 @@ public class ImageEditableElementParser implements EditableElementParser {
 		else if (fieldValue instanceof WebImage) {
 			WebImage webImage = (WebImage)fieldValue;
 
-			Optional<InfoLocalizedValue<String>> altInfoLocalizedValueOptional =
-				webImage.getAltInfoLocalizedValueOptional();
+			InfoLocalizedValue<String> infoLocalizedValue =
+				webImage.getAltInfoLocalizedValue();
 
-			if (altInfoLocalizedValueOptional.isPresent()) {
-				InfoLocalizedValue<String> infoLocalizedValue =
-					altInfoLocalizedValueOptional.get();
-
+			if (infoLocalizedValue != null) {
 				alt = infoLocalizedValue.getValue(locale);
 			}
 
@@ -179,7 +172,7 @@ public class ImageEditableElementParser implements EditableElementParser {
 
 		if (JSONUtil.isValid(value)) {
 			try {
-				JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
+				JSONObject jsonObject = _jsonFactory.createJSONObject(value);
 
 				fileEntryId = jsonObject.getLong("fileEntryId");
 				value = jsonObject.getString("url");
@@ -313,6 +306,9 @@ public class ImageEditableElementParser implements EditableElementParser {
 
 	@Reference
 	private Html _html;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

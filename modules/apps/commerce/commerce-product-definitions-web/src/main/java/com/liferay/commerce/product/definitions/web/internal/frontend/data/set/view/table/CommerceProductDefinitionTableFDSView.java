@@ -30,7 +30,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "frontend.data.set.name=" + CommerceProductFDSNames.PRODUCT_DEFINITIONS,
 	service = FDSView.class
 )
@@ -42,7 +41,7 @@ public class CommerceProductDefinitionTableFDSView extends BaseTableFDSView {
 			_fdsTableSchemaBuilderFactory.create();
 
 		return fdsTableSchemaBuilder.add(
-			"thumbnail", "",
+			"thumbnail", "image",
 			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
 				"image")
 		).add(

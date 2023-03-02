@@ -31,6 +31,7 @@ import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.internal.release.osgi.commands.ReleaseManagerOSGiCommands;
 import com.liferay.portal.util.PropsValues;
@@ -53,18 +54,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.time.StopWatch;
 import org.apache.felix.cm.PersistenceManager;
 
 /**
@@ -73,8 +68,6 @@ import org.apache.felix.cm.PersistenceManager;
 public class UpgradeReport {
 
 	public UpgradeReport() {
-		_stopWatch.start();
-
 		_initialBuildNumber = _getBuildNumber();
 		_initialSchemaVersion = _getSchemaVersion();
 		_initialTableCounts = _getTableCounts();
@@ -109,17 +102,26 @@ public class UpgradeReport {
 		warningMessages.put(message, count);
 	}
 
+	public void filterMessages() {
+		for (String filteredClassName : _FILTERED_CLASS_NAMES) {
+			_errorMessages.remove(filteredClassName);
+			_warningMessages.remove(filteredClassName);
+		}
+	}
+
 	public void generateReport(
 		PersistenceManager persistenceManager,
 		ReleaseManagerOSGiCommands releaseManagerOSGiCommands) {
 
-		_stopWatch.stop();
+		filterMessages();
 
 		_persistenceManager = persistenceManager;
 
 		try {
+			File reportFile = _getReportFile();
+
 			FileUtil.write(
-				_getReportFile(),
+				reportFile,
 				StringUtil.merge(
 					new String[] {
 						_getDateInfo(), _getUpgradeTimeInfo(),
@@ -128,9 +130,17 @@ public class UpgradeReport {
 						_getDatabaseTablesInfo(), _getUpgradeProcessesInfo(),
 						_getLogEventsInfo("errors"),
 						_getLogEventsInfo("warnings"),
-						releaseManagerOSGiCommands.check()
+						(releaseManagerOSGiCommands == null) ?
+							StringPool.BLANK :
+								releaseManagerOSGiCommands.check()
 					},
 					StringPool.NEW_LINE + StringPool.NEW_LINE));
+
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Upgrade report generated in " +
+						reportFile.getAbsolutePath());
+			}
 		}
 		catch (IOException ioException) {
 			_log.error("Unable to generate the upgrade report", ioException);
@@ -165,11 +175,6 @@ public class UpgradeReport {
 			return "Unable to get database tables size";
 		}
 
-		Set<String> tableNames = new HashSet<>();
-
-		tableNames.addAll(_initialTableCounts.keySet());
-		tableNames.addAll(finalTableCounts.keySet());
-
 		StringBundler sb = new StringBundler(finalTableCounts.size() + 3);
 
 		String format = "%-30s %20s %20s\n";
@@ -180,46 +185,42 @@ public class UpgradeReport {
 				format, "Table name", "Rows (initial)", "Rows (final)"));
 		sb.append(String.format(format, _UNDERLINE, _UNDERLINE, _UNDERLINE));
 
-		Stream<String> stream = tableNames.stream();
+		List<String> tableNames = new ArrayList<>();
 
-		stream.filter(
-			tableName -> {
-				int initialCount = _initialTableCounts.getOrDefault(
-					tableName, 0);
-				int finalCount = finalTableCounts.getOrDefault(tableName, 0);
+		tableNames.addAll(_initialTableCounts.keySet());
+		tableNames.addAll(finalTableCounts.keySet());
 
-				return (initialCount > 0) || (finalCount > 0);
-			}
-		).sorted(
-			(a, b) -> {
-				int countA = _initialTableCounts.getOrDefault(a, 0);
-				int countB = _initialTableCounts.getOrDefault(b, 0);
+		ListUtil.distinct(
+			tableNames,
+			(tableNameA, tableNameB) -> {
+				int countA = _initialTableCounts.getOrDefault(tableNameA, 0);
+				int countB = _initialTableCounts.getOrDefault(tableNameB, 0);
 
-				if (countA == countB) {
-					return a.compareTo(b);
+				if (countA != countB) {
+					return countB - countA;
 				}
 
-				return countB - countA;
+				return tableNameA.compareTo(tableNameB);
+			});
+
+		for (String tableName : tableNames) {
+			int initialCount = _initialTableCounts.getOrDefault(tableName, -1);
+			int finalCount = finalTableCounts.getOrDefault(tableName, -1);
+
+			if ((initialCount <= 0) && (finalCount <= 0)) {
+				continue;
 			}
-		).forEach(
-			tableName -> {
-				int initialCount = _initialTableCounts.getOrDefault(
-					tableName, -1);
 
-				String initialRows =
-					(initialCount >= 0) ? String.valueOf(initialCount) :
-						StringPool.DASH;
+			String initialRows =
+				(initialCount >= 0) ? String.valueOf(initialCount) :
+					StringPool.DASH;
 
-				int finalCount = finalTableCounts.getOrDefault(tableName, -1);
+			String finalRows =
+				(finalCount >= 0) ? String.valueOf(finalCount) :
+					StringPool.DASH;
 
-				String finalRows =
-					(finalCount >= 0) ? String.valueOf(finalCount) :
-						StringPool.DASH;
-
-				sb.append(
-					String.format(format, tableName, initialRows, finalRows));
-			}
-		);
+			sb.append(String.format(format, tableName, initialRows, finalRows));
+		}
 
 		return sb.toString();
 	}
@@ -286,16 +287,17 @@ public class UpgradeReport {
 	}
 
 	private String _getLogEventsInfo(String type) {
-		Set<Map.Entry<String, Map<String, Integer>>> entrySet;
+		List<Map.Entry<String, Map<String, Integer>>> entries =
+			new ArrayList<>();
 
 		if (type.equals("errors")) {
-			entrySet = _errorMessages.entrySet();
+			entries.addAll(_errorMessages.entrySet());
 		}
 		else {
-			entrySet = _warningMessages.entrySet();
+			entries.addAll(_warningMessages.entrySet());
 		}
 
-		if (entrySet.isEmpty()) {
+		if (entries.isEmpty()) {
 			return StringBundler.concat("No ", type, " thrown during upgrade");
 		}
 
@@ -304,40 +306,20 @@ public class UpgradeReport {
 		sb.append(StringUtil.upperCaseFirstLetter(type));
 		sb.append(" thrown during upgrade process\n");
 
-		Stream<Map.Entry<String, Map<String, Integer>>> stream =
-			entrySet.stream();
-
-		Map<String, Map<String, Integer>> sortedErrors = stream.sorted(
-			Collections.reverseOrder(
-				Map.Entry.comparingByValue(
-					new Comparator<Map<String, Integer>>() {
-
-						@Override
-						public int compare(
-							Map<String, Integer> object1,
-							Map<String, Integer> object2) {
-
-							return Integer.compare(
-								object1.size(), object2.size());
-						}
-
-					}))
-		).collect(
-			Collectors.toMap(
-				Map.Entry::getKey, Map.Entry::getValue,
-				(object1, object2) -> object2, LinkedHashMap::new)
-		);
-
 		for (Map.Entry<String, Map<String, Integer>> entry :
-				sortedErrors.entrySet()) {
+				ListUtil.sort(
+					entries,
+					Collections.reverseOrder(
+						Map.Entry.comparingByValue(
+							Comparator.comparingInt(Map::size))))) {
 
 			sb.append("Class name: ");
 			sb.append(entry.getKey());
 			sb.append(StringPool.NEW_LINE);
 
-			Map<String, Integer> value = _sort(entry.getValue());
+			for (Map.Entry<String, Integer> valueEntry :
+					_sort(entry.getValue())) {
 
-			for (Map.Entry<String, Integer> valueEntry : value.entrySet()) {
 				sb.append(StringPool.TAB);
 				sb.append(valueEntry.getValue());
 				sb.append(" occurrences of the following ");
@@ -448,7 +430,14 @@ public class UpgradeReport {
 	}
 
 	private File _getReportFile() {
-		File reportsDir = new File(".", "reports");
+		File reportsDir = null;
+
+		if (DBUpgrader.isUpgradeClient()) {
+			reportsDir = new File(".", "reports");
+		}
+		else {
+			reportsDir = new File(PropsValues.LIFERAY_HOME, "reports");
+		}
 
 		if ((reportsDir != null) && !reportsDir.exists()) {
 			reportsDir.mkdirs();
@@ -593,11 +582,9 @@ public class UpgradeReport {
 				GetterUtil.getInteger(message.substring(startIndex, endIndex)));
 		}
 
-		map = _sort(map);
-
 		int count = 0;
 
-		for (Map.Entry<String, Integer> entry : map.entrySet()) {
+		for (Map.Entry<String, Integer> entry : _sort(map)) {
 			sb.append(StringPool.TAB);
 			sb.append(entry.getKey());
 			sb.append(" took ");
@@ -617,30 +604,14 @@ public class UpgradeReport {
 	private String _getUpgradeTimeInfo() {
 		return String.format(
 			"Upgrade completed in %s seconds",
-			_stopWatch.getTime() / Time.SECOND);
+			DBUpgrader.getUpgradeTime() / Time.SECOND);
 	}
 
-	private Map<String, Integer> _sort(Map<String, Integer> map) {
-		Set<Map.Entry<String, Integer>> set = map.entrySet();
-
-		Stream<Map.Entry<String, Integer>> stream = set.stream();
-
-		return stream.sorted(
+	private List<Map.Entry<String, Integer>> _sort(Map<String, Integer> map) {
+		return ListUtil.sort(
+			new ArrayList<>(map.entrySet()),
 			Collections.reverseOrder(
-				Map.Entry.comparingByValue(
-					new Comparator<Integer>() {
-
-						@Override
-						public int compare(Integer object1, Integer object2) {
-							return Integer.compare(object1, object2);
-						}
-
-					}))
-		).collect(
-			Collectors.toMap(
-				Map.Entry::getKey, Map.Entry::getValue,
-				(object1, object2) -> object2, LinkedHashMap::new)
-		);
+				Map.Entry.comparingByValue(Integer::compare)));
 	}
 
 	private static final String _CONFIGURATION_PID_ADVANCED_FILE_SYSTEM_STORE =
@@ -650,6 +621,11 @@ public class UpgradeReport {
 	private static final String _CONFIGURATION_PID_FILE_SYSTEM_STORE =
 		"com.liferay.portal.store.file.system.configuration." +
 			"FileSystemStoreConfiguration";
+
+	private static final String[] _FILTERED_CLASS_NAMES = {
+		"com.liferay.portal.search.elasticsearch7.internal.sidecar." +
+			"SidecarManager"
+	};
 
 	private static final String _UNDERLINE = "--------------";
 
@@ -666,7 +642,6 @@ public class UpgradeReport {
 	private final Map<String, Integer> _initialTableCounts;
 	private PersistenceManager _persistenceManager;
 	private String _rootDir;
-	private final StopWatch _stopWatch = new StopWatch();
 	private final Map<String, Map<String, Integer>> _warningMessages =
 		new ConcurrentHashMap<>();
 

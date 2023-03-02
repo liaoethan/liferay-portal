@@ -24,6 +24,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.ServicePreAction;
 import com.liferay.portal.events.ThemeServicePreAction;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
@@ -57,7 +58,6 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.JaxRsLinkUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.segments.SegmentsEntryRetriever;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.constants.SegmentsWebKeys;
@@ -91,6 +91,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/site-page.properties",
 	scope = ServiceScope.PROTOTYPE, service = SitePageResource.class
 )
+@CTAware
 public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 
 	@Override
@@ -138,7 +139,7 @@ public class SitePageResourceImpl extends BaseSitePageResourceImpl {
 		Layout layout = _getLayout(siteId, friendlyUrlPath);
 
 		return Page.of(
-			TransformUtil.transform(
+			transform(
 				_getSegmentsExperiences(layout),
 				segmentsExperience -> _toSitePage(
 					_isEmbeddedPageDefinition(), layout,

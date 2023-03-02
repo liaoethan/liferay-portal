@@ -12,20 +12,24 @@
  * details.
  */
 
+import {StatusBadgeType} from '../../components/StatusBadge/StatusBadge';
 import {DescriptionType} from '../../types';
 
-export type FacetAggregation = {
-	facets: {
-		facetCriteria: string;
-		facetValues: {
-			numberOfOccurrences: number;
-			term: string;
-		}[];
+type Facets = {
+	facetCriteria: string;
+	facetValues: {
+		numberOfOccurrences: number;
+		term: string;
 	}[];
+};
+
+export type FacetAggregation = {
+	facets: Facets[];
 };
 
 export type APIResponse<Query = any> = {
 	actions: Object;
+	facets: Facets[];
 	items: Query[];
 	lastPage: number;
 	page: number;
@@ -35,7 +39,17 @@ export type APIResponse<Query = any> = {
 
 // Objects Types
 
+export type PickList = {
+	key: string;
+	name: string;
+};
+
 export type Role = {
+	id: number;
+	name: string;
+};
+
+export type UserGroup = {
 	id: number;
 	name: string;
 };
@@ -48,18 +62,34 @@ export type UserAccount = {
 	givenName: string;
 	id: number;
 	image: string;
+	name: string;
 	roleBriefs: Role[];
+	userGroupBriefs: UserGroup[];
 	uuid: number;
+};
+
+export type UserRole = {
+	roles: number;
+	rolesBriefs: Role[];
+	userId: number;
 };
 
 export type TestrayBuild = {
 	active: boolean;
+	buildToTasks: TestrayTask[];
+	caseResultBlocked: string;
+	caseResultFailed: string;
+	caseResultInProgress: string;
+	caseResultIncomplete: string;
+	caseResultPassed: string;
+	caseResultTestFix: string;
+	caseResultUntested: string;
 	creator: {
 		name: string;
 	};
 	dateCreated: string;
 	description: string;
-	dueStatus: number;
+	dueStatus: PickList;
 	gitHash: string;
 	id: number;
 	name: string;
@@ -70,11 +100,12 @@ export type TestrayBuild = {
 	r_projectToBuilds_c_project?: TestrayProject;
 	r_routineToBuilds_c_routine?: TestrayRoutine;
 	routine?: TestrayRoutine;
+	tasks: TestrayTask[];
 	template: boolean;
+	templateTestrayBuildId: string;
 };
 
 export type TestrayCase = {
-	caseNumber: number;
 	caseType?: TestrayCaseType;
 	component?: TestrayComponent;
 	dateCreated: string;
@@ -84,10 +115,13 @@ export type TestrayCase = {
 	estimatedDuration: number;
 	id: number;
 	name: string;
+	number: number;
 	originationKey: string;
 	priority: number;
+	project?: TestrayProject;
 	r_caseTypeToCases_c_caseType?: TestrayCaseType;
 	r_componentToCases_c_component?: TestrayComponent;
+	r_projectToCases_c_project?: TestrayProject;
 	steps: string;
 	stepsType: string;
 };
@@ -97,17 +131,19 @@ export type TestrayCaseResult = {
 	attachments: string;
 	build?: TestrayBuild;
 	case?: TestrayCase;
+	caseResultToCaseResultsIssues: TestrayCaseResultIssue[];
 	closedDate: string;
-	commentMBMessage: string;
-	commentMBMessageId: string;
-	component: TestrayComponent;
+	comment: string;
+	component?: TestrayComponent;
 	dateCreated: string;
 	dateModified: string;
-	dueStatus: number;
+	dueStatus: PickList;
 	errors: string;
 	id: number;
-	issue: string;
+	issues: TestrayCaseResultIssue[];
 	key: string;
+	mbMessageId: number;
+	mbThreadId: number;
 	r_buildToCaseResult_c_build?: TestrayBuild;
 	r_caseToCaseResult_c_case?: TestrayCase;
 	r_caseToCaseResult_c_caseId?: number;
@@ -120,6 +156,15 @@ export type TestrayCaseResult = {
 	warnings: number;
 };
 
+export type TestrayCaseResultIssue = {
+	caseResult?: TestrayCaseResult;
+	id: number;
+	issue?: TestrayIssue;
+	name: string;
+	r_caseResultToCaseResultsIssues_c_caseResult?: TestrayCaseResult;
+	r_issueToCaseResultsIssues_c_issue?: TestrayIssue;
+};
+
 export type TestrayCaseType = {
 	dateCreated: string;
 	dateModified: string;
@@ -129,6 +174,15 @@ export type TestrayCaseType = {
 	status: string;
 };
 
+export type TestrayDyspatchTrigger = {
+	creator: {
+		name: string;
+		urlImage?: string;
+	};
+	status: StatusBadgeType;
+	type: string;
+};
+
 export type TestrayFactorOption = {
 	dateCreated: string;
 	dateModified: string;
@@ -136,6 +190,13 @@ export type TestrayFactorOption = {
 	id: number;
 	name: string;
 	r_factorCategoryToOptions_c_factorCategory: TestrayFactorCategory;
+};
+
+export type TestrayIssue = {
+	dateCreated: number;
+	dateModified: number;
+	id: number;
+	name: string;
 };
 
 export type TestrayProductVersion = {
@@ -166,16 +227,19 @@ export type TestrayRequirement = {
 	linkURL: string;
 	r_componentToRequirements_c_component?: TestrayComponent;
 	summary: string;
+	url: string;
 };
 
 export type TestrayRequirementCase = {
-	case: TestrayCase;
+	case?: TestrayCase;
 	id: number;
-	requirement: TestrayRequirement;
+	r_caseToRequirementsCases_c_case?: TestrayCase;
+	r_requiremenToRequirementsCases_c_requirement?: TestrayRequirement;
+	requirement?: TestrayRequirement;
 };
 
 export type TestrayRun = {
-	build: TestrayBuild;
+	build?: TestrayBuild;
 	dateCreated: string;
 	dateModified: string;
 	description: string;
@@ -188,13 +252,49 @@ export type TestrayRun = {
 	jenkinsJobKey: string;
 	name: string;
 	number: string;
+	r_buildToRuns_c_build?: TestrayBuild;
 	status: string;
 };
 
 export type TestraySubTask = {
-	dueStatus: number;
+	dateCreated: string;
+	dateModified: string;
+	dueStatus: PickList;
+	errors: string;
+	id: number;
+	mbMessageId: number;
+	mbThreadId: number;
+	mergedToSubtaskId: TestraySubTask;
 	name: string;
+	number: number;
+	r_mergedToTestraySubtask_c_subtaskId: TestraySubTask;
+	r_splitFromTestraySubtask_c_subtask: TestraySubTask;
+	r_taskToSubtasks_c_task: TestrayTask;
+	r_userToSubtasks_user: UserAccount;
+	r_userToSubtasks_userId: number;
 	score: number;
+	splitFromSubtask: TestraySubTask;
+	statusUpdateDate: string;
+	task: TestrayTask;
+	user: UserAccount;
+};
+
+export type TestraySubTaskCaseResult = {
+	caseResult?: TestrayCaseResult;
+	id: number;
+	name: string;
+	r_caseResultToSubtasksCasesResults_c_caseResult?: TestrayCaseResult;
+	r_subtaskToSubtasksCasesResults_c_subtask?: TestraySubTask;
+	subTask?: TestraySubTask;
+};
+
+export type TestraySubTaskIssue = {
+	id: number;
+	issue?: TestrayIssue;
+	name: string;
+	r_issueToSubtasksIssues_c_issue?: TestrayIssue;
+	r_subtaskToSubtasksIssues_c_subtask?: TestraySubTask;
+	subTask?: TestraySubTask;
 };
 
 export type TestraySuite = {
@@ -222,10 +322,33 @@ export type TestraySuiteCase = {
 export type TestrayTask = {
 	build?: TestrayBuild;
 	dateCreated: string;
-	dueStatus: number;
+	dispatchTriggerId: number;
+	dueStatus: PickList;
 	id: number;
 	name: string;
 	r_buildToTasks_c_build?: TestrayBuild;
+	subtaskScore: string;
+	subtaskScoreCompleted: string;
+	subtaskScoreSelfIncomplete: string;
+	taskToTasksUsers: any;
+};
+
+export type TestrayTaskCaseTypes = {
+	caseType?: TestrayCaseType;
+	id: number;
+	name: string;
+	r_caseTypeToTasksCaseTypes_c_caseType?: TestrayCaseType;
+	r_taskToTasksCaseTypes_c_taskId?: TestrayTask;
+	task?: TestrayTask;
+};
+
+export type TestrayTaskUser = {
+	id: number;
+	name: string;
+	r_taskToTasksUsers_c_task?: TestrayTask;
+	r_userToTasksUsers_user?: UserAccount;
+	task?: TestrayTask;
+	user?: UserAccount;
 };
 
 export type TestrayTeam = {
@@ -264,9 +387,11 @@ export type TestrayFactorCategory = {
 };
 
 export type TestrayRoutine = {
+	builds: TestrayBuild[];
 	dateCreated: string;
 	id: number;
 	name: string;
+	routineToBuilds: TestrayBuild[];
 };
 
 export type TestrayFactor = {
@@ -280,3 +405,37 @@ export type TestrayFactor = {
 	r_runToFactors_c_run?: TestrayRun;
 	run: TestrayRun;
 };
+
+export type TestrayAttachment = {
+	name: string;
+	url: string;
+	value: string;
+};
+
+export type TestrayDispatchTrigger = {
+	creator: {
+		image: string;
+		name: string;
+	};
+	dateCreated: string;
+	dispatchTriggerId: number;
+	dueStatus: PickList;
+	externalReferenceCode: string;
+	id: number;
+	name: string;
+	output: string;
+	type: string;
+};
+
+export type MessageBoardMessage = {
+	articleBody: string;
+	creator: {
+		image: string;
+		name: string;
+	};
+	dateCreated: string;
+	headline: string;
+	id: string;
+};
+
+export type StorageType = 'persisted' | 'temporary';

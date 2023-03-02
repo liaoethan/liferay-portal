@@ -54,6 +54,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -207,7 +208,16 @@ public abstract class BaseIndexResourceTestCase {
 
 		assertContains(index1, (List<Index>)page.getItems());
 		assertContains(index2, (List<Index>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetIndexesPage_getExpectedActions());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetIndexesPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	protected Index testGetIndexesPage_addIndex(Index index) throws Exception {
@@ -328,6 +338,12 @@ public abstract class BaseIndexResourceTestCase {
 	}
 
 	protected void assertValid(Page<Index> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Index> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Index> indexes = page.getItems();
@@ -342,6 +358,20 @@ public abstract class BaseIndexResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -494,6 +524,10 @@ public abstract class BaseIndexResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

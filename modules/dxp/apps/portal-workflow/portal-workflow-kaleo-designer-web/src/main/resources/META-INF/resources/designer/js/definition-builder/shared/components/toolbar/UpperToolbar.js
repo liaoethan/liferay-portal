@@ -127,7 +127,10 @@ export default function UpperToolbar({
 				const deserializeUtil = new DeserializeUtil();
 				const xmlDefinition = currentEditor.getData();
 
-				deserializeUtil.updateXMLDefinition(xmlDefinition);
+				deserializeUtil.updateXMLDefinition(
+					encodeURIComponent(xmlDefinition)
+				);
+
 				const metadata = deserializeUtil.getMetadata();
 
 				currentName = metadata.name;
@@ -136,7 +139,7 @@ export default function UpperToolbar({
 				currentDescription = metadata.description;
 				setDefinitionDescription(currentDescription);
 
-				currentElements = deserializeUtil.getElements(xmlDefinition);
+				currentElements = deserializeUtil.getElements();
 				setElements(currentElements);
 			}
 			else {

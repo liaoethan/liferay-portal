@@ -12,10 +12,11 @@
  * details.
  */
 
+import TestrayError from '../../TestrayError';
+import Rest from '../../core/Rest';
+import SearchBuilder from '../../core/SearchBuilder';
 import i18n from '../../i18n';
 import yupSchema from '../../schema/yup';
-import {SearchBuilder} from '../../util/search';
-import Rest from './Rest';
 import {APIResponse, TestrayProductVersion} from './types';
 
 type ProductVersion = typeof yupSchema.productVersion.__outputType;
@@ -61,7 +62,7 @@ class TestrayProductVersionImpl extends Rest<
 		);
 
 		if (response?.totalCount) {
-			throw new Error(
+			throw new TestrayError(
 				i18n.sub('the-x-name-already-exists', 'product-version')
 			);
 		}

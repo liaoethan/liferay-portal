@@ -54,6 +54,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -208,7 +209,16 @@ public abstract class BaseReindexStatusResourceTestCase {
 
 		assertContains(reindexStatus1, (List<ReindexStatus>)page.getItems());
 		assertContains(reindexStatus2, (List<ReindexStatus>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetReindexStatusesPage_getExpectedActions());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetReindexStatusesPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	protected ReindexStatus testGetReindexStatusesPage_addReindexStatus(
@@ -327,6 +337,13 @@ public abstract class BaseReindexStatusResourceTestCase {
 	}
 
 	protected void assertValid(Page<ReindexStatus> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<ReindexStatus> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<ReindexStatus> reindexStatuses = page.getItems();
@@ -341,6 +358,20 @@ public abstract class BaseReindexStatusResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -494,6 +525,10 @@ public abstract class BaseReindexStatusResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

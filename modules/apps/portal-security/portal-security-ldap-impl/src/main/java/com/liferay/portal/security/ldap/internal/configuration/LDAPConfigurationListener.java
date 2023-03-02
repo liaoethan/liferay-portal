@@ -42,7 +42,7 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
 /**
  * @author Michael C. Han
  */
-@Component(immediate = true, service = ConfigurationListener.class)
+@Component(service = ConfigurationListener.class)
 public class LDAPConfigurationListener implements ConfigurationListener {
 
 	@Override
@@ -58,12 +58,12 @@ public class LDAPConfigurationListener implements ConfigurationListener {
 				factoryPid, ".scoped", StringPool.BLANK);
 		}
 
-		if (!_configurationProviders.containsKey(factoryPid)) {
-			return;
-		}
-
 		ConfigurationProvider<?> configurationProvider =
 			_configurationProviders.get(factoryPid);
+
+		if (configurationProvider == null) {
+			return;
+		}
 
 		try {
 			if (configurationEvent.getType() == ConfigurationEvent.CM_DELETED) {

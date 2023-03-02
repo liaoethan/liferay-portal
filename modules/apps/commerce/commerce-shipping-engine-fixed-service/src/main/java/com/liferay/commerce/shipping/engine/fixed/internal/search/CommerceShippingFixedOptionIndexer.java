@@ -44,7 +44,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CommerceShippingFixedOptionIndexer
 	extends BaseIndexer<CommerceShippingFixedOption> {
 
@@ -151,7 +151,7 @@ public class CommerceShippingFixedOptionIndexer
 
 		_indexWriterHelper.updateDocument(
 			commerceShippingFixedOption.getCompanyId(),
-			getDocument(commerceShippingFixedOption), isCommitImmediately());
+			getDocument(commerceShippingFixedOption));
 	}
 
 	@Override

@@ -49,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Wade Cao
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-custom-facet",
@@ -116,10 +115,6 @@ public class CustomFacetPortlet extends MVCPortlet {
 				portletSharedSearchResponse.getPortletPreferences(
 					renderRequest));
 
-		Facet facet = _getFacet(
-			portletSharedSearchResponse, customFacetPortletPreferences,
-			renderRequest);
-
 		String parameterName = _getParameterName(customFacetPortletPreferences);
 
 		Optional<List<String>> parameterValuesOptional =
@@ -129,7 +124,9 @@ public class CustomFacetPortlet extends MVCPortlet {
 		return customFacetDisplayContextBuilder.setCustomDisplayCaption(
 			customFacetPortletPreferences.getCustomHeadingOptional()
 		).setFacet(
-			facet
+			_getFacet(
+				portletSharedSearchResponse, customFacetPortletPreferences,
+				renderRequest)
 		).setFieldToAggregate(
 			customFacetPortletPreferences.getAggregationFieldString()
 		).setFrequenciesVisible(
@@ -138,6 +135,8 @@ public class CustomFacetPortlet extends MVCPortlet {
 			customFacetPortletPreferences.getFrequencyThreshold()
 		).setMaxTerms(
 			customFacetPortletPreferences.getMaxTerms()
+		).setOrder(
+			customFacetPortletPreferences.getOrder()
 		).setPaginationStartParameterName(
 			_getPaginationStartParameterName(portletSharedSearchResponse)
 		).setParameterName(
@@ -167,7 +166,7 @@ public class CustomFacetPortlet extends MVCPortlet {
 
 		SearchResponse searchResponse =
 			portletSharedSearchResponse.getFederatedSearchResponse(
-				customFacetPortletPreferences.getFederatedSearchKeyOptional());
+				customFacetPortletPreferences.getFederatedSearchKey());
 
 		return searchResponse.withFacetContextGet(
 			facetContext -> facetContext.getFacet(

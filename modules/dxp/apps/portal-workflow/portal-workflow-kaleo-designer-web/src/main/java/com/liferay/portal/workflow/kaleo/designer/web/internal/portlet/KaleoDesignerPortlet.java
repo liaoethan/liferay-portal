@@ -15,11 +15,10 @@
 package com.liferay.portal.workflow.kaleo.designer.web.internal.portlet;
 
 import com.liferay.account.model.AccountRole;
-import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -34,6 +33,7 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -45,6 +45,7 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -53,23 +54,21 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.util.comparator.RoleNameComparator;
 import com.liferay.portal.kernel.util.comparator.UserFirstNameComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.workflow.configuration.WorkflowDefinitionConfiguration;
 import com.liferay.portal.workflow.kaleo.designer.web.constants.KaleoDesignerPortletKeys;
 import com.liferay.portal.workflow.kaleo.designer.web.internal.constants.KaleoDesignerWebKeys;
 import com.liferay.portal.workflow.kaleo.designer.web.internal.portlet.display.context.KaleoDesignerDisplayContext;
 import com.liferay.portal.workflow.kaleo.exception.DuplicateKaleoDefinitionNameException;
 import com.liferay.portal.workflow.kaleo.model.KaleoDefinitionVersion;
+import com.liferay.portal.workflow.kaleo.runtime.action.ActionExecutorManager;
 import com.liferay.portal.workflow.kaleo.service.KaleoDefinitionVersionLocalService;
 
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
@@ -81,18 +80,13 @@ import javax.portlet.RenderResponse;
 import javax.portlet.ResourceRequest;
 import javax.portlet.ResourceResponse;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eduardo Lundgren
  */
 @Component(
-	configurationPid = "com.liferay.portal.workflow.configuration.WorkflowDefinitionConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.autopropagated-parameters=availableFields",
@@ -168,7 +162,15 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 				_serveRoles(resourceRequest, resourceResponse);
 			}
 			else if (resourceID.equals("scriptLanguages")) {
-				_serveScriptLanguages(resourceRequest, resourceResponse);
+				writeJSON(
+					resourceRequest, resourceResponse,
+					JSONUtil.toJSONArray(
+						ListUtil.sort(
+							new ArrayList<>(
+								ScriptingUtil.getSupportedLanguages())),
+						language -> JSONUtil.put(
+							"scriptLanguage", StringUtil.toLowerCase(language)),
+						_log));
 			}
 			else if (resourceID.equals("users")) {
 				_serveUsers(resourceRequest, resourceResponse);
@@ -180,17 +182,6 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 		catch (Exception exception) {
 			throw new PortletException(exception);
 		}
-	}
-
-	@Activate
-	@Modified
-	protected void activate(Map<String, Object> properties) {
-		WorkflowDefinitionConfiguration workflowDefinitionConfiguration =
-			ConfigurableUtil.createConfigurable(
-				WorkflowDefinitionConfiguration.class, properties);
-
-		_companyAdministratorCanPublish =
-			workflowDefinitionConfiguration.companyAdministratorCanPublish();
 	}
 
 	@Override
@@ -267,7 +258,7 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 
 		String name = ParamUtil.getString(resourceRequest, "name");
 
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		if (Validator.isNotNull(name)) {
 			ThemeDisplay themeDisplay =
@@ -353,7 +344,7 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 				new RoleNameComparator());
 		}
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (Role role : roles) {
 			if (!_rolePermission.contains(
@@ -369,35 +360,6 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 				).put(
 					"roleId", role.getRoleId()
 				));
-		}
-
-		writeJSON(resourceRequest, resourceResponse, jsonArray);
-	}
-
-	private void _serveScriptLanguages(
-			ResourceRequest resourceRequest, ResourceResponse resourceResponse)
-		throws Exception {
-
-		Set<String> supportedScriptLanguages =
-			ScriptingUtil.getSupportedLanguages();
-
-		Stream<String> supportedScriptLanguagesStream =
-			supportedScriptLanguages.stream();
-
-		List<Object> sortedSupportedScriptLanguages =
-			supportedScriptLanguagesStream.sorted(
-			).collect(
-				Collectors.toList()
-			);
-
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
-
-		for (Object supportedScriptLanguage : sortedSupportedScriptLanguages) {
-			jsonArray.put(
-				JSONUtil.put(
-					"scriptLanguage",
-					StringUtil.toLowerCase(
-						supportedScriptLanguage.toString())));
 		}
 
 		writeJSON(resourceRequest, resourceResponse, jsonArray);
@@ -456,7 +418,7 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 			}
 		}
 
-		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
+		JSONArray jsonArray = _jsonFactory.createJSONArray();
 
 		for (User user : users) {
 			if (!_userPermission.contains(
@@ -490,12 +452,10 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 
 		KaleoDesignerDisplayContext kaleoDesignerDisplayContext =
 			new KaleoDesignerDisplayContext(
-				renderRequest, _kaleoDefinitionVersionLocalService,
+				_actionExecutorManager, renderRequest,
+				_kaleoDefinitionVersionLocalService, _portletResourcePermission,
 				ResourceBundleLoaderUtil.getPortalResourceBundleLoader(),
 				_userLocalService);
-
-		kaleoDesignerDisplayContext.setCompanyAdministratorCanPublish(
-			_companyAdministratorCanPublish);
 
 		renderRequest.setAttribute(
 			KaleoDesignerWebKeys.KALEO_DESIGNER_DISPLAY_CONTEXT,
@@ -533,9 +493,13 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 		KaleoDesignerPortlet.class);
 
 	@Reference
+	private ActionExecutorManager _actionExecutorManager;
+
+	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
-	private volatile boolean _companyAdministratorCanPublish;
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private KaleoDefinitionVersionLocalService
@@ -543,6 +507,11 @@ public class KaleoDesignerPortlet extends MVCPortlet {
 
 	@Reference
 	private Localization _localization;
+
+	@Reference(
+		target = "(resource.name=" + WorkflowConstants.RESOURCE_NAME + ")"
+	)
+	private PortletResourcePermission _portletResourcePermission;
 
 	@Reference
 	private RoleLocalService _roleLocalService;

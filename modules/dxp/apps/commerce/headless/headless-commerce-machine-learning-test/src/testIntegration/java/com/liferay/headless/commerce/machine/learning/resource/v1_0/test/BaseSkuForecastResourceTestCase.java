@@ -56,6 +56,7 @@ import java.text.DateFormat;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -219,7 +220,17 @@ public abstract class BaseSkuForecastResourceTestCase {
 
 		assertContains(skuForecast1, (List<SkuForecast>)page.getItems());
 		assertContains(skuForecast2, (List<SkuForecast>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetSkuForecastsByMonthlyRevenuePage_getExpectedActions());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSkuForecastsByMonthlyRevenuePage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -423,6 +434,13 @@ public abstract class BaseSkuForecastResourceTestCase {
 	}
 
 	protected void assertValid(Page<SkuForecast> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<SkuForecast> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<SkuForecast> skuForecasts = page.getItems();
@@ -437,6 +455,20 @@ public abstract class BaseSkuForecastResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -645,6 +677,10 @@ public abstract class BaseSkuForecastResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

@@ -16,7 +16,8 @@ package com.liferay.site.welcome.site.initializer.internal.instance.lifecycle;
 
 import com.liferay.document.library.constants.DLPortletKeys;
 import com.liferay.document.library.kernel.model.DLFileEntry;
-import com.liferay.fragment.contributor.FragmentCollectionContributorRegistration;
+import com.liferay.document.library.kernel.store.Store;
+import com.liferay.fragment.contributor.FragmentCollectionContributor;
 import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -32,6 +33,9 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
@@ -40,7 +44,6 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizer;
 import com.liferay.portal.util.PropsValues;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
 import com.liferay.site.initializer.SiteInitializer;
 
 import java.util.List;
@@ -51,7 +54,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(immediate = true, service = PortalInstanceLifecycleListener.class)
+@Component(service = PortalInstanceLifecycleListener.class)
 public class AddDefaultLayoutPortalInstanceLifecycleListener
 	extends BasePortalInstanceLifecycleListener {
 
@@ -74,10 +77,16 @@ public class AddDefaultLayoutPortalInstanceLifecycleListener
 			if (defaultLayout == null) {
 				String name = PrincipalThreadLocal.getName();
 
+				PermissionChecker permissionChecker =
+					PermissionThreadLocal.getPermissionChecker();
+
 				try {
 					User user = _getUser(company.getCompanyId());
 
 					PrincipalThreadLocal.setName(user.getUserId());
+
+					PermissionThreadLocal.setPermissionChecker(
+						_defaultPermissionCheckerFactory.create(user));
 
 					ServiceContextThreadLocal.pushServiceContext(
 						new ServiceContext());
@@ -86,6 +95,10 @@ public class AddDefaultLayoutPortalInstanceLifecycleListener
 				}
 				finally {
 					PrincipalThreadLocal.setName(name);
+
+					PermissionThreadLocal.setPermissionChecker(
+						permissionChecker);
+
 					ServiceContextThreadLocal.popServiceContext();
 				}
 			}
@@ -110,9 +123,11 @@ public class AddDefaultLayoutPortalInstanceLifecycleListener
 		return adminUsers.get(0);
 	}
 
+	@Reference
+	private PermissionCheckerFactory _defaultPermissionCheckerFactory;
+
 	@Reference(target = "(fragment.collection.key=BASIC_COMPONENT)")
-	private FragmentCollectionContributorRegistration
-		_fragmentCollectionContributorRegistration;
+	private FragmentCollectionContributor _fragmentCollectionContributor;
 
 	@Reference
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
@@ -144,8 +159,8 @@ public class AddDefaultLayoutPortalInstanceLifecycleListener
 	)
 	private SiteInitializer _siteInitializer;
 
-	@Reference(target = "(dl.store.impl.enabled=true)")
-	private StoreFactory _storeFactory;
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 	@Reference
 	private UserLocalService _userLocalService;

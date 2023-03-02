@@ -24,24 +24,35 @@ import {
 import {KeyedMutator} from 'swr';
 
 import ListViewContextProvider, {
+	AppActions,
 	InitialState as ListViewContextState,
 	ListViewContext,
 	ListViewContextProviderProps,
 	ListViewTypes,
 } from '../../context/ListViewContext';
+import SearchBuilder from '../../core/SearchBuilder';
 import {useFetch} from '../../hooks/useFetch';
 import i18n from '../../i18n';
+import {
+	FilterSchema as FilterSchemaType,
+	filterSchema as filterSchemas,
+} from '../../schema/filter';
 import {APIResponse} from '../../services/rest';
 import {SortDirection} from '../../types';
 import {PAGINATION} from '../../util/constants';
-import {SearchBuilder} from '../../util/search';
 import EmptyState from '../EmptyState';
 import Loading from '../Loading';
 import ManagementToolbar, {ManagementToolbarProps} from '../ManagementToolbar';
 import Table, {TableProps} from '../Table';
 
+type ChildrenOptions = {
+	dispatch: React.Dispatch<AppActions>;
+	listViewContext: ListViewContextState;
+	mutate: KeyedMutator<any>;
+};
+
 export type ListViewProps<T = any> = {
-	children?: (response: APIResponse, mutate: KeyedMutator<any>) => ReactNode;
+	children?: (response: APIResponse, options: ChildrenOptions) => ReactNode;
 	forceRefetch?: number;
 	managementToolbarProps?: {
 		visible?: boolean;
@@ -66,7 +77,7 @@ export type ListViewProps<T = any> = {
 	variables?: any;
 };
 
-const ListViewRest: React.FC<ListViewProps> = ({
+const ListView: React.FC<ListViewProps> = ({
 	children,
 	forceRefetch,
 	managementToolbarProps: {
@@ -77,7 +88,7 @@ const ListViewRest: React.FC<ListViewProps> = ({
 	resource,
 	tableProps,
 	transformData,
-	variables: _variables,
+	variables,
 	pagination = {displayTop: true},
 }) => {
 	const [listViewContext, dispatch] = useContext(ListViewContext);
@@ -89,50 +100,50 @@ const ListViewRest: React.FC<ListViewProps> = ({
 		sort,
 	} = listViewContext;
 
+	const filterSchemaName = managementToolbarProps.filterSchema ?? '';
+	const filterSchema = (filterSchemas as any)[
+		filterSchemaName
+	] as FilterSchemaType;
+
+	const onApplyFilterMemo = useMemo(
+		() => filterSchema?.onApply?.bind(filterSchema),
+		[filterSchema]
+	);
+
+	const filterVariables = useMemo(
+		() => ({
+			appliedFilter: filters.filter,
+			defaultFilter: variables?.filter,
+			filterSchema,
+		}),
+		[filters.filter, variables?.filter, filterSchema]
+	);
+
 	const getURLSearchParams = useCallback(
-		(url: string) => {
-			const urlSearchParams = new URLSearchParams();
-
-			urlSearchParams.set(
-				'sort',
-				sort.key ? `${sort.key}:${sort.direction.toLowerCase()}` : ''
-			);
-			urlSearchParams.set('page', listViewContext.page.toString());
-			urlSearchParams.set(
-				'pageSize',
-				listViewContext.pageSize.toString()
-			);
-			urlSearchParams.set(
-				'filter',
-				SearchBuilder.createFilter(
-					filters.filter,
-					_variables?.filter
-				) || ''
-			);
-
-			if (forceRefetch) {
-				urlSearchParams.set('ts', forceRefetch.toString());
-			}
-
-			const operator = url.includes('?') ? '&' : '?';
-
-			return `${url}${operator}${urlSearchParams.toString()}`;
-		},
-		[
+		() => ({
+			filter: onApplyFilterMemo
+				? onApplyFilterMemo(filterVariables)
+				: SearchBuilder.createFilter(filterVariables) || '',
 			forceRefetch,
-			_variables?.filter,
-			filters.filter,
+			page: listViewContext.page,
+			pageSize: listViewContext.pageSize,
+			sort: sort.key ? `${sort.key}:${sort.direction.toLowerCase()}` : '',
+		}),
+		[
+			onApplyFilterMemo,
+			filterVariables,
+			forceRefetch,
 			listViewContext.page,
 			listViewContext.pageSize,
-			sort.direction,
 			sort.key,
+			sort.direction,
 		]
 	);
 
-	const {data: response, error, loading, mutate} = useFetch(
-		getURLSearchParams(resource),
-		transformData
-	);
+	const {data: response, error, loading, mutate} = useFetch(resource, {
+		params: getURLSearchParams(),
+		transformData,
+	});
 
 	const {actions = {}, items = [], page, pageSize, totalCount = 0} =
 		response || {};
@@ -193,10 +204,6 @@ const ListViewRest: React.FC<ListViewProps> = ({
 		}
 	}, [items, tableProps, selectedRows, dispatch]);
 
-	if (error) {
-		return <span>{error.message}</span>;
-	}
-
 	if (loading) {
 		return <Loading />;
 	}
@@ -234,9 +241,19 @@ const ListViewRest: React.FC<ListViewProps> = ({
 				/>
 			)}
 
-			{!items.length && <EmptyState />}
+			{!items.length && (
+				<EmptyState
+					description={error?.message}
+					type={error ? 'EMPTY_SEARCH' : 'EMPTY_STATE'}
+				/>
+			)}
 
-			{children && children(response as APIResponse, mutate)}
+			{children &&
+				children(response as APIResponse, {
+					dispatch,
+					listViewContext,
+					mutate,
+				})}
 
 			{!!items.length && (
 				<>
@@ -264,14 +281,14 @@ const ListViewRest: React.FC<ListViewProps> = ({
 	);
 };
 
-const ListViewMemoized = memo(ListViewRest);
+const ListViewMemoized = memo(ListView);
 
 const ListViewWithContext: React.FC<
 	ListViewProps & {
 		initialContext?: ListViewContextProviderProps;
 	}
 > = ({initialContext, ...otherProps}) => (
-	<ListViewContextProvider {...initialContext}>
+	<ListViewContextProvider {...initialContext} id={otherProps.resource}>
 		<ListViewMemoized {...otherProps} />
 	</ListViewContextProvider>
 );

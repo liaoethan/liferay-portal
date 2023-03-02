@@ -37,7 +37,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = Constants.SERVICE_RANKING + ":Integer=10",
 	service = InfoItemFormProvider.class
 )
@@ -70,8 +69,7 @@ public class CPAttachmentFileEntryInfoItemFormProvider
 		).infoFieldSetEntry(
 			CPAttachmentFileEntryInfoItemFields.URLInfoField
 		).labelInfoLocalizedValue(
-			InfoLocalizedValue.localize(
-				"com.liferay.commerce.lang", "basic-information")
+			InfoLocalizedValue.localize(getClass(), "basic-information")
 		).name(
 			"basic-information"
 		).build();
@@ -116,8 +114,7 @@ public class CPAttachmentFileEntryInfoItemFormProvider
 		).infoFieldSetEntry(
 			CPAttachmentFileEntryInfoItemFields.uuidInfoField
 		).labelInfoLocalizedValue(
-			InfoLocalizedValue.localize(
-				"com.liferay.commerce.lang", "detailed-information")
+			InfoLocalizedValue.localize(getClass(), "detailed-information")
 		).name(
 			"detailed-information"
 		).build();

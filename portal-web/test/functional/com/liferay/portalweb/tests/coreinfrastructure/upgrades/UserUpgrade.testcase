@@ -7,7 +7,7 @@ definition {
 	property testray.main.component.name = "Upgrades User and System Management";
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade625 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "mariadb,mysql,postgresql";
@@ -18,7 +18,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade704 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "mariadb,mysql,postgresql";
@@ -29,7 +29,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade713 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "mariadb,mysql,postgresql";
@@ -40,7 +40,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade720 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "mariadb,mysql,postgresql";
@@ -51,7 +51,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade721 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "mariadb,mysql,postgresql";
@@ -62,7 +62,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade730 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "mariadb,mysql,postgresql";
@@ -72,8 +72,18 @@ definition {
 		Upgrade.resetTestUserPassword(administratorEmail = "test@liferay.com");
 	}
 
+	@priority = 5
+	test ResetTestUserPasswordAfterUpgrade740 {
+		property data.archive.type = "data-archive-portal";
+		property database.types = "mariadb,mysql,postgresql";
+		property portal.version = "7.4.0";
+		property setup.wizard.enabled = "true";
+
+		Upgrade.resetTestUserPassword(administratorEmail = "test@liferay.com");
+	}
+
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade7110 {
 		property data.archive.type = "data-archive-portal";
 		property portal.version = "7.1.10";
@@ -83,7 +93,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade7210 {
 		property data.archive.type = "data-archive-portal";
 		property portal.version = "7.2.10";
@@ -93,7 +103,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade70106 {
 		property data.archive.type = "data-archive-portal";
 		property portal.version = "7.0.10.6";
@@ -103,7 +113,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade72101 {
 		property data.archive.type = "data-archive-portal";
 		property portal.version = "7.2.10.1";
@@ -113,7 +123,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade621015 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "db2,mariadb,mysql,oracle,postgresql,sybase";
@@ -124,7 +134,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-73277."
-	@priority = "5"
+	@priority = 5
 	test ResetTestUserPasswordAfterUpgrade621021 {
 		property data.archive.type = "data-archive-portal";
 		property database.types = "db2,mariadb,mysql,oracle,postgresql,sybase";
@@ -134,7 +144,7 @@ definition {
 		Upgrade.resetTestUserPassword(administratorEmail = "test@liferay.com");
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade625 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "mysql";
@@ -147,7 +157,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade704 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "mariadb,mysql,postgresql";
@@ -160,7 +170,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade713 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "mariadb,mysql,postgresql";
@@ -173,7 +183,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade720 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "mariadb,mysql,postgresql";
@@ -186,7 +196,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade721 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "mariadb,mysql,postgresql";
@@ -199,7 +209,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade730 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "mariadb,mysql,postgresql";
@@ -212,7 +222,20 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
+	test ViewAndEditUserAfterUpgrade740 {
+		property data.archive.type = "data-archive-user";
+		property database.types = "mariadb,mysql,postgresql";
+		property portal.version = "7.4.0";
+
+		SignIn.signIn();
+
+		SearchAdministration.executeReindex();
+
+		Upgrade.viewAndEditUser();
+	}
+
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade7110 {
 		property data.archive.type = "data-archive-user";
 		property portal.version = "7.1.10";
@@ -224,7 +247,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade7210 {
 		property data.archive.type = "data-archive-user";
 		property portal.version = "7.2.10";
@@ -236,7 +259,19 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
+	test ViewAndEditUserAfterUpgrade7413 {
+		property data.archive.type = "data-archive-user";
+		property portal.version = "7.4.13";
+
+		SignIn.signIn();
+
+		SearchAdministration.executeReindex();
+
+		Upgrade.viewAndEditUser();
+	}
+
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade70106 {
 		property data.archive.type = "data-archive-user";
 		property portal.version = "7.0.10.6";
@@ -248,7 +283,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade72101 {
 		property data.archive.type = "data-archive-user";
 		property portal.version = "7.2.10.1";
@@ -260,7 +295,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade621015 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "db2,mysql,oracle";
@@ -273,7 +308,7 @@ definition {
 		Upgrade.viewAndEditUser();
 	}
 
-	@priority = "5"
+	@priority = 5
 	test ViewAndEditUserAfterUpgrade621021 {
 		property data.archive.type = "data-archive-user";
 		property database.types = "db2,mysql,oracle,postgresql";

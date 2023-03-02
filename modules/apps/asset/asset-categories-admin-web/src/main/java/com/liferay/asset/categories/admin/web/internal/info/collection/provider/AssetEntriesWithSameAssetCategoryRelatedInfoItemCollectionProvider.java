@@ -59,7 +59,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -68,7 +67,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jürgen Kappler
  */
 @Component(
-	immediate = true,
 	property = "item.class.name=com.liferay.asset.kernel.model.AssetCategory",
 	service = RelatedInfoItemCollectionProvider.class
 )
@@ -80,22 +78,20 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 	public InfoPage<AssetEntry> getCollectionInfoPage(
 		CollectionQuery collectionQuery) {
 
-		Optional<Object> relatedItemOptional =
-			collectionQuery.getRelatedItemObjectOptional();
-
-		Object relatedItem = relatedItemOptional.orElse(null);
+		Object relatedItem = collectionQuery.getRelatedItem();
 
 		if (!(relatedItem instanceof AssetCategory)) {
 			return InfoPage.of(
 				Collections.emptyList(), collectionQuery.getPagination(), 0);
 		}
 
-		AssetEntryQuery assetEntryQuery = _getAssetEntryQuery(collectionQuery);
+		AssetCategory assetCategory = (AssetCategory)relatedItem;
+
+		AssetEntryQuery assetEntryQuery = _getAssetEntryQuery(
+			assetCategory, collectionQuery);
 
 		try {
-			AssetCategory assetCategory = (AssetCategory)relatedItem;
-
-			SearchContext searchContext = _getSearchContext(assetCategory);
+			SearchContext searchContext = _getSearchContext();
 
 			Hits hits = _assetHelper.search(
 				searchContext, assetEntryQuery, assetEntryQuery.getStart(),
@@ -140,12 +136,12 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 	}
 
 	private AssetEntryQuery _getAssetEntryQuery(
-		CollectionQuery collectionQuery) {
+		AssetCategory assetCategory, CollectionQuery collectionQuery) {
 
 		AssetEntryQuery assetEntryQuery = new AssetEntryQuery();
 
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
+		assetEntryQuery.setAllCategoryIds(
+			new long[] {assetCategory.getCategoryId()});
 
 		assetEntryQuery.setClassNameIds(_getClassNameIds(collectionQuery));
 		assetEntryQuery.setEnablePermissions(true);
@@ -156,8 +152,12 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 			assetEntryQuery.setEnd(pagination.getEnd());
 		}
 
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
 		assetEntryQuery.setGroupIds(
 			new long[] {serviceContext.getScopeGroupId()});
+
 		assetEntryQuery.setOrderByCol1(Field.MODIFIED_DATE);
 		assetEntryQuery.setOrderByType1("DESC");
 
@@ -169,11 +169,8 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 	}
 
 	private long[] _getClassNameIds(CollectionQuery collectionQuery) {
-		Optional<Map<String, String[]>> configurationOptional =
-			collectionQuery.getConfigurationOptional();
-
-		Map<String, String[]> configuration = configurationOptional.orElse(
-			null);
+		Map<String, String[]> configuration =
+			collectionQuery.getConfiguration();
 
 		if (MapUtil.isNotEmpty(configuration) &&
 			ArrayUtil.isNotEmpty(configuration.get("item_types"))) {
@@ -196,19 +193,8 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
-		return ArrayUtil.filter(
-			AssetRendererFactoryRegistryUtil.getClassNameIds(
-				serviceContext.getCompanyId(), true),
-			classNameId -> {
-				Indexer<?> indexer = IndexerRegistryUtil.getIndexer(
-					_portal.getClassName(classNameId));
-
-				if (indexer == null) {
-					return false;
-				}
-
-				return true;
-			});
+		return AssetRendererFactoryRegistryUtil.getIndexableClassNameIds(
+			serviceContext.getCompanyId(), true);
 	}
 
 	private InfoField _getItemTypesInfoField() {
@@ -226,8 +212,7 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 				}
 
 				Indexer<?> indexer = IndexerRegistryUtil.getIndexer(
-					_portal.getClassName(
-						assetRendererFactory.getClassNameId()));
+					assetRendererFactory.getClassName());
 
 				if (indexer == null) {
 					return false;
@@ -271,20 +256,18 @@ public class AssetEntriesWithSameAssetCategoryRelatedInfoItemCollectionProvider
 		return finalStep.build();
 	}
 
-	private SearchContext _getSearchContext(AssetCategory assetCategory) {
+	private SearchContext _getSearchContext() {
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
 
 		ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
 
 		return SearchContextFactory.getInstance(
-			new long[] {assetCategory.getCategoryId()}, new String[0],
+			new long[0], new String[0],
 			HashMapBuilder.<String, Serializable>put(
 				Field.STATUS, WorkflowConstants.STATUS_APPROVED
 			).put(
 				"head", true
-			).put(
-				"latest", true
 			).build(),
 			serviceContext.getCompanyId(), null, themeDisplay.getLayout(), null,
 			serviceContext.getScopeGroupId(), null, serviceContext.getUserId());

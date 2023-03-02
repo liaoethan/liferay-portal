@@ -14,8 +14,9 @@
 
 package com.liferay.fragment.internal.renderer;
 
+import com.liferay.frontend.taglib.clay.servlet.taglib.IconTag;
 import com.liferay.info.item.renderer.InfoItemRenderer;
-import com.liferay.info.item.renderer.InfoItemRendererTracker;
+import com.liferay.info.item.renderer.InfoItemRendererRegistry;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -36,6 +37,7 @@ import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.JspException;
 
 /**
  * @author Eudaldo Alonso
@@ -44,11 +46,11 @@ public class FragmentRendererUtil {
 
 	public static List<InfoItemRenderer<?>> getInfoItemRenderers(
 		String className, Class<?> clazz,
-		InfoItemRendererTracker infoItemRendererTracker) {
+		InfoItemRendererRegistry infoItemRendererRegistry) {
 
 		if (Validator.isNotNull(className)) {
 			List<InfoItemRenderer<?>> infoItemRenderers =
-				infoItemRendererTracker.getInfoItemRenderers(className);
+				infoItemRendererRegistry.getInfoItemRenderers(className);
 
 			if (!infoItemRenderers.isEmpty()) {
 				return infoItemRenderers;
@@ -60,7 +62,7 @@ public class FragmentRendererUtil {
 		if (interfaces.length != 0) {
 			for (Class<?> anInterface : interfaces) {
 				List<InfoItemRenderer<?>> infoItemRenderers =
-					infoItemRendererTracker.getInfoItemRenderers(
+					infoItemRendererRegistry.getInfoItemRenderers(
 						anInterface.getName());
 
 				if (!infoItemRenderers.isEmpty()) {
@@ -73,7 +75,7 @@ public class FragmentRendererUtil {
 
 		if (superClass != null) {
 			return getInfoItemRenderers(
-				className, superClass, infoItemRendererTracker);
+				className, superClass, infoItemRendererRegistry);
 		}
 
 		return null;
@@ -121,6 +123,42 @@ public class FragmentRendererUtil {
 		catch (IOException ioException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(ioException);
+			}
+		}
+	}
+
+	public static void printRestrictedContentMessage(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		try {
+			PrintWriter printWriter = httpServletResponse.getWriter();
+
+			printWriter.write(
+				"<div class=\"alert alert-secondary align-items-baseline " +
+					"bg-light d-flex\"><span class=\"alert-indicator " +
+						"flex-shrink-0 mr-2\">");
+
+			IconTag iconTag = new IconTag();
+
+			iconTag.setCssClass("lexicon-icon lexicon-icon-password-policies");
+
+			iconTag.setSymbol("password-policies");
+
+			printWriter.write(
+				iconTag.doTagAsString(httpServletRequest, httpServletResponse));
+
+			printWriter.write("</span>");
+			printWriter.write(
+				LanguageUtil.get(
+					httpServletRequest,
+					"this-content-cannot-be-displayed-due-to-permission-" +
+						"restrictions"));
+			printWriter.write("</div>");
+		}
+		catch (IOException | JspException exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
 			}
 		}
 	}

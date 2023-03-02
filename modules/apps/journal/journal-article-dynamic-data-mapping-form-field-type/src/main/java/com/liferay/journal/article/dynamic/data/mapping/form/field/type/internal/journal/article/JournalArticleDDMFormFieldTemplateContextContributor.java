@@ -26,7 +26,7 @@ import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -49,7 +50,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Pavel Savinov
  */
 @Component(
-	immediate = true,
 	property = "ddm.form.field.type.name=" + JournalArticleDDMFormFieldTypeConstants.JOURNAL_ARTICLE,
 	service = {
 		DDMFormFieldTemplateContextContributor.class,
@@ -114,6 +114,8 @@ public class JournalArticleDDMFormFieldTemplateContextContributor
 
 		infoItemItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 			new JournalArticleItemSelectorReturnType());
+		infoItemItemSelectorCriterion.setRefererClassPK(
+			_getRefererClassPK(httpServletRequest));
 
 		return String.valueOf(
 			_itemSelector.getItemSelectorURL(
@@ -129,7 +131,7 @@ public class JournalArticleDDMFormFieldTemplateContextContributor
 		}
 
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(value);
 
 			long classPK = jsonObject.getLong("classPK");
 
@@ -167,13 +169,32 @@ public class JournalArticleDDMFormFieldTemplateContextContributor
 		}
 	}
 
+	private long _getRefererClassPK(HttpServletRequest httpServletRequest) {
+		String articleId = ParamUtil.getString(httpServletRequest, "articleId");
+
+		if (Validator.isNull(articleId)) {
+			return 0;
+		}
+
+		long groupId = ParamUtil.getLong(httpServletRequest, "groupId");
+
+		JournalArticle journalArticle =
+			_journalArticleLocalService.fetchArticle(groupId, articleId);
+
+		if (journalArticle == null) {
+			return 0;
+		}
+
+		return journalArticle.getResourcePrimKey();
+	}
+
 	private String _getValue(String value) {
 		if (Validator.isNull(value)) {
 			return StringPool.BLANK;
 		}
 
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(value);
 
 			long classPK = jsonObject.getLong("classPK");
 
@@ -197,8 +218,7 @@ public class JournalArticleDDMFormFieldTemplateContextContributor
 					"title", journalArticle.getTitle()
 				).put(
 					"titleMap",
-					JSONFactoryUtil.createJSONObject(
-						journalArticle.getTitleMap())
+					_jsonFactory.createJSONObject(journalArticle.getTitleMap())
 				);
 			}
 
@@ -221,6 +241,9 @@ public class JournalArticleDDMFormFieldTemplateContextContributor
 
 	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;

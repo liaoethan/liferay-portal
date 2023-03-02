@@ -3,7 +3,7 @@ definition {
 
 	property portal.release = "true";
 	property portal.upstream = "true";
-	property testray.component.names = "User Interface";
+	property testray.component.names = "RTL Infrastructure,WYSIWYG";
 	property testray.main.component.name = "User Interface";
 
 	setUp {
@@ -15,7 +15,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -24,15 +24,10 @@ definition {
 	}
 
 	@description = "Verify the right to left localization css values are applied to a text field"
-	@priority = "5"
+	@priority = 5
 	@refactordone
 	test RTLDirectionStyleAppliedToTextField {
-		property app.server.types = "tomcat";
-		property database.types = "mysql";
-		property environment.acceptance = "true";
 		property portal.acceptance = "true";
-		property test.name.skip.portal.instance = "RightToLeftInfrastructure#RTLDirectionStyleAppliedToTextField";
-		property testray.component.names = "WYSIWYG";
 
 		ProductMenu.gotoPortlet(
 			category = "Content & Data",
@@ -54,15 +49,10 @@ definition {
 	}
 
 	@description = "Verify the right to left localization css values are applied to page layout"
-	@priority = "5"
+	@priority = 5
 	@refactordone
 	test RTLStylesAppliedToPageLayout {
-		property app.server.types = "tomcat";
-		property database.types = "mysql";
-		property environment.acceptance = "true";
 		property portal.acceptance = "true";
-		property test.name.skip.portal.instance = "RightToLeftInfrastructure#RTLStylesAppliedToPageLayout";
-		property testray.component.names = "WYSIWYG";
 
 		JSONLayout.addPublicLayout(
 			groupName = "Guest",

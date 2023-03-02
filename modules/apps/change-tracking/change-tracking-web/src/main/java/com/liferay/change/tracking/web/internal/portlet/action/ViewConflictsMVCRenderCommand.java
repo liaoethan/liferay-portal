@@ -22,6 +22,7 @@ import com.liferay.change.tracking.model.CTPreferences;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTEntryLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
+import com.liferay.change.tracking.web.internal.configuration.helper.CTSettingsConfigurationHelper;
 import com.liferay.change.tracking.web.internal.constants.CTWebKeys;
 import com.liferay.change.tracking.web.internal.display.CTDisplayRendererRegistry;
 import com.liferay.change.tracking.web.internal.display.context.ViewConflictsDisplayContext;
@@ -50,7 +51,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Samuel Trong Tran
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + CTPortletKeys.PUBLICATIONS,
 		"mvc.command.name=/change_tracking/view_conflicts"
@@ -99,8 +99,8 @@ public class ViewConflictsMVCRenderCommand implements MVCRenderCommand {
 				new ViewConflictsDisplayContext(
 					activeCtCollectionId, conflictInfoMap, ctCollection,
 					_ctDisplayRendererRegistry, _ctEntryLocalService,
-					hasUnapprovedChanges, _language, _portal, renderRequest,
-					renderResponse));
+					_ctSettingsConfigurationHelper, hasUnapprovedChanges,
+					_language, _portal, renderRequest, renderResponse));
 
 			return "/publications/view_conflicts.jsp";
 		}
@@ -123,6 +123,9 @@ public class ViewConflictsMVCRenderCommand implements MVCRenderCommand {
 
 	@Reference
 	private CTPreferencesLocalService _ctPreferencesLocalService;
+
+	@Reference
+	private CTSettingsConfigurationHelper _ctSettingsConfigurationHelper;
 
 	@Reference
 	private Language _language;

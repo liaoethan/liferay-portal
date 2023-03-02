@@ -14,20 +14,21 @@
 
 package com.liferay.cookies.internal.manager;
 
-import com.liferay.cookies.configuration.consent.CookiesConsentConfiguration;
+import com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.configuration.Filter;
-import com.liferay.portal.kernel.cookies.ConsentCookieType;
 import com.liferay.portal.kernel.cookies.CookiesManager;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.cookies.UnsupportedCookieException;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
-import com.liferay.portal.kernel.util.CookieKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -36,26 +37,93 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeFormatter;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Tamas Molnar
  * @author Brian Wing Shun Chan
+ * @author Olivér Kecskeméty
  */
 @Component(
-	configurationPid = "com.liferay.cookies.configuration.consent.CookiesConsentConfiguration",
-	immediate = true, service = CookiesManager.class
+	configurationPid = "com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration",
+	property = {
+		"cookies.functional=" + CookiesConstants.NAME_GUEST_LANGUAGE_ID,
+		"cookies.necessary=" + CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL,
+		"cookies.necessary=" + CookiesConstants.NAME_CONSENT_TYPE_NECESSARY,
+		"cookies.necessary=" + CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
+		"cookies.necessary=" + CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
+		"cookies.necessary=" + CookiesConstants.NAME_COOKIE_SUPPORT,
+		"cookies.necessary=" + CookiesConstants.NAME_USER_CONSENT_CONFIGURED
+	},
+	service = CookiesManager.class
 )
 public class CookiesManagerImpl implements CookiesManager {
+
+	@Override
+	public boolean addCookie(
+		Cookie cookie, HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		boolean secure = false;
+
+		if (httpServletRequest != null) {
+			secure = _portal.isSecure(httpServletRequest);
+		}
+
+		return addCookie(
+			cookie, httpServletRequest, httpServletResponse, secure);
+	}
+
+	@Override
+	public boolean addCookie(
+		Cookie cookie, HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, boolean secure) {
+
+		if (_internalCookies.get(cookie.getName()) != null) {
+			return addCookie(
+				_internalCookies.get(cookie.getName()), cookie,
+				httpServletRequest, httpServletResponse, secure);
+		}
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"The following cookie is trying to be added without consent " +
+					"type: " + cookie.getName());
+		}
+
+		if (_knownCookies.get(cookie.getName()) != null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"The cookie will be added with the consent type used " +
+						"previously. Use the API with explicitly declared " +
+							"consent type.");
+			}
+
+			return addCookie(
+				_knownCookies.get(cookie.getName()), cookie, httpServletRequest,
+				httpServletResponse, secure);
+		}
+
+		if (_log.isWarnEnabled()) {
+			_log.warn(
+				"The cookie will be deleted. Use the API with explicitly " +
+					"declared consent type.");
+		}
+
+		return deleteCookies(
+			CookiesManagerUtil.getDomain(httpServletRequest),
+			httpServletRequest, httpServletResponse, cookie.getName());
+	}
 
 	@Override
 	public boolean addCookie(
@@ -76,10 +144,19 @@ public class CookiesManagerImpl implements CookiesManager {
 			return false;
 		}
 
-		if ((cookie.getMaxAge() != 0) &&
-			!hasConsentType(consentType, httpServletRequest)) {
+		if (cookie.getMaxAge() != 0) {
+			CookiesPreferenceHandlingConfiguration
+				cookiesPreferenceHandlingConfiguration =
+					_getCookiesPreferenceHandlingConfiguration(
+						httpServletRequest);
 
-			return false;
+			if (!cookiesPreferenceHandlingConfiguration.enabled()) {
+				_deleteCookieConsentCookies(
+					httpServletRequest, httpServletResponse);
+			}
+			else if (!hasConsentType(consentType, httpServletRequest)) {
+				return false;
+			}
 		}
 
 		// LEP-5175
@@ -111,6 +188,20 @@ public class CookiesManagerImpl implements CookiesManager {
 
 			cookiesMap.put(StringUtil.toUpperCase(cookie.getName()), cookie);
 		}
+
+		if (_log.isWarnEnabled() &&
+			(_knownCookies.get(cookie.getName()) != null) &&
+			(_knownCookies.get(cookie.getName()) != consentType)) {
+
+			_log.warn(
+				StringBundler.concat(
+					"The ", cookie.getName(),
+					" cookie was previously added with consent type ",
+					_knownCookies.get(cookie.getName()),
+					" and will now be modified to consent type ", consentType));
+		}
+
+		_knownCookies.put(cookie.getName(), consentType);
 
 		return true;
 	}
@@ -268,45 +359,6 @@ public class CookiesManagerImpl implements CookiesManager {
 	}
 
 	@Override
-	public List<ConsentCookieType> getOptionalConsentCookieTypes(long groupId)
-		throws Exception {
-
-		CookiesConsentConfiguration cookiesConsentConfiguration =
-			_configurationProvider.getGroupConfiguration(
-				CookiesConsentConfiguration.class, groupId);
-
-		return ListUtil.fromArray(
-			new ConsentCookieType(
-				cookiesConsentConfiguration.functionalCookiesDescription(),
-				CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL,
-				cookiesConsentConfiguration.functionalCookiesPrechecked()),
-			new ConsentCookieType(
-				cookiesConsentConfiguration.performanceCookiesDescription(),
-				CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
-				cookiesConsentConfiguration.performanceCookiesPrechecked()),
-			new ConsentCookieType(
-				cookiesConsentConfiguration.personalizationCookiesDescription(),
-				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
-				cookiesConsentConfiguration.
-					personalizationCookiesPrechecked()));
-	}
-
-	@Override
-	public List<ConsentCookieType> getRequiredConsentCookieTypes(long groupId)
-		throws Exception {
-
-		CookiesConsentConfiguration cookiesConsentConfiguration =
-			_configurationProvider.getGroupConfiguration(
-				CookiesConsentConfiguration.class, groupId);
-
-		return ListUtil.fromArray(
-			new ConsentCookieType(
-				cookiesConsentConfiguration.
-					strictlyNecessaryCookiesDescription(),
-				CookiesConstants.NAME_CONSENT_TYPE_NECESSARY, true));
-	}
-
-	@Override
 	public boolean hasConsentType(
 		int consentType, HttpServletRequest httpServletRequest) {
 
@@ -330,11 +382,15 @@ public class CookiesManagerImpl implements CookiesManager {
 		String consentCookieValue = getCookieValue(
 			consentCookieName, httpServletRequest);
 
-		if (Validator.isNull(consentCookieValue)) {
-			return true;
+		if (Validator.isNotNull(consentCookieValue)) {
+			return GetterUtil.getBoolean(consentCookieValue);
 		}
 
-		return GetterUtil.getBoolean(consentCookieValue);
+		CookiesPreferenceHandlingConfiguration
+			cookiesPreferenceHandlingConfiguration =
+				_getCookiesPreferenceHandlingConfiguration(httpServletRequest);
+
+		return !cookiesPreferenceHandlingConfiguration.explicitConsentMode();
 	}
 
 	@Override
@@ -377,12 +433,77 @@ public class CookiesManagerImpl implements CookiesManager {
 		}
 	}
 
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		for (String name : _getProperty(properties, "cookies.functional")) {
+			_internalCookies.put(
+				name, CookiesConstants.CONSENT_TYPE_FUNCTIONAL);
+		}
+
+		for (String name : _getProperty(properties, "cookies.necessary")) {
+			_internalCookies.put(name, CookiesConstants.CONSENT_TYPE_NECESSARY);
+		}
+
+		for (String name : _getProperty(properties, "cookies.performance")) {
+			_internalCookies.put(
+				name, CookiesConstants.CONSENT_TYPE_PERFORMANCE);
+		}
+
+		for (String name :
+				_getProperty(properties, "cookies.personalization")) {
+
+			_internalCookies.put(
+				name, CookiesConstants.CONSENT_TYPE_PERSONALIZATION);
+		}
+	}
+
+	private boolean _deleteCookieConsentCookies(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse) {
+
+		boolean hasConsentTypeFunctionalCookie = Validator.isNotNull(
+			getCookieValue(
+				CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL,
+				httpServletRequest));
+		boolean hasConsentTypePerformanceCookie = Validator.isNotNull(
+			getCookieValue(
+				CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
+				httpServletRequest));
+		boolean hasConsentTypePersonalizationCookie = Validator.isNotNull(
+			getCookieValue(
+				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
+				httpServletRequest));
+		boolean hasUserConsentConfiguredCookie = Validator.isNotNull(
+			getCookieValue(
+				CookiesConstants.NAME_USER_CONSENT_CONFIGURED,
+				httpServletRequest));
+
+		if (hasConsentTypeFunctionalCookie || hasConsentTypePerformanceCookie ||
+			hasConsentTypePersonalizationCookie ||
+			hasUserConsentConfiguredCookie) {
+
+			return deleteCookies(
+				getDomain(httpServletRequest), httpServletRequest,
+				httpServletResponse,
+				CookiesConstants.NAME_CONSENT_TYPE_FUNCTIONAL,
+				CookiesConstants.NAME_CONSENT_TYPE_PERFORMANCE,
+				CookiesConstants.NAME_CONSENT_TYPE_PERSONALIZATION,
+				CookiesConstants.NAME_USER_CONSENT_CONFIGURED);
+		}
+
+		return false;
+	}
+
 	private Map<String, Cookie> _getCookiesMap(
 		HttpServletRequest httpServletRequest) {
 
+		if (httpServletRequest == null) {
+			return Collections.emptyMap();
+		}
+
 		Map<String, Cookie> cookiesMap =
 			(Map<String, Cookie>)httpServletRequest.getAttribute(
-				CookieKeys.class.getName());
+				CookiesManagerImpl.class.getName());
 
 		if (cookiesMap != null) {
 			return cookiesMap;
@@ -405,9 +526,36 @@ public class CookiesManagerImpl implements CookiesManager {
 			}
 		}
 
-		httpServletRequest.setAttribute(CookieKeys.class.getName(), cookiesMap);
+		httpServletRequest.setAttribute(
+			CookiesManagerImpl.class.getName(), cookiesMap);
 
 		return cookiesMap;
+	}
+
+	private CookiesPreferenceHandlingConfiguration
+		_getCookiesPreferenceHandlingConfiguration(
+			HttpServletRequest httpServletRequest) {
+
+		try {
+			if (httpServletRequest != null) {
+				long groupId = _portal.getScopeGroupId(httpServletRequest);
+
+				if (groupId > 0) {
+					return _configurationProvider.getGroupConfiguration(
+						CookiesPreferenceHandlingConfiguration.class, groupId);
+				}
+
+				return _configurationProvider.getCompanyConfiguration(
+					CookiesPreferenceHandlingConfiguration.class,
+					_portal.getCompanyId(httpServletRequest));
+			}
+
+			return _configurationProvider.getSystemConfiguration(
+				CookiesPreferenceHandlingConfiguration.class);
+		}
+		catch (PortalException portalException) {
+			return ReflectionUtil.throwException(portalException);
+		}
 	}
 
 	private String _getCookieValue(
@@ -427,6 +575,26 @@ public class CookiesManagerImpl implements CookiesManager {
 		}
 
 		return cookie.getValue();
+	}
+
+	private String[] _getProperty(
+		Map<String, Object> properties, String propertyName) {
+
+		String[] propertyValues = GetterUtil.getStringValues(
+			properties.get(propertyName));
+
+		if ((propertyValues != null) && (propertyValues.length > 0)) {
+			return propertyValues;
+		}
+
+		String propertyValue = GetterUtil.getString(
+			properties.get(propertyName));
+
+		if (Validator.isNotNull(propertyValue)) {
+			return new String[] {propertyValue};
+		}
+
+		return new String[0];
 	}
 
 	private static final String _SESSION_COOKIE_DOMAIN = PropsUtil.get(
@@ -449,11 +617,12 @@ public class CookiesManagerImpl implements CookiesManager {
 	private static final Log _log = LogFactoryUtil.getLog(
 		CookiesManagerImpl.class);
 
-	@Reference
-	private ConfigurationProvider _configurationProvider;
+	private static final Map<String, Integer> _internalCookies =
+		new HashMap<>();
+	private static final Map<String, Integer> _knownCookies = new HashMap<>();
 
 	@Reference
-	private CookiesConsentConfiguration _cookiesConsentConfiguration;
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private Portal _portal;

@@ -77,13 +77,15 @@ page import="com.liferay.user.groups.admin.constants.UserGroupsAdminPortletKeys"
 page import="com.liferay.user.groups.admin.web.internal.display.context.EditUserGroupAssignmentsManagementToolbarDisplayContext" %><%@
 page import="com.liferay.user.groups.admin.web.internal.display.context.SelectUserGroupManagementToolbarDisplayContext" %><%@
 page import="com.liferay.user.groups.admin.web.internal.display.context.ViewUserGroupsManagementToolbarDisplayContext" %><%@
+page import="com.liferay.user.groups.admin.web.internal.frontend.taglib.clay.servlet.taglib.UserVerticalCard" %><%@
+page import="com.liferay.user.groups.admin.web.internal.portlet.action.ActionUtil" %><%@
+page import="com.liferay.user.groups.admin.web.internal.servlet.taglib.util.UserActionDropdownItems" %><%@
 page import="com.liferay.users.admin.constants.UsersAdminPortletKeys" %>
 
 <%@ page import="java.util.LinkedHashMap" %><%@
 page import="java.util.List" %>
 
-<%@ page import="javax.portlet.PortletURL" %><%@
-page import="javax.portlet.WindowState" %>
+<%@ page import="javax.portlet.PortletURL" %>
 
 <liferay-frontend:defineObjects />
 

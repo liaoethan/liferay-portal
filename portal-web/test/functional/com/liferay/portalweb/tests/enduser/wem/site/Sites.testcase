@@ -15,7 +15,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -24,7 +24,7 @@ definition {
 	}
 
 	@description = "Inactive and reactive site."
-	@priority = "4"
+	@priority = 4
 	test ActivateSite {
 		property test.name.skip.portal.instance = "Sites#ActivateSite";
 
@@ -77,7 +77,7 @@ definition {
 	}
 
 	@description = "Add child site in child site."
-	@priority = "4"
+	@priority = 4
 	test AddChildChildSite {
 		task ("Add a site") {
 			JSONGroup.addGroup(groupName = "Site Name");
@@ -112,7 +112,7 @@ definition {
 	}
 
 	@description = "View public page via virtual host URL."
-	@priority = "3"
+	@priority = 3
 	test AddPublicVirtualHostsSiteURL {
 		task ("Add a site and a page in it") {
 			JSONGroup.addGroup(groupName = "Site Name");
@@ -141,7 +141,7 @@ definition {
 	}
 
 	@description = "Able to add a site with comma."
-	@priority = "3"
+	@priority = 3
 	test AddSiteWithCommaInName {
 		task ("Add a site with comma") {
 			JSONGroup.addGroup(groupName = "Site Name,");
@@ -155,7 +155,7 @@ definition {
 	}
 
 	@description = "Unable to add same site name."
-	@priority = "3"
+	@priority = 3
 	test AddSiteWithInvalidDuplicateName {
 		task ("Add a site") {
 			JSONGroup.addGroup(groupName = "Site Name");
@@ -171,19 +171,19 @@ definition {
 	}
 
 	@description = "Unable to add site name with blank name, invalid characters * and numeric."
-	@priority = "3"
+	@priority = 3
 	test AddSiteWithInvalidName {
 		for (var siteName : list " ,Site Name*,22222") {
 			Site.openSitesAdmin();
 
 			Site.viewCannotAdd(
-				siteName = "${siteName}",
+				siteName = ${siteName},
 				siteNameInvalid = "Invalid");
 		}
 	}
 
 	@description = "Deleting firiendly URL makes it not able to access page via fridely URL."
-	@priority = "4"
+	@priority = 4
 	test DeleteSiteFriendlyURL {
 		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 
@@ -239,7 +239,7 @@ definition {
 	}
 
 	@description = "Could edit site name."
-	@priority = "5"
+	@priority = 5
 	test EditSite {
 		property portal.acceptance = "true";
 
@@ -263,7 +263,7 @@ definition {
 	}
 
 	@description = "Could edit friendly URL and access by it."
-	@priority = "4"
+	@priority = 4
 	test EditSiteFriendlyURL {
 		property release.feature.flags.disable.DISABLE_PRIVATE_LAYOUTS = "true";
 
@@ -309,7 +309,7 @@ definition {
 	}
 
 	@description = "Could not add invalid friendly URL and can access by former friendly URL."
-	@priority = "3"
+	@priority = 3
 	test EditSiteFriendlyURLInvalid {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "Sites#EditSiteFriendlyURLInvalid";
@@ -345,7 +345,7 @@ definition {
 	}
 
 	@description = "Able to search and find site by site name."
-	@priority = "5"
+	@priority = 5
 	test SearchSite {
 		property portal.acceptance = "true";
 
@@ -357,7 +357,7 @@ definition {
 	}
 
 	@description = "Can not choose its own site as parent site."
-	@priority = "3"
+	@priority = 3
 	test SiteCannotBeItsOwnParent {
 		JSONGroup.addGroup(groupName = "Site Name");
 
@@ -369,7 +369,7 @@ definition {
 	}
 
 	@description = "Can not choose its own site as parent site in staging."
-	@priority = "3"
+	@priority = 3
 	test SiteCannotBeItsOwnParentStaging {
 		task ("Add a site and a public page in it") {
 			JSONGroup.addGroup(groupName = "Site Name");
@@ -400,8 +400,185 @@ definition {
 		}
 	}
 
+	@description = "This is a test case for LRQA-5853. Disbale Content Sharing in instance level and view child Sites doesn't display content from parent Sites."
+	@priority = 4
+	test ViewContentSharingDisabledAcrossSitesViaAP {
+		var siteName = TestCase.getSiteName(siteName = ${siteName});
+
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Sharing",
+			configurationName = "Content Sharing",
+			configurationScope = "Virtual Instance Scope");
+
+		PortalSettings.configureContentSharingAcrossSitesCP(enableAcrossSite = "false");
+
+		PortalSettings.configureContentSharingSubSitesCP(subSites = "enabledByDefault");
+
+		JSONGroup.addGroup(groupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Site Name",
+			layoutName = "AP Test Page");
+
+		JSONGroup.addChildGroup(
+			groupName = "Child SiteName",
+			parentGroupName = "Site Name");
+
+		JSONLayout.addPublicLayout(
+			groupName = "Child SiteName",
+			layoutName = "WC Test Page",
+			parentGroupName = "Site Name");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Site Name",
+			layoutName = "AP Test Page",
+			widgetName = "Asset Publisher");
+
+		JSONLayout.addWidgetToPublicLayout(
+			groupName = "Child SiteName",
+			layoutName = "WC Test Page",
+			parentGroupName = "Site Name",
+			widgetName = "Web Content Display");
+
+		Navigator.openSiteURL(siteName = "Child SiteName");
+
+		WebContentDisplayPortlet.add(
+			webContentContent = "WC WebContent Content",
+			webContentTitle = "WC WebContent Title");
+
+		WebContentDisplayPortlet.viewContent(
+			webContentContent = "WC WebContent Content",
+			webContentTitle = "WC WebContent Title");
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		AssetPublisherPortlet.configureSiteScopePG(
+			siteName = "Child SiteName",
+			siteScopeType = "Child Site");
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		AssetPublisherPortlet.viewConfigureSiteScopeContentSharingPG(
+			childSite = "true",
+			contentSharingAcrossSitesEnabled = "false",
+			liferaySiteName = ${siteName});
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		AssetPublisherPortlet.viewContentSharingPG(
+			assetContent = "WC WebContent Content",
+			assetTitle = "WC WebContent Title",
+			siteScope1 = "Site Name",
+			siteScope2 = "Child SiteName");
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		Blogs.addViaAPSelectScope(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title",
+			siteScope = "Site Name");
+
+		Navigator.openSiteURL(siteName = "Child SiteName");
+
+		Portlet.addPG(portletName = "Asset Publisher");
+
+		AssetPublisherPortlet.configureSiteScopePG(
+			siteName = "Site Name",
+			siteScopeType = "Parent Site");
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		AssetPublisherPortlet.viewConfigureSiteScopeContentSharingPG(
+			childSite = "true",
+			contentSharingAcrossSitesEnabled = "false",
+			liferaySiteName = ${siteName});
+
+		Navigator.openSiteURL(siteName = "Child SiteName");
+
+		AssetPublisherPortlet.viewContentSharingPG(
+			assetContent = "Blogs Entry Content",
+			assetTitle = "Blogs Entry Title",
+			siteScope1 = "Site Name",
+			siteScope2 = "Child SiteName");
+	}
+
+	@description = "This is a test case for LRQA-6014. Enable Content Sharing in instance level and view child Sites display content from parent Sites."
+	@priority = 4
+	test ViewContentSharingEnabledAcrossSitesViaAP {
+		var siteName = TestCase.getSiteName(siteName = ${siteName});
+
+		PortalSettings.gotoConfiguration(
+			configurationCategory = "Sharing",
+			configurationName = "Content Sharing",
+			configurationScope = "Virtual Instance Scope");
+
+		PortalSettings.configureContentSharingAcrossSitesCP(enableAcrossSite = "true");
+
+		PortalSettings.configureContentSharingSubSitesCP(subSites = "enabledByDefault");
+
+		ApplicationsMenu.gotoPortlet(
+			category = "Sites",
+			panel = "Control Panel",
+			portlet = "Sites");
+
+		Site.addBlankCP(siteName = "Site Name");
+
+		ProductMenu.gotoPortlet(
+			category = "Site Builder",
+			portlet = "Pages");
+
+		PagesAdmin.addPage(pageName = "AP Test Page");
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		Portlet.addPG(portletName = "Asset Publisher");
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		AssetPublisherPortlet.viewConfigureSiteScopeContentSharingPG(
+			contentSharingAcrossSitesEnabled = "true",
+			liferaySiteName = ${siteName});
+
+		Navigator.openSiteURL(siteName = "Site Name");
+
+		Blogs.addViaAP(
+			entryContent = "Blogs Entry Content",
+			entryTitle = "Blogs Entry Title");
+
+		Navigator.openURL();
+
+		ProductMenu.gotoPortlet(
+			category = "Site Builder",
+			portlet = "Pages");
+
+		PagesAdmin.addPage(pageName = "AP Test Page");
+
+		Navigator.gotoPage(pageName = "AP Test Page");
+
+		Portlet.addPG(portletName = "Asset Publisher");
+
+		Navigator.gotoPage(pageName = "AP Test Page");
+
+		AssetPublisherPortlet.viewConfigureSiteScopeContentSharingPG(
+			contentSharingAcrossSitesEnabled = "true",
+			currentSite = "true",
+			liferaySiteName = ${siteName});
+
+		Navigator.gotoPage(pageName = "AP Test Page");
+
+		AssetPublisherPortlet.configureScope(otherSite = "Site Name");
+
+		Navigator.gotoPage(pageName = "AP Test Page");
+
+		AssetPublisherPortlet.viewContentSharingPG(
+			assetContent = "Blogs Entry Content",
+			assetTitle = "Blogs Entry Title",
+			siteScope1 = "Site Name",
+			siteScope2 = ${siteName});
+	}
+
 	@description = "View Web Content Admin displayed in global site."
-	@priority = "4"
+	@priority = 4
 	test ViewDefaultGlobalScopeLandingPage {
 		property testray.component.names = "Site Administration";
 
@@ -415,7 +592,7 @@ definition {
 	}
 
 	@description = "View parent site in child site's Sites Directory."
-	@priority = "4"
+	@priority = 4
 	test ViewDisplayParentSiteViaSitesDirectory {
 		Site.openSitesAdmin();
 
@@ -491,7 +668,7 @@ definition {
 	}
 
 	@description = "View sites in child site's Sites Directory."
-	@priority = "4"
+	@priority = 4
 	test ViewSiteHierarchiesViaSitesDirectory {
 		task ("Add a site and a public page in it") {
 			JSONGroup.addGroup(groupName = "Site Name");
@@ -695,7 +872,7 @@ definition {
 		}
 
 		task ("View no site fits this level") {
-			AssertTextEquals(
+			AssertTextEquals.assertPartialText(
 				locator1 = "Message#EMPTY_INFO",
 				value1 = "No sites were found.");
 		}

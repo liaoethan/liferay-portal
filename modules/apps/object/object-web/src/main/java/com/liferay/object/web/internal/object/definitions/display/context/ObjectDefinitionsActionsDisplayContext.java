@@ -16,14 +16,17 @@ package com.liferay.object.web.internal.object.definitions.display.context;
 
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
+import com.liferay.notification.service.NotificationTemplateLocalService;
 import com.liferay.object.action.executor.ObjectActionExecutor;
 import com.liferay.object.action.executor.ObjectActionExecutorRegistry;
 import com.liferay.object.action.trigger.ObjectActionTrigger;
 import com.liferay.object.action.trigger.ObjectActionTriggerRegistry;
 import com.liferay.object.admin.rest.dto.v1_0.util.ObjectActionUtil;
+import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.constants.ObjectWebKeys;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
-import com.liferay.object.web.internal.constants.ObjectWebKeys;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.web.internal.object.definitions.display.context.util.ObjectCodeEditorUtil;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.StringPool;
@@ -40,6 +43,7 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -50,18 +54,21 @@ public class ObjectDefinitionsActionsDisplayContext
 	extends BaseObjectDefinitionsDisplayContext {
 
 	public ObjectDefinitionsActionsDisplayContext(
-		HttpServletRequest httpServletRequest,
+		HttpServletRequest httpServletRequest, JSONFactory jsonFactory,
+		NotificationTemplateLocalService notificationTemplateLocalService,
 		ObjectActionExecutorRegistry objectActionExecutorRegistry,
 		ObjectActionTriggerRegistry objectActionTriggerRegistry,
+		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ModelResourcePermission<ObjectDefinition>
-			objectDefinitionModelResourcePermission,
-		JSONFactory jsonFactory) {
+			objectDefinitionModelResourcePermission) {
 
 		super(httpServletRequest, objectDefinitionModelResourcePermission);
 
+		_jsonFactory = jsonFactory;
+		_notificationTemplateLocalService = notificationTemplateLocalService;
 		_objectActionExecutorRegistry = objectActionExecutorRegistry;
 		_objectActionTriggerRegistry = objectActionTriggerRegistry;
-		_jsonFactory = jsonFactory;
+		_objectDefinitionLocalService = objectDefinitionLocalService;
 	}
 
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems()
@@ -97,7 +104,8 @@ public class ObjectDefinitionsActionsDisplayContext
 
 	public List<Map<String, Object>> getObjectActionCodeEditorElements() {
 		return ObjectCodeEditorUtil.getCodeEditorElements(
-			true, objectRequestHelper.getLocale(), getObjectDefinitionId());
+			false, true, true, objectRequestHelper.getLocale(),
+			getObjectDefinitionId());
 	}
 
 	public ObjectActionExecutor getObjectActionExecutor() {
@@ -153,7 +161,11 @@ public class ObjectDefinitionsActionsDisplayContext
 		).put(
 			"description", objectAction.getDescription()
 		).put(
+			"errorMessage", objectAction.getErrorMessageMap()
+		).put(
 			"id", objectAction.getObjectActionId()
+		).put(
+			"label", objectAction.getLabelMap()
 		).put(
 			"name", objectAction.getName()
 		).put(
@@ -161,8 +173,12 @@ public class ObjectDefinitionsActionsDisplayContext
 		).put(
 			"objectActionTriggerKey", objectAction.getObjectActionTriggerKey()
 		).put(
+			"objectDefinitionId", objectAction.getObjectDefinitionId()
+		).put(
 			"parameters",
 			ObjectActionUtil.toParameters(
+				_notificationTemplateLocalService,
+				_objectDefinitionLocalService,
 				objectAction.getParametersUnicodeProperties())
 		);
 	}
@@ -173,12 +189,19 @@ public class ObjectDefinitionsActionsDisplayContext
 
 		ObjectDefinition objectDefinition = getObjectDefinition();
 
-		List<ObjectActionTrigger> objectActionTriggers =
-			_objectActionTriggerRegistry.getObjectActionTriggers(
-				objectDefinition.getClassName());
+		for (ObjectActionTrigger objectActionTrigger :
+				_objectActionTriggerRegistry.getObjectActionTriggers(
+					objectDefinition.getClassName())) {
 
-		objectActionTriggers.forEach(
-			objectActionTrigger -> objectActionTriggersJSONArray.put(
+			if (Objects.equals(
+					objectActionTrigger.getKey(),
+					ObjectActionTriggerConstants.KEY_STANDALONE) &&
+				objectDefinition.isSystem()) {
+
+				continue;
+			}
+
+			objectActionTriggersJSONArray.put(
 				JSONUtil.put(
 					"description",
 					LanguageUtil.get(
@@ -193,7 +216,8 @@ public class ObjectDefinitionsActionsDisplayContext
 							objectActionTrigger.getKey() + "]")
 				).put(
 					"value", objectActionTrigger.getKey()
-				)));
+				));
+		}
 
 		return objectActionTriggersJSONArray;
 	}
@@ -210,7 +234,8 @@ public class ObjectDefinitionsActionsDisplayContext
 		return ResourceURLBuilder.createResourceURL(
 			objectRequestHelper.getLiferayPortletResponse()
 		).setParameter(
-			"objectDefinitionId", getObjectDefinitionId()
+			"objectDefinitionExternalReferenceCode",
+			getObjectDefinitionExternalReferenceCode()
 		).setResourceID(
 			"/object_definitions/get_object_definitions_relationships"
 		).buildString();
@@ -250,7 +275,10 @@ public class ObjectDefinitionsActionsDisplayContext
 	}
 
 	private final JSONFactory _jsonFactory;
+	private final NotificationTemplateLocalService
+		_notificationTemplateLocalService;
 	private final ObjectActionExecutorRegistry _objectActionExecutorRegistry;
 	private final ObjectActionTriggerRegistry _objectActionTriggerRegistry;
+	private final ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 }

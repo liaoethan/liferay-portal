@@ -221,11 +221,20 @@ public abstract class BasePriceListResourceTestCase {
 
 		assertContains(priceList1, (List<PriceList>)page.getItems());
 		assertContains(priceList2, (List<PriceList>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetPriceListsPage_getExpectedActions());
 
 		priceListResource.deletePriceList(priceList1.getId());
 
 		priceListResource.deletePriceList(priceList2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetPriceListsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -980,6 +989,13 @@ public abstract class BasePriceListResourceTestCase {
 	}
 
 	protected void assertValid(Page<PriceList> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<PriceList> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<PriceList> priceLists = page.getItems();
@@ -994,6 +1010,20 @@ public abstract class BasePriceListResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1264,6 +1294,10 @@ public abstract class BasePriceListResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

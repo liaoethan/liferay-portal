@@ -29,24 +29,20 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermissionUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -75,46 +71,52 @@ public class LayoutAnalyticsReportsInfoItem
 
 	@Override
 	public List<Locale> getAvailableLocales(Layout layout) {
-		return Optional.ofNullable(
-			_groupLocalService.fetchGroup(layout.getGroupId())
-		).map(
-			Group::getGroupId
-		).map(
-			_language::getAvailableLocales
-		).map(
-			ListUtil::fromCollection
-		).orElseGet(
-			() -> Collections.singletonList(LocaleUtil.getDefault())
-		);
+		Group group = _groupLocalService.fetchGroup(layout.getGroupId());
+
+		if (group == null) {
+			return Collections.singletonList(LocaleUtil.getDefault());
+		}
+
+		Set<Locale> availableLocales = _language.getAvailableLocales(
+			group.getGroupId());
+
+		if (availableLocales == null) {
+			return Collections.singletonList(LocaleUtil.getDefault());
+		}
+
+		return ListUtil.fromCollection(availableLocales);
 	}
 
 	@Override
 	public String getCanonicalURL(Layout layout, Locale locale) {
-		Optional<ThemeDisplay> themeDisplayOptional =
-			_getThemeDisplayOptional();
+		ThemeDisplay themeDisplay = _getThemeDisplay();
 
-		return themeDisplayOptional.map(
-			themeDisplay -> {
-				try {
-					String canonicalURL = _portal.getCanonicalURL(
-						_getCompleteURL(themeDisplay), themeDisplay, layout,
-						false, false);
+		if (themeDisplay == null) {
+			return StringPool.BLANK;
+		}
 
-					LayoutSEOLink layoutSEOLink =
-						_layoutSEOLinkManager.getCanonicalLayoutSEOLink(
-							layout, locale, canonicalURL, themeDisplay);
+		try {
+			String canonicalURL = _portal.getCanonicalURL(
+				_getCompleteURL(themeDisplay), themeDisplay, layout, false,
+				false);
 
-					return layoutSEOLink.getHref();
-				}
-				catch (PortalException portalException) {
-					_log.error(portalException);
+			LayoutSEOLink layoutSEOLink =
+				_layoutSEOLinkManager.getCanonicalLayoutSEOLink(
+					layout, locale, canonicalURL, themeDisplay);
 
-					return StringPool.BLANK;
-				}
+			String href = layoutSEOLink.getHref();
+
+			if (href == null) {
+				return StringPool.BLANK;
 			}
-		).orElse(
-			StringPool.BLANK
-		);
+
+			return href;
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+
+			return StringPool.BLANK;
+		}
 	}
 
 	@Override
@@ -131,24 +133,30 @@ public class LayoutAnalyticsReportsInfoItem
 
 	@Override
 	public Date getPublishDate(Layout layout) {
-		return layout.getPublishDate();
+		Date date = layout.getPublishDate();
+
+		if (date == null) {
+			date = layout.getModifiedDate();
+		}
+
+		return date;
 	}
 
 	@Override
 	public String getTitle(Layout layout, Locale locale) {
-		return Optional.ofNullable(
-			layout.getTitle(locale)
-		).filter(
-			Validator::isNotNull
-		).orElseGet(
-			() -> layout.getName(locale)
-		);
+		String title = layout.getTitle(locale);
+
+		if (Validator.isNull(title)) {
+			return layout.getName(locale);
+		}
+
+		return title;
 	}
 
 	@Override
 	public boolean isShow(Layout layout) {
-		if ((!layout.isTypeContent() && !layout.isTypePortlet()) ||
-			_isEmbeddedPersonalApplicationLayout(layout)) {
+		if (layout.isEmbeddedPersonalApplication() ||
+			(!layout.isTypeContent() && !layout.isTypePortlet())) {
 
 			return false;
 		}
@@ -180,12 +188,15 @@ public class LayoutAnalyticsReportsInfoItem
 		}
 	}
 
-	private Optional<ThemeDisplay> _getThemeDisplayOptional() {
-		return Optional.ofNullable(
-			ServiceContextThreadLocal.getServiceContext()
-		).map(
-			ServiceContext::getThemeDisplay
-		);
+	private ThemeDisplay _getThemeDisplay() {
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		if (serviceContext == null) {
+			return null;
+		}
+
+		return serviceContext.getThemeDisplay();
 	}
 
 	private boolean _hasEditPermission(
@@ -201,23 +212,6 @@ public class LayoutAnalyticsReportsInfoItem
 		return true;
 	}
 
-	private boolean _isEmbeddedPersonalApplicationLayout(Layout layout) {
-		if (layout.isTypeControlPanel()) {
-			return false;
-		}
-
-		String layoutFriendlyURL = layout.getFriendlyURL();
-
-		if (layout.isSystem() &&
-			layoutFriendlyURL.equals(
-				PropsUtil.get(PropsKeys.CONTROL_PANEL_LAYOUT_FRIENDLY_URL))) {
-
-			return true;
-		}
-
-		return false;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutAnalyticsReportsInfoItem.class);
 
@@ -228,15 +222,9 @@ public class LayoutAnalyticsReportsInfoItem
 	private Language _language;
 
 	@Reference
-	private LayoutLocalService _layoutLocalService;
-
-	@Reference
 	private LayoutSEOLinkManager _layoutSEOLinkManager;
 
 	@Reference
 	private Portal _portal;
-
-	@Reference
-	private UserLocalService _userLocalService;
 
 }

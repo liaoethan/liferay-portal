@@ -53,7 +53,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=com.liferay.headless.commerce.delivery.order.dto.v1_0.PlacedOrder",
 	service = {DTOConverter.class, PlacedOrderDTOConverter.class}
 )
@@ -136,6 +135,12 @@ public class PlacedOrderDTOConverter
 					commerceOrder.getShippingAddressId();
 				printedNote = commerceOrder.getPrintedNote();
 				purchaseOrderNumber = commerceOrder.getPurchaseOrderNumber();
+				shippingOption = commerceOrder.getShippingOptionName();
+				status = commerceOrderWorkflowStatusLabel;
+				summary = _getSummary(commerceOrder, locale);
+				workflowStatusInfo = _toStatus(
+					commerceOrder.getStatus(), commerceOrderWorkflowStatusLabel,
+					commerceOrderWorkflowStatusLabelI18n);
 
 				setShippingMethod(
 					() -> {
@@ -148,12 +153,6 @@ public class PlacedOrderDTOConverter
 
 						return commerceShippingMethod.getEngineKey();
 					});
-				shippingOption = commerceOrder.getShippingOptionName();
-				status = commerceOrderWorkflowStatusLabel;
-				summary = _getSummary(commerceOrder, locale);
-				workflowStatusInfo = _toStatus(
-					commerceOrder.getStatus(), commerceOrderWorkflowStatusLabel,
-					commerceOrderWorkflowStatusLabelI18n);
 			}
 		};
 

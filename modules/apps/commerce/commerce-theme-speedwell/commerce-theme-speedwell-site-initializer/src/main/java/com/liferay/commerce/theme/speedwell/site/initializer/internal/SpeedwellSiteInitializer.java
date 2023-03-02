@@ -95,13 +95,13 @@ import com.liferay.portal.kernel.settings.ModifiableSettings;
 import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.settings.SettingsFactory;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.capabilities.SearchCapabilities;
 import com.liferay.site.exception.InitializationException;
 import com.liferay.site.initializer.SiteInitializer;
 
@@ -132,7 +132,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Gianmarco Brunialti Masera
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "site.initializer.key=" + SpeedwellSiteInitializer.KEY,
 	service = SiteInitializer.class
 )
@@ -269,6 +268,10 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 
 	@Override
 	public boolean isActive(long companyId) {
+		if (!_searchCapabilities.isCommerceSupported()) {
+			return false;
+		}
+
 		Theme theme = _themeLocalService.fetchTheme(
 			companyId, _SPEEDWELL_THEME_ID);
 
@@ -907,7 +910,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		File file = null;
 
 		try {
-			file = FileUtil.createTempFile(inputStream);
+			file = _file.createTempFile(inputStream);
 
 			String mimeType = MimeTypesUtil.getContentType(file);
 
@@ -921,7 +924,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 		}
 		finally {
 			if (file != null) {
-				FileUtil.delete(file);
+				_file.delete(file);
 			}
 		}
 	}
@@ -951,7 +954,7 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 			_speedwellDependencyResolver.getImageDependencyPath() +
 				"Speedwell_Logo.png");
 
-		File file = FileUtil.createTempFile(inputStream);
+		File file = _file.createTempFile(inputStream);
 
 		_cpFileImporter.updateLogo(file, false, true, serviceContext);
 		_cpFileImporter.updateLogo(file, true, true, serviceContext);
@@ -1090,6 +1093,9 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 	private DLImporter _dlImporter;
 
 	@Reference
+	private com.liferay.portal.kernel.util.File _file;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
@@ -1115,6 +1121,9 @@ public class SpeedwellSiteInitializer implements SiteInitializer {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SearchCapabilities _searchCapabilities;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.commerce.theme.speedwell.site.initializer)"

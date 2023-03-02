@@ -19,13 +19,15 @@ definition {
 
 		Testray.tearDownCP();
 
-		if ("${testPortalInstance}" == "true") {
+		ObjectAdmin.deleteAllCustomObjectsViaAPI();
+
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 	}
 
 	@description = "This is a test for LPS-152637. Verify if Testray can be created"
-	@priority = "5"
+	@priority = 5
 	test CanBeCreated {
 		task ("Create Testray") {
 			ApplicationsMenu.gotoPortlet(
@@ -43,7 +45,7 @@ definition {
 
 			PortletEntry.inputName(name = "Testray 2");
 
-			Click(locator1 = "Button#ADD");
+			Button.click(button = "Add");
 
 			Alert.viewSuccessMessage();
 		}
@@ -56,16 +58,18 @@ definition {
 	}
 
 	@description = "This is a test for LPS-152873. Verify if when Testray is created, Remote Apps will be created for it as well"
-	@priority = "5"
+	@priority = 5
 	test RemoteAppsAreCreatedForTestray {
+		property solutions.acceptance = "true";
+
 		task ("Create Testray") {
-			Testray.createTestraySite(siteName = "Testray 2");
+			Testray.addTestraySite();
 
 			Refresh();
 		}
 
 		task ("Go to Remote Apps Portlet") {
-			RemoteApps.goToRemoteAppsPortlet();
+			ClientExtensionGeneral.goToRemoteAppsPortlet();
 		}
 
 		task ("Assert if Remote Apps is Present") {
@@ -76,10 +80,12 @@ definition {
 	}
 
 	@description = "This is a test for LPS-152970. Verify if when Testray is created, Style Books will be created for it as well"
-	@priority = "5"
+	@priority = 5
 	test StyleBooksAreCreatedForTestray {
+		property solutions.acceptance = "true";
+
 		task ("Create and Go to Testray") {
-			Testray.createTestraySite(siteName = "Testray 2");
+			Testray.addTestraySite();
 
 			Refresh();
 

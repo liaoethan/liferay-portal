@@ -31,7 +31,7 @@ import com.liferay.exportimport.kernel.service.StagingLocalService;
 import com.liferay.exportimport.kernel.staging.MergeLayoutPrototypesThreadLocal;
 import com.liferay.exportimport.kernel.staging.Staging;
 import com.liferay.fragment.constants.FragmentConstants;
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
@@ -126,7 +126,8 @@ public class ExportImportPerformanceTest {
 		Class<?> clazz = ExportImportPerformanceTest.class;
 
 		Properties properties = PropertiesUtil.load(
-			clazz.getResourceAsStream("export-import-performance.properties"),
+			clazz.getResourceAsStream(
+				"dependencies/export-import-performance.properties"),
 			"UTF-8");
 
 		_fragmentEntryLinksPerLayout = GetterUtil.getInteger(
@@ -146,7 +147,7 @@ public class ExportImportPerformanceTest {
 			"Properties:",
 			StreamUtil.toString(
 				clazz.getResourceAsStream(
-					"export-import-performance.properties")),
+					"dependencies/export-import-performance.properties")),
 			"\nResults:");
 	}
 
@@ -342,7 +343,7 @@ public class ExportImportPerformanceTest {
 
 		for (int i = 0; i < _fragmentEntryLinksPerLayout; i++) {
 			FragmentEntry fragmentEntry =
-				_fragmentCollectionContributorTracker.getFragmentEntry(
+				_fragmentCollectionContributorRegistry.getFragmentEntry(
 					"FEATURED_CONTENT-highlights-circle");
 
 			_fragmentEntryLinkLocalService.addFragmentEntryLink(
@@ -560,13 +561,16 @@ public class ExportImportPerformanceTest {
 
 	private static final String _TMPL_FRAGMENT_EDITABLE_VALUES =
 		StringUtil.read(
-			ExportImportPerformanceTest.class, "fragment-editable-values.tmpl");
+			ExportImportPerformanceTest.class,
+			"dependencies/fragment-editable-values.tmpl");
 
 	private static final String _TMPL_FRAGMENT_PORTLET = StringUtil.read(
-		ExportImportPerformanceTest.class, "fragment-portlet.tmpl");
+		ExportImportPerformanceTest.class,
+		"dependencies/fragment-portlet.tmpl");
 
 	private static final String _TMPL_PORTLET_PREFERENCES = StringUtil.read(
-		ExportImportPerformanceTest.class, "portlet-preferences.tmpl");
+		ExportImportPerformanceTest.class,
+		"dependencies/portlet-preferences.tmpl");
 
 	private static int _fragmentEntryLinksPerLayout;
 	private static int _layoutsCount;
@@ -597,8 +601,8 @@ public class ExportImportPerformanceTest {
 	private ExportImportLocalService _exportImportLocalService;
 
 	@Inject
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Inject
 	private FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;

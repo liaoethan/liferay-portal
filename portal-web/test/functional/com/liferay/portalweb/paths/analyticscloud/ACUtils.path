@@ -22,7 +22,7 @@
 </tr>
 <tr>
 	<td>GENERIC_TEXT</td>
-	<td>//*[normalize-space(text())='${key_textValue}']</td>
+	<td>//*[text()='${key_textValue}']</td>
 	<td></td>
 </tr>
 <tr>
@@ -33,6 +33,11 @@
 <tr>
 	<td>TOGGLE_ICON</td>
 	<td>//*[contains(@class, 'toggle-switch-check')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TOGGLE_ICON_ON_OFF</td>
+	<td>//*[contains(@data-testid, '${key_toggleType}__${key_boolean}')]</td>
 	<td></td>
 </tr>
 <tr>

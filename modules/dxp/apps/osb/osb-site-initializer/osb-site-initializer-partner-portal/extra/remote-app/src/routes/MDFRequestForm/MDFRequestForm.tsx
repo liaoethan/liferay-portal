@@ -9,33 +9,38 @@
  * distribution rights of the Software.
  */
 
+import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {FormikHelpers, setNestedObjectValues} from 'formik';
 import {useState} from 'react';
 
 import PRMFormik from '../../common/components/PRMFormik';
 import {PRMPageRoute} from '../../common/enums/prmPageRoute';
-import {RequestStatus} from '../../common/enums/requestStatus';
 import useLiferayNavigate from '../../common/hooks/useLiferayNavigate';
+import MDFRequestDTO from '../../common/interfaces/dto/mdfRequestDTO';
 import MDFRequest from '../../common/interfaces/mdfRequest';
 import {Liferay} from '../../common/services/liferay';
+import useGetMDFRequestById from '../../common/services/liferay/object/mdf-requests/useGetMDFRequestById';
+import {Status} from '../../common/utils/constants/status';
+import {getMDFRequestFromDTO} from '../../common/utils/dto/mdf-request/getMDFRequestFromDTO';
+import isObjectEmpty from '../../common/utils/isObjectEmpty';
+import useGetMDFRequestIdByHash from '../MDFClaimForm/hooks/useGetMDFRequestIdByHash';
 import {StepType} from './enums/stepType';
 import Activities from './steps/Activities';
 import activitiesSchema from './steps/Activities/schema/yup';
 import Goals from './steps/Goals';
 import goalsSchema from './steps/Goals/schema/yup';
 import Review from './steps/Review/Review';
-import isObjectEmpty from './utils/isObjectEmpty';
 import submitForm from './utils/submitForm';
 
 const initialFormValues: MDFRequest = {
 	activities: [],
 	additionalOption: {},
-	campaignName: '',
 	company: {},
 	country: {},
 	liferayBusinessSalesGoals: [],
+	mdfRequestStatus: Status.DRAFT,
 	overallCampaignDescription: '',
-	requestStatus: RequestStatus.PENDING,
+	overallCampaignName: '',
 	targetAudienceRoles: [],
 	targetMarkets: [],
 };
@@ -44,9 +49,17 @@ type StepComponent = {
 	[key in StepType]?: JSX.Element;
 };
 
+const FIRST_POSITION_AFTER_HASH = 0;
+
 const MDFRequestForm = () => {
 	const [step, setStep] = useState<StepType>(StepType.GOALS);
 	const siteURL = useLiferayNavigate();
+
+	const mdfRequestId = Number(
+		useGetMDFRequestIdByHash(FIRST_POSITION_AFTER_HASH)
+	);
+
+	const {data, isValidating} = useGetMDFRequestById(mdfRequestId);
 
 	const onCancel = () =>
 		Liferay.Util.navigate(
@@ -81,20 +94,14 @@ const MDFRequestForm = () => {
 						FormikHelpers<MDFRequest>,
 						'setFieldValue'
 					>
-				) =>
-					submitForm(
-						values,
-						formikHelpers,
-						siteURL,
-						RequestStatus.DRAFT
-					)
-				}
+				) => submitForm(values, formikHelpers, siteURL, Status.DRAFT)}
 				validationSchema={goalsSchema}
 			/>
 		),
 		[StepType.ACTIVITIES]: (
 			<PRMFormik.Array
 				component={Activities}
+				isEdit={mdfRequestId !== undefined}
 				name="activities"
 				onCancel={onCancel}
 				onContinue={onContinue}
@@ -105,14 +112,7 @@ const MDFRequestForm = () => {
 						FormikHelpers<MDFRequest>,
 						'setFieldValue'
 					>
-				) =>
-					submitForm(
-						values,
-						formikHelpers,
-						siteURL,
-						RequestStatus.DRAFT
-					)
-				}
+				) => submitForm(values, formikHelpers, siteURL, Status.DRAFT)}
 				validationSchema={activitiesSchema}
 			/>
 		),
@@ -126,23 +126,24 @@ const MDFRequestForm = () => {
 						FormikHelpers<MDFRequest>,
 						'setFieldValue'
 					>
-				) =>
-					submitForm(
-						values,
-						formikHelpers,
-						siteURL,
-						RequestStatus.DRAFT
-					)
-				}
+				) => submitForm(values, formikHelpers, siteURL, Status.DRAFT)}
 			/>
 		),
 	};
 
+	if ((isValidating || !data) && mdfRequestId) {
+		return <ClayLoadingIndicator />;
+	}
+
 	return (
 		<PRMFormik
-			initialValues={initialFormValues}
+			initialValues={
+				mdfRequestId
+					? getMDFRequestFromDTO(data as MDFRequestDTO)
+					: initialFormValues
+			}
 			onSubmit={(values, formikHelpers) =>
-				submitForm(values, formikHelpers, siteURL)
+				submitForm(values, formikHelpers, siteURL, Status.PENDING)
 			}
 		>
 			{StepFormComponent[step]}

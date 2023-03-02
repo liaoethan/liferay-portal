@@ -68,7 +68,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -90,8 +89,7 @@ import org.osgi.service.component.annotations.ReferenceCardinality;
  */
 @Component(
 	configurationPid = "com.liferay.multi.factor.authentication.fido2.web.internal.configuration.MFAFIDO2Configuration.scoped",
-	configurationPolicy = ConfigurationPolicy.REQUIRE, immediate = true,
-	service = {}
+	configurationPolicy = ConfigurationPolicy.REQUIRE, service = {}
 )
 public class FIDO2BrowserSetupMFAChecker
 	implements BrowserMFAChecker, SetupMFAChecker {
@@ -411,7 +409,7 @@ public class FIDO2BrowserSetupMFAChecker
 		return _relyingParty.startAssertion(
 			StartAssertionOptions.builder(
 			).username(
-				Optional.of(user.getScreenName())
+				user.getScreenName()
 			).build());
 	}
 

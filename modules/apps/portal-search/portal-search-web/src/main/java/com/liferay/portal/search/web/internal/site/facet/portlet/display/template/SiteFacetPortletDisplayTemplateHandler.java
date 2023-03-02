@@ -20,9 +20,10 @@ import com.liferay.portal.kernel.template.TemplateHandler;
 import com.liferay.portal.kernel.template.TemplateVariableGroup;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
+import com.liferay.portal.search.web.internal.facet.display.context.BucketDisplayContext;
 import com.liferay.portal.search.web.internal.facet.display.context.ScopeSearchFacetDisplayContext;
-import com.liferay.portal.search.web.internal.facet.display.context.ScopeSearchFacetTermDisplayContext;
 import com.liferay.portal.search.web.internal.site.facet.constants.SiteFacetPortletKeys;
+import com.liferay.portal.search.web.internal.site.facet.portlet.SiteFacetPortlet;
 import com.liferay.portlet.display.template.constants.PortletDisplayTemplateConstants;
 
 import java.util.List;
@@ -31,7 +32,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -39,7 +39,6 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.portal.search.web.internal.site.facet.configuration.SearchFacetsWebTemplateConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	property = "javax.portlet.name=" + SiteFacetPortletKeys.SITE_FACET,
 	service = TemplateHandler.class
 )
@@ -48,7 +47,7 @@ public class SiteFacetPortletDisplayTemplateHandler
 
 	@Override
 	public String getClassName() {
-		return ScopeSearchFacetTermDisplayContext.class.getName();
+		return SiteFacetPortlet.class.getName();
 	}
 
 	@Override
@@ -86,14 +85,14 @@ public class SiteFacetPortletDisplayTemplateHandler
 			"scopeSearchFacetDisplayContext");
 		templateVariableGroup.addVariable(
 			"term-frequency", Integer.class,
-			PortletDisplayTemplateConstants.ENTRY, "getCount()");
+			PortletDisplayTemplateConstants.ENTRY, "getFrequency()");
 		templateVariableGroup.addVariable(
 			"term-name", String.class, PortletDisplayTemplateConstants.ENTRY,
 			"getDescriptiveName()");
 		templateVariableGroup.addCollectionVariable(
 			"terms", List.class, PortletDisplayTemplateConstants.ENTRIES,
-			"term", ScopeSearchFacetTermDisplayContext.class,
-			PortletDisplayTemplateConstants.ENTRY, "getDescriptiveName()");
+			"term", BucketDisplayContext.class,
+			PortletDisplayTemplateConstants.ENTRY, "getBucketText()");
 
 		TemplateVariableGroup categoriesServicesTemplateVariableGroup =
 			new TemplateVariableGroup(

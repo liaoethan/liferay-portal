@@ -34,7 +34,6 @@ import com.liferay.portal.kernel.settings.SettingsDescriptor;
 import com.liferay.portal.kernel.settings.SettingsException;
 import com.liferay.portal.kernel.settings.SettingsFactory;
 import com.liferay.portal.kernel.settings.SettingsLocator;
-import com.liferay.portal.kernel.settings.definition.ConfigurationBeanDeclaration;
 import com.liferay.portal.kernel.settings.definition.ConfigurationPidMapping;
 
 import java.util.ArrayList;
@@ -54,7 +53,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
  * @author Raymond Augé
  * @author Jorge Ferrer
  */
-@Component(immediate = true, service = SettingsFactory.class)
+@Component(service = {SettingsFactory.class, SettingsFactoryImpl.class})
 public class SettingsFactoryImpl implements SettingsFactory {
 
 	public SettingsFactoryImpl() {
@@ -147,15 +146,8 @@ public class SettingsFactoryImpl implements SettingsFactory {
 		}
 	}
 
-	@Reference(
-		cardinality = ReferenceCardinality.MULTIPLE,
-		policy = ReferencePolicy.DYNAMIC
-	)
-	protected void setConfigurationBeanDeclaration(
-		ConfigurationBeanDeclaration configurationBeanDeclaration) {
-
-		Class<?> configurationBeanClass =
-			configurationBeanDeclaration.getConfigurationBeanClass();
+	protected void registerConfigurationBeanClass(
+		Class<?> configurationBeanClass) {
 
 		String settingsId = ConfigurationPidUtil.getConfigurationPid(
 			configurationBeanClass);
@@ -203,11 +195,11 @@ public class SettingsFactoryImpl implements SettingsFactory {
 		_settingsDescriptors.remove(settingsId);
 	}
 
-	protected void unsetConfigurationBeanDeclaration(
-		ConfigurationBeanDeclaration configurationBeanDeclaration) {
+	protected void unregisterConfigurationBeanClass(
+		Class<?> configurationBeanClass) {
 
 		String settingsId = ConfigurationPidUtil.getConfigurationPid(
-			configurationBeanDeclaration.getConfigurationBeanClass());
+			configurationBeanClass);
 
 		unregister(settingsId);
 	}

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Copyright (c) 2000-present Liferay, Inc. All rights reserved.
  *
@@ -13,53 +12,113 @@
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 
 import PRMFormik from '../../common/components/PRMFormik';
+import {PRMPageRoute} from '../../common/enums/prmPageRoute';
+import useLiferayNavigate from '../../common/hooks/useLiferayNavigate';
 import MDFRequestActivityDTO from '../../common/interfaces/dto/mdfRequestActivityDTO';
 import MDFClaim from '../../common/interfaces/mdfClaim';
+import {Liferay} from '../../common/services/liferay';
+import useGetDocumentFolder from '../../common/services/liferay/headless-delivery/useGetDocumentFolders';
 import useGetMDFRequestById from '../../common/services/liferay/object/mdf-requests/useGetMDFRequestById';
+import {Status} from '../../common/utils/constants/status';
 import MDFClaimPage from './components/MDFClaimPage';
+import claimSchema from './components/MDFClaimPage/schema/yup';
+import useGetMDFRequestIdByHash from './hooks/useGetMDFRequestIdByHash';
+import submitForm from './utils/submitForm';
 
 const getInitialFormValues = (
-	totalrequestedAmount?: number,
-	activitiesDTO?: MDFRequestActivityDTO[]
+	mdfRequestId: number,
+	activitiesDTO?: MDFRequestActivityDTO[],
+	totalrequestedAmount?: number
 ): MDFClaim => ({
 	activities: activitiesDTO?.map((activity) => ({
-		budgets: activity.activityToBudgets?.map((budget) => ({
-			claimAmount: budget.cost,
+		activityStatus: activity.activityStatus,
+		budgets: activity.actToBgts?.map((budget) => ({
 			expenseName: budget.expense.name,
+			id: budget.id,
+			invoiceAmount: budget.cost,
+			requestAmount: budget.cost,
+			selected: false,
 		})),
+		claimed: activity.actToMDFClmActs
+			?.map((mdfClaimActivity) => {
+				return (
+					mdfClaimActivity?.r_mdfClmToMDFClmActs_c_mdfClaim
+						?.mdfClaimStatus.key !== 'draft'
+				);
+			})
+			.includes(true),
 		id: activity.id,
 		metrics: '',
 		name: activity.name,
 		selected: false,
 		totalCost: 0,
 	})),
+	mdfClaimStatus: Status.PENDING,
+	r_mdfReqToMDFClms_c_mdfRequestId: mdfRequestId,
 	totalClaimAmount: 0,
 	totalrequestedAmount,
 });
 
 const MDFClaimForm = () => {
-	const {data: mdfRequest, isValidating} = useGetMDFRequestById(46006);
+	const {
+		data: claimParentFolder,
+		isValidating: isValidatingClaimFolder,
+	} = useGetDocumentFolder(Liferay.ThemeDisplay.getScopeGroupId(), 'claim');
 
-	if (!mdfRequest || isValidating) {
+	const claimParentFolderId = claimParentFolder?.items[0].id;
+
+	const mdfRequestId = useGetMDFRequestIdByHash();
+
+	const {
+		data: mdfRequest,
+		isValidating: isValidatingMDFRequestById,
+	} = useGetMDFRequestById(Number(mdfRequestId));
+
+	const siteURL = useLiferayNavigate();
+
+	const onCancel = () =>
+		Liferay.Util.navigate(`${siteURL}/${PRMPageRoute.MDF_CLAIM_LISTING}`);
+
+	if (
+		!mdfRequest ||
+		isValidatingMDFRequestById ||
+		isValidatingClaimFolder ||
+		!claimParentFolderId
+	) {
 		return <ClayLoadingIndicator />;
 	}
 
 	return (
 		<PRMFormik
 			initialValues={getInitialFormValues(
-				mdfRequest.totalMDFRequestAmount,
-				mdfRequest.mdfRequestToActivities
+				Number(mdfRequestId),
+				mdfRequest.mdfReqToActs,
+				mdfRequest.totalMDFRequestAmount
 			)}
 			onSubmit={(values, formikHelpers) =>
-				console.log(values, formikHelpers)
+				submitForm(
+					values,
+					formikHelpers,
+					mdfRequest,
+					claimParentFolderId,
+					siteURL
+				)
 			}
 		>
 			<MDFClaimPage
 				mdfRequest={mdfRequest}
-				onCancel={() => console.log('canceled')}
+				onCancel={onCancel}
 				onSaveAsDraft={(values, formikHelpers) =>
-					console.log(values, formikHelpers)
+					submitForm(
+						values,
+						formikHelpers,
+						mdfRequest,
+						claimParentFolderId,
+						siteURL,
+						Status.DRAFT
+					)
 				}
+				validationSchema={claimSchema}
 			/>
 		</PRMFormik>
 	);

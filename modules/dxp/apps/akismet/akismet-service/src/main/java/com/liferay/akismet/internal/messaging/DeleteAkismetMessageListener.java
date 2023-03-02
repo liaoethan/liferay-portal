@@ -22,14 +22,12 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
 import com.liferay.portal.kernel.scheduler.SchedulerException;
 import com.liferay.portal.kernel.scheduler.StorageType;
 import com.liferay.portal.kernel.scheduler.Trigger;
 import com.liferay.portal.kernel.scheduler.TriggerFactory;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Time;
 
 import java.util.Date;
@@ -39,7 +37,6 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
@@ -47,58 +44,47 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(
 	configurationPid = "com.liferay.akismet.internal.configuration.AkismetServiceConfiguration",
-	configurationPolicy = ConfigurationPolicy.REQUIRE, immediate = true,
-	property = "cron.expression=0 0 0 * * ?",
-	service = DeleteAkismetMessageListener.class
+	configurationPolicy = ConfigurationPolicy.REQUIRE, service = {}
 )
 public class DeleteAkismetMessageListener extends BaseMessageListener {
 
 	@Activate
 	protected void activate(Map<String, Object> properties) {
-		modified(properties);
-
-		String cronExpression = GetterUtil.getString(
-			properties.get("cron.expression"), _DEFAULT_CRON_EXPRESSION);
+		_akismetServiceConfiguration = ConfigurableUtil.createConfigurable(
+			AkismetServiceConfiguration.class, properties);
 
 		String className = getClass().getName();
 
 		Trigger trigger = _triggerFactory.createTrigger(
-			className, className, new Date(), null, cronExpression);
+			className, className, null, null, "0 0 0 * * ?");
 
 		_schedulerEntryImpl = new SchedulerEntryImpl(
 			getClass().getName(), trigger);
 
-		if (_initialized) {
-			deactivate();
-		}
-
 		_schedulerEngineHelper.register(
 			this, _schedulerEntryImpl, DestinationNames.SCHEDULER_DISPATCH);
-		_initialized = true;
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		if (_initialized) {
-			try {
-				if (_log.isDebugEnabled()) {
-					_log.debug("Unscheduling trigger");
-				}
-
-				_schedulerEngineHelper.unschedule(
-					_schedulerEntryImpl, StorageType.MEMORY_CLUSTERED);
-			}
-			catch (SchedulerException schedulerException) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Unable to unschedule trigger", schedulerException);
-				}
+		try {
+			if (_log.isDebugEnabled()) {
+				_log.debug("Unscheduling trigger");
 			}
 
-			_schedulerEngineHelper.unregister(this);
+			Trigger trigger = _schedulerEntryImpl.getTrigger();
+
+			_schedulerEngineHelper.unschedule(
+				trigger.getJobName(), trigger.getGroupName(),
+				StorageType.MEMORY_CLUSTERED);
+		}
+		catch (SchedulerException schedulerException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to unschedule trigger", schedulerException);
+			}
 		}
 
-		_initialized = false;
+		_schedulerEngineHelper.unregister(this);
 	}
 
 	@Override
@@ -110,25 +96,13 @@ public class DeleteAkismetMessageListener extends BaseMessageListener {
 			new Date(System.currentTimeMillis() - (reportableTime * Time.DAY)));
 	}
 
-	@Modified
-	protected void modified(Map<String, Object> properties) {
-		_akismetServiceConfiguration = ConfigurableUtil.createConfigurable(
-			AkismetServiceConfiguration.class, properties);
-	}
-
-	private static final String _DEFAULT_CRON_EXPRESSION = "0 0 0 * * ?";
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		DeleteAkismetMessageListener.class);
 
 	@Reference
 	private AkismetEntryLocalService _akismetEntryLocalService;
 
-	private volatile AkismetServiceConfiguration _akismetServiceConfiguration;
-	private volatile boolean _initialized;
-
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
-	private ModuleServiceLifecycle _moduleServiceLifecycle;
+	private AkismetServiceConfiguration _akismetServiceConfiguration;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

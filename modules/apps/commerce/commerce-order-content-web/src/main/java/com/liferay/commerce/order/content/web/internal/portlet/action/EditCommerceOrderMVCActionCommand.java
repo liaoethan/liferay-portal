@@ -41,7 +41,6 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
-import com.liferay.portal.kernel.portlet.PortletQName;
 import com.liferay.portal.kernel.portlet.PortletURLFactory;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
@@ -75,7 +74,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Di Giorgi
  */
 @Component(
-	enabled = false, immediate = true,
 	property = {
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_CART_CONTENT_MINI,
 		"javax.portlet.name=" + CommercePortletKeys.COMMERCE_OPEN_ORDER_CONTENT,
@@ -154,9 +152,7 @@ public class EditCommerceOrderMVCActionCommand extends BaseMVCActionCommand {
 							PortletProvider.Action.EDIT)
 					).setMVCRenderCommandName(
 						"/commerce_open_order_content/edit_commerce_order"
-					).setParameter(
-						PortletQName.PUBLIC_RENDER_PARAMETER_NAMESPACE +
-							"backURL",
+					).setBackURL(
 						ParamUtil.getString(actionRequest, "redirect")
 					).setParameter(
 						"commerceOrderId", commerceOrderId

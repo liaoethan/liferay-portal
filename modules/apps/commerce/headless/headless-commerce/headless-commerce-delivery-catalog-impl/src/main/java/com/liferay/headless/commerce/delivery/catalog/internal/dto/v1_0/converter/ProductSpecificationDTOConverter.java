@@ -16,6 +16,7 @@ package com.liferay.headless.commerce.delivery.catalog.internal.dto.v1_0.convert
 
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.model.CPDefinitionSpecificationOptionValue;
+import com.liferay.commerce.product.model.CPOptionCategory;
 import com.liferay.commerce.product.model.CPSpecificationOption;
 import com.liferay.commerce.product.service.CPDefinitionSpecificationOptionValueLocalService;
 import com.liferay.headless.commerce.delivery.catalog.dto.v1_0.ProductSpecification;
@@ -30,7 +31,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Andrea Sbarra
  */
 @Component(
-	enabled = false,
 	property = "dto.class.name=CPDefinitionSpecificationOptionValue",
 	service = {DTOConverter.class, ProductSpecificationDTOConverter.class}
 )
@@ -53,13 +53,17 @@ public class ProductSpecificationDTOConverter
 					getCPDefinitionSpecificationOptionValue(
 						(Long)dtoConverterContext.getId());
 
-		String languageId = _language.getLanguageId(
-			dtoConverterContext.getLocale());
-
 		CPDefinition cpDefinition =
 			cpDefinitionSpecificationOptionValue.getCPDefinition();
+
 		CPSpecificationOption cpSpecificationOption =
 			cpDefinitionSpecificationOptionValue.getCPSpecificationOption();
+
+		CPOptionCategory cpOptionCategory =
+			cpSpecificationOption.getCPOptionCategory();
+
+		String languageId = _language.getLanguageId(
+			dtoConverterContext.getLocale());
 
 		return new ProductSpecification() {
 			{
@@ -71,9 +75,12 @@ public class ProductSpecificationDTOConverter
 						getCPOptionCategoryId();
 				priority = cpDefinitionSpecificationOptionValue.getPriority();
 				productId = cpDefinition.getCProductId();
+				specificationGroupKey = cpOptionCategory.getKey();
+				specificationGroupTitle = cpOptionCategory.getTitle(languageId);
 				specificationId =
 					cpSpecificationOption.getCPSpecificationOptionId();
 				specificationKey = cpSpecificationOption.getKey();
+				specificationTitle = cpSpecificationOption.getTitle(languageId);
 				value = cpDefinitionSpecificationOptionValue.getValue(
 					languageId);
 			}

@@ -15,8 +15,8 @@
 package com.liferay.saml.opensaml.integration.internal.servlet.profile;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
+import com.liferay.portal.kernel.cookies.CookiesManagerUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
@@ -84,7 +84,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -159,7 +158,6 @@ import org.opensaml.xmlsec.signature.support.SignatureTrustEngine;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicyOption;
@@ -169,7 +167,6 @@ import org.osgi.service.component.annotations.ReferencePolicyOption;
  */
 @Component(
 	configurationPid = "com.liferay.saml.runtime.configuration.SamlConfiguration",
-	configurationPolicy = ConfigurationPolicy.OPTIONAL, immediate = true,
 	service = WebSsoProfile.class
 )
 public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
@@ -199,7 +196,8 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		try {
 			messageContext = _decodeAuthnResponse(
 				httpServletRequest, httpServletResponse,
-				getSamlBinding(SAMLConstants.SAML2_POST_BINDING_URI));
+				samlBindingProvider.getSamlBinding(
+					SAMLConstants.SAML2_POST_BINDING_URI));
 
 			_processResponse(
 				messageContext, httpServletRequest, httpServletResponse);
@@ -216,29 +214,44 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 				}
 			}
 
-			if (messageContext != null) {
-				SAMLPeerEntityContext samlPeerEntityContext =
-					messageContext.getSubcontext(SAMLPeerEntityContext.class);
+			if (messageContext == null) {
+				ExceptionHandlerUtil.handleException(exception);
 
-				if (samlPeerEntityContext != null) {
-					String nameIdValue = Optional.ofNullable(
-						messageContext.getSubcontext(
-							SAMLSubjectNameIdentifierContext.class)
-					).map(
-						SAMLSubjectNameIdentifierContext::getSAML2SubjectNameID
-					).map(
-						NameID::getValue
-					).orElse(
-						null
-					);
-
-					throw new EntityInteractionException(
-						samlPeerEntityContext.getEntityId(), nameIdValue,
-						exception);
-				}
+				return;
 			}
 
-			ExceptionHandlerUtil.handleException(exception);
+			SAMLPeerEntityContext samlPeerEntityContext =
+				messageContext.getSubcontext(SAMLPeerEntityContext.class);
+
+			if (samlPeerEntityContext == null) {
+				ExceptionHandlerUtil.handleException(exception);
+
+				return;
+			}
+
+			SAMLSubjectNameIdentifierContext samlSubjectNameIdentifierContext =
+				messageContext.getSubcontext(
+					SAMLSubjectNameIdentifierContext.class);
+
+			if (samlSubjectNameIdentifierContext == null) {
+				ExceptionHandlerUtil.handleException(exception);
+
+				return;
+			}
+
+			NameID saml2SubjectNameID =
+				samlSubjectNameIdentifierContext.getSAML2SubjectNameID();
+
+			if (saml2SubjectNameID == null) {
+				ExceptionHandlerUtil.handleException(exception);
+
+				return;
+			}
+
+			String nameIdValue = saml2SubjectNameID.getValue();
+
+			throw new EntityInteractionException(
+				samlPeerEntityContext.getEntityId(), nameIdValue, exception);
 		}
 	}
 
@@ -369,11 +382,12 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		if (StringUtil.equalsIgnoreCase(
 				httpServletRequest.getMethod(), "GET")) {
 
-			samlBinding = getSamlBinding(
+			samlBinding = samlBindingProvider.getSamlBinding(
 				SAMLConstants.SAML2_REDIRECT_BINDING_URI);
 		}
 		else {
-			samlBinding = getSamlBinding(SAMLConstants.SAML2_POST_BINDING_URI);
+			samlBinding = samlBindingProvider.getSamlBinding(
+				SAMLConstants.SAML2_POST_BINDING_URI);
 		}
 
 		SamlSsoRequestContext samlSsoRequestContext = null;
@@ -495,10 +509,6 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		SPSSODescriptor spSSODescriptor =
 			(SPSSODescriptor)samlSelfMetadataContext.getRoleDescriptor();
 
-		AssertionConsumerService assertionConsumerService =
-			SamlUtil.getAssertionConsumerServiceForBinding(
-				spSSODescriptor, SAMLConstants.SAML2_POST_BINDING_URI);
-
 		SAMLPeerEntityContext samlPeerEntityContext =
 			messageContext.getSubcontext(SAMLPeerEntityContext.class);
 
@@ -520,7 +530,9 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		nameIDPolicy.setFormat(metadataManager.getNameIdFormat(entityId));
 
 		AuthnRequest authnRequest = OpenSamlUtil.buildAuthnRequest(
-			samlSelfEntityContext.getEntityId(), assertionConsumerService,
+			samlSelfEntityContext.getEntityId(),
+			SamlUtil.getAssertionConsumerServiceForBinding(
+				spSSODescriptor, SAMLConstants.SAML2_POST_BINDING_URI),
 			singleSignOnService, nameIDPolicy);
 
 		if (samlSpIdpConnection.isForceAuthn() ||
@@ -615,9 +627,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	protected Subject getSuccessSubject(
-		SamlSsoRequestContext samlSsoRequestContext,
-		AssertionConsumerService assertionConsumerService, NameID nameID,
-		SubjectConfirmationData subjectConfirmationData) {
+		NameID nameID, SubjectConfirmationData subjectConfirmationData) {
 
 		SubjectConfirmation subjectConfirmation =
 			OpenSamlUtil.buildSubjectConfirmation();
@@ -674,19 +684,6 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		subjectConfirmationData.setNotOnOrAfter(notOnOrAfterDateTime);
 
 		return subjectConfirmationData;
-	}
-
-	@Reference(
-		cardinality = ReferenceCardinality.AT_LEAST_ONE,
-		policyOption = ReferencePolicyOption.GREEDY
-	)
-	protected void setSamlBinding(SamlBinding samlBinding) {
-		addSamlBinding(samlBinding);
-	}
-
-	@Override
-	protected void unsetSamlBinding(SamlBinding samlBinding) {
-		removeSamlBinding(samlBinding);
 	}
 
 	protected void verifyAssertionSignature(
@@ -1018,10 +1015,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			samlPeerEntityContext.getEntityId(), nameID.getFormat(),
 			nameID.getValue(), serviceContext);
 
-		addCookie(
+		addNonpersistentCookie(
 			httpServletRequest, httpServletResponse,
 			SamlWebKeys.SAML_SSO_SESSION_ID,
-			samlSsoRequestContext.getSamlSsoSessionId(), -1);
+			samlSsoRequestContext.getSamlSsoSessionId());
 	}
 
 	private SamlSsoRequestContext _decodeAuthnConversationAfterLogin(
@@ -1262,9 +1259,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			OpenSamlUtil.buildIssuer(samlSelfEntityContext.getEntityId()));
 
 		assertion.setSubject(
-			getSuccessSubject(
-				samlSsoRequestContext, assertionConsumerService, nameID,
-				subjectConfirmationData));
+			getSuccessSubject(nameID, subjectConfirmationData));
 		assertion.setVersion(SAMLVersion.VERSION_20);
 
 		List<AuthnStatement> authnStatements = assertion.getAuthnStatements();
@@ -1464,9 +1459,15 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			if ((authnRequest != null) && authnRequest.isPassive() &&
 				(user == null)) {
 
+				SamlProviderConfiguration samlProviderConfiguration =
+					samlProviderConfigurationHelper.
+						getSamlProviderConfiguration();
+
 				_sendFailureResponse(
-					samlSsoRequestContext, StatusCode.NO_PASSIVE,
-					httpServletResponse);
+					samlProviderConfiguration.
+						authnRequestSigningAllowsDynamicACSURL(),
+					httpServletResponse, samlSsoRequestContext,
+					StatusCode.NO_PASSIVE);
 
 				return;
 			}
@@ -1492,9 +1493,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			}
 
 			if (sessionExpired || Validator.isNull(samlSsoSessionId)) {
-				addCookie(
+				CookiesManagerUtil.deleteCookies(
+					CookiesManagerUtil.getDomain(httpServletRequest),
 					httpServletRequest, httpServletResponse,
-					SamlWebKeys.SAML_SSO_SESSION_ID, StringPool.BLANK, 0);
+					SamlWebKeys.SAML_SSO_SESSION_ID);
 
 				samlSsoRequestContext.setNewSession(true);
 				samlSsoRequestContext.setSamlSsoSessionId(
@@ -1519,7 +1521,12 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 				forceAuthn);
 		}
 		else {
+			SamlProviderConfiguration samlProviderConfiguration =
+				samlProviderConfigurationHelper.getSamlProviderConfiguration();
+
 			_sendSuccessResponse(
+				samlProviderConfiguration.
+					authnRequestSigningAllowsDynamicACSURL(),
 				httpServletRequest, httpServletResponse, samlSsoRequestContext);
 
 			HttpSession httpSession = httpServletRequest.getSession(false);
@@ -1651,10 +1658,10 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 			SamlWebKeys.SAML_SP_SESSION_KEY,
 			samlSpSession.getSamlSpSessionKey());
 
-		addCookie(
+		addNonpersistentCookie(
 			httpServletRequest, httpServletResponse,
 			SamlWebKeys.SAML_SP_SESSION_KEY,
-			samlSpSession.getSamlSpSessionKey(), -1);
+			samlSpSession.getSamlSpSessionKey());
 
 		httpServletResponse.sendRedirect(
 			_getAuthRedirectURL(messageContext, httpServletRequest));
@@ -1747,19 +1754,20 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	private void _sendFailureResponse(
-			SamlSsoRequestContext samlSsoRequestContext, String statusURI,
-			HttpServletResponse httpServletResponse)
+			boolean dynamicACSURL, HttpServletResponse httpServletResponse,
+			SamlSsoRequestContext samlSsoRequestContext, String statusURI)
 		throws Exception {
 
 		MessageContext<?> messageContext =
 			samlSsoRequestContext.getSAMLMessageContext();
 
-		SamlBinding samlBinding = getSamlBinding(
+		SamlBinding samlBinding = samlBindingProvider.getSamlBinding(
 			SAMLConstants.SAML2_POST_BINDING_URI);
 
 		AssertionConsumerService assertionConsumerService =
 			SamlUtil.resolverAssertionConsumerService(
-				messageContext, samlBinding.getCommunicationProfileId());
+				messageContext, samlBinding.getCommunicationProfileId(),
+				dynamicACSURL);
 
 		SAMLPeerEntityContext samlPeerEntityContext =
 			messageContext.getSubcontext(SAMLPeerEntityContext.class);
@@ -1820,7 +1828,7 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 	}
 
 	private void _sendSuccessResponse(
-			HttpServletRequest httpServletRequest,
+			boolean dynamicACSURL, HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse,
 			SamlSsoRequestContext samlSsoRequestContext)
 		throws Exception {
@@ -1828,12 +1836,13 @@ public class WebSsoProfileImpl extends BaseProfile implements WebSsoProfile {
 		MessageContext<?> messageContext =
 			samlSsoRequestContext.getSAMLMessageContext();
 
-		SamlBinding samlBinding = getSamlBinding(
+		SamlBinding samlBinding = samlBindingProvider.getSamlBinding(
 			SAMLConstants.SAML2_POST_BINDING_URI);
 
 		AssertionConsumerService assertionConsumerService =
 			SamlUtil.resolverAssertionConsumerService(
-				messageContext, samlBinding.getCommunicationProfileId());
+				messageContext, samlBinding.getCommunicationProfileId(),
+				dynamicACSURL);
 
 		NameID nameID = _getSuccessNameId(samlSsoRequestContext);
 

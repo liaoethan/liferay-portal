@@ -12,41 +12,76 @@
  * details.
  */
 
+import {useEffect} from 'react';
 import {useParams} from 'react-router-dom';
-
-import Avatar from '../../../../components/Avatar';
-import AssignToMe from '../../../../components/Avatar/AssigneToMe';
-import Code from '../../../../components/Code';
-import Container from '../../../../components/Layout/Container';
-import ListViewRest from '../../../../components/ListView';
-import StatusBadge from '../../../../components/StatusBadge';
-import useMutate from '../../../../hooks/useMutate';
-import i18n from '../../../../i18n';
-import {filters} from '../../../../schema/filter';
+import Avatar from '~/components/Avatar';
+import AssignToMe from '~/components/Avatar/AssigneToMe';
+import Code from '~/components/Code';
+import JiraLink from '~/components/JiraLink';
+import Container from '~/components/Layout/Container';
+import ListViewRest from '~/components/ListView';
+import StatusBadge from '~/components/StatusBadge';
+import {StatusBadgeType} from '~/components/StatusBadge/StatusBadge';
+import useMutate from '~/hooks/useMutate';
+import useRuns from '~/hooks/useRuns';
+import useSearchBuilder from '~/hooks/useSearchBuilder';
+import i18n from '~/i18n';
 import {
+	PickList,
 	TestrayCaseResult,
-	testrayCaseResultRest,
-} from '../../../../services/rest';
-import {getStatusLabel} from '../../../../util/constants';
-import {searchUtil} from '../../../../util/search';
+	TestrayCaseResultIssue,
+	testrayCaseResultImpl,
+} from '~/services/rest';
+
 import useBuildTestActions from './useBuildTestActions';
 
 const Build = () => {
 	const {buildId} = useParams();
 	const {updateItemFromList} = useMutate();
+
 	const {actions, form} = useBuildTestActions();
+	const {
+		compareRuns: {runId},
+		setRunId,
+	} = useRuns();
+
+	useEffect(() => {
+		return () => setRunId(null);
+	}, [setRunId]);
+
+	const caseResultFilter = useSearchBuilder({useURIEncode: false});
+
+	const filter = runId
+		? caseResultFilter
+				.eq('buildId', buildId as string)
+				.and()
+				.eq('runId', runId)
+				.build()
+		: caseResultFilter.eq('buildId', buildId as string).build();
 
 	return (
 		<Container className="mt-4">
 			<ListViewRest
+				initialContext={{
+					columns: {environment: false},
+				}}
 				managementToolbarProps={{
-					filterFields: filters.build.results as any,
+					filterSchema: 'buildResults',
 					title: i18n.translate('tests'),
 				}}
-				resource={testrayCaseResultRest.resource}
+				resource={testrayCaseResultImpl.resource}
 				tableProps={{
 					actions,
 					columns: [
+						{
+							clickable: true,
+							key: 'caseType',
+							render: (
+								_,
+								{case: testrayCase}: TestrayCaseResult
+							) => testrayCase?.caseType?.name,
+							value: i18n.translate('case-type'),
+						},
 						{
 							clickable: true,
 							key: 'priority',
@@ -55,6 +90,13 @@ const Build = () => {
 								{case: testrayCase}: TestrayCaseResult
 							) => testrayCase?.priority,
 							value: i18n.translate('priority'),
+						},
+						{
+							clickable: true,
+							key: 'team',
+							render: (_, testrayCaseResult: TestrayCaseResult) =>
+								testrayCaseResult.case?.component?.team?.name,
+							value: i18n.translate('team'),
 						},
 						{
 							key: 'component',
@@ -71,6 +113,7 @@ const Build = () => {
 								_,
 								{case: testrayCase}: TestrayCaseResult
 							) => testrayCase?.name,
+							size: 'xl',
 							value: i18n.translate('case'),
 						},
 						{
@@ -80,6 +123,14 @@ const Build = () => {
 									?.toString()
 									.padStart(2, '0'),
 							value: i18n.translate('run'),
+						},
+						{
+							clickable: true,
+							key: 'environment',
+							render: (_, item: TestrayCaseResult) =>
+								item?.run?.name,
+							value: i18n.translate('environment'),
+							width: '250',
 						},
 						{
 							key: 'user',
@@ -93,10 +144,9 @@ const Build = () => {
 										<Avatar
 											className="text-capitalize"
 											displayName
-											name={`${caseResult.user.emailAddress
-												.split('@')[0]
-												.replace('.', ' ')}`}
+											name={caseResult.user.name}
 											size="sm"
+											url={caseResult.user.image}
 										/>
 									);
 								}
@@ -104,7 +154,7 @@ const Build = () => {
 								return (
 									<AssignToMe
 										onClick={() =>
-											testrayCaseResultRest
+											testrayCaseResultImpl
 												.assignToMe(caseResult)
 												.then(() => {
 													updateItemFromList(
@@ -122,37 +172,54 @@ const Build = () => {
 									/>
 								);
 							},
+							truncate: false,
 							value: i18n.translate('assignee'),
+							width: '200',
 						},
 						{
 							key: 'dueStatus',
-							render: (dueStatus: number) => (
-								<StatusBadge type={getStatusLabel(dueStatus)}>
-									{getStatusLabel(dueStatus)}
+							render: (dueStatus: PickList) => (
+								<StatusBadge
+									type={dueStatus.key as StatusBadgeType}
+								>
+									{dueStatus.name}
 								</StatusBadge>
 							),
 							value: i18n.translate('status'),
 						},
 						{
 							key: 'issues',
+							render: (issues: TestrayCaseResultIssue[]) =>
+								issues.map((caseResultIssue, index) => (
+									<JiraLink
+										issue={caseResultIssue}
+										key={index}
+									/>
+								)),
 							value: i18n.translate('issues'),
 						},
 						{
 							key: 'errors',
 							render: (errors: string) =>
-								errors && (
-									<Code>{errors.substring(0, 250)}</Code>
-								),
+								errors && <Code>{errors}</Code>,
+							size: 'xl',
+							truncate: true,
 							value: i18n.translate('errors'),
+						},
+						{
+							key: 'comment',
+							size: 'lg',
+							value: i18n.translate('comment'),
 						},
 					],
 					navigateTo: ({id}) => `case-result/${id}`,
+					rowWrap: true,
 				}}
 				transformData={(response) =>
-					testrayCaseResultRest.transformDataFromList(response)
+					testrayCaseResultImpl.transformDataFromList(response)
 				}
 				variables={{
-					filter: searchUtil.eq('buildId', buildId as string),
+					filter,
 				}}
 			/>
 		</Container>

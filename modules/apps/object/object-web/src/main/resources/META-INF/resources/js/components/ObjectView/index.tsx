@@ -49,7 +49,15 @@ const TABS = [
 ];
 
 const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
-	const [{isViewOnly, objectView, objectViewId}, dispatch] = useViewContext();
+	const [
+		{
+			isViewOnly,
+			objectDefinitionExternalReferenceCode,
+			objectView,
+			objectViewId,
+		},
+		dispatch,
+	] = useViewContext();
 
 	const [activeIndex, setActiveIndex] = useState<number>(0);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -67,7 +75,13 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 				`/o/object-admin/v1.0/object-views/${objectViewId}`
 			);
 
-			const objectFields = await API.getObjectFields(objectDefinitionId);
+			const objectFields = await API.getObjectFieldsByExternalReferenceCode(
+				objectDefinitionExternalReferenceCode
+			);
+
+			const objectDefinition = await API.getObjectDefinitionByExternalReferenceCode(
+				objectDefinitionExternalReferenceCode
+			);
 
 			const objectView = {
 				defaultObjectView,
@@ -80,6 +94,7 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 
 			dispatch({
 				payload: {
+					creationLanguageId: objectDefinition.defaultLanguageId,
 					objectFields,
 					objectView,
 				},
@@ -90,7 +105,7 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 		};
 
 		makeFetch();
-	}, [objectViewId, dispatch]);
+	}, [objectDefinitionExternalReferenceCode, objectViewId, dispatch]);
 
 	const removeUnnecessaryPropertiesFromObjectView = (
 		objectView: TObjectView
@@ -221,6 +236,7 @@ const CustomView: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 interface ICustomViewWrapperProps extends React.HTMLAttributes<HTMLElement> {
 	filterOperators: TFilterOperators;
 	isViewOnly: boolean;
+	objectDefinitionExternalReferenceCode: string;
 	objectViewId: string;
 	workflowStatusJSONArray: TWorkflowStatus[];
 }
@@ -228,6 +244,7 @@ interface ICustomViewWrapperProps extends React.HTMLAttributes<HTMLElement> {
 const CustomViewWrapper: React.FC<ICustomViewWrapperProps> = ({
 	filterOperators,
 	isViewOnly,
+	objectDefinitionExternalReferenceCode,
 	objectViewId,
 	workflowStatusJSONArray,
 }) => {
@@ -236,6 +253,7 @@ const CustomViewWrapper: React.FC<ICustomViewWrapperProps> = ({
 			value={{
 				filterOperators,
 				isViewOnly,
+				objectDefinitionExternalReferenceCode,
 				objectViewId,
 				workflowStatusJSONArray,
 			}}

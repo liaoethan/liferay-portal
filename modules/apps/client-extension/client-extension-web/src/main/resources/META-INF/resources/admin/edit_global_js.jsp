@@ -17,9 +17,15 @@
 <%@ include file="/admin/init.jsp" %>
 
 <%
-EditClientExtensionEntryPartDisplayContext<GlobalJSCET> editClientExtensionEntryPartDisplayContext = (EditClientExtensionEntryPartDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_PART_DISPLAY_CONTEXT);
+EditClientExtensionEntryDisplayContext<GlobalJSCET> editClientExtensionEntryDisplayContext = (EditClientExtensionEntryDisplayContext)renderRequest.getAttribute(ClientExtensionAdminWebKeys.EDIT_CLIENT_EXTENSION_ENTRY_DISPLAY_CONTEXT);
 
-GlobalJSCET globalJSCET = editClientExtensionEntryPartDisplayContext.getCET();
+GlobalJSCET globalJSCET = editClientExtensionEntryDisplayContext.getCET();
 %>
 
-<aui:input ignoreRequestValue="<%= true %>" label="url" name="url" type="text" value="<%= globalJSCET.getURL() %>" />
+<aui:field-wrapper cssClass="form-group">
+	<aui:input ignoreRequestValue="<%= true %>" label="js-url" name="url" required="<%= true %>" type="text" value="<%= globalJSCET.getURL() %>" />
+
+	<div class="form-text">
+		<liferay-ui:message key="this-javascript-is-appended-to-main-js" />
+	</div>
+</aui:field-wrapper>

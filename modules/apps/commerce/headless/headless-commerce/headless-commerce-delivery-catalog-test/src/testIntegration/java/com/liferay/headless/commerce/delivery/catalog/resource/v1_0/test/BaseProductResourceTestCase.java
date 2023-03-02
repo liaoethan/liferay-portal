@@ -185,6 +185,7 @@ public abstract class BaseProductResourceTestCase {
 		Product product = randomProduct();
 
 		product.setDescription(regex);
+		product.setExternalReferenceCode(regex);
 		product.setMetaDescription(regex);
 		product.setMetaKeyword(regex);
 		product.setMetaTitle(regex);
@@ -201,6 +202,7 @@ public abstract class BaseProductResourceTestCase {
 		product = ProductSerDes.toDTO(json);
 
 		Assert.assertEquals(regex, product.getDescription());
+		Assert.assertEquals(regex, product.getExternalReferenceCode());
 		Assert.assertEquals(regex, product.getMetaDescription());
 		Assert.assertEquals(regex, product.getMetaKeyword());
 		Assert.assertEquals(regex, product.getMetaTitle());
@@ -218,7 +220,7 @@ public abstract class BaseProductResourceTestCase {
 			testGetChannelProductsPage_getIrrelevantChannelId();
 
 		Page<Product> page = productResource.getChannelProductsPage(
-			channelId, null, null, Pagination.of(1, 10), null);
+			channelId, null, null, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(0, page.getTotalCount());
 
@@ -227,14 +229,18 @@ public abstract class BaseProductResourceTestCase {
 				irrelevantChannelId, randomIrrelevantProduct());
 
 			page = productResource.getChannelProductsPage(
-				irrelevantChannelId, null, null, Pagination.of(1, 2), null);
+				irrelevantChannelId, null, null, null, Pagination.of(1, 2),
+				null);
 
 			Assert.assertEquals(1, page.getTotalCount());
 
 			assertEquals(
 				Arrays.asList(irrelevantProduct),
 				(List<Product>)page.getItems());
-			assertValid(page);
+			assertValid(
+				page,
+				testGetChannelProductsPage_getExpectedActions(
+					irrelevantChannelId));
 		}
 
 		Product product1 = testGetChannelProductsPage_addProduct(
@@ -244,13 +250,23 @@ public abstract class BaseProductResourceTestCase {
 			channelId, randomProduct());
 
 		page = productResource.getChannelProductsPage(
-			channelId, null, null, Pagination.of(1, 10), null);
+			channelId, null, null, null, Pagination.of(1, 10), null);
 
 		Assert.assertEquals(2, page.getTotalCount());
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(product1, product2), (List<Product>)page.getItems());
-		assertValid(page);
+		assertValid(
+			page, testGetChannelProductsPage_getExpectedActions(channelId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetChannelProductsPage_getExpectedActions(Long channelId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -272,7 +288,7 @@ public abstract class BaseProductResourceTestCase {
 
 		for (EntityField entityField : entityFields) {
 			Page<Product> page = productResource.getChannelProductsPage(
-				channelId, null,
+				channelId, null, null,
 				getFilterString(entityField, "between", product1),
 				Pagination.of(1, 2), null);
 
@@ -304,7 +320,8 @@ public abstract class BaseProductResourceTestCase {
 
 		for (EntityField entityField : entityFields) {
 			Page<Product> page = productResource.getChannelProductsPage(
-				channelId, null, getFilterString(entityField, "eq", product1),
+				channelId, null, null,
+				getFilterString(entityField, "eq", product1),
 				Pagination.of(1, 2), null);
 
 			assertEquals(
@@ -335,7 +352,8 @@ public abstract class BaseProductResourceTestCase {
 
 		for (EntityField entityField : entityFields) {
 			Page<Product> page = productResource.getChannelProductsPage(
-				channelId, null, getFilterString(entityField, "eq", product1),
+				channelId, null, null,
+				getFilterString(entityField, "eq", product1),
 				Pagination.of(1, 2), null);
 
 			assertEquals(
@@ -358,14 +376,14 @@ public abstract class BaseProductResourceTestCase {
 			channelId, randomProduct());
 
 		Page<Product> page1 = productResource.getChannelProductsPage(
-			channelId, null, null, Pagination.of(1, 2), null);
+			channelId, null, null, null, Pagination.of(1, 2), null);
 
 		List<Product> products1 = (List<Product>)page1.getItems();
 
 		Assert.assertEquals(products1.toString(), 2, products1.size());
 
 		Page<Product> page2 = productResource.getChannelProductsPage(
-			channelId, null, null, Pagination.of(2, 2), null);
+			channelId, null, null, null, Pagination.of(2, 2), null);
 
 		Assert.assertEquals(3, page2.getTotalCount());
 
@@ -374,7 +392,7 @@ public abstract class BaseProductResourceTestCase {
 		Assert.assertEquals(products2.toString(), 1, products2.size());
 
 		Page<Product> page3 = productResource.getChannelProductsPage(
-			channelId, null, null, Pagination.of(1, 3), null);
+			channelId, null, null, null, Pagination.of(1, 3), null);
 
 		assertEqualsIgnoringOrder(
 			Arrays.asList(product1, product2, product3),
@@ -490,7 +508,7 @@ public abstract class BaseProductResourceTestCase {
 
 		for (EntityField entityField : entityFields) {
 			Page<Product> ascPage = productResource.getChannelProductsPage(
-				channelId, null, null, Pagination.of(1, 2),
+				channelId, null, null, null, Pagination.of(1, 2),
 				entityField.getName() + ":asc");
 
 			assertEquals(
@@ -498,7 +516,7 @@ public abstract class BaseProductResourceTestCase {
 				(List<Product>)ascPage.getItems());
 
 			Page<Product> descPage = productResource.getChannelProductsPage(
-				channelId, null, null, Pagination.of(1, 2),
+				channelId, null, null, null, Pagination.of(1, 2),
 				entityField.getName() + ":desc");
 
 			assertEquals(
@@ -564,6 +582,7 @@ public abstract class BaseProductResourceTestCase {
 										put(
 											"channelId",
 											testGraphQLGetChannelProduct_getChannelId());
+
 										put("productId", product.getId());
 									}
 								},
@@ -726,8 +745,26 @@ public abstract class BaseProductResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (product.getExternalReferenceCode() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("images", additionalAssertFieldName)) {
 				if (product.getImages() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("linkedProducts", additionalAssertFieldName)) {
+				if (product.getLinkedProducts() == null) {
 					valid = false;
 				}
 
@@ -893,6 +930,12 @@ public abstract class BaseProductResourceTestCase {
 	}
 
 	protected void assertValid(Page<Product> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Product> page, Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Product> products = page.getItems();
@@ -907,6 +950,20 @@ public abstract class BaseProductResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1026,6 +1083,19 @@ public abstract class BaseProductResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals(
+					"externalReferenceCode", additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						product1.getExternalReferenceCode(),
+						product2.getExternalReferenceCode())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("id", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(product1.getId(), product2.getId())) {
 					return false;
@@ -1037,6 +1107,17 @@ public abstract class BaseProductResourceTestCase {
 			if (Objects.equals("images", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						product1.getImages(), product2.getImages())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("linkedProducts", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						product1.getLinkedProducts(),
+						product2.getLinkedProducts())) {
 
 					return false;
 				}
@@ -1297,6 +1378,10 @@ public abstract class BaseProductResourceTestCase {
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
 
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
+
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();
 
@@ -1387,12 +1472,25 @@ public abstract class BaseProductResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
+		if (entityFieldName.equals("externalReferenceCode")) {
+			sb.append("'");
+			sb.append(String.valueOf(product.getExternalReferenceCode()));
+			sb.append("'");
+
+			return sb.toString();
+		}
+
 		if (entityFieldName.equals("id")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
 		if (entityFieldName.equals("images")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("linkedProducts")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -1584,6 +1682,8 @@ public abstract class BaseProductResourceTestCase {
 			{
 				createDate = RandomTestUtil.nextDate();
 				description = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				externalReferenceCode = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				id = RandomTestUtil.randomLong();
 				metaDescription = StringUtil.toLowerCase(

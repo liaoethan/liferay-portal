@@ -44,9 +44,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Marco Leo
  * @author Alessio Antonio Rendina
  */
-@Component(
-	enabled = false, immediate = true, service = CommerceAccountRoleHelper.class
-)
+@Component(service = CommerceAccountRoleHelper.class)
 public class CommerceAccountRoleHelperImpl
 	implements CommerceAccountRoleHelper {
 
@@ -121,6 +119,14 @@ public class CommerceAccountRoleHelperImpl
 				"com.liferay.commerce.model.CommerceOrderType",
 				new String[] {ActionKeys.VIEW});
 
+			groupResourceActionIds.put(
+				AccountEntry.class.getName(),
+				new String[] {
+					AccountActionKeys.MANAGE_ADDRESSES,
+					AccountActionKeys.ASSIGN_USERS, ActionKeys.UPDATE,
+					ActionKeys.VIEW, AccountActionKeys.VIEW_ADDRESSES,
+					AccountActionKeys.VIEW_USERS
+				});
 			groupResourceActionIds.put(
 				"com.liferay.commerce.account.model.CommerceAccount",
 				new String[] {

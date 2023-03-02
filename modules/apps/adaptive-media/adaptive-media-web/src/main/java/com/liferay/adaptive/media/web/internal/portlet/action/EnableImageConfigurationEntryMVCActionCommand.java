@@ -23,8 +23,6 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 
-import java.util.Optional;
-
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 
@@ -35,7 +33,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Sergio González
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + AMPortletKeys.ADAPTIVE_MEDIA,
 		"mvc.command.name=/adaptive_media/enable_image_configuration_entry"
@@ -59,14 +56,15 @@ public class EnableImageConfigurationEntryMVCActionCommand
 		_amImageConfigurationHelper.enableAMImageConfigurationEntry(
 			themeDisplay.getCompanyId(), amImageConfigurationEntryUuid);
 
-		Optional<AMImageConfigurationEntry> amImageConfigurationEntryOptional =
+		AMImageConfigurationEntry amImageConfigurationEntry =
 			_amImageConfigurationHelper.getAMImageConfigurationEntry(
 				themeDisplay.getCompanyId(), amImageConfigurationEntryUuid);
 
-		amImageConfigurationEntryOptional.ifPresent(
-			amImageConfigurationEntry -> SessionMessages.add(
+		if (amImageConfigurationEntry != null) {
+			SessionMessages.add(
 				actionRequest, "configurationEntryEnabled",
-				amImageConfigurationEntry));
+				amImageConfigurationEntry);
+		}
 	}
 
 	@Reference

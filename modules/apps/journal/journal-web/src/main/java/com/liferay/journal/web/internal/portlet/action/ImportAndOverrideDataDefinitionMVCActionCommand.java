@@ -42,7 +42,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Leticia Maciel
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + JournalPortletKeys.JOURNAL,
 		"mvc.command.name=/journal/import_and_override_data_definition"
@@ -87,9 +86,7 @@ public class ImportAndOverrideDataDefinitionMVCActionCommand
 			hideDefaultSuccessMessage(actionRequest);
 		}
 		catch (Exception exception) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(exception);
-			}
+			_log.error(exception);
 
 			SessionErrors.add(
 				actionRequest, "importDataDefinitionErrorMessage");

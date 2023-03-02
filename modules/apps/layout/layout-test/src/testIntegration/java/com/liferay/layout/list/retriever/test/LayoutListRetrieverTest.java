@@ -27,7 +27,7 @@ import com.liferay.info.pagination.InfoPage;
 import com.liferay.layout.list.retriever.DefaultLayoutListRetrieverContext;
 import com.liferay.layout.list.retriever.KeyListObjectReference;
 import com.liferay.layout.list.retriever.LayoutListRetriever;
-import com.liferay.layout.list.retriever.LayoutListRetrieverTracker;
+import com.liferay.layout.list.retriever.LayoutListRetrieverRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -47,7 +47,6 @@ import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -104,7 +103,7 @@ public class LayoutListRetrieverTest {
 
 		LayoutListRetriever<?, KeyListObjectReference> layoutListRetriever =
 			(LayoutListRetriever<?, KeyListObjectReference>)
-				_layoutListRetrieverTracker.getLayoutListRetriever(
+				_layoutListRetrieverRegistry.getLayoutListRetriever(
 					InfoListProviderItemSelectorReturnType.class.getName());
 
 		KeyListObjectReference keyListObjectReference =
@@ -158,7 +157,7 @@ public class LayoutListRetrieverTest {
 
 		LayoutListRetriever<?, KeyListObjectReference> layoutListRetriever =
 			(LayoutListRetriever<?, KeyListObjectReference>)
-				_layoutListRetrieverTracker.getLayoutListRetriever(
+				_layoutListRetrieverRegistry.getLayoutListRetriever(
 					InfoListProviderItemSelectorReturnType.class.getName());
 
 		KeyListObjectReference keyListObjectReference =
@@ -180,7 +179,7 @@ public class LayoutListRetrieverTest {
 	private Group _group;
 
 	@Inject
-	private LayoutListRetrieverTracker _layoutListRetrieverTracker;
+	private LayoutListRetrieverRegistry _layoutListRetrieverRegistry;
 
 	private static class AssetEntryRelatedInfoItemCollectionProvider
 		implements RelatedInfoItemCollectionProvider<AssetEntry, AssetTag> {
@@ -189,10 +188,7 @@ public class LayoutListRetrieverTest {
 		public InfoPage<AssetTag> getCollectionInfoPage(
 			CollectionQuery collectionQuery) {
 
-			Optional<Object> relatedItemOptional =
-				collectionQuery.getRelatedItemObjectOptional();
-
-			Object relatedItem = relatedItemOptional.orElse(null);
+			Object relatedItem = collectionQuery.getRelatedItem();
 
 			if (!(relatedItem instanceof AssetEntry)) {
 				return InfoPage.of(

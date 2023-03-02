@@ -934,28 +934,6 @@ public class PortletWrapper
 	}
 
 	/**
-	 * Returns the name of the poller processor class of the portlet.
-	 *
-	 * @return the name of the poller processor class of the portlet
-	 */
-	@Override
-	public String getPollerProcessorClass() {
-		return model.getPollerProcessorClass();
-	}
-
-	/**
-	 * Returns the poller processor instance of the portlet.
-	 *
-	 * @return the poller processor instance of the portlet
-	 */
-	@Override
-	public com.liferay.portal.kernel.poller.PollerProcessor
-		getPollerProcessorInstance() {
-
-		return model.getPollerProcessorInstance();
-	}
-
-	/**
 	 * Returns the name of the POP message listener class of the portlet.
 	 *
 	 * @return the name of the POP message listener class of the portlet
@@ -2994,17 +2972,6 @@ public class PortletWrapper
 	}
 
 	/**
-	 * Sets the name of the poller processor class of the portlet.
-	 *
-	 * @param pollerProcessorClass the name of the poller processor class of the
-	 portlet
-	 */
-	@Override
-	public void setPollerProcessorClass(String pollerProcessorClass) {
-		model.setPollerProcessorClass(pollerProcessorClass);
-	}
-
-	/**
 	 * Sets the name of the POP message listener class of the portlet.
 	 *
 	 * @param popMessageListenerClass the name of the POP message listener class
@@ -3726,6 +3693,11 @@ public class PortletWrapper
 	@Override
 	public void setXmlRpcMethodClass(String xmlRpcMethodClass) {
 		model.setXmlRpcMethodClass(xmlRpcMethodClass);
+	}
+
+	@Override
+	public String toXmlString() {
+		return model.toXmlString();
 	}
 
 	@Override

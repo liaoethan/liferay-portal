@@ -52,7 +52,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Alec Sloan
  */
-@Component(enabled = false, immediate = true, service = Indexer.class)
+@Component(service = Indexer.class)
 public class CommerceShipmentIndexer extends BaseIndexer<CommerceShipment> {
 
 	public static final String CLASS_NAME = CommerceShipment.class.getName();
@@ -168,7 +168,7 @@ public class CommerceShipmentIndexer extends BaseIndexer<CommerceShipment> {
 		document.addKeyword(
 			"commerceAccountId", commerceShipment.getCommerceAccountId());
 		document.addKeyword(
-			"commerceAccountName", commerceShipment.getCommerceAccountName());
+			"commerceAccountName", commerceShipment.getAccountEntryName());
 		document.addKeyword(
 			"commerceChannelId", commerceChannel.getCommerceChannelId());
 		document.addKeyword("commerceChannelName", commerceChannel.getName());
@@ -212,8 +212,7 @@ public class CommerceShipmentIndexer extends BaseIndexer<CommerceShipment> {
 		throws Exception {
 
 		_indexWriterHelper.updateDocument(
-			commerceShipment.getCompanyId(), getDocument(commerceShipment),
-			isCommitImmediately());
+			commerceShipment.getCompanyId(), getDocument(commerceShipment));
 	}
 
 	@Override

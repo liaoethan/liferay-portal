@@ -46,11 +46,9 @@ JournalEditArticleDisplayContext journalEditArticleDisplayContext = new JournalE
 	</div>
 </c:if>
 
-<liferay-asset:select-asset-display-page
-	classNameId="<%= PortalUtil.getClassNameId(JournalArticle.class) %>"
-	classPK="<%= (article != null) ? article.getResourcePrimKey() : 0 %>"
-	classTypeId="<%= journalEditArticleDisplayContext.getDDMStructureId() %>"
-	groupId="<%= journalEditArticleDisplayContext.getGroupId() %>"
-	showPortletLayouts="<%= true %>"
-	showViewInContextLink="<%= journalEditArticleDisplayContext.getClassNameId() == JournalArticleConstants.CLASS_NAME_ID_DEFAULT %>"
-/>
+<div>
+	<react:component
+		data="<%= journalEditArticleDisplayContext.getSelectAssetDisplayPageContext() %>"
+		module="js/article/SelectAssetDisplayPage"
+	/>
+</div>

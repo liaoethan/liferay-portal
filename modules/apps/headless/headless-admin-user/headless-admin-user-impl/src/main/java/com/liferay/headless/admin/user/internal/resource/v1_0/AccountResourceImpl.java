@@ -22,8 +22,10 @@ import com.liferay.account.service.AccountEntryService;
 import com.liferay.headless.admin.user.dto.v1_0.Account;
 import com.liferay.headless.admin.user.internal.dto.v1_0.converter.AccountResourceDTOConverter;
 import com.liferay.headless.admin.user.internal.dto.v1_0.converter.OrganizationResourceDTOConverter;
+import com.liferay.headless.admin.user.internal.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.admin.user.internal.odata.entity.v1_0.AccountEntityModel;
 import com.liferay.headless.admin.user.resource.v1_0.AccountResource;
+import com.liferay.headless.common.spi.service.context.ServiceContextRequestUtil;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
@@ -35,6 +37,7 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -52,7 +55,6 @@ import com.liferay.portal.vulcan.util.SearchUtil;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -234,7 +236,8 @@ public class AccountResourceImpl
 		AccountEntry accountEntry = _accountEntryService.addAccountEntry(
 			contextUser.getUserId(), _getParentAccountId(account),
 			account.getName(), account.getDescription(), _getDomains(account),
-			null, null, null, _getType(account), _getStatus(account), null);
+			null, null, null, _getType(account), _getStatus(account),
+			_getServiceContext(account));
 
 		accountEntry = _accountEntryService.updateExternalReferenceCode(
 			accountEntry.getAccountEntryId(),
@@ -286,7 +289,7 @@ public class AccountResourceImpl
 			_accountEntryService.updateAccountEntry(
 				accountId, _getParentAccountId(account), account.getName(),
 				account.getDescription(), false, _getDomains(account), null,
-				null, null, _getStatus(account), null));
+				null, null, _getStatus(account), _getServiceContext(account)));
 	}
 
 	@Override
@@ -299,15 +302,27 @@ public class AccountResourceImpl
 				externalReferenceCode, contextUser.getUserId(),
 				_getParentAccountId(account), account.getName(),
 				account.getDescription(), _getDomains(account), null, null,
-				null, _getType(account), _getStatus(account), null));
+				null, _getType(account), _getStatus(account),
+				_getServiceContext(account)));
+	}
+
+	@Override
+	protected void preparePatch(Account account, Account existingAccount) {
+		super.preparePatch(account, existingAccount);
+
+		if (account.getCustomFields() != null) {
+			existingAccount.setCustomFields(account.getCustomFields());
+		}
 	}
 
 	private String[] _getDomains(Account account) {
-		return Optional.ofNullable(
-			account.getDomains()
-		).orElse(
-			new String[0]
-		);
+		String[] domains = account.getDomains();
+
+		if (domains == null) {
+			return new String[0];
+		}
+
+		return domains;
 	}
 
 	private DTOConverterContext _getDTOConverterContext(long accountEntryId) {
@@ -419,37 +434,60 @@ public class AccountResourceImpl
 	}
 
 	private long[] _getOrganizationIds(Account account) {
-		return Optional.ofNullable(
-			account.getOrganizationIds()
-		).map(
-			ArrayUtil::toArray
-		).orElse(
-			new long[0]
-		);
+		Long[] organizationIds = account.getOrganizationIds();
+
+		if (organizationIds == null) {
+			return new long[0];
+		}
+
+		return ArrayUtil.toArray(organizationIds);
 	}
 
 	private long _getParentAccountId(Account account) {
-		return Optional.ofNullable(
-			account.getParentAccountId()
-		).orElse(
-			AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT
-		);
+		Long parentAccountId = account.getParentAccountId();
+
+		if (parentAccountId == null) {
+			return AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT;
+		}
+
+		return parentAccountId;
+	}
+
+	private ServiceContext _getServiceContext(Account account)
+		throws Exception {
+
+		ServiceContext serviceContext =
+			ServiceContextRequestUtil.createServiceContext(
+				CustomFieldsUtil.toMap(
+					AccountEntry.class.getName(), contextCompany.getCompanyId(),
+					account.getCustomFields(),
+					contextAcceptLanguage.getPreferredLocale()),
+				contextCompany.getGroupId(), contextHttpServletRequest, null);
+
+		serviceContext.setCompanyId(contextCompany.getCompanyId());
+		serviceContext.setUserId(contextUser.getUserId());
+
+		return serviceContext;
 	}
 
 	private int _getStatus(Account account) {
-		return Optional.ofNullable(
-			account.getStatus()
-		).orElse(
-			WorkflowConstants.STATUS_APPROVED
-		);
+		Integer status = account.getStatus();
+
+		if (status == null) {
+			return WorkflowConstants.STATUS_APPROVED;
+		}
+
+		return status;
 	}
 
 	private String _getType(Account account) {
-		return Optional.ofNullable(
-			account.getTypeAsString()
-		).orElse(
-			AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS
-		);
+		String type = account.getTypeAsString();
+
+		if (type == null) {
+			return AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS;
+		}
+
+		return type;
 	}
 
 	private Account _toAccount(AccountEntry accountEntry) throws Exception {

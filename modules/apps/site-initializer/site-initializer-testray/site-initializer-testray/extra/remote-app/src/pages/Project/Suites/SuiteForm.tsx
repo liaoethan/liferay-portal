@@ -19,22 +19,22 @@ import {useState} from 'react';
 import {useForm} from 'react-hook-form';
 import {useOutletContext, useParams} from 'react-router-dom';
 import {KeyedMutator} from 'swr';
-
-import Form from '../../../components/Form';
-import Container from '../../../components/Layout/Container';
-import {useHeader} from '../../../hooks';
-import useFormActions from '../../../hooks/useFormActions';
-import useFormModal from '../../../hooks/useFormModal';
-import i18n from '../../../i18n';
-import yupSchema, {yupResolver} from '../../../schema/yup';
+import Form from '~/components/Form';
+import Container from '~/components/Layout/Container';
+import SearchBuilder from '~/core/SearchBuilder';
+import {useHeader} from '~/hooks';
+import useFormActions from '~/hooks/useFormActions';
+import useFormModal from '~/hooks/useFormModal';
+import i18n from '~/i18n';
+import yupSchema, {yupResolver} from '~/schema/yup';
 import {
 	TestrayCase,
 	TestraySuite,
 	createSuiteCaseBatch,
 	testraySuiteRest,
-} from '../../../services/rest';
-import {getUniqueList} from '../../../util';
-import {searchUtil} from '../../../util/search';
+} from '~/services/rest';
+import {getUniqueList} from '~/util';
+
 import {CaseListView} from '../Cases';
 import SuiteSelectCasesModal from './modal';
 
@@ -51,7 +51,8 @@ const SuiteForm = () => {
 		form: {onClose, onError, onSave, onSubmit},
 	} = useFormActions();
 
-	useHeader({timeout: 100, useTabs: []});
+	useHeader({tabs: [], timeout: 100});
+
 	const [cases, setCases] = useState<number[]>([]);
 	const {projectId} = useParams();
 	const context: {
@@ -80,8 +81,8 @@ const SuiteForm = () => {
 		onSubmit<TestraySuite>(
 			{...form, projectId},
 			{
-				create: (...params) => testraySuiteRest.create(...params),
-				update: (...params) => testraySuiteRest.update(...params),
+				create: (data) => testraySuiteRest.create(data),
+				update: (id, data) => testraySuiteRest.update(id, data),
 			}
 		)
 			.then((response) => {
@@ -98,14 +99,8 @@ const SuiteForm = () => {
 				}
 			})
 			.then(context.mutateTestraySuite)
-			.then(() => onSave())
-			.catch(() => onError());
-	};
-
-	const inputProps = {
-		errors,
-		register,
-		required: true,
+			.then(onSave)
+			.catch(onError);
 	};
 
 	const {modal} = useFormModal({
@@ -121,16 +116,18 @@ const SuiteForm = () => {
 	return (
 		<Container className="container">
 			<Form.Input
-				{...inputProps}
+				errors={errors}
 				label={i18n.translate('name')}
 				name="name"
+				register={register}
+				required
 			/>
 
 			<Form.Input
-				{...inputProps}
+				errors={errors}
 				label={i18n.translate('description')}
 				name="description"
-				required={false}
+				register={register}
 				type="textarea"
 			/>
 
@@ -162,7 +159,9 @@ const SuiteForm = () => {
 			{caseParameters || !!cases.length ? (
 				<div />
 			) : (
-				<ClayAlert>There are no linked cases.</ClayAlert>
+				<ClayAlert>
+					{i18n.translate('there-are-no-linked-cases')}
+				</ClayAlert>
 			)}
 
 			<SuiteSelectCasesModal
@@ -204,7 +203,7 @@ const SuiteForm = () => {
 								},
 							],
 						},
-						variables: {filter: searchUtil.in('id', cases)},
+						variables: {filter: SearchBuilder.in('id', cases)},
 					}}
 				/>
 			)}

@@ -35,7 +35,6 @@ import com.liferay.portal.kernel.messaging.Message;
 import com.liferay.portal.kernel.messaging.MessageListener;
 import com.liferay.portal.kernel.messaging.MessageRunnable;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portlet.documentlibrary.store.StoreFactory;
 
 import java.io.InputStream;
 
@@ -59,10 +58,6 @@ import org.osgi.service.component.annotations.Reference;
 	service = MessageListener.class
 )
 public class AntivirusAsyncMessageListener implements MessageListener {
-
-	public AntivirusAsyncMessageListener() {
-		_storeFactory = StoreFactory.getInstance();
-	}
 
 	@Override
 	public void receive(Message message) {
@@ -131,14 +126,12 @@ public class AntivirusAsyncMessageListener implements MessageListener {
 	}
 
 	private void _receive(Message message) throws Exception {
-		Store store = _storeFactory.getStore();
-
 		long companyId = message.getLong("companyId");
 		long repositoryId = message.getLong("repositoryId");
 		String fileName = message.getString("fileName");
 		String versionLabel = message.getString("versionLabel");
 
-		boolean fileExists = store.hasFile(
+		boolean fileExists = _store.hasFile(
 			companyId, repositoryId, fileName, versionLabel);
 
 		if (!fileExists) {
@@ -155,7 +148,7 @@ public class AntivirusAsyncMessageListener implements MessageListener {
 		}
 
 		try {
-			InputStream inputStream = store.getFileAsStream(
+			InputStream inputStream = _store.getFileAsStream(
 				companyId, repositoryId, fileName, versionLabel);
 
 			_antivirusScanner.scan(inputStream);
@@ -180,15 +173,15 @@ public class AntivirusAsyncMessageListener implements MessageListener {
 
 				// Quarantine original file
 
-				store.addFile(
+				_store.addFile(
 					companyId, AntivirusAsyncConstants.REPOSITORY_ID_QUARANTINE,
 					fileName, versionLabel,
-					store.getFileAsStream(
+					_store.getFileAsStream(
 						companyId, repositoryId, fileName, versionLabel));
 
 				// Delete original file
 
-				store.deleteFile(
+				_store.deleteFile(
 					companyId, repositoryId, fileName, versionLabel);
 
 				_antivirusAsyncEventListenerManager.onVirusFound(
@@ -222,6 +215,8 @@ public class AntivirusAsyncMessageListener implements MessageListener {
 	private DestinationFactory _destinationFactory;
 
 	private ServiceRegistration<Destination> _destinationServiceRegistration;
-	private final StoreFactory _storeFactory;
+
+	@Reference(target = "(default=true)")
+	private Store _store;
 
 }

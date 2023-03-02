@@ -217,11 +217,20 @@ public abstract class BaseSpecificationResourceTestCase {
 
 		assertContains(specification1, (List<Specification>)page.getItems());
 		assertContains(specification2, (List<Specification>)page.getItems());
-		assertValid(page);
+		assertValid(page, testGetSpecificationsPage_getExpectedActions());
 
 		specificationResource.deleteSpecification(specification1.getId());
 
 		specificationResource.deleteSpecification(specification2.getId());
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSpecificationsPage_getExpectedActions()
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
 	}
 
 	@Test
@@ -844,6 +853,13 @@ public abstract class BaseSpecificationResourceTestCase {
 	}
 
 	protected void assertValid(Page<Specification> page) {
+		assertValid(page, Collections.emptyMap());
+	}
+
+	protected void assertValid(
+		Page<Specification> page,
+		Map<String, Map<String, String>> expectedActions) {
+
 		boolean valid = false;
 
 		java.util.Collection<Specification> specifications = page.getItems();
@@ -858,6 +874,20 @@ public abstract class BaseSpecificationResourceTestCase {
 		}
 
 		Assert.assertTrue(valid);
+
+		Map<String, Map<String, String>> actions = page.getActions();
+
+		for (String key : expectedActions.keySet()) {
+			Map action = actions.get(key);
+
+			Assert.assertNotNull(key + " does not contain an action", action);
+
+			Map expectedAction = expectedActions.get(key);
+
+			Assert.assertEquals(
+				expectedAction.get("method"), action.get("method"));
+			Assert.assertEquals(expectedAction.get("href"), action.get("href"));
+		}
 	}
 
 	protected String[] getAdditionalAssertFieldNames() {
@@ -1052,6 +1082,10 @@ public abstract class BaseSpecificationResourceTestCase {
 
 		EntityModel entityModel = entityModelResource.getEntityModel(
 			new MultivaluedHashMap());
+
+		if (entityModel == null) {
+			return Collections.emptyList();
+		}
 
 		Map<String, EntityField> entityFieldsMap =
 			entityModel.getEntityFieldsMap();

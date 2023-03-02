@@ -16,30 +16,34 @@ import classNames from 'classnames';
 import {ReactNode} from 'react';
 
 const statusBarClassNames = {
-	'blocked': 'blocked',
-	'failed': 'failed',
-	'in progress': 'in-progress',
-	'incomplete': 'light',
-	'other': 'primary',
-	'passed': 'passed',
-	'self': 'info',
-	'test fix': 'test-fix',
-	'untested': 'untested',
+	blocked: 'blocked',
+	complete: 'completed',
+	failed: 'failed',
+	inanalysis: 'in-analysis',
+	incomplete: 'light',
+	inprogress: 'inprogress',
+	open: 'open',
+	other: 'primary',
+	passed: 'passed',
+	scheduled: 'untested',
+	self: 'info',
+	testfix: 'test-fix',
+	untested: 'untested',
 };
 
-export type StatusBarOptions = keyof typeof statusBarClassNames;
+export type StatusBadgeType = keyof typeof statusBarClassNames;
 
 export type StatusBadgeProps = {
 	children: ReactNode;
-	type: StatusBarOptions;
+	type: StatusBadgeType;
 };
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({children, type}) => (
 	<span
 		className={classNames(
 			'label label-chart text-uppercase text-nowrap',
-			statusBarClassNames[type] ||
-				type.toLocaleLowerCase().replace(' ', '-')
+			(statusBarClassNames as any)[type?.toLowerCase()] ||
+				type?.toLowerCase().replace(' ', '-')
 		)}
 	>
 		{children}

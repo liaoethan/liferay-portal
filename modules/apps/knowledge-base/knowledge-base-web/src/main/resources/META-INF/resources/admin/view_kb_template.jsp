@@ -17,7 +17,7 @@
 <%@ include file="/admin/init.jsp" %>
 
 <c:choose>
-	<c:when test='<%= GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-156421")) %>'>
+	<c:when test='<%= FeatureFlagManagerUtil.isEnabled("LPS-156421") %>'>
 		<liferay-util:include page="/admin/common/vertical_menu.jsp" servletContext="<%= application %>" />
 
 		<div class="knowledge-base-admin-content">
@@ -28,8 +28,64 @@
 </c:choose>
 
 <%
+String backURL = ParamUtil.getString(request, "backURL");
+
 KBTemplate kbTemplate = (KBTemplate)request.getAttribute(KBWebKeys.KNOWLEDGE_BASE_KB_TEMPLATE);
+
+if (Validator.isNotNull(backURL)) {
+	portletDisplay.setURLBack(backURL);
+}
+
+boolean portletTitleBasedNavigation = GetterUtil.getBoolean(portletConfig.getInitParameter("portlet-title-based-navigation"));
+
+if (portletTitleBasedNavigation) {
+	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setURLBack(redirect);
+
+	renderResponse.setTitle(kbTemplate.getTitle());
+}
 %>
+
+<c:if test='<%= portletTitleBasedNavigation && FeatureFlagManagerUtil.isEnabled("LPS-166643") %>'>
+
+	<%
+	KBDropdownItemsProvider kbDropdownItemsProvider = new KBDropdownItemsProvider(liferayPortletRequest, liferayPortletResponse);
+	%>
+
+	<div class="management-bar management-bar-light navbar navbar-expand-md">
+		<clay:container-fluid>
+			<ul class="justify-content-end navbar-nav navbar-nav-expand">
+				<li class="nav-item">
+					<clay:link
+						aria-label='<%= LanguageUtil.get(request, "edit") %>'
+						cssClass="btn-monospaced btn-secondary btn-sm"
+						href='<%=
+							PortletURLBuilder.createRenderURL(
+								liferayPortletResponse
+							).setMVCPath(
+								"/admin/common/edit_kb_template.jsp"
+							).setRedirect(
+								currentURL
+							).setParameter(
+								"kbTemplateId", kbTemplate.getKbTemplateId()
+							).buildRenderURL(
+							).toString()
+						%>'
+						icon="pencil"
+						title='<%= LanguageUtil.get(request, "edit") %>'
+					/>
+				</li>
+				<li class="nav-item">
+					<clay:dropdown-actions
+						aria-label='<%= LanguageUtil.get(request, "show-actions") %>'
+						dropdownItems="<%= kbDropdownItemsProvider.getKBTemplateMoreActionsDropdownItems(kbTemplate) %>"
+						propsTransformer="admin/js/KBDropdownPropsTransformer"
+					/>
+				</li>
+			</ul>
+		</clay:container-fluid>
+	</div>
+</c:if>
 
 <div class="container-fluid container-fluid-max-xl container-form-lg">
 	<div class="kb-article sheet">
@@ -39,12 +95,10 @@ KBTemplate kbTemplate = (KBTemplate)request.getAttribute(KBWebKeys.KNOWLEDGE_BAS
 			</div>
 
 			<%= kbTemplate.getContent() %>
-
-			<liferay-util:include page="/admin/kb_template_comments.jsp" servletContext="<%= application %>" />
 		</div>
 	</div>
 </div>
 
-<c:if test='<%= GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-156421")) %>'>
+<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPS-156421") %>'>
 	</div>
 </c:if>

@@ -24,6 +24,7 @@ import lang from '../../../utils/lang.es';
 import {getFullPath} from '../../../utils/utils.es';
 
 const QuestionList = ({
+	buildParams,
 	changePage,
 	context,
 	creatorId,
@@ -37,6 +38,7 @@ const QuestionList = ({
 	search,
 	section,
 	sectionTitle,
+	urlParams = {},
 }) => {
 	if (section) {
 		return (
@@ -45,9 +47,8 @@ const QuestionList = ({
 					activeDelta={pageSize}
 					activePage={page}
 					changeDelta={(pageSize) =>
-						changePage({page, pageSize, search})
+						changePage({...urlParams, page, pageSize, search})
 					}
-					changePage={(page) => changePage({page, pageSize, search})}
 					data={questions}
 					emptyState={
 						sectionTitle && !search ? (
@@ -85,7 +86,10 @@ const QuestionList = ({
 					hrefConstructor={(page) =>
 						`${getFullPath('questions')}${
 							context.historyRouterBasePath ? '' : '#/'
-						}questions/${sectionTitle}?page=${page}&pagesize=${pageSize}`
+						}questions/${sectionTitle}?${buildParams({
+							...urlParams,
+							page,
+						})}`
 					}
 					loading={loading}
 					totalCount={questions.totalCount}

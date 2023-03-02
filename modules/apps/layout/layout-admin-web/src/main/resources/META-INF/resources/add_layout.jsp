@@ -25,12 +25,14 @@ List<SiteNavigationMenu> autoSiteNavigationMenus = layoutsAdminDisplayContext.ge
 <clay:container-fluid>
 	<liferay-frontend:edit-form
 		action="<%= (sourcePlid <= 0) ? layoutsAdminDisplayContext.getAddLayoutURL() : layoutsAdminDisplayContext.getCopyLayoutURL(sourcePlid) %>"
+		cssClass="add-layout-form"
 		method="post"
 		name="fm"
 		onSubmit="event.preventDefault();"
+		validateOnBlur="<%= false %>"
 	>
 		<liferay-frontend:edit-form-body>
-			<aui:input autoFocus="<%= true %>" label="name" name="name" required="<%= true %>" />
+			<aui:input label="name" name="name" placeholder='<%= LanguageUtil.get(request, "add-page-name") %>' required="<%= true %>" />
 
 			<c:choose>
 				<c:when test="<%= autoSiteNavigationMenus.size() > 1 %>">
@@ -100,16 +102,9 @@ List<SiteNavigationMenu> autoSiteNavigationMenus = layoutsAdminDisplayContext.ge
 		</liferay-frontend:edit-form-body>
 
 		<liferay-frontend:edit-form-footer>
-			<clay:button
-				id='<%= liferayPortletResponse.getNamespace() + "addButton" %>'
-				label="add"
-				type="submit"
-			/>
-
-			<clay:button
-				cssClass="btn-cancel"
-				displayType="secondary"
-				label="cancel"
+			<liferay-frontend:edit-form-buttons
+				submitId="addButton"
+				submitLabel="add"
 			/>
 		</liferay-frontend:edit-form-footer>
 	</liferay-frontend:edit-form>

@@ -15,6 +15,7 @@
 package com.liferay.commerce.price.list.service.impl;
 
 import com.liferay.commerce.model.CommerceOrderTypeTable;
+import com.liferay.commerce.price.list.exception.DuplicateCommercePriceListOrderTypeRelException;
 import com.liferay.commerce.price.list.model.CommercePriceList;
 import com.liferay.commerce.price.list.model.CommercePriceListOrderTypeRel;
 import com.liferay.commerce.price.list.model.CommercePriceListOrderTypeRelTable;
@@ -48,7 +49,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false,
 	property = "model.class.name=com.liferay.commerce.price.list.model.CommercePriceListOrderTypeRel",
 	service = AopService.class
 )
@@ -61,15 +61,24 @@ public class CommercePriceListOrderTypeRelLocalServiceImpl
 			int priority, ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = _userLocalService.getUser(userId);
-
 		CommercePriceListOrderTypeRel commercePriceListOrderTypeRel =
+			commercePriceListOrderTypeRelPersistence.fetchByCPI_COTI(
+				commercePriceListId, commerceOrderTypeId);
+
+		if (commercePriceListOrderTypeRel != null) {
+			throw new DuplicateCommercePriceListOrderTypeRelException();
+		}
+
+		commercePriceListOrderTypeRel =
 			commercePriceListOrderTypeRelPersistence.create(
 				counterLocalService.increment());
+
+		User user = _userLocalService.getUser(userId);
 
 		commercePriceListOrderTypeRel.setCompanyId(user.getCompanyId());
 		commercePriceListOrderTypeRel.setUserId(user.getUserId());
 		commercePriceListOrderTypeRel.setUserName(user.getFullName());
+
 		commercePriceListOrderTypeRel.setCommercePriceListId(
 			commercePriceListId);
 		commercePriceListOrderTypeRel.setCommerceOrderTypeId(
@@ -82,7 +91,7 @@ public class CommercePriceListOrderTypeRelLocalServiceImpl
 			commercePriceListOrderTypeRelPersistence.update(
 				commercePriceListOrderTypeRel);
 
-		reindexCommercePriceList(commercePriceListId);
+		_reindexCommercePriceList(commercePriceListId);
 
 		return commercePriceListOrderTypeRel;
 	}
@@ -99,7 +108,7 @@ public class CommercePriceListOrderTypeRelLocalServiceImpl
 		_expandoRowLocalService.deleteRows(
 			commercePriceListOrderTypeRel.getCommercePriceListOrderTypeRelId());
 
-		reindexCommercePriceList(
+		_reindexCommercePriceList(
 			commercePriceListOrderTypeRel.getCommercePriceListId());
 
 		return commercePriceListOrderTypeRel;
@@ -182,15 +191,6 @@ public class CommercePriceListOrderTypeRelLocalServiceImpl
 				commercePriceListId, name));
 	}
 
-	protected void reindexCommercePriceList(long commercePriceListId)
-		throws PortalException {
-
-		Indexer<CommercePriceList> indexer =
-			IndexerRegistryUtil.nullSafeGetIndexer(CommercePriceList.class);
-
-		indexer.reindex(CommercePriceList.class.getName(), commercePriceListId);
-	}
-
 	private GroupByStep _getGroupByStep(
 			FromStep fromStep, Long commercePriceListId, String keywords)
 		throws PortalException {
@@ -220,6 +220,15 @@ public class CommercePriceListOrderTypeRelLocalServiceImpl
 
 				return predicate;
 			});
+	}
+
+	private void _reindexCommercePriceList(long commercePriceListId)
+		throws PortalException {
+
+		Indexer<CommercePriceList> indexer =
+			IndexerRegistryUtil.nullSafeGetIndexer(CommercePriceList.class);
+
+		indexer.reindex(CommercePriceList.class.getName(), commercePriceListId);
 	}
 
 	@Reference

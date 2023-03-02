@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -154,8 +155,11 @@ public class ObjectActionServiceTest {
 
 	private ObjectAction _addObjectAction(User user) throws Exception {
 		return _objectActionLocalService.addObjectAction(
-			user.getUserId(), _objectDefinition.getObjectDefinitionId(), true,
-			StringPool.BLANK, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), user.getUserId(),
+			_objectDefinition.getObjectDefinitionId(), true, StringPool.BLANK,
+			RandomTestUtil.randomString(),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			RandomTestUtil.randomString(),
 			ObjectActionExecutorConstants.KEY_WEBHOOK,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_ADD,
@@ -178,8 +182,11 @@ public class ObjectActionServiceTest {
 			_setUser(user);
 
 			objectAction = _objectActionService.addObjectAction(
+				RandomTestUtil.randomString(),
 				_objectDefinition.getObjectDefinitionId(), true,
 				StringPool.BLANK, RandomTestUtil.randomString(),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				RandomTestUtil.randomString(),
 				ObjectActionExecutorConstants.KEY_WEBHOOK,
 				ObjectActionTriggerConstants.KEY_ON_AFTER_ADD,
@@ -240,8 +247,11 @@ public class ObjectActionServiceTest {
 			objectAction = _addObjectAction(user);
 
 			objectAction = _objectActionService.updateObjectAction(
-				objectAction.getObjectActionId(), true, StringPool.BLANK,
-				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(), objectAction.getObjectActionId(),
+				true, StringPool.BLANK, RandomTestUtil.randomString(),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				RandomTestUtil.randomString(),
 				ObjectActionExecutorConstants.KEY_GROOVY,
 				ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE,
 				new UnicodeProperties());

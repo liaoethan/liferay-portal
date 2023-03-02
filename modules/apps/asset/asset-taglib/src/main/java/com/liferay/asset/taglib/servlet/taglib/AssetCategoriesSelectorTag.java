@@ -26,6 +26,7 @@ import com.liferay.asset.taglib.internal.util.AssetVocabularyUtil;
 import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
 import com.liferay.learn.LearnMessage;
 import com.liferay.learn.LearnMessageUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -43,7 +44,6 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.vulcan.util.TransformUtil;
 import com.liferay.portlet.asset.util.comparator.AssetVocabularyGroupLocalizedTitleComparator;
 import com.liferay.taglib.aui.AUIUtil;
 import com.liferay.taglib.util.IncludeTag;
@@ -97,6 +97,10 @@ public class AssetCategoriesSelectorTag extends IncludeTag {
 		return _ignoreRequestValue;
 	}
 
+	public boolean isShowLabel() {
+		return _showLabel;
+	}
+
 	public boolean isShowOnlyRequiredVocabularies() {
 		return _showOnlyRequiredVocabularies;
 	}
@@ -148,6 +152,10 @@ public class AssetCategoriesSelectorTag extends IncludeTag {
 		setServletContext(ServletContextUtil.getServletContext());
 	}
 
+	public void setShowLabel(boolean showLabel) {
+		_showLabel = showLabel;
+	}
+
 	public void setShowOnlyRequiredVocabularies(
 		boolean showOnlyRequiredVocabularies) {
 
@@ -179,6 +187,7 @@ public class AssetCategoriesSelectorTag extends IncludeTag {
 		_id = null;
 		_ignoreRequestValue = false;
 		_namespace = null;
+		_showLabel = true;
 		_showOnlyRequiredVocabularies = false;
 		_showRequiredLabel = true;
 		_singleSelect = false;
@@ -383,7 +392,7 @@ public class AssetCategoriesSelectorTag extends IncludeTag {
 						return selectedItems;
 					}
 				).put(
-					"singleSelect", !vocabulary.isMultiValued()
+					"singleSelect", _singleSelect || !vocabulary.isMultiValued()
 				).put(
 					"title",
 					vocabulary.getUnambiguousTitle(
@@ -428,6 +437,8 @@ public class AssetCategoriesSelectorTag extends IncludeTag {
 					}
 				).put(
 					"portletURL", String.valueOf(getPortletURL())
+				).put(
+					"showLabel", isShowLabel()
 				).put(
 					"vocabularies", getVocabularies()
 				).build());
@@ -532,6 +543,7 @@ public class AssetCategoriesSelectorTag extends IncludeTag {
 	private String _id;
 	private boolean _ignoreRequestValue;
 	private String _namespace;
+	private boolean _showLabel = true;
 	private boolean _showOnlyRequiredVocabularies;
 	private boolean _showRequiredLabel = true;
 	private boolean _singleSelect;

@@ -66,6 +66,16 @@ public class ObjectEntryLocalServiceWrapper
 	}
 
 	@Override
+	public com.liferay.object.model.ObjectEntry addObjectEntry(
+			String externalReferenceCode, long userId,
+			com.liferay.object.model.ObjectDefinition objectDefinition)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryLocalService.addObjectEntry(
+			externalReferenceCode, userId, objectDefinition);
+	}
+
+	@Override
 	public void addOrUpdateExtensionDynamicObjectDefinitionTableValues(
 			long userId,
 			com.liferay.object.model.ObjectDefinition objectDefinition,
@@ -300,6 +310,14 @@ public class ObjectEntryLocalServiceWrapper
 		long objectEntryId) {
 
 		return _objectEntryLocalService.fetchObjectEntry(objectEntryId);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectEntry fetchObjectEntry(
+		String externalReferenceCode, long objectDefinitionId) {
+
+		return _objectEntryLocalService.fetchObjectEntry(
+			externalReferenceCode, objectDefinitionId);
 	}
 
 	/**
@@ -580,6 +598,14 @@ public class ObjectEntryLocalServiceWrapper
 	}
 
 	@Override
+	public java.util.Map<String, java.io.Serializable> getSystemValues(
+			com.liferay.object.model.ObjectEntry objectEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryLocalService.getSystemValues(objectEntry);
+	}
+
+	@Override
 	public String getTitleValue(long objectDefinitionId, long primaryKey)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -606,7 +632,8 @@ public class ObjectEntryLocalServiceWrapper
 	@Override
 	public java.util.List<java.util.Map<String, java.io.Serializable>>
 			getValuesList(
-				long objectDefinitionId, long groupId, long[] accountEntryIds,
+				long groupId, long companyId, long userId,
+				long objectDefinitionId,
 				com.liferay.petra.sql.dsl.expression.Predicate predicate,
 				String search, int start, int end,
 				com.liferay.petra.sql.dsl.query.sort.OrderByExpression[]
@@ -614,19 +641,19 @@ public class ObjectEntryLocalServiceWrapper
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryLocalService.getValuesList(
-			objectDefinitionId, groupId, accountEntryIds, predicate, search,
+			groupId, companyId, userId, objectDefinitionId, predicate, search,
 			start, end, orderByExpressions);
 	}
 
 	@Override
 	public int getValuesListCount(
-			long objectDefinitionId, long groupId, long[] accountEntryIds,
+			long groupId, long companyId, long userId, long objectDefinitionId,
 			com.liferay.petra.sql.dsl.expression.Predicate predicate,
 			String search)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryLocalService.getValuesListCount(
-			objectDefinitionId, groupId, accountEntryIds, predicate, search);
+			groupId, companyId, userId, objectDefinitionId, predicate, search);
 	}
 
 	@Override

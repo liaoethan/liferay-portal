@@ -20,6 +20,8 @@ import Form from '../../components/Form';
 import Modal from '../../components/Modal';
 import {FormModalOptions} from '../../hooks/useFormModal';
 import i18n from '../../i18n';
+import {Liferay} from '../../services/liferay';
+import {testrayTaskImpl} from '../../services/rest';
 
 type TestflowModalProps = {
 	modal: FormModalOptions;
@@ -33,15 +35,28 @@ const TestflowModal: React.FC<TestflowModalProps> = ({
 	const navigate = useNavigate();
 	const [breadCrumb, setBreadCrumb] = useState([]);
 
-	const [, , buildBreadcrumb] = breadCrumb as {
+	const [project, routine, build] = breadCrumb as {
 		label: string;
 		value: number;
 	}[];
 
-	const onSubmit = () => {
-		if (buildBreadcrumb.value) {
-			navigate(`/testflow/${buildBreadcrumb.value}/create`);
+	const onSubmit = async () => {
+		const buildId = build.value;
+		const projectId = project.value;
+		const routineId = routine.value;
+
+		const taskResponse = await testrayTaskImpl.getTasksByBuildId(buildId);
+
+		if (taskResponse?.totalCount) {
+			return Liferay.Util.openToast({
+				message: i18n.translate('a-task-for-this-build-already-exists'),
+				type: 'danger',
+			});
 		}
+
+		navigate(
+			`/project/${projectId}/routines/${routineId}/build/${buildId}/testflow/create`
+		);
 	};
 
 	return (

@@ -53,7 +53,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Adolfo Pérez
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + KBPortletKeys.KNOWLEDGE_BASE_ADMIN,
 		"mvc.command.name=/knowledge_base/import_file"
@@ -114,6 +113,8 @@ public class ImportFileMVCActionCommand extends BaseMVCActionCommand {
 			}
 		}
 		catch (KBArticleImportException kbArticleImportException) {
+			hideDefaultErrorMessage(actionRequest);
+
 			SessionErrors.add(
 				actionRequest, kbArticleImportException.getClass(),
 				kbArticleImportException);

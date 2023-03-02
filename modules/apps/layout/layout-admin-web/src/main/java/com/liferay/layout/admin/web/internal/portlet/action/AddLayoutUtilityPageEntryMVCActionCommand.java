@@ -15,17 +15,18 @@
 package com.liferay.layout.admin.web.internal.portlet.action;
 
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
-import com.liferay.layout.utility.page.exception.LayoutUtilityPageEntryNameException;
+import com.liferay.layout.admin.web.internal.handler.LayoutUtilityPageEntryPortalExceptionRequestHandler;
+import com.liferay.layout.importer.LayoutsImporter;
+import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
+import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
+import com.liferay.layout.utility.page.provider.LayoutUtilityPageEntryDefaultPageElementDefinitionProvider;
 import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
-import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
@@ -40,7 +41,6 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import javax.portlet.ActionRequest;
@@ -54,7 +54,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + LayoutAdminPortletKeys.GROUP_PAGES,
 		"mvc.command.name=/layout_admin/add_layout_utility_page_entry"
@@ -69,20 +68,9 @@ public class AddLayoutUtilityPageEntryMVCActionCommand
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
-		String name = ParamUtil.getString(actionRequest, "name");
-		int type = ParamUtil.getInteger(actionRequest, "type");
-		long masterLayoutPlid = ParamUtil.getLong(
-			actionRequest, "masterLayoutPlid");
-
 		try {
-			ServiceContext serviceContext = ServiceContextFactory.getInstance(
-				actionRequest);
-
 			LayoutUtilityPageEntry layoutUtilityPageEntry =
-				_layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
-					null, serviceContext.getUserId(),
-					serviceContext.getScopeGroupId(), name, type,
-					masterLayoutPlid);
+				_addLayoutUtilityPageEntry(actionRequest);
 
 			JSONObject jsonObject = JSONUtil.put(
 				"redirectURL",
@@ -97,71 +85,39 @@ public class AddLayoutUtilityPageEntryMVCActionCommand
 		catch (PortalException portalException) {
 			hideDefaultErrorMessage(actionRequest);
 
-			_handlePortalException(
-				actionRequest, actionResponse, portalException);
+			_layoutUtilityPageEntryPortalExceptionRequestHandler.
+				handlePortalException(
+					actionRequest, actionResponse, portalException);
 		}
 	}
 
-	private JSONObject _createErrorJSONObject(
-		ActionRequest actionRequest, PortalException portalException) {
+	private LayoutUtilityPageEntry _addLayoutUtilityPageEntry(
+			ActionRequest actionRequest)
+		throws Exception {
 
-		if (_log.isDebugEnabled()) {
-			_log.debug(portalException);
+		String name = ParamUtil.getString(actionRequest, "name");
+		String type = ParamUtil.getString(actionRequest, "type");
+		long masterLayoutPlid = ParamUtil.getLong(
+			actionRequest, "masterLayoutPlid");
+
+		ServiceContext serviceContext = ServiceContextFactory.getInstance(
+			actionRequest);
+
+		LayoutUtilityPageEntry layoutUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
+				null, serviceContext.getUserId(),
+				serviceContext.getScopeGroupId(), 0, 0, false, name, type,
+				masterLayoutPlid, serviceContext);
+
+		String pageElementJSON =
+			_layoutUtilityPageEntryDefaultPageElementDefinitionProvider.
+				getDefaultPageElementJSON(type);
+
+		if (pageElementJSON != null) {
+			_importPageElement(layoutUtilityPageEntry, pageElementJSON);
 		}
 
-		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
-			WebKeys.THEME_DISPLAY);
-
-		String errorMessage = null;
-
-		if (portalException instanceof
-				LayoutUtilityPageEntryNameException.MustNotBeDuplicate) {
-
-			errorMessage = _language.get(
-				themeDisplay.getLocale(),
-				"a-utility-page-with-that-name-already-exists");
-		}
-		else if (portalException instanceof
-					LayoutUtilityPageEntryNameException.MustNotBeNull) {
-
-			errorMessage = _language.get(
-				themeDisplay.getLocale(), "name-must-not-be-empty");
-		}
-		else if (portalException instanceof
-					LayoutUtilityPageEntryNameException.
-						MustNotContainInvalidCharacters) {
-
-			LayoutUtilityPageEntryNameException.MustNotContainInvalidCharacters
-				lptene =
-					(LayoutUtilityPageEntryNameException.
-						MustNotContainInvalidCharacters)portalException;
-
-			errorMessage = _language.format(
-				themeDisplay.getLocale(),
-				"name-cannot-contain-the-following-invalid-character-x",
-				lptene.character);
-		}
-		else if (portalException instanceof
-					LayoutUtilityPageEntryNameException.
-						MustNotExceedMaximumSize) {
-
-			int nameMaxLength = ModelHintsUtil.getMaxLength(
-				LayoutUtilityPageEntry.class.getName(), "name");
-
-			errorMessage = _language.format(
-				themeDisplay.getLocale(),
-				"please-enter-a-name-with-fewer-than-x-characters",
-				nameMaxLength);
-		}
-
-		if (Validator.isNull(errorMessage)) {
-			errorMessage = _language.get(
-				themeDisplay.getLocale(), "an-unexpected-error-occurred");
-
-			_log.error(portalException);
-		}
-
-		return JSONUtil.put("error", errorMessage);
+		return layoutUtilityPageEntry;
 	}
 
 	private String _getRedirectURL(
@@ -192,30 +148,50 @@ public class AddLayoutUtilityPageEntryMVCActionCommand
 			layoutFullURL, "p_l_mode", Constants.EDIT);
 	}
 
-	private void _handlePortalException(
-			ActionRequest actionRequest, ActionResponse actionResponse,
-			PortalException portalException)
+	private void _importPageElement(
+			LayoutUtilityPageEntry layoutUtilityPageEntry,
+			String pageElementJSON)
 		throws Exception {
 
-		JSONObject errorJSONObject = _createErrorJSONObject(
-			actionRequest, portalException);
+		Layout layout = _layoutLocalService.getLayout(
+			layoutUtilityPageEntry.getPlid());
 
-		JSONPortletResponseUtil.writeJSON(
-			actionRequest, actionResponse, errorJSONObject);
+		Layout draftLayout = layout.fetchDraftLayout();
+
+		LayoutPageTemplateStructure layoutPageTemplateStructure =
+			_layoutPageTemplateStructureLocalService.
+				fetchLayoutPageTemplateStructure(
+					draftLayout.getGroupId(), draftLayout.getPlid(), true);
+
+		LayoutStructure layoutStructure = LayoutStructure.of(
+			layoutPageTemplateStructure.getDefaultSegmentsExperienceData());
+
+		_layoutsImporter.importPageElement(
+			draftLayout, layoutStructure, layoutStructure.getMainItemId(),
+			pageElementJSON, 0);
 	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		AddLayoutUtilityPageEntryMVCActionCommand.class);
-
-	@Reference
-	private Language _language;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
 
 	@Reference
+	private LayoutPageTemplateStructureLocalService
+		_layoutPageTemplateStructureLocalService;
+
+	@Reference
+	private LayoutsImporter _layoutsImporter;
+
+	@Reference
+	private LayoutUtilityPageEntryDefaultPageElementDefinitionProvider
+		_layoutUtilityPageEntryDefaultPageElementDefinitionProvider;
+
+	@Reference
 	private LayoutUtilityPageEntryLocalService
 		_layoutUtilityPageEntryLocalService;
+
+	@Reference
+	private LayoutUtilityPageEntryPortalExceptionRequestHandler
+		_layoutUtilityPageEntryPortalExceptionRequestHandler;
 
 	@Reference
 	private Portal _portal;

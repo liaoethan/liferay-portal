@@ -16,10 +16,11 @@ import {Root, createRoot} from 'react-dom/client';
 import {SWRConfig} from 'swr';
 
 import TestrayRouter from './TestrayRouter';
-import AccountContextProvider from './context/AccountContext';
 import ClayIconProvider from './context/ClayIconProvider';
+import TestrayContextProvider from './context/TestrayContext';
 
 import './styles/index.scss';
+import ApplicationContextProvider from './context/ApplicationPropertiesContext';
 import SWRCacheProvider from './services/SWRCacheProvider';
 import fetcher from './services/fetcher';
 
@@ -27,6 +28,10 @@ class Testray extends HTMLElement {
 	private root: Root | undefined;
 
 	connectedCallback() {
+		const properties = {
+			jiraBaseURL: this.getAttribute('jiraBaseURL') || '',
+		};
+
 		if (!this.root) {
 			this.root = createRoot(this);
 
@@ -38,11 +43,13 @@ class Testray extends HTMLElement {
 						revalidateOnFocus: false,
 					}}
 				>
-					<AccountContextProvider>
-						<ClayIconProvider>
-							<TestrayRouter />
-						</ClayIconProvider>
-					</AccountContextProvider>
+					<ApplicationContextProvider properties={properties}>
+						<TestrayContextProvider>
+							<ClayIconProvider>
+								<TestrayRouter />
+							</ClayIconProvider>
+						</TestrayContextProvider>
+					</ApplicationContextProvider>
 				</SWRConfig>
 			);
 		}

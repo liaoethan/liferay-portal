@@ -14,65 +14,57 @@
 
 package com.liferay.portal.search.web.internal.custom.facet.display.context;
 
-import com.liferay.portal.kernel.search.facet.Facet;
-import com.liferay.portal.kernel.search.facet.collector.FacetCollector;
-import com.liferay.portal.kernel.search.facet.collector.TermCollector;
-import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.theme.PortletDisplay;
-import com.liferay.portal.kernel.theme.ThemeDisplay;
-import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.search.web.internal.BaseFacetDisplayContextTestCase;
+import com.liferay.portal.search.web.internal.custom.facet.configuration.CustomFacetPortletInstanceConfiguration;
 import com.liferay.portal.search.web.internal.custom.facet.display.context.builder.CustomFacetDisplayContextBuilder;
+import com.liferay.portal.search.web.internal.facet.display.context.BucketDisplayContext;
+import com.liferay.portal.search.web.internal.facet.display.context.FacetDisplayContext;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
-import org.mockito.Mockito;
-
 /**
  * @author Wade Cao
  */
-public class CustomFacetDisplayContextTest {
+public class CustomFacetDisplayContextTest
+	extends BaseFacetDisplayContextTestCase {
 
 	@ClassRule
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
-	@Before
-	public void setUp() {
-		Mockito.doReturn(
-			_facetCollector
-		).when(
-			_facet
-		).getFacetCollector();
+	@Override
+	public FacetDisplayContext createFacetDisplayContext(String parameterValue)
+		throws Exception {
+
+		return _createDisplayContext(
+			"customDisplayCaption", "fieldToAggregate", parameterValue,
+			"count:desc");
 	}
 
 	@Test
 	public void testEmptyCustomDisplayCaption() throws Exception {
 		String customDisplayCaption = "";
 		String fieldToAggregate = "groupId";
-		String parameterValue = "";
 
 		CustomFacetDisplayContext customFacetDisplayContext =
 			_createDisplayContext(
-				customDisplayCaption, fieldToAggregate, parameterValue);
+				customDisplayCaption, fieldToAggregate,
+				getFacetDisplayContextParameterValue());
 
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
+		List<BucketDisplayContext> bucketDisplayContexts =
+			customFacetDisplayContext.getBucketDisplayContexts();
 
 		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 0,
-			customFacetTermDisplayContexts.size());
+			bucketDisplayContexts.toString(), 0, bucketDisplayContexts.size());
 
 		Assert.assertTrue(customFacetDisplayContext.isNothingSelected());
 		Assert.assertTrue(customFacetDisplayContext.isRenderNothing());
@@ -80,108 +72,28 @@ public class CustomFacetDisplayContextTest {
 			fieldToAggregate, customFacetDisplayContext.getDisplayCaption());
 	}
 
+	@Override
 	@Test
-	public void testEmptySearchResultsWithPreviousSelection() throws Exception {
-		String fieldName = RandomTestUtil.randomString();
-
-		String parameterValue = fieldName;
-
-		CustomFacetDisplayContext customFacetDisplayContext =
-			_createDisplayContext(
-				"customDisplayCaption", "fieldToAggregate", parameterValue);
-
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 1,
-			customFacetTermDisplayContexts.size());
-
-		CustomFacetTermDisplayContext customFacetTermDisplayContext =
-			customFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(0, customFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			fieldName, customFacetTermDisplayContext.getFieldName());
-		Assert.assertTrue(customFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(customFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			parameterValue, customFacetDisplayContext.getParameterValue());
-		Assert.assertFalse(customFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(customFacetDisplayContext.isRenderNothing());
+	public void testEmptySearchResults() throws Exception {
 	}
 
-	@Test
-	public void testOneTerm() throws Exception {
-		String fieldName = RandomTestUtil.randomString();
-		int count = RandomTestUtil.randomInt();
+	@Override
+	protected void testOrderBy(
+			int[] expectedFrequencies, String[] expectedTerms,
+			int[] frequencies, String order, String[] terms)
+		throws Exception {
 
-		_setUpOneTermCollector(fieldName, count);
-
-		String parameterValue = "";
-
-		CustomFacetDisplayContext customFacetDisplayContext =
-			_createDisplayContext(
-				"customDisplayCaption", "fieldToAggregate", parameterValue);
-
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 1,
-			customFacetTermDisplayContexts.size());
-
-		CustomFacetTermDisplayContext customFacetTermDisplayContext =
-			customFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			count, customFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			fieldName, customFacetTermDisplayContext.getFieldName());
-		Assert.assertFalse(customFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(customFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			parameterValue, customFacetDisplayContext.getParameterValue());
-		Assert.assertTrue(customFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(customFacetDisplayContext.isRenderNothing());
-	}
-
-	@Test
-	public void testOneTermWithPreviousSelection() throws Exception {
-		String fieldName = RandomTestUtil.randomString();
-		int count = RandomTestUtil.randomInt();
-
-		_setUpOneTermCollector(fieldName, count);
-
-		String parameterValue = fieldName;
+		setUpTermCollectors(
+			facetCollector, getTermCollectors(terms, frequencies));
 
 		CustomFacetDisplayContext customFacetDisplayContext =
 			_createDisplayContext(
-				"customDisplayCaption", "fieldToAggregate", parameterValue);
+				"customDisplayCaption", "fieldToAggregate", StringPool.BLANK,
+				order);
 
-		List<CustomFacetTermDisplayContext> customFacetTermDisplayContexts =
-			customFacetDisplayContext.getTermDisplayContexts();
-
-		Assert.assertEquals(
-			customFacetTermDisplayContexts.toString(), 1,
-			customFacetTermDisplayContexts.size());
-
-		CustomFacetTermDisplayContext customFacetTermDisplayContext =
-			customFacetTermDisplayContexts.get(0);
-
-		Assert.assertEquals(
-			count, customFacetTermDisplayContext.getFrequency());
-		Assert.assertEquals(
-			fieldName, customFacetTermDisplayContext.getFieldName());
-		Assert.assertTrue(customFacetTermDisplayContext.isSelected());
-		Assert.assertTrue(customFacetTermDisplayContext.isFrequencyVisible());
-
-		Assert.assertEquals(
-			parameterValue, customFacetDisplayContext.getParameterValue());
-		Assert.assertFalse(customFacetDisplayContext.isNothingSelected());
-		Assert.assertFalse(customFacetDisplayContext.isRenderNothing());
+		assertFacetOrder(
+			customFacetDisplayContext.getBucketDisplayContexts(), expectedTerms,
+			expectedFrequencies);
 	}
 
 	private CustomFacetDisplayContext _createDisplayContext(
@@ -189,16 +101,29 @@ public class CustomFacetDisplayContextTest {
 			String parameterValue)
 		throws Exception {
 
-		CustomFacetDisplayContextBuilder customFacetDisplayContextBuilder =
-			new CustomFacetDisplayContextBuilder(_getHttpServletRequest());
+		return _createDisplayContext(
+			customDisplayCaption, fieldToAggregate, parameterValue,
+			"count:desc");
+	}
 
-		customFacetDisplayContextBuilder.setFacet(_facet);
+	private CustomFacetDisplayContext _createDisplayContext(
+			String customDisplayCaption, String fieldToAggregate,
+			String parameterValue, String order)
+		throws Exception {
+
+		CustomFacetDisplayContextBuilder customFacetDisplayContextBuilder =
+			new CustomFacetDisplayContextBuilder(
+				getHttpServletRequest(
+					CustomFacetPortletInstanceConfiguration.class));
+
+		customFacetDisplayContextBuilder.setFacet(facet);
 		customFacetDisplayContextBuilder.setParameterName("custom");
 		customFacetDisplayContextBuilder.setParameterValue(parameterValue);
 		customFacetDisplayContextBuilder.setFrequenciesVisible(true);
 
 		customFacetDisplayContextBuilder.setFrequencyThreshold(0);
 		customFacetDisplayContextBuilder.setMaxTerms(0);
+		customFacetDisplayContextBuilder.setOrder(order);
 
 		customFacetDisplayContextBuilder.setCustomDisplayCaption(
 			Optional.ofNullable(customDisplayCaption));
@@ -206,62 +131,5 @@ public class CustomFacetDisplayContextTest {
 
 		return customFacetDisplayContextBuilder.build();
 	}
-
-	private TermCollector _createTermCollector(String fieldName, int count) {
-		TermCollector termCollector = Mockito.mock(TermCollector.class);
-
-		Mockito.doReturn(
-			count
-		).when(
-			termCollector
-		).getFrequency();
-
-		Mockito.doReturn(
-			fieldName
-		).when(
-			termCollector
-		).getTerm();
-
-		return termCollector;
-	}
-
-	private HttpServletRequest _getHttpServletRequest() {
-		HttpServletRequest httpServletRequest = Mockito.mock(
-			HttpServletRequest.class);
-
-		Mockito.doReturn(
-			_getThemeDisplay()
-		).when(
-			httpServletRequest
-		).getAttribute(
-			WebKeys.THEME_DISPLAY
-		);
-
-		return httpServletRequest;
-	}
-
-	private ThemeDisplay _getThemeDisplay() {
-		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
-
-		Mockito.doReturn(
-			Mockito.mock(PortletDisplay.class)
-		).when(
-			themeDisplay
-		).getPortletDisplay();
-
-		return themeDisplay;
-	}
-
-	private void _setUpOneTermCollector(String fieldName, int count) {
-		Mockito.doReturn(
-			Collections.singletonList(_createTermCollector(fieldName, count))
-		).when(
-			_facetCollector
-		).getTermCollectors();
-	}
-
-	private final Facet _facet = Mockito.mock(Facet.class);
-	private final FacetCollector _facetCollector = Mockito.mock(
-		FacetCollector.class);
 
 }

@@ -14,8 +14,7 @@
 
 package com.liferay.journal.internal.validation;
 
-import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
 import com.liferay.dynamic.data.mapping.exception.NoSuchStructureException;
 import com.liferay.dynamic.data.mapping.exception.NoSuchTemplateException;
 import com.liferay.dynamic.data.mapping.exception.StorageFieldNameException;
@@ -90,7 +89,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Máté Thurzó
  */
 @Component(
-	immediate = true,
 	property = "model.class.name=com.liferay.journal.model.JournalArticle",
 	service = ModelValidator.class
 )
@@ -330,7 +328,7 @@ public class JournalArticleModelValidator
 
 		List<DDMStructure> folderDDMStructures =
 			_journalFolderLocalService.getDDMStructures(
-				SiteConnectedGroupGroupProviderUtil.
+				_siteConnectedGroupGroupProvider.
 					getCurrentAndAncestorSiteAndDepotGroupIds(groupId, true),
 				folderId, restrictionType);
 
@@ -390,14 +388,15 @@ public class JournalArticleModelValidator
 			serviceContext = new ServiceContext();
 		}
 
+		String content = article.getContent();
+
 		try {
 			validate(
 				article.getCompanyId(), article.getGroupId(),
-				article.getClassNameId(), article.getTitleMap(),
-				article.getContent(), ddmStructureKey, ddmTemplateKey,
-				article.getDisplayDate(), article.getExpirationDate(),
-				smallImage, smallImageURL, smallImageFile, smallImageBytes,
-				serviceContext);
+				article.getClassNameId(), article.getTitleMap(), content,
+				ddmStructureKey, ddmTemplateKey, article.getDisplayDate(),
+				article.getExpirationDate(), smallImage, smallImageURL,
+				smallImageFile, smallImageBytes, serviceContext);
 		}
 		catch (PortalException portalException) {
 			ModelValidationResults.FailureBuilder failureBuilder =
@@ -412,8 +411,7 @@ public class JournalArticleModelValidator
 			validateReferences(
 				article.getGroupId(), ddmStructureKey, ddmTemplateKey,
 				article.getLayoutUuid(), smallImage, smallImageURL,
-				smallImageBytes, article.getSmallImageId(),
-				article.getContent());
+				smallImageBytes, article.getSmallImageId(), content);
 		}
 		catch (ExportImportContentValidationException
 					exportImportContentValidationException) {
@@ -529,9 +527,6 @@ public class JournalArticleModelValidator
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
 	@Reference
-	private DepotEntryLocalService _depotEntryLocalService;
-
-	@Reference
 	private ImageLocalService _imageLocalService;
 
 	@Reference
@@ -557,5 +552,8 @@ public class JournalArticleModelValidator
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
 
 }

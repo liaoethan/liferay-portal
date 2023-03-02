@@ -16,6 +16,11 @@
 	<td></td>
 </tr>
 <tr>
+	<td>TITLE_PRINT_PREVIEW</td>
+	<td>//div[contains(@class,'kb-title')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>CONTENT</td>
 	<td>//div[contains(@class,'kb-entity-body')]//p</td>
 	<td></td>
@@ -33,21 +38,6 @@
 <tr>
 	<td>EDIT_ON_GITHUB</td>
 	<td>//span[contains(.,'Edit on GitHub')]</td>
-	<td></td>
-</tr>
-<tr>
-	<td>SUBSCRIBE</td>
-	<td>//div[@class='kb-article-container']//div//a/span[contains(.,'Subscribe')]</td>
-	<td></td>
-</tr>
-<tr>
-	<td>HISTORY</td>
-	<td>//div[@class='kb-article-container']//div//a/span[contains(.,'History')]</td>
-	<td></td>
-</tr>
-<tr>
-	<td>PRINT</td>
-	<td>//div[@class='kb-article-container']//div//a/span[contains(.,'Print')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -94,6 +84,11 @@
 <tr>
 	<td>ATTACHMENTS_HEADER_EXPANDED</td>
 	<td>//a[contains(@class,'collapse-icon') and contains(@aria-expanded,'true') and contains(.,'Attachments')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>ATTACHMENTS_REMOVE</td>
+	<td>//div//span[contains(.,'${key_attachmentName}')]//following-sibling::span//span[*[name()='svg'][contains(@class,'icon-trash')]]</td>
 	<td></td>
 </tr>
 <tr>
@@ -194,6 +189,11 @@
 <tr>
 	<td>SECTIONS_SELECT</td>
 	<td>//select[contains(@id, 'knowledge_base_web') and contains(@id, 'sections')]//option[contains(.,'${key_kbArticleSection}')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SECTION_WIDGET_SELECT</td>
+	<td>//select[contains(@id,'kbArticlesSections')]</td>
 	<td></td>
 </tr>
 <tr>

@@ -16,6 +16,7 @@ package com.liferay.portal.vulcan.util;
 
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.search.BooleanClause;
@@ -53,7 +54,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * @author Brian Wing Shun Chan
@@ -303,11 +303,16 @@ public class SearchUtil {
 			return null;
 		}
 
-		return Stream.of(
-			sorts
-		).flatMap(
-			sort -> Stream.of(sort.getFieldName(), !sort.isReverse())
-		).toArray();
+		Object[] sortsByComparatorColumns = new Object[sorts.length * 2];
+
+		for (int i = 0; i < sorts.length; i++) {
+			Sort sort = sorts[i];
+
+			sortsByComparatorColumns[i * 2] = sort.getFieldName();
+			sortsByComparatorColumns[(i * 2) + 1] = !sort.isReverse();
+		}
+
+		return sortsByComparatorColumns;
 	}
 
 }

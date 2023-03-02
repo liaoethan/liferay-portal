@@ -14,12 +14,15 @@
 
 package com.liferay.layout.content.page.editor.web.internal.portlet.action;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorTracker;
+import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
 import com.liferay.fragment.model.FragmentEntry;
+import com.liferay.fragment.renderer.FragmentRenderer;
+import com.liferay.fragment.renderer.FragmentRendererRegistry;
 import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.layout.content.page.editor.constants.ContentPageEditorPortletKeys;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
@@ -39,7 +42,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Eudaldo Alonso
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET,
 		"mvc.command.name=/layout_content_page_editor/get_fragment_entry_input_field_types"
@@ -60,23 +62,21 @@ public class GetFragmentEntryInputFieldTypesMVCResourceCommand
 		String fragmentEntryKey = ParamUtil.getString(
 			resourceRequest, "fragmentEntryKey");
 
-		FragmentEntry fragmentEntry = _getFragmentEntry(
+		String typeOptions = _getFragmentTypeOptions(
 			fragmentEntryKey,
 			ParamUtil.getLong(
 				resourceRequest, "groupId", themeDisplay.getScopeGroupId()));
 
-		if ((fragmentEntry == null) ||
-			Validator.isNull(fragmentEntry.getTypeOptions())) {
-
+		if (Validator.isNull(typeOptions)) {
 			JSONPortletResponseUtil.writeJSON(
 				resourceRequest, resourceResponse,
-				JSONFactoryUtil.createJSONArray());
+				_jsonFactory.createJSONArray());
 
 			return;
 		}
 
-		JSONObject typeOptionsJSONObject = JSONFactoryUtil.createJSONObject(
-			fragmentEntry.getTypeOptions());
+		JSONObject typeOptionsJSONObject = _jsonFactory.createJSONObject(
+			typeOptions);
 
 		JSONArray fieldTypesJSONArray = typeOptionsJSONObject.getJSONArray(
 			"fieldTypes");
@@ -86,7 +86,7 @@ public class GetFragmentEntryInputFieldTypesMVCResourceCommand
 
 			JSONPortletResponseUtil.writeJSON(
 				resourceRequest, resourceResponse,
-				JSONFactoryUtil.createJSONArray());
+				_jsonFactory.createJSONArray());
 
 			return;
 		}
@@ -95,7 +95,7 @@ public class GetFragmentEntryInputFieldTypesMVCResourceCommand
 			resourceRequest, resourceResponse, fieldTypesJSONArray);
 	}
 
-	private FragmentEntry _getFragmentEntry(
+	private String _getFragmentTypeOptions(
 		String fragmentEntryKey, long groupId) {
 
 		FragmentEntry fragmentEntry =
@@ -104,18 +104,35 @@ public class GetFragmentEntryInputFieldTypesMVCResourceCommand
 
 		if (fragmentEntry == null) {
 			fragmentEntry =
-				_fragmentCollectionContributorTracker.getFragmentEntry(
+				_fragmentCollectionContributorRegistry.getFragmentEntry(
 					fragmentEntryKey);
 		}
 
-		return fragmentEntry;
+		if (fragmentEntry != null) {
+			return fragmentEntry.getTypeOptions();
+		}
+
+		FragmentRenderer fragmentRenderer =
+			_fragmentRendererRegistry.getFragmentRenderer(fragmentEntryKey);
+
+		if (fragmentRenderer != null) {
+			return fragmentRenderer.getTypeOptions();
+		}
+
+		return StringPool.BLANK;
 	}
 
 	@Reference
-	private FragmentCollectionContributorTracker
-		_fragmentCollectionContributorTracker;
+	private FragmentCollectionContributorRegistry
+		_fragmentCollectionContributorRegistry;
 
 	@Reference
 	private FragmentEntryLocalService _fragmentEntryLocalService;
+
+	@Reference
+	private FragmentRendererRegistry _fragmentRendererRegistry;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 }

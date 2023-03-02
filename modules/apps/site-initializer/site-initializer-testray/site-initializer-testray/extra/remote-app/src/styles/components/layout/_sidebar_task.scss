@@ -1,0 +1,179 @@
+$opacity-transition: all 0.3s ease;
+
+.task-sidebar {
+	color: #8b8db2;
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	padding: 0 25px 20px;
+
+	li {
+		overflow-x: hidden;
+		width: 200px;
+	}
+
+	&-expanded {
+		opacity: 1;
+		transition: $opacity-transition;
+		visibility: visible;
+		width: 220px;
+	}
+
+	&-hidden {
+		opacity: 0;
+		transition: $opacity-transition;
+		visibility: hidden;
+		width: 60px;
+	}
+
+	.task-sidebar-title {
+		height: 30px;
+
+		&-expanded {
+			background-color: #18215c;
+			display: flex;
+			justify-content: space-between;
+			width: 100%;
+		}
+
+		&-hidden {
+			display: flex;
+			position: relative;
+		}
+	}
+
+	.ellipsis-text {
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		display: -webkit-box;
+		line-clamp: 2;
+		max-width: 25ch;
+		overflow: hidden;
+		text-align: justify;
+		text-overflow: ellipsis;
+		white-space: break-spaces;
+		word-wrap: break-word;
+	}
+
+	.quantity-task-badge {
+		align-items: center;
+		background-color: #303376;
+		color: #fff;
+		display: inline-flex;
+		height: 25px;
+		justify-content: center;
+		padding: 4px;
+		width: 25px;
+	}
+
+	.subtask-sidebar {
+		animation-delay: 1s;
+		background-color: #303376;
+		box-sizing: border-box;
+		font-size: 14px !important;
+		margin-bottom: 8px;
+		padding: 8px;
+		text-decoration: none !important;
+		text-transform: uppercase;
+		width: 100%;
+
+		&:hover {
+			background-color: #434796;
+			color: #b0b2dd;
+		}
+	}
+
+	.sidebar-item-hidden {
+		opacity: 0;
+		transition: $opacity-transition;
+		visibility: hidden;
+		width: 0;
+	}
+
+	.sidebar-item-visible {
+		opacity: 1;
+		transition: $opacity-transition;
+		visibility: visible;
+	}
+
+	.notification {
+		margin-left: 3px;
+		position: absolute;
+		top: 10px;
+		user-select: none;
+
+		.task-sidebar-notification {
+			align-items: center;
+			background: #f00;
+			border-radius: 100%;
+			bottom: 10px;
+			box-shadow: 1px 2px 3px rgba(200, 0, 0, 0.3);
+			color: #fff;
+			display: flex;
+			font-size: 12px;
+			height: 20px;
+			justify-content: center;
+			left: 10px;
+			padding: 10px;
+			position: absolute;
+			transition: all 1s ease;
+			user-select: none;
+			width: 20px;
+		}
+
+		&-hide {
+			opacity: 0 !important;
+			transition: all 0.3s ease;
+		}
+
+		&-show {
+			opacity: 1 !important;
+			transition: all 1s ease;
+		}
+	}
+
+	.scroller {
+		overflow-y: scroll;
+		scrollbar-color: #8b8db2;
+	}
+
+	&::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	&::-webkit-scrollbar-track {
+		border-radius: 5px;
+		padding: 1px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: #8b8db2;
+		border: 1px solid #18215c;
+		border-radius: 20px;
+	}
+
+	a {
+		color: #8b8db2;
+	}
+
+	.sidebar-buildlink {
+		max-width: 50px;
+		overflow: auto;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		width: 50px;
+	}
+
+	.sidebar-link {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		width: 180px;
+	}
+}
+
+.task-sidebar-divider {
+	border-top: solid #8b8db2 1px;
+}

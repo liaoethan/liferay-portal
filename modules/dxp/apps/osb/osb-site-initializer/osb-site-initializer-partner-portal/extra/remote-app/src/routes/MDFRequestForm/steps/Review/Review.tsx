@@ -10,6 +10,7 @@
  */
 
 import Button from '@clayui/button';
+import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useFormikContext} from 'formik';
 import {useMemo} from 'react';
 
@@ -17,6 +18,7 @@ import PRMFormikPageProps from '../../../../common/components/PRMFormik/interfac
 import ResumeCard from '../../../../common/components/ResumeCard';
 import MDFRequest from '../../../../common/interfaces/mdfRequest';
 import MDFRequestActivity from '../../../../common/interfaces/mdfRequestActivity';
+import {Status} from '../../../../common/utils/constants/status';
 import getIntlNumberFormat from '../../../../common/utils/getIntlNumberFormat';
 import getTotalBudget from '../../../../common/utils/getTotalBudget';
 import getTotalMDFRequest from '../../../../common/utils/getTotalMDFRequest';
@@ -61,9 +63,9 @@ const Review = ({
 					(activity: MDFRequestActivity, index: number) => (
 						<ActivityPanel
 							activity={activity}
-							campaignName={values.campaignName}
 							detail
 							key={index}
+							overallCampaignName={values.overallCampaignName}
 						>
 							<ActivityReviewEntry
 								mdfRequestActivity={activity}
@@ -100,8 +102,8 @@ const Review = ({
 
 					<div className="border mb-1"></div>
 
-					<div className="d-flex justify-content-between">
-						<div className="mr-auto pl-0 py-3">
+					<div className="border-neutral-2 d-md-flex p-2">
+						<div className="d-flex justify-content-between mr-auto">
 							<Button
 								className="mr-4"
 								displayType={null}
@@ -113,7 +115,7 @@ const Review = ({
 							</Button>
 
 							<Button
-								className="pl-0"
+								className="inline-item inline-item-after pl-0"
 								disabled={isSubmitting}
 								displayType={null}
 								onClick={() =>
@@ -121,10 +123,15 @@ const Review = ({
 								}
 							>
 								Save as Draft
+								{isSubmitting &&
+									values.mdfRequestStatus ===
+										Status.DRAFT && (
+										<ClayLoadingIndicator className="inline-item inline-item-after ml-2" />
+									)}
 							</Button>
 						</div>
 
-						<div className="p-2">
+						<div className="d-flex justify-content-between px-2 px-md-0">
 							<Button
 								className="mr-4"
 								displayType="secondary"
@@ -133,8 +140,17 @@ const Review = ({
 								Cancel
 							</Button>
 
-							<Button disabled={isSubmitting} type="submit">
+							<Button
+								className="inline-item inline-item-after"
+								disabled={isSubmitting}
+								type="submit"
+							>
 								Submit
+								{isSubmitting &&
+									values.mdfRequestStatus ===
+										Status.PENDING && (
+										<ClayLoadingIndicator className="inline-item inline-item-after ml-2" />
+									)}
 							</Button>
 						</div>
 					</div>

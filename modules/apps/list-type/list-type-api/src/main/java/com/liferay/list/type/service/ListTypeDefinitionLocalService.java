@@ -16,6 +16,7 @@ package com.liferay.list.type.service;
 
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.list.type.model.ListTypeDefinition;
+import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -84,7 +85,13 @@ public interface ListTypeDefinitionLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public ListTypeDefinition addListTypeDefinition(
-			long userId, Map<Locale, String> nameMap)
+			String externalReferenceCode, long userId)
+		throws PortalException;
+
+	@Indexable(type = IndexableType.REINDEX)
+	public ListTypeDefinition addListTypeDefinition(
+			String externalReferenceCode, long userId,
+			Map<Locale, String> nameMap, List<ListTypeEntry> listTypeEntries)
 		throws PortalException;
 
 	/**
@@ -219,6 +226,10 @@ public interface ListTypeDefinitionLocalService
 	public ListTypeDefinition fetchListTypeDefinition(
 		long listTypeDefinitionId);
 
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ListTypeDefinition fetchListTypeDefinitionByExternalReferenceCode(
+		String externalReferenceCode, long companyId);
+
 	/**
 	 * Returns the list type definition with the matching UUID and company.
 	 *
@@ -249,6 +260,11 @@ public interface ListTypeDefinitionLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ListTypeDefinition getListTypeDefinition(long listTypeDefinitionId)
+		throws PortalException;
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ListTypeDefinition getListTypeDefinitionByExternalReferenceCode(
+			String externalReferenceCode, long companyId)
 		throws PortalException;
 
 	/**
@@ -317,7 +333,9 @@ public interface ListTypeDefinitionLocalService
 
 	@Indexable(type = IndexableType.REINDEX)
 	public ListTypeDefinition updateListTypeDefinition(
-			long listTypeDefinitionId, Map<Locale, String> nameMap)
+			String externalReferenceCode, long listTypeDefinitionId,
+			long userId, Map<Locale, String> nameMap,
+			List<ListTypeEntry> listTypeEntries)
 		throws PortalException;
 
 }

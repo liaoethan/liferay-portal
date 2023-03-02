@@ -14,13 +14,9 @@ definition {
 
 		User.firstLoginPG();
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			portlet = "Pages");
-
-		PagesAdmin.addPage(
-			pageName = "My Subscriptions Page",
-			sitePageType = "Widget Page");
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "My Subscriptions Page");
 
 		Navigator.gotoPage(pageName = "My Subscriptions Page");
 
@@ -30,7 +26,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -41,21 +37,22 @@ definition {
 	test SubscribeAndUnsubscribetoDMFolder {
 		property custom.properties = "dl.actions.visible=true";
 
-		ProductMenu.gotoPortlet(
-			category = "Site Builder",
-			portlet = "Pages");
+		JSONLayout.addPublicLayout(
+			groupName = "Guest",
+			layoutName = "Test Page");
 
-		PagesAdmin.addPage(
-			pageName = "Test Page",
-			sitePageType = "Widget Page");
+		JSONLayout.addWidgetToPublicLayout(
+			column = 1,
+			groupName = "Guest",
+			layoutName = "Test Page",
+			widgetName = "Documents and Media");
+
+		JSONFolder.addFolder(
+			dmFolderDescription = "DM Folder Description",
+			dmFolderName = "DM Folder",
+			groupName = "Guest");
 
 		Navigator.gotoPage(pageName = "Test Page");
-
-		Portlet.addPG(portletName = "Documents and Media");
-
-		DMFolder.addPG(
-			dmFolderDescription = "DM Folder Description",
-			dmFolderName = "DM Folder");
 
 		Subscriptions.subscribeViaInfoPanelPG();
 
@@ -65,7 +62,7 @@ definition {
 			assetTitle = "Home",
 			assetType = "Documents Folder");
 
-		Subscriptions.unsubscribeViaMySubscriptions(rowNumber = "1");
+		Subscriptions.unsubscribeViaMySubscriptions(rowNumber = 1);
 
 		Navigator.gotoPage(pageName = "My Subscriptions Page");
 

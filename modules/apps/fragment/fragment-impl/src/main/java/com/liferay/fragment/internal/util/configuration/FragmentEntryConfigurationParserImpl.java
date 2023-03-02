@@ -23,18 +23,18 @@ import com.liferay.frontend.token.definition.FrontendTokenDefinition;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.frontend.token.definition.FrontendTokenMapping;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
-import com.liferay.info.item.InfoItemServiceTracker;
+import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
 import com.liferay.layout.list.retriever.DefaultLayoutListRetrieverContext;
 import com.liferay.layout.list.retriever.LayoutListRetriever;
-import com.liferay.layout.list.retriever.LayoutListRetrieverTracker;
+import com.liferay.layout.list.retriever.LayoutListRetrieverRegistry;
 import com.liferay.layout.list.retriever.ListObjectReference;
 import com.liferay.layout.list.retriever.ListObjectReferenceFactory;
-import com.liferay.layout.list.retriever.ListObjectReferenceFactoryTracker;
+import com.liferay.layout.list.retriever.ListObjectReferenceFactoryRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONException;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -82,7 +82,7 @@ public class FragmentEntryConfigurationParserImpl
 		List<FragmentConfigurationField> fragmentConfigurationFields =
 			getFragmentConfigurationFields(configuration);
 
-		JSONObject defaultValuesJSONObject = JSONFactoryUtil.createJSONObject();
+		JSONObject defaultValuesJSONObject = _jsonFactory.createJSONObject();
 
 		for (FragmentConfigurationField fragmentConfigurationField :
 				fragmentConfigurationFields) {
@@ -103,8 +103,8 @@ public class FragmentEntryConfigurationParserImpl
 		FragmentConfigurationFieldDataType fragmentConfigurationFieldDataType) {
 
 		try {
-			JSONObject editableValuesJSONObject =
-				JSONFactoryUtil.createJSONObject(editableValues);
+			JSONObject editableValuesJSONObject = _jsonFactory.createJSONObject(
+				editableValues);
 
 			JSONObject configurationValuesJSONObject =
 				editableValuesJSONObject.getJSONObject(
@@ -139,10 +139,10 @@ public class FragmentEntryConfigurationParserImpl
 			getConfigurationDefaultValuesJSONObject(configuration);
 
 		if (configurationDefaultValuesJSONObject == null) {
-			return JSONFactoryUtil.createJSONObject();
+			return _jsonFactory.createJSONObject();
 		}
 
-		JSONObject editableValuesJSONObject = JSONFactoryUtil.createJSONObject(
+		JSONObject editableValuesJSONObject = _jsonFactory.createJSONObject(
 			editableValues);
 
 		JSONObject configurationValuesJSONObject =
@@ -243,8 +243,8 @@ public class FragmentEntryConfigurationParserImpl
 		FragmentConfigurationField fragmentConfigurationField, Locale locale) {
 
 		try {
-			JSONObject editableValuesJSONObject =
-				JSONFactoryUtil.createJSONObject(editableValues);
+			JSONObject editableValuesJSONObject = _jsonFactory.createJSONObject(
+				editableValues);
 
 			JSONObject configurationValuesJSONObject =
 				editableValuesJSONObject.getJSONObject(
@@ -277,7 +277,7 @@ public class FragmentEntryConfigurationParserImpl
 		JSONObject editableValuesJSONObject = null;
 
 		try {
-			editableValuesJSONObject = JSONFactoryUtil.createJSONObject(
+			editableValuesJSONObject = _jsonFactory.createJSONObject(
 				editableValues);
 		}
 		catch (Exception exception) {
@@ -435,8 +435,8 @@ public class FragmentEntryConfigurationParserImpl
 
 	private JSONArray _getFieldSetsJSONArray(String configuration) {
 		try {
-			JSONObject configurationJSONObject =
-				JSONFactoryUtil.createJSONObject(configuration);
+			JSONObject configurationJSONObject = _jsonFactory.createJSONObject(
+				configuration);
 
 			return configurationJSONObject.getJSONArray("fieldSets");
 		}
@@ -461,7 +461,7 @@ public class FragmentEntryConfigurationParserImpl
 			JSONUtil.isValid(parsedValue)) {
 
 			try {
-				JSONObject valueJSONObject = JSONFactoryUtil.createJSONObject(
+				JSONObject valueJSONObject = _jsonFactory.createJSONObject(
 					parsedValue);
 
 				parsedValue = valueJSONObject.getString(
@@ -554,7 +554,7 @@ public class FragmentEntryConfigurationParserImpl
 				FragmentConfigurationFieldDataType.ARRAY) {
 
 			try {
-				return JSONFactoryUtil.createJSONArray(value);
+				return _jsonFactory.createJSONArray(value);
 			}
 			catch (JSONException jsonException) {
 				if (_log.isDebugEnabled()) {
@@ -583,7 +583,7 @@ public class FragmentEntryConfigurationParserImpl
 					FragmentConfigurationFieldDataType.OBJECT) {
 
 			try {
-				return JSONFactoryUtil.createJSONObject(value);
+				return _jsonFactory.createJSONObject(value);
 			}
 			catch (JSONException jsonException) {
 				if (_log.isDebugEnabled()) {
@@ -608,13 +608,13 @@ public class FragmentEntryConfigurationParserImpl
 		}
 
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(value);
 
 			String className = GetterUtil.getString(
 				jsonObject.getString("className"));
 
 			InfoItemObjectProvider<?> infoItemObjectProvider =
-				_infoItemServiceTracker.getFirstInfoItemService(
+				_infoItemServiceRegistry.getFirstInfoItemService(
 					InfoItemObjectProvider.class, className);
 
 			if (infoItemObjectProvider == null) {
@@ -638,17 +638,16 @@ public class FragmentEntryConfigurationParserImpl
 	private JSONObject _getInfoDisplayObjectEntryJSONObject(String value) {
 		try {
 			if (Validator.isNull(value) ||
-				Objects.equals(value, JSONFactoryUtil.getNullJSON())) {
+				Objects.equals(value, _jsonFactory.getNullJSON())) {
 
-				return JSONFactoryUtil.createJSONObject();
+				return _jsonFactory.createJSONObject();
 			}
 
 			JSONObject configurationValueJSONObject =
-				JSONFactoryUtil.createJSONObject(value);
+				_jsonFactory.createJSONObject(value);
 
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				JSONFactoryUtil.looseSerialize(
-					_getInfoDisplayObjectEntry(value)));
+			JSONObject jsonObject = _jsonFactory.createJSONObject(
+				_jsonFactory.looseSerialize(_getInfoDisplayObjectEntry(value)));
 
 			jsonObject.put(
 				"className",
@@ -690,7 +689,7 @@ public class FragmentEntryConfigurationParserImpl
 		}
 
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(value);
+			JSONObject jsonObject = _jsonFactory.createJSONObject(value);
 
 			if (jsonObject.length() <= 0) {
 				return Collections.emptyList();
@@ -700,14 +699,15 @@ public class FragmentEntryConfigurationParserImpl
 
 			LayoutListRetriever<?, ListObjectReference> layoutListRetriever =
 				(LayoutListRetriever<?, ListObjectReference>)
-					_layoutListRetrieverTracker.getLayoutListRetriever(type);
+					_layoutListRetrieverRegistry.getLayoutListRetriever(type);
 
 			if (layoutListRetriever == null) {
 				return Collections.emptyList();
 			}
 
 			ListObjectReferenceFactory<?> listObjectReferenceFactory =
-				_listObjectReferenceFactoryTracker.getListObjectReference(type);
+				_listObjectReferenceFactoryRegistry.getListObjectReference(
+					type);
 
 			if (listObjectReferenceFactory == null) {
 				return Collections.emptyList();
@@ -735,11 +735,11 @@ public class FragmentEntryConfigurationParserImpl
 
 	private JSONObject _getInfoListObjectEntryJSONObject(String value) {
 		if (Validator.isNull(value)) {
-			return JSONFactoryUtil.createJSONObject();
+			return _jsonFactory.createJSONObject();
 		}
 
 		try {
-			return JSONFactoryUtil.createJSONObject(value);
+			return _jsonFactory.createJSONObject(value);
 		}
 		catch (JSONException jsonException) {
 			if (_log.isDebugEnabled()) {
@@ -871,13 +871,16 @@ public class FragmentEntryConfigurationParserImpl
 	private FrontendTokenDefinitionRegistry _frontendTokenDefinitionRegistry;
 
 	@Reference
-	private InfoItemServiceTracker _infoItemServiceTracker;
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;
 
 	@Reference
-	private LayoutListRetrieverTracker _layoutListRetrieverTracker;
+	private LayoutListRetrieverRegistry _layoutListRetrieverRegistry;
 
 	@Reference
 	private LayoutLocalService _layoutLocalService;
@@ -886,8 +889,8 @@ public class FragmentEntryConfigurationParserImpl
 	private LayoutSetLocalService _layoutSetLocalService;
 
 	@Reference
-	private ListObjectReferenceFactoryTracker
-		_listObjectReferenceFactoryTracker;
+	private ListObjectReferenceFactoryRegistry
+		_listObjectReferenceFactoryRegistry;
 
 	@Reference
 	private Portal _portal;

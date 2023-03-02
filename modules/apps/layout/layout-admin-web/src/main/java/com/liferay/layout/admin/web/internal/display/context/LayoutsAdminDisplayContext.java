@@ -48,6 +48,7 @@ import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -93,6 +94,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
@@ -101,7 +103,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.util.PropsUtil;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.util.RobotsUtil;
-import com.liferay.portlet.layoutsadmin.display.context.GroupDisplayContextHelper;
+import com.liferay.site.display.context.GroupDisplayContextHelper;
 import com.liferay.site.navigation.model.SiteNavigationMenu;
 import com.liferay.site.navigation.service.SiteNavigationMenuLocalServiceUtil;
 import com.liferay.staging.StagingGroupHelper;
@@ -310,13 +312,14 @@ public class LayoutsAdminDisplayContext {
 	}
 
 	public PortletURL getCETItemSelectorURL(
-		String selectEventName, String type) {
+		boolean multipleSelection, String selectEventName, String type) {
 
 		CETItemSelectorCriterion cetItemSelectorCriterion =
 			new CETItemSelectorCriterion();
 
 		cetItemSelectorCriterion.setDesiredItemSelectorReturnTypes(
 			new CETItemSelectorReturnType());
+		cetItemSelectorCriterion.setMultipleSelection(multipleSelection);
 		cetItemSelectorCriterion.setType(type);
 
 		return _itemSelector.getItemSelectorURL(
@@ -380,6 +383,8 @@ public class LayoutsAdminDisplayContext {
 			_liferayPortletResponse
 		).setActionName(
 			"/layout_admin/copy_layout"
+		).setRedirect(
+			getRedirect()
 		).setParameter(
 			"explicitCreation", Boolean.TRUE
 		).setParameter(
@@ -706,28 +711,12 @@ public class LayoutsAdminDisplayContext {
 
 		layoutsSearchContainer.setResultsAndTotal(
 			() -> LayoutServiceUtil.getLayouts(
-				getSelGroupId(), isPrivateLayout(), keywords,
-				new String[] {
-					LayoutConstants.TYPE_COLLECTION,
-					LayoutConstants.TYPE_CONTENT, LayoutConstants.TYPE_EMBEDDED,
-					LayoutConstants.TYPE_LINK_TO_LAYOUT,
-					LayoutConstants.TYPE_FULL_PAGE_APPLICATION,
-					LayoutConstants.TYPE_PANEL, LayoutConstants.TYPE_PORTLET,
-					LayoutConstants.TYPE_URL
-				},
+				getSelGroupId(), isPrivateLayout(), keywords, _getTypes(),
 				layoutStatuses, layoutsSearchContainer.getStart(),
 				layoutsSearchContainer.getEnd(),
 				layoutsSearchContainer.getOrderByComparator()),
 			LayoutServiceUtil.getLayoutsCount(
-				getSelGroupId(), isPrivateLayout(), keywords,
-				new String[] {
-					LayoutConstants.TYPE_COLLECTION,
-					LayoutConstants.TYPE_CONTENT, LayoutConstants.TYPE_EMBEDDED,
-					LayoutConstants.TYPE_LINK_TO_LAYOUT,
-					LayoutConstants.TYPE_FULL_PAGE_APPLICATION,
-					LayoutConstants.TYPE_PANEL, LayoutConstants.TYPE_PORTLET,
-					LayoutConstants.TYPE_URL
-				},
+				getSelGroupId(), isPrivateLayout(), keywords, _getTypes(),
 				layoutStatuses));
 
 		layoutsSearchContainer.setRowChecker(
@@ -757,7 +746,7 @@ public class LayoutsAdminDisplayContext {
 	}
 
 	public List<NavigationItem> getNavigationItems() {
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LPS-162765"))) {
+		if (!FeatureFlagManagerUtil.isEnabled("LPS-162765")) {
 			return Collections.emptyList();
 		}
 
@@ -1025,6 +1014,8 @@ public class LayoutsAdminDisplayContext {
 			getPortletURL()
 		).setMVCRenderCommandName(
 			"/layout_admin/edit_layout"
+		).setBackURL(
+			getBackURL()
 		).setPortletResource(
 			ParamUtil.getString(httpServletRequest, "portletResource")
 		).setParameter(
@@ -1283,7 +1274,7 @@ public class LayoutsAdminDisplayContext {
 			"selectThemeCSSClientExtensionURL",
 			() -> String.valueOf(
 				getCETItemSelectorURL(
-					selectThemeCSSClientExtensionEventName,
+					false, selectThemeCSSClientExtensionEventName,
 					ClientExtensionEntryConstants.TYPE_THEME_CSS))
 		).put(
 			"themeCSSCETExternalReferenceCode",
@@ -1852,7 +1843,10 @@ public class LayoutsAdminDisplayContext {
 		Group selGroup = getSelGroup();
 
 		if (selGroup.isUser()) {
-			if (!PropsValues.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED) {
+			if (!PrefsPropsUtil.getBoolean(
+					themeDisplay.getCompanyId(),
+					PropsKeys.LAYOUT_USER_PRIVATE_LAYOUTS_ENABLED)) {
+
 				return false;
 			}
 			else if (PropsValues.
@@ -2214,6 +2208,22 @@ public class LayoutsAdminDisplayContext {
 		return _themeId;
 	}
 
+	private String[] _getTypes() {
+		if (_types != null) {
+			return _types;
+		}
+
+		_types = new String[] {
+			LayoutConstants.TYPE_COLLECTION, LayoutConstants.TYPE_CONTENT,
+			LayoutConstants.TYPE_EMBEDDED, LayoutConstants.TYPE_LINK_TO_LAYOUT,
+			LayoutConstants.TYPE_FULL_PAGE_APPLICATION,
+			LayoutConstants.TYPE_NODE, LayoutConstants.TYPE_PANEL,
+			LayoutConstants.TYPE_PORTLET, LayoutConstants.TYPE_URL
+		};
+
+		return _types;
+	}
+
 	private boolean _isLiveGroup() {
 		if (_liveGroup != null) {
 			return _liveGroup;
@@ -2279,5 +2289,6 @@ public class LayoutsAdminDisplayContext {
 	private final StagingGroupHelper _stagingGroupHelper;
 	private String _tabs1;
 	private String _themeId;
+	private String[] _types;
 
 }

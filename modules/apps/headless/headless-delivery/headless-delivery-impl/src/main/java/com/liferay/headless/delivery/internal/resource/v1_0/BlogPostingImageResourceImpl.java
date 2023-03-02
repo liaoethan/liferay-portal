@@ -14,6 +14,7 @@
 
 package com.liferay.headless.delivery.internal.resource.v1_0;
 
+import com.liferay.blogs.constants.BlogsConstants;
 import com.liferay.blogs.service.BlogsEntryService;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppService;
@@ -23,12 +24,15 @@ import com.liferay.headless.delivery.dto.v1_0.BlogPostingImage;
 import com.liferay.headless.delivery.dto.v1_0.util.ContentValueUtil;
 import com.liferay.headless.delivery.internal.odata.entity.v1_0.BlogPostingImageEntityModel;
 import com.liferay.headless.delivery.resource.v1_0.BlogPostingImageResource;
+import com.liferay.portal.kernel.change.tracking.CTAware;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.multipart.BinaryFile;
@@ -37,7 +41,6 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.SearchUtil;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import javax.ws.rs.BadRequestException;
@@ -54,6 +57,7 @@ import org.osgi.service.component.annotations.ServiceScope;
 	properties = "OSGI-INF/liferay/rest/v1_0/blog-posting-image.properties",
 	scope = ServiceScope.PROTOTYPE, service = BlogPostingImageResource.class
 )
+@CTAware
 public class BlogPostingImageResourceImpl
 	extends BaseBlogPostingImageResourceImpl {
 
@@ -87,7 +91,12 @@ public class BlogPostingImageResourceImpl
 		Folder folder = _blogsEntryService.addAttachmentsFolder(siteId);
 
 		return SearchUtil.search(
-			Collections.emptyMap(),
+			HashMapBuilder.put(
+				"createBatch",
+				addAction(
+					ActionKeys.ADD_ENTRY, "postSiteBlogPostingImageBatch",
+					BlogsConstants.RESOURCE_NAME, siteId)
+			).build(),
 			booleanQuery -> {
 			},
 			filter, DLFileEntry.class.getName(), search, pagination,
@@ -117,27 +126,32 @@ public class BlogPostingImageResourceImpl
 			throw new BadRequestException("No file found in body");
 		}
 
-		Optional<BlogPostingImage> blogPostingImageOptional =
-			multipartBody.getValueAsInstanceOptional(
+		String title = null;
+		String viewableBy = null;
+
+		BlogPostingImage blogPostingImage =
+			multipartBody.getValueAsNullableInstance(
 				"blogPostingImage", BlogPostingImage.class);
+
+		if (blogPostingImage != null) {
+			title = blogPostingImage.getTitle();
+			viewableBy = blogPostingImage.getViewableByAsString();
+		}
+
+		if (title == null) {
+			title = binaryFile.getFileName();
+		}
+
+		if (viewableBy == null) {
+			viewableBy = BlogPostingImage.ViewableBy.ANYONE.getValue();
+		}
 
 		FileEntry fileEntry = _dlAppService.addFileEntry(
 			null, siteId, folder.getFolderId(), binaryFile.getFileName(),
-			binaryFile.getContentType(),
-			blogPostingImageOptional.map(
-				BlogPostingImage::getTitle
-			).orElse(
-				binaryFile.getFileName()
-			),
-			null, null, null, binaryFile.getInputStream(), binaryFile.getSize(),
-			null, null,
+			binaryFile.getContentType(), title, null, null, null,
+			binaryFile.getInputStream(), binaryFile.getSize(), null, null,
 			ServiceContextRequestUtil.createServiceContext(
-				siteId, contextHttpServletRequest,
-				blogPostingImageOptional.map(
-					BlogPostingImage::getViewableByAsString
-				).orElse(
-					BlogPostingImage.ViewableBy.ANYONE.getValue()
-				)));
+				siteId, contextHttpServletRequest, viewableBy));
 
 		return _toBlogPostingImage(fileEntry);
 	}

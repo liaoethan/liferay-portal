@@ -23,10 +23,10 @@ import React, {useCallback} from 'react';
 import {config} from '../../app/config/index';
 import {useSelectorCallback} from '../../app/contexts/StoreContext';
 import {selectPageContentDropdownItems} from '../../app/selectors/selectPageContentDropdownItems';
-import {useId} from '../../core/hooks/useId';
-import {openItemSelector} from '../../core/openItemSelector';
+import {useId} from '../hooks/useId';
+import {openItemSelector} from '../openItemSelector';
 
-const DEFAULT_PREVENT_ITEM_SELECT = (callback) => callback(false);
+const DEFAULT_BEFORE_ITEM_SELECT = () => {};
 
 const DEFAULT_OPTIONS_MENU_ITEMS = [];
 
@@ -39,8 +39,8 @@ export default function ItemSelector({
 	itemSelectorURL,
 	label,
 	modalProps,
+	onBeforeItemSelect = DEFAULT_BEFORE_ITEM_SELECT,
 	onItemSelect,
-	onPreventCollectionSelect = DEFAULT_PREVENT_ITEM_SELECT,
 	optionsMenuItems = DEFAULT_OPTIONS_MENU_ITEMS,
 	quickMappedInfoItems = DEFAULT_QUICK_MAPPED_INFO_ITEMS,
 	selectedItem,
@@ -52,25 +52,31 @@ export default function ItemSelector({
 	const itemSelectorInputId = useId();
 
 	const openModal = useCallback(() => {
-		onPreventCollectionSelect((result) => {
-			if (!result) {
-				openItemSelector({
-					callback: onItemSelect,
-					eventName:
-						eventName || `${config.portletNamespace}selectInfoItem`,
-					itemSelectorURL:
-						itemSelectorURL || config.infoItemSelectorURL,
-					modalProps,
-					transformValueCallback,
-				});
-			}
+		let defaultPrevented = false;
+
+		onBeforeItemSelect({
+			preventDefault: () => {
+				defaultPrevented = true;
+			},
+		});
+
+		if (defaultPrevented) {
+			return;
+		}
+
+		openItemSelector({
+			callback: onItemSelect,
+			eventName: eventName || `${config.portletNamespace}selectInfoItem`,
+			itemSelectorURL: itemSelectorURL || config.infoItemSelectorURL,
+			modalProps,
+			transformValueCallback,
 		});
 	}, [
 		eventName,
 		itemSelectorURL,
 		modalProps,
 		onItemSelect,
-		onPreventCollectionSelect,
+		onBeforeItemSelect,
 		transformValueCallback,
 	]);
 
@@ -198,7 +204,7 @@ export default function ItemSelector({
 			<ClayInput.Group small>
 				<ClayInput.GroupItem>
 					<ClayInput
-						aria-describedby={helpTextId}
+						aria-describedby={helpText ? helpTextId : null}
 						className={classNames({
 							'page-editor__item-selector__content-input': showEditControls,
 						})}
@@ -234,7 +240,7 @@ export default function ItemSelector({
 									<ClayButtonWithIcon
 										aria-label={selectContentButtonLabel}
 										displayType="secondary"
-										small
+										size="sm"
 										symbol={selectContentButtonIcon}
 										title={selectContentButtonLabel}
 									/>
@@ -247,7 +253,7 @@ export default function ItemSelector({
 								aria-label={selectContentButtonLabel}
 								displayType="secondary"
 								onClick={openModal}
-								small
+								size="sm"
 								symbol={selectContentButtonIcon}
 								title={selectContentButtonLabel}
 							/>
@@ -270,7 +276,7 @@ export default function ItemSelector({
 										label
 									)}
 									displayType="secondary"
-									small
+									size="sm"
 									symbol="ellipsis-v"
 									title={sub(
 										Liferay.Language.get('view-x-options'),
@@ -299,11 +305,13 @@ ItemSelector.propTypes = {
 	itemSelectorURL: PropTypes.string,
 	label: PropTypes.string.isRequired,
 	modalProps: PropTypes.object,
+	onBeforeItemSelect: PropTypes.func,
 	onItemSelect: PropTypes.func.isRequired,
 	optionsMenuItems: PropTypes.arrayOf(
 		PropTypes.shape({
+			href: PropTypes.string,
 			label: PropTypes.string.isRequired,
-			onClick: PropTypes.func.isRequired,
+			onClick: PropTypes.func,
 		})
 	),
 	quickMappedInfoItems: PropTypes.arrayOf(
@@ -314,7 +322,6 @@ ItemSelector.propTypes = {
 		})
 	),
 	selectedItem: PropTypes.shape({title: PropTypes.string}),
-	shouldPreventItemSelect: PropTypes.func,
 	showEditControls: PropTypes.bool,
 	showMappedItems: PropTypes.bool,
 	transformValueCallback: PropTypes.func.isRequired,

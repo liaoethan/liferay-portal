@@ -122,33 +122,35 @@ const Layout: React.FC<React.HTMLAttributes<HTMLElement>> = () => {
 			const {
 				defaultObjectLayout,
 				name,
-				objectDefinitionId,
+				objectDefinitionExternalReferenceCode,
 				objectLayoutTabs,
 			} = await API.fetchJSON<TObjectLayout>(
 				`/o/object-admin/v1.0/object-layouts/${objectLayoutId}`
 			);
 
-			const objectDefinition = await API.getObjectDefinition(
-				objectDefinitionId
+			const objectDefinition = await API.getObjectDefinitionByExternalReferenceCode(
+				objectDefinitionExternalReferenceCode
 			);
 
-			const objectFields = await API.getObjectFields(objectDefinitionId);
+			const objectFields = await API.getObjectFieldsByExternalReferenceCode(
+				objectDefinitionExternalReferenceCode
+			);
 
-			const objectRelationships = await API.getObjectRelationships(
-				objectDefinitionId
+			const objectRelationships = await API.getObjectRelationshipsByExternalReferenceCode(
+				objectDefinitionExternalReferenceCode
 			);
 
 			const objectLayout = {
 				defaultObjectLayout,
 				name,
-				objectDefinitionId,
+				objectDefinitionExternalReferenceCode,
 				objectLayoutTabs,
 			};
 
 			dispatch({
 				payload: {
-					enabledCategorization:
-						objectDefinition.enabledCategorization,
+					creationLanguageId: objectDefinition.defaultLanguageId,
+					enableCategorization: objectDefinition.enableCategorization,
 					objectLayout,
 					objectRelationships: normalizeObjectRelationships({
 						objectLayoutTabs,

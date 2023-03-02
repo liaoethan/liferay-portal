@@ -59,7 +59,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Jorge Ferrer
  */
 @Component(
-	immediate = true,
 	property = {
 		"javax.portlet.name=" + ConfigurationAdminPortletKeys.INSTANCE_SETTINGS,
 		"javax.portlet.name=" + ConfigurationAdminPortletKeys.SITE_SETTINGS,
@@ -109,11 +108,7 @@ public class EditConfigurationMVCRenderCommand implements MVCRenderCommand {
 			}
 
 			configurationModel = new ConfigurationModel(
-				configurationModel.getBundleLocation(),
-				configurationModel.getBundleSymbolicName(),
-				configurationModel.getClassLoader(), configuration,
-				configurationModel.getExtendedObjectClassDefinition(),
-				configurationModel.isFactory());
+				configuration, configurationModel);
 
 			renderRequest.setAttribute(
 				ConfigurationAdminWebKeys.CONFIGURATION_CATEGORY_MENU_DISPLAY,
@@ -136,16 +131,12 @@ public class EditConfigurationMVCRenderCommand implements MVCRenderCommand {
 			renderRequest.setAttribute(
 				ConfigurationAdminWebKeys.CONFIGURATION_FORM_RENDERER,
 				_configurationFormRendererRetriever.
-					getConfigurationFormRenderer(pid));
+					getConfigurationFormRenderer(
+						configurationModel.getBaseID()));
 
 			List<ConfigurationMenuItem> configurationMenuItems =
-				_configurationMenuItemsServiceTrackerMap.getService(pid);
-
-			if (configurationMenuItems == null) {
-				configurationMenuItems =
-					_configurationMenuItemsServiceTrackerMap.getService(
-						factoryPid);
-			}
+				_configurationMenuItemsServiceTrackerMap.getService(
+					configurationModel.getBaseID());
 
 			if (configurationMenuItems != null) {
 				renderRequest.setAttribute(

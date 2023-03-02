@@ -17,9 +17,10 @@ package com.liferay.analytics.batch.exportimport.model.listener;
 import com.liferay.analytics.message.storage.service.AnalyticsAssociationLocalService;
 import com.liferay.analytics.message.storage.service.AnalyticsDeleteMessageLocalService;
 import com.liferay.analytics.settings.configuration.AnalyticsConfiguration;
-import com.liferay.analytics.settings.configuration.AnalyticsConfigurationTracker;
+import com.liferay.analytics.settings.configuration.AnalyticsConfigurationRegistry;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.ModelListenerException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
@@ -29,8 +30,6 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
@@ -78,7 +77,7 @@ public abstract class BaseAnalyticsDXPEntityModelListener
 
 	@Override
 	public void onBeforeRemove(T model) throws ModelListenerException {
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
+		if (!FeatureFlagManagerUtil.isEnabled("LRAC-10632") ||
 			!isTracked(model)) {
 
 			return;
@@ -116,7 +115,7 @@ public abstract class BaseAnalyticsDXPEntityModelListener
 		String preferencePropertyName) {
 
 		Dictionary<String, Object> configurationProperties =
-			analyticsConfigurationTracker.getAnalyticsConfigurationProperties(
+			analyticsConfigurationRegistry.getAnalyticsConfigurationProperties(
 				companyId);
 
 		if (configurationProperties == null) {
@@ -172,7 +171,7 @@ public abstract class BaseAnalyticsDXPEntityModelListener
 	protected AnalyticsAssociationLocalService analyticsAssociationLocalService;
 
 	@Reference
-	protected AnalyticsConfigurationTracker analyticsConfigurationTracker;
+	protected AnalyticsConfigurationRegistry analyticsConfigurationRegistry;
 
 	@Reference
 	protected AnalyticsDeleteMessageLocalService
@@ -191,8 +190,8 @@ public abstract class BaseAnalyticsDXPEntityModelListener
 		String associationClassName, Object associationClassPK,
 		Object classPK) {
 
-		if (!GetterUtil.getBoolean(PropsUtil.get("feature.flag.LRAC-10632")) ||
-			!analyticsConfigurationTracker.isActive()) {
+		if (!FeatureFlagManagerUtil.isEnabled("LRAC-10632") ||
+			!analyticsConfigurationRegistry.isActive()) {
 
 			return;
 		}

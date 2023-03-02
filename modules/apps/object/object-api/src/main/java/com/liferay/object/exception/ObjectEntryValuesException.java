@@ -14,6 +14,8 @@
 
 package com.liferay.object.exception;
 
+import com.liferay.object.model.ObjectState;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 
 /**
@@ -192,6 +194,36 @@ public class ObjectEntryValuesException extends PortalException {
 
 	}
 
+	public static class InvalidObjectStateTransition
+		extends ObjectEntryValuesException {
+
+		public InvalidObjectStateTransition(
+			ObjectState sourceObjectState, ObjectState targetObjectState) {
+
+			super(
+				String.format(
+					"Object state ID %d cannot be transitioned to object " +
+						"state ID %d",
+					sourceObjectState.getObjectStateId(),
+					targetObjectState.getObjectStateId()));
+
+			_sourceObjectState = sourceObjectState;
+			_targetObjectState = targetObjectState;
+		}
+
+		public ObjectState getSourceObjectState() {
+			return _sourceObjectState;
+		}
+
+		public ObjectState getTargetObjectState() {
+			return _targetObjectState;
+		}
+
+		private final ObjectState _sourceObjectState;
+		private final ObjectState _targetObjectState;
+
+	}
+
 	public static class ListTypeEntry extends ObjectEntryValuesException {
 
 		public ListTypeEntry(String objectFieldName) {
@@ -250,6 +282,19 @@ public class ObjectEntryValuesException extends PortalException {
 		}
 
 		private String _objectFieldName;
+
+	}
+
+	public static class UnmodifiableAccountEntryObjectField
+		extends ObjectEntryValuesException {
+
+		public UnmodifiableAccountEntryObjectField(String objectFieldName) {
+			super(
+				StringBundler.concat(
+					"The object field ", objectFieldName,
+					" is unmodifiable because it is the account entry ",
+					"restrictor"));
+		}
 
 	}
 

@@ -70,7 +70,6 @@ const useProjectActions = ({isHeaderActions}: ActionsHookParameter = {}) => {
 			icon: 'cog',
 			name: i18n.translate('manage-product-versions'),
 		},
-
 		{
 			action: ({id}, mutate) =>
 				testrayProjectImpl
@@ -83,7 +82,7 @@ const useProjectActions = ({isHeaderActions}: ActionsHookParameter = {}) => {
 			permission: 'DELETE',
 		},
 		{
-			action: ({id}) => alert(id),
+			action: ({id}) => navigate(`/project/${id}/cases/export`),
 			icon: 'print',
 			name: i18n.translate('export-cases'),
 		},

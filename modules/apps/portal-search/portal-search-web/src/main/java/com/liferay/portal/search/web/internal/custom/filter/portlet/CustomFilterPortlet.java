@@ -41,7 +41,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Luan Maoski
  */
 @Component(
-	immediate = true,
 	property = {
 		"com.liferay.portlet.add-default-resource=true",
 		"com.liferay.portlet.css-class-wrapper=portlet-custom-filter",
@@ -164,7 +163,7 @@ public class CustomFilterPortlet extends MVCPortlet {
 		CustomFilterPortletPreferences customFilterPortletPreferences) {
 
 		return portletSharedSearchResponse.getFederatedSearchResponse(
-			customFilterPortletPreferences.getFederatedSearchKeyOptional());
+			customFilterPortletPreferences.getFederatedSearchKey());
 	}
 
 	private boolean _isRenderNothing(SearchRequest searchRequest) {

@@ -27,8 +27,7 @@
 						}
 					},
 					"fragmentStyle": {
-						"borderWidth": "0",
-						"textAlign": ""
+						"borderWidth": "0"
 					},
 					"indexed": true,
 					"layout": {

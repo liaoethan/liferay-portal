@@ -18,17 +18,29 @@ import {ReactNode} from 'react';
 type CodeProps = {
 	children: ReactNode;
 	className?: string;
+	italicText?: boolean;
 };
 
-const Code: React.FC<CodeProps> = ({children, className}) => (
-	<code
-		className={classNames(
-			'bg-light break-text font-italic p-2 text-secondary w-100',
-			className
-		)}
-	>
-		{children}
-	</code>
-);
+const Code: React.FC<CodeProps> = ({
+	children,
+	className,
+	italicText = true,
+}) => {
+	if (!children) {
+		return null;
+	}
+
+	return (
+		<code
+			className={classNames(
+				'bg-light break-text p-2 text-secondary w-100',
+				className,
+				{'font-italic': italicText}
+			)}
+		>
+			{children}
+		</code>
+	);
+};
 
 export default Code;

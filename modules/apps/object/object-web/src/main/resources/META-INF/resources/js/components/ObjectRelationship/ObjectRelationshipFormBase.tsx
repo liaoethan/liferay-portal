@@ -18,8 +18,10 @@ import {
 	AutoComplete,
 	FormError,
 	Input,
+	REQUIRED_MSG,
 	SingleSelect,
 	filterArrayByQuery,
+	getLocalizableLabel,
 	invalidateRequired,
 	useForm,
 } from '@liferay/object-js-components-web';
@@ -53,10 +55,6 @@ const ONE_TO_ONE = {
 	value: ObjectRelationshipType.ONE_TO_ONE,
 };
 
-const REQUIRED_MSG = Liferay.Language.get('required');
-
-const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
-
 export function useObjectRelationshipForm({
 	initialValues,
 	onSubmit,
@@ -87,9 +85,9 @@ export function useObjectRelationshipForm({
 		if (
 			parameterRequired &&
 			relationship.type === ObjectRelationshipType.ONE_TO_MANY &&
-			!relationship.parameterObjectFieldId
+			!relationship.parameterObjectFieldName
 		) {
-			errors.parameterObjectFieldId = REQUIRED_MSG;
+			errors.parameterObjectFieldName = REQUIRED_MSG;
 		}
 
 		return errors;
@@ -112,6 +110,10 @@ export function ObjectRelationshipFormBase({
 	setValues,
 	values,
 }: IPros) {
+	const [creationLanguageId, setCreationLanguageId] = useState<
+		Liferay.Language.Locale
+	>();
+
 	const [objectDefinitions, setObjectDefinitions] = useState<
 		ObjectDefinition[]
 	>([]);
@@ -127,11 +129,24 @@ export function ObjectRelationshipFormBase({
 	}, [ffOneToOneRelationshipConfigurationEnabled, values.type]);
 
 	useEffect(() => {
+		const makeFetch = async () => {
+			const objectDefinition = await API.getObjectDefinitionByExternalReferenceCode(
+				values.objectDefinitionExternalReferenceCode1!
+			);
+
+			setCreationLanguageId(objectDefinition.defaultLanguageId);
+		};
+		makeFetch();
+	}, [values]);
+
+	useEffect(() => {
 		const fetchObjectDefinitions = async () => {
 			const items = await API.getAllObjectDefinitions();
 
 			const currentObjectDefinition = items.find(
-				({id}) => values.objectDefinitionId1 === id
+				({externalReferenceCode}) =>
+					values.objectDefinitionExternalReferenceCode1 ===
+					externalReferenceCode
 			)!;
 
 			const objectDefinitions = items.filter(
@@ -142,12 +157,15 @@ export function ObjectRelationshipFormBase({
 					!parameterRequired
 			);
 
+			setCreationLanguageId(currentObjectDefinition.defaultLanguageId);
+
 			setObjectDefinitions(objectDefinitions);
 		};
 
 		if (readonly) {
 			setObjectDefinitions([
 				{
+					externalReferenceCode: values.objectDefinitionExternalReferenceCode2 as string,
 					id: values.objectDefinitionId2 as number,
 					label: values.label as LocalizedValue<string>,
 					name: values.objectDefinitionName2 as string,
@@ -162,8 +180,13 @@ export function ObjectRelationshipFormBase({
 	}, [readonly, values.objectDefinitionId1]);
 
 	const filteredRelationships = useMemo(() => {
-		return filterArrayByQuery(objectDefinitions, 'label', query);
-	}, [objectDefinitions, query]);
+		return filterArrayByQuery({
+			array: objectDefinitions,
+			creationLanguageId,
+			query,
+			str: 'label',
+		});
+	}, [creationLanguageId, objectDefinitions, query]);
 
 	return (
 		<>
@@ -187,7 +210,10 @@ export function ObjectRelationshipFormBase({
 				value={selectedType}
 			/>
 
-			<AutoComplete
+			<AutoComplete<ObjectDefinition>
+				creationLanguageId={
+					creationLanguageId as Liferay.Language.Locale
+				}
 				disabled={readonly}
 				emptyStateMessage={Liferay.Language.get(
 					'no-objects-were-found'
@@ -196,8 +222,10 @@ export function ObjectRelationshipFormBase({
 				items={filteredRelationships}
 				label={Liferay.Language.get('object')}
 				onChangeQuery={setQuery}
-				onSelectItem={(item: ObjectDefinition) => {
+				onSelectItem={(item) => {
 					setValues({
+						objectDefinitionExternalReferenceCode2:
+							item.externalReferenceCode,
 						objectDefinitionId2: item.id,
 						objectDefinitionName2: item.name,
 					});
@@ -208,7 +236,13 @@ export function ObjectRelationshipFormBase({
 			>
 				{({label, name, system}) => (
 					<div className="d-flex justify-content-between">
-						<div>{label[defaultLanguageId] ?? name}</div>
+						<div>
+							{getLocalizableLabel(
+								creationLanguageId as Liferay.Language.Locale,
+								label,
+								name
+							)}
+						</div>
 
 						<ClayLabel displayType={system ? 'info' : 'warning'}>
 							{system
@@ -238,6 +272,7 @@ interface IPros {
 }
 
 type ObjectDefinition = {
+	externalReferenceCode: string;
 	id: number;
 	label: LocalizedValue<string>;
 	name: string;

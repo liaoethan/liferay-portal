@@ -23,10 +23,12 @@ import com.liferay.object.exception.DuplicateObjectRelationshipException;
 import com.liferay.object.exception.ObjectRelationshipParameterObjectFieldIdException;
 import com.liferay.object.exception.ObjectRelationshipReverseException;
 import com.liferay.object.exception.ObjectRelationshipTypeException;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.model.ObjectRelationship;
+import com.liferay.object.relationship.util.ObjectRelationshipUtil;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
@@ -34,10 +36,8 @@ import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.test.system.TestSystemObjectDefinitionMetadata;
 import com.liferay.object.service.test.util.ObjectDefinitionTestUtil;
 import com.liferay.object.system.SystemObjectDefinitionMetadata;
-import com.liferay.object.util.LocalizedMapUtil;
-import com.liferay.object.util.ObjectFieldUtil;
-import com.liferay.object.util.ObjectRelationshipUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -48,6 +48,7 @@ import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.sql.Connection;
 
@@ -137,6 +138,7 @@ public class ObjectRelationshipLocalServiceTest {
 			_objectDefinition1, _objectDefinition1);
 		_testAddObjectRelationshipOneToMany(
 			_objectDefinition1, _objectDefinition2);
+		_testCreateManyToManyObjectRelationshipTable(_objectDefinition1);
 
 		ObjectRelationship objectRelationship =
 			_objectRelationshipLocalService.addObjectRelationship(
@@ -254,6 +256,8 @@ public class ObjectRelationshipLocalServiceTest {
 			_objectDefinition1, _systemObjectDefinition2);
 		_testAddObjectRelationshipOneToMany(
 			_systemObjectDefinition2, _objectDefinition1);
+
+		_testCreateManyToManyObjectRelationshipTable(_systemObjectDefinition2);
 
 		_testSystemObjectRelationshipOneToMany();
 
@@ -392,7 +396,7 @@ public class ObjectRelationshipLocalServiceTest {
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				"A" + RandomTestUtil.randomString(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				ObjectDefinitionConstants.SCOPE_COMPANY, 1,
+				ObjectDefinitionConstants.SCOPE_COMPANY, null, 1,
 				Arrays.asList(
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
@@ -534,7 +538,8 @@ public class ObjectRelationshipLocalServiceTest {
 		ObjectFieldSetting objectFieldSetting =
 			_objectFieldSettingLocalService.fetchObjectFieldSetting(
 				objectRelationship.getObjectFieldId2(),
-				ObjectFieldSettingConstants.OBJECT_DEFINITION_1_SHORT_NAME);
+				ObjectFieldSettingConstants.
+					NAME_OBJECT_DEFINITION_1_SHORT_NAME);
 
 		Assert.assertNotNull(objectFieldSetting);
 
@@ -554,6 +559,89 @@ public class ObjectRelationshipLocalServiceTest {
 				objectDefinition2.getObjectDefinitionId(),
 				objectFieldNamePrefix +
 					objectDefinition1.getPKObjectFieldName()));
+	}
+
+	private void _testCreateManyToManyObjectRelationshipTable(
+			ObjectDefinition objectDefinition)
+		throws Exception {
+
+		ObjectDefinition relatedObjectDefinition =
+			ObjectDefinitionTestUtil.addObjectDefinition(
+				_objectDefinitionLocalService,
+				Arrays.asList(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING,
+						RandomTestUtil.randomString(), StringUtil.randomId())));
+
+		String name = StringUtil.randomId();
+
+		ObjectRelationship objectRelationship =
+			_objectRelationshipLocalService.addObjectRelationship(
+				TestPropsValues.getUserId(),
+				objectDefinition.getObjectDefinitionId(),
+				relatedObjectDefinition.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_PREVENT,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				name, ObjectRelationshipConstants.TYPE_MANY_TO_MANY);
+
+		Assert.assertEquals(
+			StringPool.BLANK, objectRelationship.getDBTableName());
+
+		ObjectRelationship reverseObjectRelationship =
+			_objectRelationshipLocalService.fetchReverseObjectRelationship(
+				objectRelationship, true);
+
+		Assert.assertNotNull(reverseObjectRelationship);
+		Assert.assertEquals(
+			StringPool.BLANK, reverseObjectRelationship.getDBTableName());
+
+		relatedObjectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				relatedObjectDefinition.getObjectDefinitionId());
+
+		objectRelationship =
+			_objectRelationshipLocalService.fetchObjectRelationship(
+				objectRelationship.getObjectRelationshipId());
+
+		Assert.assertNotNull(objectRelationship.getDBTableName());
+
+		reverseObjectRelationship =
+			_objectRelationshipLocalService.fetchReverseObjectRelationship(
+				objectRelationship, true);
+
+		Assert.assertEquals(
+			objectRelationship.getDBTableName(),
+			reverseObjectRelationship.getDBTableName());
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"R_", objectRelationship.getCompanyId(),
+				objectDefinition.getShortName(), "_",
+				relatedObjectDefinition.getShortName(), "_", name),
+			objectRelationship.getDBTableName());
+
+		Map<String, String> pkObjectFieldDBColumnNames =
+			ObjectRelationshipUtil.getPKObjectFieldDBColumnNames(
+				objectDefinition, relatedObjectDefinition, false);
+
+		Assert.assertTrue(
+			_hasColumn(
+				objectRelationship.getDBTableName(),
+				pkObjectFieldDBColumnNames.get("pkObjectFieldDBColumnName1")));
+		Assert.assertTrue(
+			_hasColumn(
+				objectRelationship.getDBTableName(),
+				pkObjectFieldDBColumnNames.get("pkObjectFieldDBColumnName2")));
+
+		_objectRelationshipLocalService.deleteObjectRelationship(
+			objectRelationship);
+
+		Assert.assertFalse(_hasTable(objectRelationship.getDBTableName()));
+
+		_objectDefinitionLocalService.deleteObjectDefinition(
+			relatedObjectDefinition);
 	}
 
 	private void _testSystemObjectRelationshipOneToMany() throws Exception {

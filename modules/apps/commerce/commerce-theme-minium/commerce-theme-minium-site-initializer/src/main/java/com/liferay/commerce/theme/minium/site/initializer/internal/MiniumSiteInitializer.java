@@ -92,7 +92,6 @@ import com.liferay.portal.kernel.settings.ModifiableSettings;
 import com.liferay.portal.kernel.settings.Settings;
 import com.liferay.portal.kernel.settings.SettingsFactory;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -100,6 +99,7 @@ import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.TempFileEntryUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.search.capabilities.SearchCapabilities;
 import com.liferay.site.exception.InitializationException;
 import com.liferay.site.initializer.SiteInitializer;
 
@@ -128,7 +128,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "site.initializer.key=" + MiniumSiteInitializer.KEY,
 	service = SiteInitializer.class
 )
@@ -280,6 +279,10 @@ public class MiniumSiteInitializer implements SiteInitializer {
 
 	@Override
 	public boolean isActive(long companyId) {
+		if (!_searchCapabilities.isCommerceSupported()) {
+			return false;
+		}
+
 		Theme theme = _themeLocalService.fetchTheme(
 			companyId, _MINIUM_THEME_ID);
 
@@ -944,7 +947,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		File file = null;
 
 		try {
-			file = FileUtil.createTempFile(inputStream);
+			file = _file.createTempFile(inputStream);
 
 			String mimeType = MimeTypesUtil.getContentType(file);
 
@@ -958,7 +961,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 		}
 		finally {
 			if (file != null) {
-				FileUtil.delete(file);
+				_file.delete(file);
 			}
 		}
 	}
@@ -988,7 +991,7 @@ public class MiniumSiteInitializer implements SiteInitializer {
 			_siteInitializerDependencyResolver.getImageDependencyPath() +
 				"minium_logo.png");
 
-		File file = FileUtil.createTempFile(inputStream);
+		File file = _file.createTempFile(inputStream);
 
 		_cpFileImporter.updateLogo(file, true, true, serviceContext);
 		_cpFileImporter.updateLogo(file, false, true, serviceContext);
@@ -1145,6 +1148,9 @@ public class MiniumSiteInitializer implements SiteInitializer {
 	private DLImporter _dlImporter;
 
 	@Reference
+	private com.liferay.portal.kernel.util.File _file;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
@@ -1170,6 +1176,9 @@ public class MiniumSiteInitializer implements SiteInitializer {
 
 	@Reference
 	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private SearchCapabilities _searchCapabilities;
 
 	@Reference(
 		target = "(osgi.web.symbolicname=com.liferay.commerce.theme.minium.site.initializer)"

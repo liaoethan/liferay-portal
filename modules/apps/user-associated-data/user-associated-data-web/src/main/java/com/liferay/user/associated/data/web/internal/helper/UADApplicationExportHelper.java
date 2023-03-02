@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstant
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.user.associated.data.display.UADDisplay;
 import com.liferay.user.associated.data.exporter.UADExporter;
 import com.liferay.user.associated.data.web.internal.display.UADApplicationExportDisplay;
@@ -29,11 +28,7 @@ import com.liferay.user.associated.data.web.internal.registry.UADRegistry;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -41,7 +36,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pei-Jung Lan
  */
-@Component(immediate = true, service = UADApplicationExportHelper.class)
+@Component(service = UADApplicationExportHelper.class)
 public class UADApplicationExportHelper {
 
 	public Date getApplicationLastExportDate(
@@ -62,18 +57,17 @@ public class UADApplicationExportHelper {
 	public UADApplicationExportDisplay getUADApplicationExportDisplay(
 		String applicationKey, long groupId, long userId) {
 
-		Stream<UADDisplay<?>> uadDisplayStream =
-			_uadRegistry.getApplicationUADDisplayStream(applicationKey);
+		List<UADExporter<?>> uadExporters = new ArrayList<>();
 
-		List<UADExporter<?>> uadExporters = uadDisplayStream.map(
-			UADDisplay::getTypeClass
-		).map(
-			Class::getName
-		).map(
-			key -> _uadRegistry.getUADExporter(key)
-		).collect(
-			Collectors.toList()
-		);
+		for (UADDisplay<?> uadDisplay :
+				_uadRegistry.getApplicationUADDisplays(applicationKey)) {
+
+			Class<?> typeClass = uadDisplay.getTypeClass();
+
+			String entityName = typeClass.getName();
+
+			uadExporters.add(_uadRegistry.getUADExporter(entityName));
+		}
 
 		int applicationDataCount = 0;
 
@@ -94,37 +88,26 @@ public class UADApplicationExportHelper {
 	public List<UADApplicationExportDisplay> getUADApplicationExportDisplays(
 		long groupId, long userId) {
 
-		Set<String> applicationUADDisplaysKeySet =
-			_uadRegistry.getApplicationUADDisplaysKeySet();
-
-		Iterator<String> iterator = applicationUADDisplaysKeySet.iterator();
-
 		List<UADApplicationExportDisplay> uadApplicationExportDisplays =
 			new ArrayList<>();
 
-		while (iterator.hasNext()) {
-			String applicationKey = iterator.next();
+		for (String applicationKey :
+				_uadRegistry.getApplicationUADDisplaysKeySet()) {
 
 			uadApplicationExportDisplays.add(
 				getUADApplicationExportDisplay(
 					applicationKey, groupId, userId));
 		}
 
-		Stream<UADApplicationExportDisplay> uadApplicationExportDisplaysStream =
-			uadApplicationExportDisplays.stream();
+		uadApplicationExportDisplays.sort(
+			Comparator.comparing(
+				UADApplicationExportDisplay::getApplicationKey));
 
-		return uadApplicationExportDisplaysStream.sorted(
-			Comparator.comparing(UADApplicationExportDisplay::getApplicationKey)
-		).collect(
-			Collectors.toList()
-		);
+		return uadApplicationExportDisplays;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UADApplicationExportHelper.class);
-
-	@Reference
-	private Portal _portal;
 
 	@Reference
 	private UADRegistry _uadRegistry;

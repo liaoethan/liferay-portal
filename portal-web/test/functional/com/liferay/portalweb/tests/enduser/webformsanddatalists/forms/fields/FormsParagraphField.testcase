@@ -1,9 +1,8 @@
 @component-name = "portal-web-forms-and-data-lists"
 definition {
 
-	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -17,7 +16,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -34,7 +33,7 @@ definition {
 	}
 
 	@description = "LPS-64798 - Verify that adding the Paragraph Field does not prevent page navigation"
-	@priority = "4"
+	@priority = 4
 	test CanBeAddedWithoutAffectingNavigation {
 		property portal.acceptance = "true";
 		property test.name.skip.portal.instance = "FormsParagraphField#CanBeAddedWithoutAffectingNavigation";
@@ -48,12 +47,12 @@ definition {
 
 		Form.editPageTitle(
 			formPageName = "Page 1",
-			formTitleNumber = "1");
+			formTitleNumber = 1);
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.editFieldLabelMetal(fieldValue = "Paragraph 1");
 
@@ -61,16 +60,16 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.addPage(formAddNewPageNumber = "1");
+		Form.addPage(formAddNewPageNumber = 1);
 
 		Form.editPageTitle(
 			formPageName = "Page 2",
-			formTitleNumber = "2");
+			formTitleNumber = 2);
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph",
-			formPageNumber = "1");
+			formPageNumber = 1);
 
 		Form.editFieldLabelMetal(fieldValue = "Paragraph 2");
 
@@ -78,16 +77,16 @@ definition {
 
 		Form.closeSidebar();
 
-		Form.addPage(formAddNewPageNumber = "2");
+		Form.addPage(formAddNewPageNumber = 2);
 
 		Form.editPageTitle(
 			formPageName = "Page 3",
-			formTitleNumber = "3");
+			formTitleNumber = 3);
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph",
-			formPageNumber = "2");
+			formPageNumber = 2);
 
 		Form.editFieldLabelMetal(fieldValue = "Paragraph 3");
 
@@ -137,7 +136,7 @@ definition {
 	}
 
 	@description = "Verify that a Paragraph Field can be created"
-	@priority = "5"
+	@priority = 5
 	test CanBeCreated {
 		property portal.acceptance = "true";
 
@@ -146,7 +145,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -164,7 +163,7 @@ definition {
 	}
 
 	@description = "Verify that a Paragraph Field can be deleted"
-	@priority = "5"
+	@priority = 5
 	test CanBeDeleted {
 		property portal.acceptance = "true";
 
@@ -173,14 +172,14 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
 
 		Form.closeSidebar();
 
-		Form.addTextField(fieldPositionNumber = "1");
+		Form.addTextField(fieldPositionNumber = 1);
 
 		Form.closeSidebar();
 
@@ -200,7 +199,7 @@ definition {
 	}
 
 	@description = "Verify that a Paragraph Field can be duplicated"
-	@priority = "5"
+	@priority = 5
 	test CanBeDuplicated {
 		property portal.acceptance = "true";
 
@@ -209,7 +208,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -247,23 +246,20 @@ definition {
 
 		Form.gotoAdvancedTab();
 
-		var reff = selenium.getAttribute("//div[contains(@data-field-name,'fieldReference')]/input@value");
+		var fieldReferenceValue = selenium.getAttribute("//div[contains(@data-field-name,'fieldReference')]//input@value");
 
-		echo("Creating new Option complete with Values ${reff}...");
+		echo("Creating new Option complete with Values ${fieldReferenceValue}...");
 
 		Click(
 			key_bodyText = "Test",
 			key_fieldName = "Copy of Paragraph",
 			locator1 = "FormFields#FIELD_TARGET_LABEL_AND_BODY_TEXT");
 
-		AssertElementNotPresent(
-			key_fieldName = "",
-			key_fieldValue = "${reff}",
-			locator1 = "Translation#TARGET_LANGUAGE_FIELD");
+		AssertElementNotPresent(locator1 = "//div[contains(@data-field-name,'fieldReference')]//input[@value='${fieldReferenceValue}']");
 	}
 
 	@description = "Verify that a Paragraph Field can be edited"
-	@priority = "5"
+	@priority = 5
 	test CanBeEdited {
 		property portal.acceptance = "true";
 
@@ -272,7 +268,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -300,14 +296,14 @@ definition {
 	}
 
 	@description = "Verify that a Form can be submitted with the Paragraph Field"
-	@priority = "5"
+	@priority = 5
 	test CanBeSubmitted {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -318,9 +314,9 @@ definition {
 
 		FormsAdminNavigator.gotoPublishCopyURLLink();
 
-		var publishedFormPublicURL = Form.getPublishedFormPublicURL(publishedFormPublicURL = "${publishedFormPublicURL}");
+		var publishedFormPublicURL = Form.getPublishedFormPublicURL(publishedFormPublicURL = ${publishedFormPublicURL});
 
-		Navigator.openSpecificURL(url = "${publishedFormPublicURL}");
+		Navigator.openSpecificURL(url = ${publishedFormPublicURL});
 
 		AssertElementPresent(
 			key_bodyName = "Test",
@@ -348,14 +344,14 @@ definition {
 	}
 
 	@description = "Verify that a Table can be deleted in the Body Text by highlighting the table and pressing backspace"
-	@priority = "4"
+	@priority = 4
 	test CanDeleteATableUsingBackspace {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.addTableInBodyParagraph();
@@ -386,7 +382,7 @@ definition {
 
 	@description = "Verify that a Table can be deleted in the Body Text using the right click menu"
 	@ignore = "Test Stub"
-	@priority = "4"
+	@priority = 4
 	test CanDeleteATableUsingRightClick {
 		property portal.acceptance = "false";
 
@@ -395,7 +391,7 @@ definition {
 	}
 
 	@description = "Verify that the Formatting Style can be changed using the predefined style options"
-	@priority = "4"
+	@priority = 4
 	test CanEditFormattingStyle {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanEditFormattingStyle";
 
@@ -404,7 +400,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -459,17 +455,17 @@ definition {
 	}
 
 	@description = "Verify that a Form cannot be saved or published without adding anything in the Body Text"
-	@priority = "5"
+	@priority = 5
 	test CannotBeSavedOrPublishedWithoutBodyText {
 		property portal.acceptance = "true";
-		property portal.upstream = "quarantine";
+		property portal.upstream = "true";
 
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		AssertElementPresent(
@@ -485,7 +481,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		Button.clickPublish();
@@ -497,7 +493,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -514,7 +510,7 @@ definition {
 	}
 
 	@description = "Verify that a link to a URL can be added to the Body Text"
-	@priority = "5"
+	@priority = 5
 	test CanSupportALinkToAURL {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanSupportALinkToAURL";
 
@@ -523,7 +519,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.addParagraphLinkToAURL(paragraphLink = "www.liferay.com");
@@ -540,7 +536,7 @@ definition {
 	}
 
 	@description = "Verify that Bulleted Lists can be added to the Body Text"
-	@priority = "5"
+	@priority = 5
 	test CanSupportBulletedLists {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanSupportBulletedLists";
 
@@ -549,7 +545,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		CKEditor.addSourceContent(content = "<p>Test A</p><p>Test B</p><p>Test C</p>");
@@ -584,21 +580,21 @@ definition {
 
 		for (var liContent : list "Test A,Test B,Test C") {
 			AssertElementPresent(
-				key_itemName = "${liContent}",
+				key_itemName = ${liContent},
 				key_labelName = "Paragraph",
 				locator1 = "FormFields#PARAGRAPH_CONTENT_UNORDERED_LIST");
 		}
 	}
 
 	@description = "Verify that the Body Text supports HTML"
-	@priority = "5"
+	@priority = 5
 	test CanSupportHTML {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		CKEditor.addSourceContent(content = "<h1>Paragraph Test</h1>");
@@ -623,14 +619,14 @@ definition {
 	}
 
 	@description = "Verify that an Image can be uploaded to the Body Text"
-	@priority = "5"
+	@priority = 5
 	test CanSupportImages {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		Click(
@@ -661,7 +657,7 @@ definition {
 	}
 
 	@description = "Verify that Numbered Lists can be added to the Body Text"
-	@priority = "5"
+	@priority = 5
 	test CanSupportNumberedLists {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanSupportNumberedLists";
 
@@ -670,7 +666,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		CKEditor.addSourceContent(content = "<p>Test A</p><p>Test B</p><p>Test C</p>");
@@ -705,14 +701,14 @@ definition {
 
 		for (var liContent : list "Test A,Test B,Test C") {
 			AssertElementPresent(
-				key_itemName = "${liContent}",
+				key_itemName = ${liContent},
 				key_labelName = "Paragraph",
 				locator1 = "FormFields#PARAGRAPH_CONTENT_ORDERED_LIST");
 		}
 	}
 
 	@description = "Verify that a Table can be created in the Body Text"
-	@priority = "4"
+	@priority = 4
 	test CanSupportTables {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanSupportTables";
 
@@ -721,7 +717,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		Click(
@@ -748,7 +744,7 @@ definition {
 	}
 
 	@description = "Verify that a Video can be uploaded to the Body Text"
-	@priority = "5"
+	@priority = 5
 	test CanSupportVideos {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanSupportVideos";
 
@@ -757,7 +753,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		Click(
@@ -796,7 +792,7 @@ definition {
 	}
 
 	@description = "Verify that inputs to the Body Text can be undone and redone"
-	@priority = "5"
+	@priority = 5
 	test CanUndoAndRedo {
 		property test.name.skip.portal.instance = "FormsParagraphField#CanUndoAndRedo";
 
@@ -805,7 +801,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -837,7 +833,7 @@ definition {
 
 	@description = "Verify that changes to a Field can be canceled"
 	@ignore = "Test Stub"
-	@priority = "5"
+	@priority = 5
 	test ChangesCanBeCanceled {
 		property portal.acceptance = "false";
 
@@ -846,14 +842,14 @@ definition {
 	}
 
 	@description = "Verify that the Field Reference can be Edited"
-	@priority = "5"
+	@priority = 5
 	test ReferenceCanBeEdited {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -874,7 +870,7 @@ definition {
 	}
 
 	@description = "Verify that text in the Body Text can be Bolded, Italicized and Underlined"
-	@priority = "5"
+	@priority = 5
 	test TextCanBeBoldedItalicizedAndUnderlined {
 		property test.name.skip.portal.instance = "FormsParagraphField#TextCanBeBoldedItalicizedAndUnderlined";
 
@@ -883,7 +879,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editTextBodyToolBar(content = "Test");
@@ -926,14 +922,14 @@ definition {
 	}
 
 	@description = "Verify that the Field Title can be edited"
-	@priority = "5"
+	@priority = 5
 	test TitleCanBeEdited {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Test");
@@ -954,7 +950,7 @@ definition {
 
 	@description = "Verify that the Field Type can be changed"
 	@ignore = "Test Stub"
-	@priority = "5"
+	@priority = 5
 	test TypeCanBeChanged {
 		property portal.acceptance = "false";
 

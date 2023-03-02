@@ -21,8 +21,13 @@
 	<td></td>
 </tr>
 <tr>
+	<td>CARD_FOLDER</td>
+	<td>//div[contains(@class,'card-horizontal')]/.</td>
+	<td></td>
+</tr>
+<tr>
 	<td>CHECKIN_DIALOG_TITLE</td>
-	<td>//div[contains(@class,'modal-title') and contains(text(),'Describe Your Changes')]</td>
+	<td>//*[contains(@class,'modal-title') and contains(text(),'Describe Your Changes')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -280,6 +285,16 @@
 	<td></td>
 </tr>
 <tr>
+	<td>TOOLBAR_INFO_PANEL</td>
+	<td>//li//button[*[name()='svg'][contains(@class,'info-circle')]]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>TOOLBAR_INFO_PANEL_DETAILS_MESSAGE</td>
+	<td>//strong[contains(.,'${key_detailsMessage}')]</td>
+	<td></td>
+</tr>
+<tr>
 	<td>TOOLBAR_SELECT_ALL_CHECKBOX</td>
 	<td>//li[@class='nav-item']//div[contains(@class,'checkbox')]//input</td>
 	<td></td>
@@ -323,6 +338,11 @@
 <tr>
 	<td>SIDEBAR_MENU_ITEM</td>
 	<td>//div[contains(@class,'lfr-icon-menu-open')]//*[normalize-space(text())='${key_menuItem}']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>DROPDOWN_INFO_PANEL</td>
+	<td>//div[@class= 'info-panel-content']//button[@class= 'dropdown-toggle component-action btn btn-monospaced btn-unstyled']</td>
 	<td></td>
 </tr>
 <tr>

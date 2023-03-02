@@ -77,15 +77,23 @@ public class ObjectDefinitionSerDes {
 			sb.append(objectDefinition.getAccountEntryRestricted());
 		}
 
-		if (objectDefinition.getAccountEntryRestrictedObjectFieldId() != null) {
+		if (objectDefinition.getAccountEntryRestrictedObjectFieldName() !=
+				null) {
+
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"accountEntryRestrictedObjectFieldId\": ");
+			sb.append("\"accountEntryRestrictedObjectFieldName\": ");
+
+			sb.append("\"");
 
 			sb.append(
-				objectDefinition.getAccountEntryRestrictedObjectFieldId());
+				_escape(
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName()));
+
+			sb.append("\"");
 		}
 
 		if (objectDefinition.getActions() != null) {
@@ -136,6 +144,20 @@ public class ObjectDefinitionSerDes {
 			sb.append(
 				liferayToJSONDateFormat.format(
 					objectDefinition.getDateModified()));
+
+			sb.append("\"");
+		}
+
+		if (objectDefinition.getDefaultLanguageId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"defaultLanguageId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(objectDefinition.getDefaultLanguageId()));
 
 			sb.append("\"");
 		}
@@ -498,14 +520,17 @@ public class ObjectDefinitionSerDes {
 				String.valueOf(objectDefinition.getAccountEntryRestricted()));
 		}
 
-		if (objectDefinition.getAccountEntryRestrictedObjectFieldId() == null) {
-			map.put("accountEntryRestrictedObjectFieldId", null);
+		if (objectDefinition.getAccountEntryRestrictedObjectFieldName() ==
+				null) {
+
+			map.put("accountEntryRestrictedObjectFieldName", null);
 		}
 		else {
 			map.put(
-				"accountEntryRestrictedObjectFieldId",
+				"accountEntryRestrictedObjectFieldName",
 				String.valueOf(
-					objectDefinition.getAccountEntryRestrictedObjectFieldId()));
+					objectDefinition.
+						getAccountEntryRestrictedObjectFieldName()));
 		}
 
 		if (objectDefinition.getActions() == null) {
@@ -540,6 +565,15 @@ public class ObjectDefinitionSerDes {
 				"dateModified",
 				liferayToJSONDateFormat.format(
 					objectDefinition.getDateModified()));
+		}
+
+		if (objectDefinition.getDefaultLanguageId() == null) {
+			map.put("defaultLanguageId", null);
+		}
+		else {
+			map.put(
+				"defaultLanguageId",
+				String.valueOf(objectDefinition.getDefaultLanguageId()));
 		}
 
 		if (objectDefinition.getEnableCategorization() == null) {
@@ -764,11 +798,11 @@ public class ObjectDefinitionSerDes {
 			}
 			else if (Objects.equals(
 						jsonParserFieldName,
-						"accountEntryRestrictedObjectFieldId")) {
+						"accountEntryRestrictedObjectFieldName")) {
 
 				if (jsonParserFieldValue != null) {
-					objectDefinition.setAccountEntryRestrictedObjectFieldId(
-						Long.valueOf((String)jsonParserFieldValue));
+					objectDefinition.setAccountEntryRestrictedObjectFieldName(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "actions")) {
@@ -793,6 +827,12 @@ public class ObjectDefinitionSerDes {
 				if (jsonParserFieldValue != null) {
 					objectDefinition.setDateModified(
 						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "defaultLanguageId")) {
+				if (jsonParserFieldValue != null) {
+					objectDefinition.setDefaultLanguageId(
+						(String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(

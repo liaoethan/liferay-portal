@@ -16,11 +16,11 @@ import React, {useState} from 'react';
 
 import Form from '../../../components/Form';
 import Modal from '../../../components/Modal';
+import SearchBuilder from '../../../core/SearchBuilder';
 import {withVisibleContent} from '../../../hoc/withVisibleContent';
 import {FormModalOptions} from '../../../hooks/useFormModal';
 import i18n from '../../../i18n';
 import {TestrayRequirementCase} from '../../../services/rest';
-import {searchUtil} from '../../../util/search';
 import {CaseListView} from '../Cases';
 
 type RequirementCaseLinkModalProps = {
@@ -55,7 +55,9 @@ const RequirementCaseLinkModal: React.FC<RequirementCaseLinkModalProps> = ({
 			<CaseListView
 				listViewProps={{
 					initialContext: {
-						selectedRows: items.map(({case: {id}}) => id),
+						selectedRows: items.map(
+							({case: Case}) => Case?.id as number
+						),
 					},
 					managementToolbarProps: {
 						title: i18n.translate('cases'),
@@ -68,7 +70,7 @@ const RequirementCaseLinkModal: React.FC<RequirementCaseLinkModalProps> = ({
 				}}
 				tableProps={{navigateTo: undefined, rowSelectable: true}}
 				variables={{
-					filter: searchUtil.eq('projectId', projectId),
+					filter: SearchBuilder.eq('projectId', projectId),
 				}}
 			/>
 		</Modal>

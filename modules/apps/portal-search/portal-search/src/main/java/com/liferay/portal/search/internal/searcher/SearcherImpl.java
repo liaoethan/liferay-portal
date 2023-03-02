@@ -14,6 +14,9 @@
 
 package com.liferay.portal.search.internal.searcher;
 
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
+import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistry;
@@ -21,6 +24,7 @@ import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.facet.faceted.searcher.FacetedSearcher;
 import com.liferay.portal.kernel.search.facet.faceted.searcher.FacetedSearcherManager;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.internal.searcher.helper.IndexSearcherHelper;
 import com.liferay.portal.search.legacy.searcher.SearchResponseBuilderFactory;
@@ -30,22 +34,38 @@ import com.liferay.portal.search.searcher.SearchResponseBuilder;
 import com.liferay.portal.search.searcher.Searcher;
 import com.liferay.portal.search.spi.searcher.SearchRequestContributor;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author André de Oliveira
  */
-@Component(immediate = true, service = Searcher.class)
+@Component(service = Searcher.class)
 public class SearcherImpl implements Searcher {
 
 	@Override
 	public SearchResponse search(SearchRequest searchRequest) {
 		return doSearch(_transformSearchRequest(searchRequest));
+	}
+
+	@Activate
+	protected void activate(BundleContext bundleContext) {
+		_serviceTrackerMap = ServiceTrackerMapFactory.openMultiValueMap(
+			bundleContext, SearchRequestContributor.class,
+			"search.request.contributor.id");
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		_serviceTrackerMap.close();
 	}
 
 	protected SearchResponse doSearch(SearchRequest searchRequest) {
@@ -109,9 +129,6 @@ public class SearcherImpl implements Searcher {
 	protected IndexSearcherHelper indexSearcherHelper;
 
 	@Reference
-	protected SearchRequestContributorsHolder searchRequestContributorsHolder;
-
-	@Reference
 	protected SearchResponseBuilderFactory searchResponseBuilderFactory;
 
 	private void _federatedSearches(
@@ -127,15 +144,25 @@ public class SearcherImpl implements Searcher {
 		}
 	}
 
-	private Stream<Function<SearchRequest, SearchRequest>> _getContributors(
+	private Collection<Function<SearchRequest, SearchRequest>> _getContributors(
 		SearchRequest searchRequest) {
 
-		Stream<SearchRequestContributor> stream =
-			searchRequestContributorsHolder.stream(
-				searchRequest.getIncludeContributors(),
-				searchRequest.getExcludeContributors());
+		List<String> contributors = searchRequest.getIncludeContributors();
 
-		return stream.map(
+		if (ListUtil.isEmpty(contributors)) {
+			contributors = new ArrayList<>(_serviceTrackerMap.keySet());
+		}
+
+		contributors.removeAll(searchRequest.getExcludeContributors());
+
+		Collection<SearchRequestContributor> collection = new ArrayList<>();
+
+		for (String contributor : contributors) {
+			collection.addAll(_serviceTrackerMap.getService(contributor));
+		}
+
+		return TransformUtil.transform(
+			collection,
 			searchRequestContributor -> searchRequestContributor::contribute);
 	}
 
@@ -257,15 +284,14 @@ public class SearcherImpl implements Searcher {
 		}
 	}
 
-	private <T> T _transform(T t, Stream<Function<T, T>> stream) {
-		return stream.reduce(
-			(beforeFunction, afterFunction) -> beforeFunction.andThen(
-				afterFunction)
-		).orElse(
-			Function.identity()
-		).apply(
-			t
-		);
+	private <T> T _transform(T t, Collection<Function<T, T>> collection) {
+		Function<T, T> function = Function.identity();
+
+		for (Function<T, T> curFunction : collection) {
+			function = function.andThen(curFunction);
+		}
+
+		return function.apply(t);
 	}
 
 	private SearchRequest _transformSearchRequest(SearchRequest searchRequest) {
@@ -283,5 +309,8 @@ public class SearcherImpl implements Searcher {
 
 		return new RuntimeException(searchException);
 	}
+
+	private ServiceTrackerMap<String, List<SearchRequestContributor>>
+		_serviceTrackerMap;
 
 }

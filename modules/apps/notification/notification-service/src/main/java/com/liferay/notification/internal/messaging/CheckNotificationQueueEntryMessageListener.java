@@ -14,49 +14,59 @@
 
 package com.liferay.notification.internal.messaging;
 
+import com.liferay.notification.constants.NotificationConstants;
+import com.liferay.notification.internal.configuration.NotificationQueueConfiguration;
 import com.liferay.notification.service.NotificationQueueEntryLocalService;
+import com.liferay.notification.type.NotificationType;
+import com.liferay.notification.type.NotificationTypeServiceTracker;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.messaging.BaseMessageListener;
 import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.messaging.Message;
-import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
-import com.liferay.portal.kernel.scheduler.SchedulerEntry;
 import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
 import com.liferay.portal.kernel.scheduler.TimeUnit;
-import com.liferay.portal.kernel.scheduler.Trigger;
 import com.liferay.portal.kernel.scheduler.TriggerFactory;
 import com.liferay.portal.kernel.util.Time;
 
 import java.util.Date;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Gustavo Lima
  */
-@Component(service = CheckNotificationQueueEntryMessageListener.class)
+@Component(
+	factory = "com.liferay.notification.internal.messaging.CheckNotificationQueueEntryMessageListener",
+	service = {}
+)
 public class CheckNotificationQueueEntryMessageListener
 	extends BaseMessageListener {
 
 	@Activate
-	@Modified
-	protected void activate() {
+	protected void activate(Map<String, Object> properties) {
 		Class<?> clazz = getClass();
 
-		String className = clazz.getName();
+		String className = StringBundler.concat(
+			clazz.getName(), StringPool.POUND, properties.get("companyId"));
 
-		Trigger trigger = _triggerFactory.createTrigger(
-			className, className, null, null, 15, TimeUnit.MINUTE);
-
-		SchedulerEntry schedulerEntry = new SchedulerEntryImpl(
-			className, trigger);
+		_notificationQueueConfiguration =
+			(NotificationQueueConfiguration)properties.get("configuration");
 
 		_schedulerEngineHelper.register(
-			this, schedulerEntry, DestinationNames.SCHEDULER_DISPATCH);
+			this,
+			new SchedulerEntryImpl(
+				className,
+				_triggerFactory.createTrigger(
+					className, className, null, null,
+					_notificationQueueConfiguration.checkInterval(),
+					TimeUnit.MINUTE)),
+			DestinationNames.SCHEDULER_DISPATCH);
 	}
 
 	@Deactivate
@@ -66,18 +76,29 @@ public class CheckNotificationQueueEntryMessageListener
 
 	@Override
 	protected void doReceive(Message message) throws Exception {
-		_notificationQueueEntryLocalService.sendNotificationQueueEntries();
+		NotificationType notificationType =
+			_notificationTypeServiceTracker.getNotificationType(
+				NotificationConstants.TYPE_EMAIL);
+
+		long companyId = message.getLong("companyId");
+
+		notificationType.sendUnsentNotifications(companyId);
+
+		long deleteInterval =
+			_notificationQueueConfiguration.deleteInterval() * Time.MINUTE;
 
 		_notificationQueueEntryLocalService.deleteNotificationQueueEntries(
-			new Date(System.currentTimeMillis() - (43200 * Time.MINUTE)));
+			companyId, new Date(System.currentTimeMillis() - deleteInterval));
 	}
 
-	@Reference(target = ModuleServiceLifecycle.PORTAL_INITIALIZED)
-	private ModuleServiceLifecycle _moduleServiceLifecycle;
+	private NotificationQueueConfiguration _notificationQueueConfiguration;
 
 	@Reference
 	private NotificationQueueEntryLocalService
 		_notificationQueueEntryLocalService;
+
+	@Reference
+	private NotificationTypeServiceTracker _notificationTypeServiceTracker;
 
 	@Reference
 	private SchedulerEngineHelper _schedulerEngineHelper;

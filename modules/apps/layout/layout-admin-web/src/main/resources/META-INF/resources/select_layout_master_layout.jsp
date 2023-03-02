@@ -62,12 +62,12 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-master-page"));
 	</clay:sheet>
 </clay:container-fluid>
 
-<aui:script require="frontend-js-web/liferay/delegate/delegate.es as delegateModule">
+<aui:script require="frontend-js-web/index as frontendJsWeb">
+	var {delegate} = frontendJsWeb;
+
 	var layoutPageTemplateEntries = document.getElementById(
 		'<portlet:namespace />layoutPageTemplateEntries'
 	);
-
-	var delegate = delegateModule.default;
 
 	var addLayoutActionOptionQueryClickHandler = delegate(
 		layoutPageTemplateEntries,
@@ -77,7 +77,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "select-master-page"));
 			Liferay.Util.openModal({
 				disableAutoClose: true,
 				height: '60vh',
-				id: '<portlet:namespace />addLayoutDialog',
+				id: 'addLayoutDialog',
 				size: 'md',
 				title: '<liferay-ui:message key="add-collection-page" />',
 				url: event.delegateTarget.dataset.addLayoutUrl,

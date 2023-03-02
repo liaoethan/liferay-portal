@@ -14,78 +14,48 @@
 
 import ClayIcon from '@clayui/icon';
 import ClayLayout from '@clayui/layout';
-import {ReactNode, useState} from 'react';
+import {useMemo} from 'react';
 import {Link, useOutletContext} from 'react-router-dom';
 import {KeyedMutator} from 'swr';
 
 import Avatar from '../../../../../../components/Avatar';
 import AssignToMe from '../../../../../../components/Avatar/AssigneToMe';
 import Code from '../../../../../../components/Code';
+import JiraLink from '../../../../../../components/JiraLink';
 import Container from '../../../../../../components/Layout/Container';
 import StatusBadge from '../../../../../../components/StatusBadge';
+import {StatusBadgeType} from '../../../../../../components/StatusBadge/StatusBadge';
 import QATable, {Orientation} from '../../../../../../components/Table/QATable';
 import i18n from '../../../../../../i18n';
 import {
+	MessageBoardMessage,
+	TestrayAttachment,
 	TestrayCaseResult,
-	testrayCaseResultRest,
+	testrayCaseResultImpl,
 } from '../../../../../../services/rest';
-import {getStatusLabel} from '../../../../../../util/constants';
+import {safeJSONParse} from '../../../../../../util';
 import {getTimeFromNow} from '../../../../../../util/date';
 import CaseResultHeaderActions from './CaseResultHeaderActions';
 
-type CollapsableItemProps = {
-	children: ReactNode;
-	count: number;
-	title: string;
-};
-
-type TestrayAttachment = {
-	name: string;
-	url: string;
-	value: string;
-};
-
-const CollapsableItem: React.FC<CollapsableItemProps> = ({
-	children,
-	count,
-	title,
-}) => {
-	const [visible, setVisible] = useState(false);
-
-	return (
-		<>
-			<span className="custom-link" onClick={() => setVisible(!visible)}>
-				{`${i18n.translate(
-					visible ? 'hide' : 'show'
-				)} ${count} ${title}`}
-			</span>
-
-			{visible && <div>{children}</div>}
-		</>
-	);
+type OutletContext = {
+	caseResult: TestrayCaseResult;
+	mbMessage: MessageBoardMessage;
+	mutateCaseResult: KeyedMutator<TestrayCaseResult>;
+	projectId: string;
 };
 
 const CaseResult = () => {
 	const {
 		caseResult,
+		mbMessage,
 		mutateCaseResult,
 		projectId,
-	}: {
-		caseResult: TestrayCaseResult;
-		mutateCaseResult: KeyedMutator<any>;
-		projectId: string;
-	} = useOutletContext();
+	}: OutletContext = useOutletContext();
 
-	const getAttachments = (): TestrayAttachment[] => {
-		try {
-			return JSON.parse(caseResult.attachments);
-		}
-		catch (error) {
-			return [];
-		}
-	};
-
-	const attachments = getAttachments();
+	const attachments = useMemo(
+		() => safeJSONParse(caseResult.attachments, []) as TestrayAttachment[],
+		[caseResult.attachments]
+	);
 
 	return (
 		<>
@@ -93,12 +63,13 @@ const CaseResult = () => {
 				caseResult={caseResult}
 				mutateCaseResult={mutateCaseResult}
 			/>
+
 			<ClayLayout.Row>
 				<ClayLayout.Col xs={9}>
 					<Container
 						className="mt-4"
 						collapsable
-						title="Test Details"
+						title={i18n.translate('test-details')}
 					>
 						<QATable
 							items={[
@@ -106,13 +77,12 @@ const CaseResult = () => {
 									title: i18n.translate('status'),
 									value: (
 										<StatusBadge
-											type={getStatusLabel(
+											type={
 												caseResult.dueStatus
-											)}
+													.key as StatusBadgeType
+											}
 										>
-											{getStatusLabel(
-												caseResult.dueStatus
-											)}
+											{caseResult.dueStatus.name}
 										</StatusBadge>
 									),
 								},
@@ -139,34 +109,27 @@ const CaseResult = () => {
 										attachments.length.toString()
 									),
 									value: (
-										<CollapsableItem
-											count={attachments.length}
-											title={i18n.translate('attachment')}
-										>
-											<div className="d-flex flex-column mb-1">
-												{attachments.map(
-													(attachment, index) => (
-														<a
-															className="mt-2"
-															href={
-																attachment.url
-															}
-															key={index}
-															rel="noopener noreferrer"
-															target="_blank"
-														>
-															{attachment.name}
+										<div className="d-flex flex-column mb-1">
+											{attachments.map(
+												(attachment, index) => (
+													<a
+														className="mt-2"
+														href={attachment.url}
+														key={index}
+														rel="noopener noreferrer"
+														target="_blank"
+													>
+														{attachment.name}
 
-															<ClayIcon
-																className="ml-2"
-																fontSize={12}
-																symbol="shortcut"
-															/>
-														</a>
-													)
-												)}
-											</div>
-										</CollapsableItem>
+														<ClayIcon
+															className="ml-2"
+															fontSize={12}
+															symbol="shortcut"
+														/>
+													</a>
+												)
+											)}
+										</div>
 									),
 								},
 								{
@@ -223,7 +186,7 @@ const CaseResult = () => {
 						/>
 
 						<Link
-							to={`/project/${projectId}/cases/${caseResult.id}`}
+							to={`/project/${projectId}/cases/${caseResult.case?.id}`}
 						>
 							{i18n.translate('view-case')}
 						</Link>
@@ -257,12 +220,13 @@ const CaseResult = () => {
 									value: caseResult?.user ? (
 										<Avatar
 											displayName
-											name={`${caseResult.user.givenName} ${caseResult.user.additionalName}`}
+											name={caseResult.user.name}
+											url={caseResult.user.image}
 										/>
 									) : (
 										<AssignToMe
 											onClick={() =>
-												testrayCaseResultRest
+												testrayCaseResultImpl
 													.assignToMe(caseResult)
 													.then(mutateCaseResult)
 											}
@@ -272,11 +236,47 @@ const CaseResult = () => {
 								{
 									divider: true,
 									title: i18n.translate('issues'),
-									value: '-',
+									value: caseResult.issues.length
+										? caseResult.issues.map(
+												(caseResultIssue, index) => (
+													<JiraLink
+														issue={caseResultIssue}
+														key={index}
+													/>
+												)
+										  )
+										: '-',
 								},
 								{
 									title: i18n.translate('comment'),
-									value: caseResult.commentMBMessage,
+									value: mbMessage ? (
+										<div className="d-flex flex-column">
+											<cite>
+												{mbMessage?.articleBody}
+											</cite>
+
+											<div className="align-items-center d-flex justify-center mt-2 text-gray">
+												<Avatar
+													name={
+														mbMessage.creator?.name
+													}
+													url={
+														mbMessage.creator?.image
+													}
+												/>
+
+												<span className="ml-2">
+													{`${
+														mbMessage.creator?.name
+													} · ${getTimeFromNow(
+														mbMessage.dateCreated
+													)}`}
+												</span>
+											</div>
+										</div>
+									) : (
+										i18n.translate('none')
+									),
 								},
 							]}
 							orientation={Orientation.VERTICAL}

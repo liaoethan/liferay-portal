@@ -26,6 +26,8 @@ export {default as autoSize} from './liferay/autosize/autosize.es';
 
 export {CONSENT_TYPES as COOKIE_TYPES} from './liferay/util/consent';
 
+export {checkConsent} from './liferay/util/consent';
+
 export {getCookie, setCookie, removeCookie} from './liferay/util/cookie/cookie';
 
 // Debounce API
@@ -35,6 +37,10 @@ export {cancelDebounce, debounce} from './liferay/debounce/debounce.es';
 // Delegate API
 
 export {default as delegate} from './liferay/delegate/delegate.es';
+
+// DynamicInlineScroll
+
+export {default as DynamicInlineScroll} from './liferay/DynamicInlineScroll.es';
 
 // Form API
 
@@ -59,10 +65,13 @@ export {default as PortletBase} from './liferay/PortletBase.es';
 
 export {
 	openModal,
-	openAlertModal,
-	openConfirmModal,
+	openPortletModal,
+	openPortletWindow,
 	openSelectionModal,
 } from './liferay/modal/Modal';
+
+export {default as openAlertModal} from './liferay/modal/commands/open_alert_modal';
+export {default as openConfirmModal} from './liferay/modal/commands/open_confirm_modal';
 
 export {default as openSimpleInputModal} from './liferay/modal/commands/OpenSimpleInputModal.es';
 

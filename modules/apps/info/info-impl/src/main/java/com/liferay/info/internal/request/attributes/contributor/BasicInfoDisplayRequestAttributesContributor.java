@@ -30,7 +30,6 @@ import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.JavaConstants;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portlet.RenderRequestFactory;
 import com.liferay.portlet.RenderResponseFactory;
@@ -48,9 +47,7 @@ import org.osgi.service.component.annotations.Reference;
 /**
  * @author Pavel Savinov
  */
-@Component(
-	immediate = true, service = InfoDisplayRequestAttributesContributor.class
-)
+@Component(service = InfoDisplayRequestAttributesContributor.class)
 public class BasicInfoDisplayRequestAttributesContributor
 	implements InfoDisplayRequestAttributesContributor {
 
@@ -114,15 +111,11 @@ public class BasicInfoDisplayRequestAttributesContributor
 		}
 
 		return AssetRendererFactoryRegistryUtil.
-			getAssetRendererFactoryByClassNameId(
-				_portal.getClassNameId(infoItemDetails.getClassName()));
+			getAssetRendererFactoryByClassName(infoItemDetails.getClassName());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BasicInfoDisplayRequestAttributesContributor.class);
-
-	@Reference
-	private Portal _portal;
 
 	@Reference
 	private PortletLocalService _portletLocalService;

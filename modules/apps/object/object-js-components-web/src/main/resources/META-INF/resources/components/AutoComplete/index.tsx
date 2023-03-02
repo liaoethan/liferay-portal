@@ -18,56 +18,74 @@ import React, {useState} from 'react';
 import {FieldBase} from '../FieldBase';
 
 import './index.scss';
+import {getLocalizableLabel} from '../../utils/string';
 import {CustomSelect} from './CustomSelect';
-
-interface IAutoCompleteProps extends React.HTMLAttributes<HTMLElement> {
-	children: (item: any) => React.ReactNode;
+interface AutoCompleteProps<
+	T extends {
+		label?: LocalizedValue<string> | string;
+		name?: string;
+		value?: string;
+	}
+> extends React.HTMLAttributes<HTMLElement> {
+	children: (item: T) => React.ReactNode;
 	contentRight?: React.ReactNode;
+	creationLanguageId: Liferay.Language.Locale;
 	disabled?: boolean;
 	emptyStateMessage: string;
 	error?: string;
 	feedbackMessage?: string;
 	hasEmptyItem?: boolean;
-	items: any[];
+	items: T[];
 	label: string;
 	onChangeQuery: (value: string) => void;
-	onSelectItem: (item: any) => void;
+	onSelectEmptyStateItem?: (emptyStateItem: EmptyStateItem) => void;
+	onSelectItem: (item: T) => void;
 	placeholder?: string;
 	query: string;
 	required?: boolean;
+	tooltip?: string;
 	value?: string;
 }
 
-export default function AutoComplete({
+type EmptyStateItem = {
+	id: string;
+	label: string;
+};
+
+export default function AutoComplete<
+	T extends {
+		label?: LocalizedValue<string> | string;
+		name?: string;
+		value?: string;
+	}
+>({
 	children,
 	className,
 	contentRight,
+	creationLanguageId,
 	disabled,
 	emptyStateMessage,
 	error,
 	feedbackMessage,
 	hasEmptyItem,
 	id,
-	items: initialItems,
+	items,
 	label,
 	onChangeQuery,
+	onSelectEmptyStateItem,
 	onSelectItem,
 	placeholder,
 	query,
 	required = false,
+	tooltip,
 	value,
-}: IAutoCompleteProps) {
+}: AutoCompleteProps<T>) {
 	const [active, setActive] = useState<boolean>(false);
 
-	const items = hasEmptyItem
-		? [
-				{
-					id: '',
-					label: Liferay.Language.get('choose-an-option'),
-				},
-				...initialItems,
-		  ]
-		: initialItems;
+	const emptyStateItem = {
+		id: '',
+		label: Liferay.Language.get('choose-an-option'),
+	};
 
 	return (
 		<FieldBase
@@ -78,6 +96,7 @@ export default function AutoComplete({
 			id={id}
 			label={label}
 			required={required}
+			tooltip={tooltip}
 		>
 			<ClayDropDown
 				active={!disabled && active}
@@ -97,12 +116,12 @@ export default function AutoComplete({
 				}
 			>
 				<ClayDropDown.Search
-					onChange={({target: {value}}) => onChangeQuery(value)}
+					onChange={onChangeQuery}
 					placeholder={Liferay.Language.get('search')}
 					value={query}
 				/>
 
-				{(items.length === 1 && items[0].id === '') || !items.length ? (
+				{!items.length ? (
 					<ClayDropDown.ItemList>
 						<ClayDropDown.Item>
 							{emptyStateMessage}
@@ -110,9 +129,34 @@ export default function AutoComplete({
 					</ClayDropDown.ItemList>
 				) : (
 					<ClayDropDown.ItemList>
+						{hasEmptyItem && (
+							<ClayDropDown.Item
+								onClick={() => {
+									setActive(false);
+
+									if (onSelectEmptyStateItem) {
+										onSelectEmptyStateItem(emptyStateItem);
+									}
+								}}
+							>
+								<div className="d-flex justify-content-between">
+									<div>{emptyStateItem.label}</div>
+								</div>
+							</ClayDropDown.Item>
+						)}
+
 						{items.map((item, index) => {
 							return (
 								<ClayDropDown.Item
+									active={
+										typeof item.label !== 'string'
+											? value ===
+											  getLocalizableLabel(
+													creationLanguageId,
+													item.label
+											  )
+											: value === item.name
+									}
 									key={index}
 									onClick={() => {
 										setActive(false);

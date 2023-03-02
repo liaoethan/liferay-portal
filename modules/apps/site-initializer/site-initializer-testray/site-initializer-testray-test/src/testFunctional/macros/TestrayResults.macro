@@ -1,0 +1,13 @@
+definition {
+
+	macro caseResultsMetrics {
+		AssertTextEquals(
+			locator1 = "TestrayResults#TOTAL_TEST_CASE_RESULTS",
+			value1 = ${totalTestCases});
+	}
+
+	macro goToCaseResults {
+		TestrayRoutines.goToRoutine(routineName = ${caseResultsName});
+	}
+
+}

@@ -14,18 +14,19 @@
 
 package com.liferay.portal.tools.service.builder;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.io.unsync.UnsyncBufferedReader;
 import com.liferay.petra.io.unsync.UnsyncStringReader;
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.petra.xml.Dom4jUtil;
 import com.liferay.portal.kernel.change.tracking.CTColumnResolutionType;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayOutputStream;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.cache.CacheField;
 import com.liferay.portal.kernel.plugin.Version;
@@ -118,7 +119,6 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import org.dom4j.Attribute;
 import org.dom4j.Document;
@@ -127,7 +127,9 @@ import org.dom4j.DocumentType;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.XPath;
+import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 
 /**
  * @author Brian Wing Shun Chan
@@ -1152,6 +1154,13 @@ public class ServiceBuilder {
 		return getDimensions(GetterUtil.getInteger(dims));
 	}
 
+	public String getDuplicateEntityExternalReferenceCodeException(
+		Entity entity) {
+
+		return "Duplicate" + _getEntityExceptionName(entity, false) +
+			"ExternalReferenceCode";
+	}
+
 	public Entity getEntity(String name) throws Exception {
 		Entity entity = _entityPool.get(name);
 
@@ -1398,21 +1407,8 @@ public class ServiceBuilder {
 	}
 
 	public String getNoSuchEntityException(Entity entity) {
-		String noSuchEntityException = entity.getName();
-
-		if (_shortNoSuchExceptionEnabled) {
-			String portletShortName = entity.getPortletShortName();
-
-			if (Validator.isNull(portletShortName) ||
-				(noSuchEntityException.startsWith(portletShortName) &&
-				 !noSuchEntityException.equals(portletShortName))) {
-
-				noSuchEntityException = noSuchEntityException.substring(
-					portletShortName.length());
-			}
-		}
-
-		return "NoSuch" + noSuchEntityException;
+		return "NoSuch" +
+			_getEntityExceptionName(entity, _shortNoSuchExceptionEnabled);
 	}
 
 	public String getParameterType(JavaParameter parameter) {
@@ -2607,6 +2603,14 @@ public class ServiceBuilder {
 			}
 
 			if (entity.hasEntityColumns()) {
+				if (entity.hasExternalReferenceCode() ||
+					entity.hasEntityColumn("externalReferenceCode")) {
+
+					exceptions.add(
+						getDuplicateEntityExternalReferenceCodeException(
+							entity));
+				}
+
 				exceptions.add(getNoSuchEntityException(entity));
 			}
 		}
@@ -2672,7 +2676,16 @@ public class ServiceBuilder {
 
 				String content = _processTemplate(_tplException, context);
 
-				if (exception.startsWith("NoSuch")) {
+				if (exception.startsWith("Duplicate") &&
+					exception.endsWith("ExternalReferenceCode")) {
+
+					content = StringUtil.replace(
+						content, "PortalException",
+						isVersionGTE_7_4_0() ?
+							"DuplicateExternalReferenceCodeException" :
+								"SystemException");
+				}
+				else if (exception.startsWith("NoSuch")) {
 					content = StringUtil.replace(
 						content, "PortalException", "NoSuchModelException");
 				}
@@ -2683,7 +2696,37 @@ public class ServiceBuilder {
 					exceptionFile, content, _modifiedFileNames);
 			}
 
-			if (exception.startsWith("NoSuch")) {
+			if (exception.startsWith("Duplicate") &&
+				exception.endsWith("ExternalReferenceCode")) {
+
+				String content = _read(exceptionFile);
+
+				if (isVersionGTE_7_4_0()) {
+					if (!content.contains(
+							"DuplicateExternalReferenceCodeException")) {
+
+						content = StringUtil.replace(
+							content, "PortalException",
+							"DuplicateExternalReferenceCodeException");
+						content = StringUtil.replace(
+							content, "SystemException",
+							"DuplicateExternalReferenceCodeException");
+
+						ToolsUtil.writeFileRaw(
+							exceptionFile, content, _modifiedFileNames);
+					}
+				}
+				else {
+					if (!content.contains("SystemException")) {
+						content = StringUtil.replace(
+							content, "PortalException", "SystemException");
+
+						ToolsUtil.writeFileRaw(
+							exceptionFile, content, _modifiedFileNames);
+					}
+				}
+			}
+			else if (exception.startsWith("NoSuch")) {
 				String content = _read(exceptionFile);
 
 				if (!content.contains("NoSuchModelException")) {
@@ -4737,6 +4780,20 @@ public class ServiceBuilder {
 	}
 
 	private String _formatXml(String xml) throws Exception {
+		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
+			new UnsyncByteArrayOutputStream();
+
+		OutputFormat outputFormat = new OutputFormat(StringPool.TAB, true);
+
+		outputFormat.setOmitEncoding(true);
+		outputFormat.setPadText(true);
+		outputFormat.setTrimText(true);
+
+		XMLWriter xmlWriter = new XMLWriter(
+			unsyncByteArrayOutputStream, outputFormat);
+
+		SAXReader saxReader = _getSAXReader();
+
 		String doctype = null;
 
 		int x = xml.indexOf("<!DOCTYPE");
@@ -4750,7 +4807,16 @@ public class ServiceBuilder {
 		}
 
 		xml = StringUtil.replace(xml, '\r', "");
-		xml = Dom4jUtil.toString(xml);
+
+		xmlWriter.write(saxReader.read(new XMLSafeReader(xml)));
+
+		xml = StringUtil.trimTrailing(
+			unsyncByteArrayOutputStream.toString(StringPool.UTF8));
+
+		while (xml.contains(" \n")) {
+			xml = StringUtil.replace(xml, " \n", "\n");
+		}
+
 		xml = StringUtil.replace(xml, "\"/>", "\" />");
 
 		if (Validator.isNotNull(doctype)) {
@@ -5390,6 +5456,25 @@ public class ServiceBuilder {
 				columnDBName, " for entity ", entity.getName()));
 	}
 
+	private String _getEntityExceptionName(
+		Entity entity, boolean shortExceptionName) {
+
+		String name = entity.getName();
+
+		if (shortExceptionName) {
+			String portletShortName = entity.getPortletShortName();
+
+			if (Validator.isNull(portletShortName) ||
+				(name.startsWith(portletShortName) &&
+				 !name.equals(portletShortName))) {
+
+				name = name.substring(portletShortName.length());
+			}
+		}
+
+		return name;
+	}
+
 	private List<String> _getEntityMappingPKEntityColumnDBNames(
 			EntityMapping entityMapping)
 		throws Exception {
@@ -5794,32 +5879,40 @@ public class ServiceBuilder {
 			return false;
 		}
 
-		boolean hasCompanyId = Stream.of(
-			columnElements.toArray(new Element[0])
-		).map(
-			columnElement -> columnElement.attributeValue("name")
-		).anyMatch(
-			columnName -> columnName.equals("companyId")
-		);
+		boolean hasCompanyId = false;
+
+		for (Element columnElement : columnElements) {
+			String columnName = columnElement.attributeValue("name");
+
+			if (columnName.equals("companyId")) {
+				hasCompanyId = true;
+
+				break;
+			}
+		}
 
 		if (!hasCompanyId) {
 			return false;
 		}
 
-		String[] finderColumnNames = Stream.of(
-			finderColumnElements.toArray(new Element[0])
-		).map(
-			finderColumnElement -> finderColumnElement.attributeValue("name")
-		).filter(
-			finderColumnName ->
-				finderColumnName.endsWith("Id") ||
-				finderColumnName.endsWith("PK")
-		).toArray(
-			String[]::new
-		);
+		List<String> finderColumnNames = TransformUtil.transform(
+			finderColumnElements,
+			finderColumnElement -> {
+				String finderColumnName = finderColumnElement.attributeValue(
+					"name");
 
-		if ((finderColumnNames.length == 1) &&
-			finderColumnNames[0].equals("classNameId")) {
+				if ((finderColumnName == null) ||
+					(!finderColumnName.endsWith("Id") &&
+					 !finderColumnName.endsWith("PK"))) {
+
+					return null;
+				}
+
+				return finderColumnName;
+			});
+
+		if ((finderColumnNames.size() == 1) &&
+			Objects.equals("classNameId", finderColumnNames.get(0))) {
 
 			return true;
 		}
@@ -6566,8 +6659,14 @@ public class ServiceBuilder {
 			String externalReferenceCodeUpperCase = StringUtil.toUpperCase(
 				externalReferenceCode);
 
-			finderElement.addAttribute(
-				"name", externalReferenceCodeUpperCase.charAt(0) + "_ERC");
+			if (isVersionGTE_7_4_0()) {
+				finderElement.addAttribute(
+					"name", "ERC_" + externalReferenceCodeUpperCase.charAt(0));
+			}
+			else {
+				finderElement.addAttribute(
+					"name", externalReferenceCodeUpperCase.charAt(0) + "_ERC");
+			}
 
 			finderElement.addAttribute("return-type", entityName);
 
@@ -6578,12 +6677,24 @@ public class ServiceBuilder {
 			Element finderColumnElement = finderElement.addElement(
 				"finder-column");
 
-			finderColumnElement.addAttribute(
-				"name", externalReferenceCode + "Id");
+			if (isVersionGTE_7_4_0()) {
+				finderColumnElement.addAttribute(
+					"name", "externalReferenceCode");
 
-			finderColumnElement = finderElement.addElement("finder-column");
+				finderColumnElement = finderElement.addElement("finder-column");
 
-			finderColumnElement.addAttribute("name", "externalReferenceCode");
+				finderColumnElement.addAttribute(
+					"name", externalReferenceCode + "Id");
+			}
+			else {
+				finderColumnElement.addAttribute(
+					"name", externalReferenceCode + "Id");
+
+				finderColumnElement = finderElement.addElement("finder-column");
+
+				finderColumnElement.addAttribute(
+					"name", "externalReferenceCode");
+			}
 
 			finderElements.add(finderElement);
 		}

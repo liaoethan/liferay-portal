@@ -12,11 +12,12 @@
 import ClayIcon from '@clayui/icon';
 import classNames from 'classnames';
 import DOMPurify from 'dompurify';
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import i18n from '../../../../common/I18n';
 import {fetchHeadless} from '../../../../common/services/liferay/api';
 import {storage} from '../../../../common/services/liferay/storage';
 import {STORAGE_KEYS} from '../../../../common/utils/constants';
+import routerPath from '../../../../common/utils/routerPath';
 import {useCustomerPortal} from '../../context';
 import {actionTypes} from '../../context/reducer';
 import QuickLinksSkeleton from './Skeleton';
@@ -34,6 +35,8 @@ const QuickLinksPanel = () => {
 		dispatch,
 	] = useCustomerPortal();
 	const [quickLinksContents, setQuickLinksContents] = useState([]);
+
+	const pageRoutes = useMemo(() => routerPath(), []);
 
 	useEffect(() => {
 		const quickLinksExpandedStorage = storage.getItem(
@@ -68,7 +71,12 @@ const QuickLinksPanel = () => {
 					const htmlBody = await structuredComponent.text();
 
 					accumulator.push(
-						htmlBody.replace('{{accountKey}}', project?.accountKey)
+						htmlBody
+							.replace('{{accountKey}}', project?.accountKey)
+							.replace(
+								'{{projectURL}}',
+								pageRoutes.project(project?.accountKey)
+							)
 					);
 				}
 
@@ -78,7 +86,7 @@ const QuickLinksPanel = () => {
 		);
 
 		setQuickLinksContents(renderedQuickLinksContents);
-	}, [project?.accountKey, quickLinks, structuredContents]);
+	}, [pageRoutes, project?.accountKey, quickLinks, structuredContents]);
 
 	useEffect(() => {
 		if (quickLinks) {

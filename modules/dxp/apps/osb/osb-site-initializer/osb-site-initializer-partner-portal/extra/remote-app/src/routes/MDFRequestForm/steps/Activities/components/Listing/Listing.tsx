@@ -20,18 +20,21 @@ import getNewActivity from '../../utils/getNewActivity';
 
 interface IProps {
 	activities: MDFRequestActivity[];
-	campaignName: string;
-	isValid: boolean;
+	hasActivityErrorsByIndex: (index: number) => boolean;
 	onAdd: () => void;
+	onEdit: (index: number) => void;
+	onRemove: (index: number) => void;
+	overallCampaignName: string;
 }
 
 const Listing = ({
 	activities,
-	campaignName,
-	isValid,
+	hasActivityErrorsByIndex,
 	onAdd,
+	onEdit,
+	onRemove,
+	overallCampaignName,
 	push,
-	remove,
 }: IProps & ArrayHelpers) => {
 	const handleOnAdd = () => {
 		push(getNewActivity());
@@ -46,13 +49,15 @@ const Listing = ({
 					activities.map((activity, index) => (
 						<ActivityPanel
 							activity={activity}
-							campaignName={campaignName}
+							hasErrors={hasActivityErrorsByIndex(index)}
 							key={index}
-							onRemove={() => remove(index)}
+							onEdit={() => onEdit(index)}
+							onRemove={() => onRemove(index)}
+							overallCampaignName={overallCampaignName}
 						/>
 					))}
 
-				{!activities.length && !isValid && (
+				{!activities.length && (
 					<ClayAlert displayType="info" title="Info:">
 						No entries were found
 					</ClayAlert>

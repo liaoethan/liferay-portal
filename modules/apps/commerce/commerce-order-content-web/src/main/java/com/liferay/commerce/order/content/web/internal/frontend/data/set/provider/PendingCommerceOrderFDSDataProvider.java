@@ -44,7 +44,6 @@ import org.osgi.service.component.annotations.Reference;
  * @author Alessio Antonio Rendina
  */
 @Component(
-	enabled = false, immediate = true,
 	property = "fds.data.provider.key=" + CommerceOrderFDSNames.PENDING_ORDERS,
 	service = FDSDataProvider.class
 )
@@ -72,10 +71,10 @@ public class PendingCommerceOrderFDSDataProvider
 		CommerceGroupThreadLocal.set(commerceChannel.getGroup());
 
 		List<CommerceOrder> commerceOrders =
-			_commerceOrderService.getUserPendingCommerceOrders(
+			_commerceOrderService.getUserOpenCommerceOrders(
 				commerceChannel.getCompanyId(), commerceChannel.getGroupId(),
 				fdsKeywords.getKeywords(), fdsPagination.getStartPosition(),
-				fdsPagination.getEndPosition());
+				fdsPagination.getEndPosition(), sort);
 
 		return CommerceOrderFDSUtil.getOrders(
 			commerceChannel.getGroupId(), commerceOrders,

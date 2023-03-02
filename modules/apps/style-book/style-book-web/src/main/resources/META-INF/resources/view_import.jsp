@@ -69,24 +69,22 @@ ImportStyleBookDisplayContext importStyleBookDisplayContext = new ImportStyleBoo
 			</aui:script>
 		</c:if>
 
-		<liferay-frontend:fieldset-group>
-			<liferay-frontend:fieldset>
-				<aui:input label="select-file" name="file" type="file">
-					<aui:validator name="required" />
+		<liferay-frontend:fieldset>
+			<aui:input label="select-file" name="file" type="file">
+				<aui:validator name="required" />
 
-					<aui:validator name="acceptFiles">
-						'zip'
-					</aui:validator>
-				</aui:input>
+				<aui:validator name="acceptFiles">
+					'zip'
+				</aui:validator>
+			</aui:input>
 
-				<aui:input checked="<%= true %>" label="overwrite-existing-style-books" name="overwrite" type="checkbox" />
-			</liferay-frontend:fieldset>
-		</liferay-frontend:fieldset-group>
+			<aui:input checked="<%= true %>" label="overwrite-existing-style-books" name="overwrite" type="checkbox" />
+		</liferay-frontend:fieldset>
 	</liferay-frontend:edit-form-body>
 
 	<liferay-frontend:edit-form-footer>
-		<aui:button type="submit" value="import" />
-
-		<aui:button type="cancel" />
+		<liferay-frontend:edit-form-buttons
+			submitLabel="import"
+		/>
 	</liferay-frontend:edit-form-footer>
 </liferay-frontend:edit-form>

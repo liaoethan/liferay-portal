@@ -26,6 +26,7 @@ import com.liferay.object.internal.upgrade.v3_17_0.util.ObjectStateTransitionTab
 import com.liferay.object.internal.upgrade.v3_19_0.util.ObjectFilterTable;
 import com.liferay.object.internal.upgrade.v3_22_0.ObjectFieldUpgradeProcess;
 import com.liferay.object.internal.upgrade.v3_24_0.ObjectFieldSettingUpgradeProcess;
+import com.liferay.object.internal.upgrade.v3_27_0.ObjectActionUpgradeProcess;
 import com.liferay.object.internal.upgrade.v3_3_0.util.ObjectViewFilterColumnTable;
 import com.liferay.object.internal.upgrade.v3_9_0.ObjectLayoutBoxUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess;
@@ -97,7 +98,7 @@ public class ObjectServiceUpgradeStepRegistrator
 		registry.register(
 			"3.3.0", "3.4.0",
 			UpgradeProcessFactory.addColumns(
-				"ObjectAction", "description STRING null"));
+				"ObjectAction", "description VARCHAR(75) null"));
 
 		registry.register(
 			"3.4.0", "3.5.0",
@@ -229,6 +230,41 @@ public class ObjectServiceUpgradeStepRegistrator
 			"3.24.0", "3.25.0",
 			UpgradeProcessFactory.addColumns(
 				"ObjectDefinition", "enableObjectEntryHistory BOOLEAN"));
+
+		registry.register(
+			"3.25.0", "3.26.0",
+			new com.liferay.object.internal.upgrade.v3_26_0.
+				ObjectFieldSettingUpgradeProcess(_portalUUID));
+
+		registry.register(
+			"3.26.0", "3.26.1",
+			UpgradeProcessFactory.alterColumnType(
+				"ObjectDefinition", "className", "VARCHAR(255) null"));
+
+		registry.register("3.26.1", "3.27.0", new ObjectActionUpgradeProcess());
+
+		registry.register(
+			"3.27.0", "3.27.1",
+			new com.liferay.object.internal.upgrade.v3_27_1.
+				ObjectFieldSettingUpgradeProcess());
+
+		registry.register(
+			"3.27.1", "3.28.0",
+			new BaseExternalReferenceCodeUpgradeProcess() {
+
+				@Override
+				protected String[][] getTableAndPrimaryKeyColumnNames() {
+					return new String[][] {{"ObjectAction", "objectActionId"}};
+				}
+
+			});
+
+		registry.register(
+			"3.28.0", "4.0.0",
+			UpgradeProcessFactory.alterColumnType(
+				"ObjectAction", "description", "VARCHAR(75) null"),
+			UpgradeProcessFactory.alterColumnType(
+				"ObjectValidationRule", "script", "TEXT null"));
 	}
 
 	@Reference

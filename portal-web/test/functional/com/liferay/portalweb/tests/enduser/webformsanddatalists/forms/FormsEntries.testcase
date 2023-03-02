@@ -1,9 +1,8 @@
 @component-name = "portal-web-forms-and-data-lists"
 definition {
 
-	property custom.properties = "minifier.enabled=true";
 	property osgi.module.configuration.file.names = "com.liferay.frontend.js.loader.modules.extender.internal.configuration.Details.config";
-	property osgi.module.configurations = "waitTimeout=&quot;15&quot;";
+	property osgi.module.configurations = "waitTimeout=\"15\"";
 	property portal.release = "true";
 	property portal.upstream = "true";
 	property testray.main.component.name = "Forms";
@@ -17,7 +16,7 @@ definition {
 	tearDown {
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 		else {
@@ -34,7 +33,7 @@ definition {
 	}
 
 	@description = "Verify that Entries can be deleted"
-	@priority = "5"
+	@priority = 5
 	test CanBeDeleted {
 		property portal.acceptance = "true";
 
@@ -42,7 +41,7 @@ definition {
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.save();
 
@@ -76,7 +75,7 @@ definition {
 	}
 
 	@description = "Verify that Entries can be edited"
-	@priority = "5"
+	@priority = 5
 	test CanBeEdited {
 		property portal.acceptance = "true";
 
@@ -84,7 +83,7 @@ definition {
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.save();
 
@@ -120,21 +119,20 @@ definition {
 	}
 
 	@description = "Verify that a user can navigate to the correct metric by using the list on the right"
-	@priority = "5"
+	@priority = 5
 	test CanBeNavigatedUsingNavigationList {
-		property portal.acceptance = "quarantine";
-		property portal.upstream = "quarantine";
+		property portal.acceptance = "true";
 
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "1",
+			fieldPositionNumber = 1,
 			fieldType = "Select from List");
 
 		FormFields.editOptionsRow(
@@ -144,7 +142,7 @@ definition {
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "2",
+			fieldPositionNumber = 2,
 			fieldType = "Numeric");
 
 		Form.closeSidebar();
@@ -165,7 +163,7 @@ definition {
 
 		FormFields.editText(
 			fieldName = "Numeric",
-			fieldValue = "5");
+			fieldValue = 5);
 
 		FormPortlet.submitSuccessfully();
 
@@ -189,7 +187,7 @@ definition {
 	}
 
 	@description = "Verify that Entries can be viewed"
-	@priority = "5"
+	@priority = 5
 	test CanBeViewed {
 		property portal.acceptance = "true";
 
@@ -197,7 +195,7 @@ definition {
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.save();
 
@@ -228,7 +226,7 @@ definition {
 	}
 
 	@description = "LPS-74997 - Verify that editing a Form does not affect previously submitted Form Entries"
-	@priority = "4"
+	@priority = 4
 	test CanBeViewedAfterEditingTheForm {
 		property portal.acceptance = "true";
 		property portal.upstream = "true";
@@ -238,7 +236,7 @@ definition {
 		Form.editName(formName = "Delete Select Option Test");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Select from List");
 
 		var fieldName = FormFields.getFieldName();
@@ -249,7 +247,7 @@ definition {
 			FormFields.editOptionsRow(
 				optionName = "Select${number}",
 				optionValue = "Select ${number}",
-				rowNumber = "${number}");
+				rowNumber = ${number});
 		}
 
 		Form.closeSidebar();
@@ -280,7 +278,7 @@ definition {
 
 		FormsAdmin.viewSelectEntry(
 			fieldLabel = "Select",
-			fieldName = "${fieldName}",
+			fieldName = ${fieldName},
 			selectOption = "Select 2");
 
 		ProductMenu.gotoPortlet(
@@ -291,11 +289,11 @@ definition {
 
 		FormsAdminNavigator.gotoEditField(fieldName = "Select");
 
-		FormFields.deleteOptionsRow(rowNumber = "2");
+		FormFields.deleteOptionsRow(rowNumber = 2);
 
 		FormFields.viewDeletedSelectOptionsRowFieldValue(
 			fieldValue = "Select 2",
-			rowNumber = "2");
+			rowNumber = 2);
 
 		Form.closeSidebar();
 
@@ -311,12 +309,12 @@ definition {
 
 		FormsAdmin.viewSelectEntry(
 			fieldLabel = "Select",
-			fieldName = "${fieldName}",
+			fieldName = ${fieldName},
 			selectOption = "Select 2");
 	}
 
 	@description = "Verify that Entries Previews display the correct information"
-	@priority = "5"
+	@priority = 5
 	test DisplayCorrectInfoInPreviews {
 		property portal.acceptance = "true";
 
@@ -325,7 +323,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Text");
 
 		FormFields.editText(
@@ -335,7 +333,7 @@ definition {
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "1",
+			fieldPositionNumber = 1,
 			fieldType = "Numeric");
 
 		Form.save();
@@ -350,7 +348,7 @@ definition {
 
 		FormFields.editText(
 			fieldName = "Numeric",
-			fieldValue = "5");
+			fieldValue = 5);
 
 		FormPortlet.submitSuccessfully();
 
@@ -368,7 +366,7 @@ definition {
 
 		FormsAdmin.viewFormEntryWorkflowStatus(formEntryWorkflowStatus = "Test Text");
 
-		FormsAdmin.viewFormEntryWorkflowStatus(formEntryWorkflowStatus = "5");
+		FormsAdmin.viewFormEntryWorkflowStatus(formEntryWorkflowStatus = 5);
 
 		FormsAdmin.viewFormEntryWorkflowStatus(formEntryWorkflowStatus = "Approved");
 
@@ -376,7 +374,7 @@ definition {
 	}
 
 	@description = "Verify that the correct number of Entries are displayed"
-	@priority = "3"
+	@priority = 3
 	test DisplayCorrectNumberOfEntries {
 		property portal.acceptance = "true";
 
@@ -384,7 +382,7 @@ definition {
 
 		Form.editName(formName = "Form1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.save();
 
@@ -428,27 +426,27 @@ definition {
 	}
 
 	@description = "Verify that Entries for the Color, Date and Text Fields display a Field List in the Summary Tab"
-	@priority = "5"
+	@priority = 5
 	test DisplayFieldListInSummaryTab {
 		FormsAdmin.addForm();
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "1",
+			fieldPositionNumber = 1,
 			fieldType = "Color",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "2",
+			fieldPositionNumber = 2,
 			fieldType = "Date",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.save();
 
@@ -501,7 +499,7 @@ definition {
 	}
 
 	@description = "Verify that Entries for the Paragraph, Rich Text, Separator, Image, and Upload Fields do not display any metrics in the Summary Tab"
-	@priority = "5"
+	@priority = 5
 	test DisplayNoMetricsInSummaryTab {
 		property portal.acceptance = "true";
 
@@ -510,7 +508,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Paragraph");
 
 		FormFields.editParagraphBody(content = "Hello");
@@ -518,25 +516,25 @@ definition {
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "1",
+			fieldPositionNumber = 1,
 			fieldType = "Rich Text");
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "2",
+			fieldPositionNumber = 2,
 			fieldType = "Separator");
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "3",
+			fieldPositionNumber = 3,
 			fieldType = "Image");
 
 		Form.closeSidebar();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "4",
+			fieldPositionNumber = 4,
 			fieldType = "Upload");
 
 		Form.save();
@@ -575,13 +573,13 @@ definition {
 			key_text = "1 Entry",
 			locator1 = "FormViewBuilder#ENTRIES_TITLE_CONTENT");
 
-		AssertElementPresent(
-			key_value = "There are no entries",
-			locator1 = "FormFields#VALIDATION_ERROR_ENTRIES");
+		AssertTextEquals(
+			locator1 = "Message#EMPTY_STATE_INFO",
+			value1 = "There are no entries.");
 	}
 
 	@description = "Verify that Entries for the Numeric Field display a Field List, Average, Maximum Value, Minimum Value, and Sum in the Summary Tab"
-	@priority = "5"
+	@priority = 5
 	test DisplayStatisticsInSummaryTab {
 		property portal.acceptance = "true";
 
@@ -590,9 +588,9 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Numeric",
-			formPageNumber = "0");
+			formPageNumber = 0);
 
 		Form.save();
 
@@ -602,7 +600,7 @@ definition {
 
 		FormViewBuilder.editText(
 			fieldName = "Numeric",
-			fieldValue = "5");
+			fieldValue = 5);
 
 		FormPortlet.submitSuccessfully();
 
@@ -618,7 +616,7 @@ definition {
 
 		FormViewBuilder.editText(
 			fieldName = "Numeric",
-			fieldValue = "11");
+			fieldValue = 11);
 
 		FormPortlet.submitSuccessfully();
 
@@ -633,14 +631,14 @@ definition {
 		FormsAdminNavigator.gotoEntries();
 
 		FormViewBuilder.viewSummaryEntryNumeric(
-			key_averageValue = "8",
-			key_maxValue = "11",
-			key_minValue = "5",
-			key_sumValue = "16");
+			key_averageValue = 8,
+			key_maxValue = 11,
+			key_minValue = 5,
+			key_sumValue = 16);
 	}
 
 	@description = "LPS-61197 - Verify that with Single Approver Workflow enabled, the Date Field is properly displayed on an Entry submitted from the Forms Widget"
-	@priority = "5"
+	@priority = 5
 	test FromWidgetWithWorkflowEnabledDisplaysDateField {
 		property portal.acceptance = "true";
 
@@ -649,7 +647,7 @@ definition {
 		Form.editName();
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Date");
 
 		FormsAdminNavigator.gotoSettings();
@@ -728,7 +726,7 @@ definition {
 	}
 
 	@description = "Verify that with Single Approver Workflow enabled and after the form entry was approved, the entry will have an approved label"
-	@priority = "5"
+	@priority = 5
 	test WorkflowApprovalChangesLabelToApproved {
 		property portal.acceptance = "true";
 
@@ -736,7 +734,7 @@ definition {
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.closeSidebar();
 
@@ -750,7 +748,7 @@ definition {
 
 		FormsAdminNavigator.gotoPublishCopyURLLink();
 
-		var publishedFormURL = Form.getPublishedFormPublicURL(publishedFormPublicURL = "${publishedFormPublicURL}");
+		var publishedFormURL = Form.getPublishedFormPublicURL(publishedFormPublicURL = ${publishedFormPublicURL});
 
 		JSONUser.addUser(
 			userEmailAddress = "user1@liferay.com",
@@ -783,7 +781,7 @@ definition {
 
 		Navigator.openURL();
 
-		Navigator.openSpecificURL(url = "${publishedFormURL}");
+		Navigator.openSpecificURL(url = ${publishedFormURL});
 
 		FormViewBuilder.editText(
 			fieldName = "Text",
@@ -829,7 +827,7 @@ definition {
 	}
 
 	@description = "Verify that with Single Approver Workflow enabled, the Submit button now reads "Submit for Publication""
-	@priority = "5"
+	@priority = 5
 	test WorkflowChangesSubmitButtonToSubmitForPublication {
 		property portal.acceptance = "true";
 
@@ -837,7 +835,7 @@ definition {
 
 		Form.editName(formName = "Form 1");
 
-		Form.addTextField(fieldPositionNumber = "0");
+		Form.addTextField(fieldPositionNumber = 0);
 
 		Form.closeSidebar();
 
@@ -855,7 +853,7 @@ definition {
 	}
 
 	@description = "This is a use case for LPS-103694. Verify that with Single Approver Workflow enabled and after the user Submit for Publication, the form entry will have a pending label and the admin is notified of form submission"
-	@priority = "5"
+	@priority = 5
 	test WorkflowSubmissionChangesLabelToPending {
 		property portal.acceptance = "true";
 
@@ -864,7 +862,7 @@ definition {
 		Form.editName(formName = "Form 1");
 
 		Form.gotoAddField(
-			fieldPositionNumber = "0",
+			fieldPositionNumber = 0,
 			fieldType = "Text");
 
 		FormsAdminNavigator.gotoSettings();
@@ -879,7 +877,7 @@ definition {
 
 		var publishFormURL = Form.getPublishedFormPublicURL();
 
-		Navigator.openSpecificURL(url = "${publishFormURL}");
+		Navigator.openSpecificURL(url = ${publishFormURL});
 
 		FormFields.editText(
 			fieldName = "Text",
@@ -899,9 +897,9 @@ definition {
 
 		// Pausing 120 seconds due to LPS-159468
 
-		Pause(locator1 = "120000");
+		Pause(locator1 = 120000);
 
-		Navigator.openSpecificURL(url = "${publishFormURL}");
+		Navigator.openSpecificURL(url = ${publishFormURL});
 
 		FormFields.editText(
 			fieldName = "Text",

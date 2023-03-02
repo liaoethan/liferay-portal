@@ -16,13 +16,13 @@ definition {
 
 		var testPortalInstance = PropsUtil.get("test.portal.instance");
 
-		if ("${testPortalInstance}" == "true") {
+		if (${testPortalInstance} == "true") {
 			PortalInstances.tearDownCP();
 		}
 	}
 
 	@description = "LPS-150886 - Verify that it's possible to delete an object after deleting the relationship"
-	@priority = "4"
+	@priority = 4
 	test CanDeleteCustomObjectAfterDeleteRelationship {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 290",
@@ -48,11 +48,7 @@ definition {
 
 		ObjectAdmin.openObjectAdmin();
 
-		Click(
-			key_objectLabel = "Custom Object 290",
-			locator1 = "ObjectAdmin#OBJECT_KEBAB_MENU");
-
-		MenuItem.clickNoError(menuItem = "Delete");
+		CreateObject.deleteObjectViaUI(objectLabel = "Custom Object 290");
 
 		SelectFrame(locator1 = "ObjectCustomViews#VIEW_MODAL_CONTENT");
 
@@ -80,7 +76,7 @@ definition {
 	}
 
 	@description = "LPS-150886 - Verify that it's possible to delete a published object"
-	@priority = "5"
+	@priority = 5
 	test CanDeletePublishedCustomObject {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 290",
@@ -113,7 +109,7 @@ definition {
 	}
 
 	@description = "LPS-135406 - Verify it is the user is able to delete a relationship of object native"
-	@priority = "4"
+	@priority = 4
 	test CanDeleteRelationshipFromNativeObject {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 151498",
@@ -123,7 +119,7 @@ definition {
 		for (var systemObjects : list "Account,Commerce Product,Commerce Product Group,Commerce Order,User") {
 			ObjectAdmin.openObjectAdmin();
 
-			ObjectPortlet.selectSystemObject(label = "${systemObjects}");
+			ObjectPortlet.selectSystemObject(label = ${systemObjects});
 
 			ObjectAdmin.gotoRelationshipsTab();
 
@@ -142,8 +138,53 @@ definition {
 		}
 	}
 
+	@description = "LPS-158615 - Verify that it's possible to filter object entries by API"
+	@priority = 4
+	test CanFilterObjectEntriesViaAPI {
+		task ("Given a custom object with a text field") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 158615",
+				objectName = "CustomObject158615",
+				pluralLabelName = "Custom Objects 158615");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Text",
+				fieldLabelName = "Food",
+				fieldName = "customObjectField",
+				fieldType = "String",
+				isRequired = "false",
+				objectName = "CustomObject158615");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject158615");
+		}
+
+		task ("When entries are added to the object") {
+			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
+				fieldName = "customObjectField",
+				objectName = "CustomObject158615",
+				value = "Apple");
+
+			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
+				fieldName = "customObjectField",
+				objectName = "CustomObject158615",
+				value = "Apple Sauce");
+
+			ObjectAdmin.addObjectSingleFieldEntryViaAPI(
+				fieldName = "customObjectField",
+				objectName = "CustomObject158615",
+				value = "Banana");
+		}
+
+		task ("Then the object's entries can be filtered") {
+			ObjectAdmin.filterObjectEntryViaAPI(
+				fieldName = "customObjectField",
+				objectName = "CustomObject158615",
+				value = "Apple");
+		}
+	}
+
 	@description = "LPS-150886 - Verify that it's not possible to delete an object that has a relationship"
-	@priority = "5"
+	@priority = 5
 	test CannotDeleteCustomObjectWithRelationship {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 290",
@@ -169,11 +210,7 @@ definition {
 
 		ObjectAdmin.openObjectAdmin();
 
-		Click(
-			key_objectLabel = "Custom Object 290",
-			locator1 = "ObjectAdmin#OBJECT_KEBAB_MENU");
-
-		MenuItem.clickNoError(menuItem = "Delete");
+		CreateObject.deleteObjectViaUI(objectLabel = "Custom Object 290");
 
 		SelectFrame(locator1 = "ObjectCustomViews#VIEW_MODAL_CONTENT");
 
@@ -181,12 +218,12 @@ definition {
 	}
 
 	@description = "LPS-135406 - Verify it is not possible to delete native fields of objects native"
-	@priority = "4"
+	@priority = 4
 	test CannotDeleteFieldsFromNativeObjects {
 		for (var systemObjects : list "Account,Commerce Product,Commerce Product Group,Commerce Order,Postal Address,User") {
 			ObjectAdmin.openObjectAdmin();
 
-			ObjectPortlet.selectSystemObject(label = "${systemObjects}");
+			ObjectPortlet.selectSystemObject(label = ${systemObjects});
 
 			ObjectAdmin.goToFieldsTab();
 
@@ -195,7 +232,7 @@ definition {
 	}
 
 	@description = "LPS-135406 - Verify it is not possible to delete a relationship field of custom object from a native object"
-	@priority = "4"
+	@priority = 4
 	test CannotDeleteReleationshipFieldFromNativeObject {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 151500",
@@ -219,7 +256,7 @@ definition {
 	}
 
 	@description = "LPS-150886 - Verify that the custom object label cannot be used to confirm the deletion"
-	@priority = "5"
+	@priority = 5
 	test CannotUseObjectLabelAsConfirmation {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 290 Test",
@@ -238,11 +275,7 @@ definition {
 
 		ObjectAdmin.openObjectAdmin();
 
-		Click(
-			key_objectLabel = "Custom Object 290 Test",
-			locator1 = "ObjectAdmin#OBJECT_KEBAB_MENU");
-
-		MenuItem.clickNoError(menuItem = "Delete");
+		CreateObject.deleteObjectViaUI(objectLabel = "Custom Object 290 Test");
 
 		SelectFrame(locator1 = "ObjectCustomViews#VIEW_MODAL_CONTENT");
 
@@ -256,7 +289,7 @@ definition {
 	}
 
 	@description = "LPS-135406 - Verify it is possible to update the label of relationship field of custom object from a native object"
-	@priority = "4"
+	@priority = 4
 	test CanUpdateRelationshipFieldLabelFromNativeObject {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 151501",
@@ -280,7 +313,7 @@ definition {
 
 		CreateObject.editLabel(labelName = "New Relationship");
 
-		Button.clickSave();
+		PortletEntry.save();
 
 		Refresh();
 
@@ -290,7 +323,7 @@ definition {
 	}
 
 	@description = "LPS-135406 - Verify it is possible to update the label of relationship of native object"
-	@priority = "4"
+	@priority = 4
 	test CanUpdateRelationshipLavelFromNativeObject {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 151499",
@@ -314,7 +347,7 @@ definition {
 
 		CreateObject.editLabel(labelName = "New Relationship");
 
-		Button.clickSave();
+		PortletEntry.save();
 
 		Refresh();
 
@@ -323,8 +356,45 @@ definition {
 			locator1 = "CreateObject#SELECT_OBJECT_FIELD_IN_TABLE");
 	}
 
+	@description = "LPS-162024 - Verify that an error message is shown when the user enters the wrong value in the confirmation field"
+	@priority = 4
+	test CanViewErrorMessageWithIncorrectValue {
+		task ("Given an object with a field is created") {
+			ObjectAdmin.addObjectViaAPI(
+				labelName = "Custom Object 162024",
+				objectName = "CustomObject162024",
+				pluralLabelName = "Custom Objects 162024");
+
+			ObjectAdmin.addObjectFieldViaAPI(
+				fieldBusinessType = "Text",
+				fieldLabelName = "Custom Field",
+				fieldName = "customObjectField",
+				fieldType = "String",
+				isRequired = "false",
+				objectName = "CustomObject162024");
+
+			ObjectAdmin.publishObjectViaAPI(objectName = "CustomObject162024");
+		}
+
+		task ("When the user enters an incorrect value in the confirmation field while deleting the object") {
+			ObjectAdmin.openObjectAdmin();
+
+			CreateObject.deleteObjectViaUI(objectLabel = "Custom Object 162024");
+
+			SelectFrame(locator1 = "ObjectCustomViews#VIEW_MODAL_CONTENT");
+
+			Type(
+				locator1 = "ObjectAdmin#PLACEHOLDER_DELETE_OBJECT",
+				value1 = "anyone");
+		}
+
+		task ("Then an error message is shown") {
+			AssertElementPresent(locator1 = "Message#WARNING_FEEDBACK");
+		}
+	}
+
 	@description = "Verify that it's possible to view the custom object after restarting portal"
-	@priority = "5"
+	@priority = 5
 	test CanViewObjectAfterRestart {
 		property portal.acceptance = "true";
 
@@ -352,7 +422,7 @@ definition {
 
 			CreateObject.selectPanelCategoryKey(panelCategoryKey = "Control Panel > Users");
 
-			ObjectAdmin.saveCustomObject();
+			Button.clickSave();
 		}
 
 		task ("Create an Entry (via API)") {
@@ -401,7 +471,7 @@ definition {
 	}
 
 	@description = "LPS-150886 - Verify that the delete modal contains a warning message with the number of entries that will be deleted"
-	@priority = "4"
+	@priority = 4
 	test CanViewWarningMessageDeleteModal {
 		ObjectAdmin.addObjectViaAPI(
 			labelName = "Custom Object 290",
@@ -427,11 +497,7 @@ definition {
 
 		ObjectAdmin.openObjectAdmin();
 
-		Click(
-			key_objectLabel = "Custom Object 290",
-			locator1 = "ObjectAdmin#OBJECT_KEBAB_MENU");
-
-		MenuItem.clickNoError(menuItem = "Delete");
+		CreateObject.deleteObjectViaUI(objectLabel = "Custom Object 290");
 
 		SelectFrame(locator1 = "ObjectCustomViews#VIEW_MODAL_CONTENT");
 

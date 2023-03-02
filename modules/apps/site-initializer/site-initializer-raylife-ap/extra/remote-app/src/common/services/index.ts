@@ -26,11 +26,12 @@ export function parametersFormater(
 		parametersContainer.push(`${item}=${parameters[item]}`);
 	});
 
-	const parametersString = '?' + parametersContainer.join('&');
+	const parametersString = parametersContainer.join('&');
 
 	return parametersString;
 }
 
 export * from './Application';
+export * from './Claim';
 export * from './Policy';
 export * from './SalesGoal';
