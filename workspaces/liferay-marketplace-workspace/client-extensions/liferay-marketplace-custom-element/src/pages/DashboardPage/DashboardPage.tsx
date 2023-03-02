@@ -8,8 +8,7 @@ import {
 } from '../../components/DashboardTable/DashboardTable';
 import {Footer} from '../../components/Footer/Footer';
 import {Header} from '../../components/Header/Header';
-import {getProducts} from '../../utils/api';
-import {getProductSpecifications} from '../../utils/api';
+import {getProducts, getProductSpecifications} from '../../utils/api';
 import {AppDetailsPage} from '../AppDetailsPage/AppDetailsPage';
 import {initialDashboardNavigationItems} from './DashboardPageUtil';
 
@@ -39,38 +38,61 @@ export function DashboardPage() {
   		return monthNames[monthIndex] + ', ' + day + ' ' + year;
 	}
 
-	const getProductTypeList = async () => {
-		const products = await getProducts();
+	function getAppListProductSpecifications(productIds : number[]) {
+		let appListProductSpecifications : any[] = [];
 
-		const productTypeList : string[] = [];
-
-		products.items.map((product: any) => {
-			const productId : number = product.productId;
-
-			getProductSpecifications({appProductId : productId}).then(productSpecifications =>
-				productTypeList.push(productSpecifications.items[0].value.en_US)
-			);
+		productIds.forEach((productId) =>  {
+			appListProductSpecifications.push(getProductSpecifications({appProductId: productId}));
 		})
 
-		return productTypeList;
+		return Promise.all(appListProductSpecifications);
+	}
+
+	function getAppListProductIds(products: any) {
+		const productIds : any[] = [];
+
+		products.items.map((product: any) => {
+			productIds.push(product.productId);
+		})
+
+		return productIds;
+	}
+
+	function getProductTypeFromSpecifications(specifications: any) {
+		var productType = 'no type';
+
+		specifications.items.forEach((specification: any) => {
+			if (specification.specificationKey === "type") {
+				productType = specification.value.en_US;
+			}
+		})
+
+		return productType;
 	}
 
 	useEffect(() => {
-		(async () => {
-			let [products, productTypeList] = await Promise.all([getProducts(), getProductTypeList()]);
+		const setNewAppList = async () => {
+			const appList = await getProducts();
 
-			const liferayApps = products.items.map((product: any, index: number) => ({
-				thumbnail: product.thumbnail,
-				name: product.name.en_US,
-				updatedDate: formatDate(product.modifiedDate),
-				updatedBy: product.catalogId,
-				version: product.version,
-				status: product.productStatus,
-				type: productTypeList[index]
-			}))
-			setApps(liferayApps);
-		})();
-	}, []);
+			const appListProductIds : number[] = getAppListProductIds(appList);
+
+			const appListProductSpecifications = await getAppListProductSpecifications(appListProductIds);
+
+			const newAppList = appList.items.map((product: any, index: number) => {
+				return {
+					thumbnail: product.thumbnail,
+					name: product.name.en_US,
+					updatedDate: formatDate(product.modifiedDate),
+					updatedBy: product.catalogId,
+					version: product.version,
+					status: product.workflowStatusInfo.label,
+					type: getProductTypeFromSpecifications(appListProductSpecifications[index])
+				}
+			})
+			setApps(newAppList);
+		}
+		setNewAppList();
+	}, [])
 
 	return (
 		<div className="dashboard-page-container">
