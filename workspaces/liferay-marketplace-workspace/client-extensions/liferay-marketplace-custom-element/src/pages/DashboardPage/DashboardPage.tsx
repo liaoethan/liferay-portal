@@ -70,6 +70,18 @@ export function DashboardPage() {
 		return productType;
 	}
 
+	function getProductVersionFromSpecifications(specifications: any) {
+		var productVersion = '0';
+
+		specifications.items.forEach((specification: any) => {
+			if (specification.specificationKey === "version") {
+				productVersion = specification.value.en_US;
+			}
+		})
+
+		return productVersion;
+	}
+
 	useEffect(() => {
 		const setNewAppList = async () => {
 			const appList = await getProducts();
@@ -84,7 +96,7 @@ export function DashboardPage() {
 					name: product.name.en_US,
 					updatedDate: formatDate(product.modifiedDate),
 					updatedBy: product.catalogId,
-					version: product.version,
+					version: getProductVersionFromSpecifications(appListProductSpecifications[index]),
 					status: product.workflowStatusInfo.label,
 					type: getProductTypeFromSpecifications(appListProductSpecifications[index])
 				}
