@@ -17,6 +17,7 @@ import './DashboardPage.scss';
 export function DashboardPage() {
 	const [selectedApp, setSelectedApp] = useState<AppProps>();
 	const [apps, setApps] = useState<AppProps[]>(Array<AppProps>());
+	const [loading, setLoading] = useState(false);
 	const [dashboardNavigationItems, setDashboardNavigationItems] = useState(
 		initialDashboardNavigationItems
 	);
@@ -72,6 +73,8 @@ export function DashboardPage() {
 
 	useEffect(() => {
 		const setNewAppList = async () => {
+			setLoading(true);
+
 			const appList = await getProducts();
 
 			const appListProductIds : number[] = getAppListProductIds(appList);
@@ -89,6 +92,8 @@ export function DashboardPage() {
 					type: getProductTypeFromSpecifications(appListProductSpecifications[index])
 				}
 			})
+
+			setLoading(false);
 			setApps(newAppList);
 		}
 		setNewAppList();
@@ -96,46 +101,43 @@ export function DashboardPage() {
 
 	return (
 		<div className="dashboard-page-container">
-			<div>
-				<div className="dashboard-page-body-container">
-					<DashboardNavigation
-						accountAppsNumber="4"
-						accountIcon={accountLogo}
-						accountTitle="Acme Co"
+			<div className="dashboard-page-body-container">
+				<DashboardNavigation
+					accountAppsNumber="4"
+					accountIcon={accountLogo}
+					accountTitle="Acme Co"
+					dashboardNavigationItems={dashboardNavigationItems}
+					onSelectAppChange={setSelectedApp}
+					setDashboardNavigationItems={
+						setDashboardNavigationItems
+					}
+				/>
+
+				{selectedApp ? (
+					<AppDetailsPage
 						dashboardNavigationItems={dashboardNavigationItems}
-						onSelectAppChange={setSelectedApp}
-						setDashboardNavigationItems={
-							setDashboardNavigationItems
-						}
+						selectedApp={selectedApp}
+						setSelectedApp={setSelectedApp}
 					/>
+				) : (
+					<div className="dashboard-page-body">
+						<div className="dashboard-page-body-header-container">
+							<Header
+								description="Manage and publish apps on the Marketplace"
+								title="Apps"
+							/>
 
-					{selectedApp ? (
-						<AppDetailsPage
-							dashboardNavigationItems={dashboardNavigationItems}
-							selectedApp={selectedApp}
-							setSelectedApp={setSelectedApp}
-						/>
-					) : (
-						<div>
-							<div className="dashboard-page-body-header-container">
-								<Header
-									description="Manage and publish apps on the Marketplace"
-									title="Apps"
-								/>
-
-								<a href="/create-new-app">
-									<button className="dashboard-page-body-header-button">
-										+ New App
-									</button>
-								</a>
-							</div>
-
-							<DashboardTable apps={apps} />
+							<a href="/create-new-app">
+								<button className="dashboard-page-body-header-button">
+									+ New App
+								</button>
+							</a>
 						</div>
-					)}
-				</div>
-			</div>
 
+						<DashboardTable apps={apps} loading={loading}/>
+					</div>
+				)}
+			</div>
 			<Footer />
 		</div>
 	);

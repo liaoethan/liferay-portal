@@ -17,6 +17,50 @@
 		}
 	}
 
+	&-loading {
+		&-container {
+			border: 1px solid #E2E2E4;
+			border-radius: 8px;
+		}
+
+		&-image-container {
+			margin-top: 5rem;
+			text-align: center;
+		}
+
+		&-text {
+			font-family: 'Source Sans Pro', sans-serif;
+			font-weight: 600;
+			font-size: 18px;
+			line-height: 24px;
+			margin-bottom: 5rem;
+			margin-top: 1.5rem;
+			text-align: center;
+		}
+	}
+
+	&-no-apps {
+		&-text {
+			font-family: 'Source Sans Pro', sans-serif;
+			font-weight: 600;
+			font-size: 18px;
+			line-height: 24px;
+			margin-bottom: 0.5rem;
+			margin-top: 1.5rem;
+			text-align: center;
+		}
+
+		&-description {
+			color: #6C6C75;
+			font-family: 'Source Sans Pro', sans-serif;
+			font-weight: 400;
+			font-size: 15px;
+			line-height: 24px;
+			margin-bottom: 5rem;
+			text-align: center;
+		}
+	}
+
 	&-header-text {
 		color: #6c6c75;
 		font-family: 'Source Sans Pro', sans-serif;
