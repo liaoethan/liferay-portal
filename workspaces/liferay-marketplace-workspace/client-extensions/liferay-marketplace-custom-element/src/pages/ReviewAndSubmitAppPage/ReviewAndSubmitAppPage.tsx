@@ -104,11 +104,7 @@ export function ReviewAndSubmitAppPage({
 				[];
 
 			productSpecificationsResponse.items.map(
-				(specification: {
-					specificationKey: string;
-					title: {[key: string]: string};
-					value: {[key: string]: string};
-				}) => {
+				(specification) => {
 					const {specificationKey, value} = specification;
 					const localizedValue = value['en_US'];
 
