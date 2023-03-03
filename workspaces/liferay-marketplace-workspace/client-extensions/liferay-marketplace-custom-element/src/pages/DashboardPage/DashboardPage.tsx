@@ -18,9 +18,15 @@ export function DashboardPage() {
 	const [selectedApp, setSelectedApp] = useState<AppProps>();
 	const [apps, setApps] = useState<AppProps[]>(Array<AppProps>());
 	const [loading, setLoading] = useState(false);
+	const [appListSearchQuery, setAppListSearchQuery] = useState('')
+
 	const [dashboardNavigationItems, setDashboardNavigationItems] = useState(
 		initialDashboardNavigationItems
 	);
+
+	const handleAppListSearchInput = (e: any) => {
+		setAppListSearchQuery(e.target.value)
+	}
 
 	const formatDate = (date: string) => {
 		var dateObject = new Date(date);
@@ -94,14 +100,20 @@ export function DashboardPage() {
 			const appListProductSpecifications = await getAppListProductSpecifications(appListProductIds);
 
 			const newAppList = appList.items.map((product: any, index: number) => {
-				return {
-					thumbnail: product.thumbnail,
-					name: product.name.en_US,
-					updatedDate: formatDate(product.modifiedDate),
-					updatedBy: product.catalogId,
-					version: getProductVersionFromSpecifications(appListProductSpecifications[index]),
-					status: product.workflowStatusInfo.label,
-					type: getProductTypeFromSpecifications(appListProductSpecifications[index])
+				const appName = product.name.en_US;
+
+				if (appName.includes(appListSearchQuery)) {
+					return {
+						thumbnail: product.thumbnail,
+						name: appName,
+						updatedDate: formatDate(product.modifiedDate),
+						updatedBy: product.catalogId,
+						version: getProductVersionFromSpecifications(appListProductSpecifications[index]),
+						status: product.workflowStatusInfo.label,
+						type: getProductTypeFromSpecifications(appListProductSpecifications[index])
+					}
+				} else {
+					return {}
 				}
 			})
 
@@ -109,7 +121,7 @@ export function DashboardPage() {
 			setApps(newAppList);
 		}
 		setNewAppList();
-	}, [])
+	}, [appListSearchQuery])
 
 	return (
 		<div className="dashboard-page-container">
@@ -137,6 +149,14 @@ export function DashboardPage() {
 							<Header
 								description="Manage and publish apps on the Marketplace"
 								title="Apps"
+							/>
+
+							<input
+								className="dashboard-page-app-list-search"
+								onChange={handleAppListSearchInput}
+								placeholder="Search Apps"
+								type="search"
+								value={appListSearchQuery}
 							/>
 
 							<a href="/create-new-app">
