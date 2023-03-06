@@ -84,21 +84,20 @@ export function DashboardPage() {
 
 			const newAppList = appList.items.map((product: any, index: number) => {
 				return {
-					thumbnail: product.thumbnail,
 					name: product.name.en_US,
-					updatedDate: formatDate(product.modifiedDate),
-					updatedBy: product.catalogId,
+					status: product.workflowStatusInfo.label.replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase()),
+					thumbnail: product.thumbnail,
+					type: getProductTypeFromSpecifications(appListProductSpecifications[index]),
 					version: getProductVersionFromSpecifications(appListProductSpecifications[index]),
-					status: product.workflowStatusInfo.label,
-					type: getProductTypeFromSpecifications(appListProductSpecifications[index])
+					updatedBy: product.catalogId,
+					updatedDate: formatDate(product.modifiedDate)
 				}
 			})
 
 			setLoading(false);
 			setApps(newAppList);
-		}
-		setNewAppList();
-	}, [])
+		})();
+	}, []);
 
 	return (
 		<div className="dashboard-page-container">
