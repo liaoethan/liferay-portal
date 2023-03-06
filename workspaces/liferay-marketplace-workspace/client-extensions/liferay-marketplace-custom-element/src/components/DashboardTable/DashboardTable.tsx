@@ -23,9 +23,9 @@ interface DashboardTableProps {
 }
 
 export function DashboardTable({apps, loading}: DashboardTableProps) {
-	if (apps.length === 0) {
-		if (loading) {
-			return (
+	return (
+		<div>
+			{apps.length === 0 && loading && (
 				<div className="dashboard-table-loading-container">
 					<div className="dashboard-table-loading-image-container">
 						<img
@@ -38,9 +38,9 @@ export function DashboardTable({apps, loading}: DashboardTableProps) {
 						Apps Loading . . .
 					</div>
 				</div>
-			)
-		} else {
-			return (
+			)}
+
+			{apps.length === 0 && !loading && (
 				<div className="dashboard-table-loading-container">
 					<div className="dashboard-table-loading-image-container">
 						<img
@@ -56,51 +56,51 @@ export function DashboardTable({apps, loading}: DashboardTableProps) {
 						Create new apps and they will show up here. Click on "<a href="/create-new-app">New App</a>" to start creating apps
 					</div>
 				</div>
-			)
-		}
-	} else {
-		return (
-			<ClayTable borderless className="dashboard-table-container">
-				<ClayTable.Head>
-					<ClayTable.Cell headingCell>
-						<div className="dashboard-table-header-name">
+			)}
+
+			{apps.length !== 0 && (
+				<ClayTable borderless className="dashboard-table-container">
+					<ClayTable.Head>
+						<ClayTable.Cell headingCell>
+							<div className="dashboard-table-header-name">
+								<span className="dashboard-table-header-text">
+									Name
+								</span>
+
+								<img
+									alt="Swap Vert"
+									className="dashboard-table-header-name-icon"
+									src={swapVert}
+								/>
+							</div>
+						</ClayTable.Cell>
+
+						<ClayTable.Cell headingCell>
+							<span className="dashboard-table-header-text">Version</span>
+						</ClayTable.Cell>
+
+						<ClayTable.Cell headingCell>
+							<span className="dashboard-table-header-text">Type</span>
+						</ClayTable.Cell>
+
+						<ClayTable.Cell headingCell>
 							<span className="dashboard-table-header-text">
-								Name
+								Last Updated
 							</span>
+						</ClayTable.Cell>
 
-							<img
-								alt="Swap Vert"
-								className="dashboard-table-header-name-icon"
-								src={swapVert}
-							/>
-						</div>
-					</ClayTable.Cell>
+						<ClayTable.Cell headingCell>
+							<span className="dashboard-table-header-text">Status</span>
+						</ClayTable.Cell>
+					</ClayTable.Head>
 
-					<ClayTable.Cell headingCell>
-						<span className="dashboard-table-header-text">Version</span>
-					</ClayTable.Cell>
-
-					<ClayTable.Cell headingCell>
-						<span className="dashboard-table-header-text">Type</span>
-					</ClayTable.Cell>
-
-					<ClayTable.Cell headingCell>
-						<span className="dashboard-table-header-text">
-							Last Updated
-						</span>
-					</ClayTable.Cell>
-
-					<ClayTable.Cell headingCell>
-						<span className="dashboard-table-header-text">Status</span>
-					</ClayTable.Cell>
-				</ClayTable.Head>
-
-				<ClayTable.Body>
-					{apps.map((app) => (
-						<DashboardTableRow app={app} key={app.name} />
-					))}
-				</ClayTable.Body>
-			</ClayTable>
-		);
-	}
+					<ClayTable.Body>
+						{apps.map((app) => (
+							<DashboardTableRow app={app} key={app.name} />
+						))}
+					</ClayTable.Body>
+				</ClayTable>
+			)}
+		</div>
+	);
 }
