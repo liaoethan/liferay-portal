@@ -54,6 +54,9 @@ export function DashboardPage() {
 		specifications.items.forEach((specification: any) => {
 			if (specification.specificationKey === "type") {
 				productType = specification.value.en_US;
+
+				if (productType === "saas") productType = "SaaS"
+				else if (productType === "osgi") productType = "OSGI"
 			}
 		})
 
@@ -73,7 +76,7 @@ export function DashboardPage() {
 	}
 
 	useEffect(() => {
-		const setNewAppList = async () => {
+		(async () => {
 			setLoading(true);
 
 			const appList = await getProducts();
