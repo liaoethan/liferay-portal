@@ -23,20 +23,9 @@ export function DashboardPage() {
 	);
 
 	const formatDate = (date: string) => {
-		var dateObject = new Date(date);
+		let formattedDate = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', day: 'numeric'}).format(new Date(date));
 
-		var monthNames = [
-			"Jan", "Feb", "Mar",
-			"Apr", "May", "Jun", "Jul",
-			"Aug", "Sep", "Oct",
-			"Nov", "Dec"
-		];
-
-		var day = dateObject.getDate();
-		var monthIndex = dateObject.getMonth();
-		var year = dateObject.getFullYear();
-
-  		return monthNames[monthIndex] + ', ' + day + ' ' + year;
+		return formattedDate;
 	}
 
 	function getAppListProductSpecifications(productIds : number[]) {
