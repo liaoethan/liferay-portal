@@ -79,7 +79,7 @@ export function DashboardPage() {
 		(async () => {
 			setLoading(true);
 
-			const appList = await getProducts();
+			const appList = await getProducts();d
 
 			const appListProductIds : number[] = getAppListProductIds(appList);
 
