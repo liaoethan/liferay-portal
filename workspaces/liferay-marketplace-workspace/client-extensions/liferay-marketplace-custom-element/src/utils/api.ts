@@ -7,7 +7,7 @@ const headers = {
 export function createApp({
 	appDescription,
 	appName,
-	catalogId,
+	catalogId
 }: {
 	appDescription: string;
 	appName: string;
@@ -174,6 +174,15 @@ export async function createSpecification({body}: {body: Object}) {
 export async function getCatalogs() {
 	const response = await fetch(
 		'/o/headless-commerce-admin-catalog/v1.0/catalogs',
+		{headers, method: 'GET'}
+	);
+
+	return response.json();
+}
+
+export async function getCatalog({catalogId}: {catalogId: number}) {
+	const response = await fetch(
+		`/o/headless-commerce-admin-catalog/v1.0/catalog/${catalogId}`,
 		{headers, method: 'GET'}
 	);
 
