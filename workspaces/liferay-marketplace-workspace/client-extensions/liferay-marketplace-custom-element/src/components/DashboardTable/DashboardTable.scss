@@ -1,6 +1,10 @@
 .dashboard-table {
 	&-container {
 		table-layout: fixed;
+
+		tr {
+			border: 0;
+		}
 	}
 
 	&-header-name {
