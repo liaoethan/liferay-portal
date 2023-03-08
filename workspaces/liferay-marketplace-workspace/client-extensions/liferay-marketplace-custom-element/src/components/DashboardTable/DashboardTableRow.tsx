@@ -17,10 +17,10 @@ interface DashboardTableRowProps {
 export function DashboardTableRow({app}: DashboardTableRowProps) {
 	const {
 		image,
+		lastUpdatedBy,
 		name,
 		status,
 		type,
-		updatedBy,
 		updatedDate,
 		updatedResponsible,
 		version,
@@ -62,7 +62,7 @@ export function DashboardTableRow({app}: DashboardTableRowProps) {
 				</div>
 
 				<span className="dashboard-table-row-last-updated-by">
-					{updatedBy}
+					{lastUpdatedBy}
 				</span>
 			</ClayTable.Cell>
 

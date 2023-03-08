@@ -88,11 +88,11 @@ export function DashboardPage() {
 			const newAppList = appList.items.map((product: any, index: number) => {
 				return {
 					name: product.name.en_US,
+					lastUpdatedBy: product.lastUpdatedBy,
 					status: product.workflowStatusInfo.label.replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase()),
 					thumbnail: product.thumbnail,
 					type: getProductTypeFromSpecifications(appListProductSpecifications[index]),
 					version: getProductVersionFromSpecifications(appListProductSpecifications[index]),
-					updatedBy: product.catalogId,
 					updatedDate: formatDate(product.modifiedDate)
 				}
 			})

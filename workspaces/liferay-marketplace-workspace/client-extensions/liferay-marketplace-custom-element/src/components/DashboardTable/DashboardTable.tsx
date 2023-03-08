@@ -8,11 +8,11 @@ import {DashboardTableRow} from './DashboardTableRow';
 
 export type AppProps = {
 	image: string;
+	lastUpdatedBy: string;
 	name: string;
 	selected: boolean;
 	status: string;
 	type: string;
-	updatedBy: string;
 	updatedDate: string;
 	updatedResponsible: string;
 	version: string;

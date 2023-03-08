@@ -1,4 +1,4 @@
-declare let Liferay: {authToken: string};
+declare let Liferay: {authToken: string, ThemeDisplay: any};
 const headers = {
 	'Content-Type': 'application/json',
 	'X-CSRF-Token': Liferay.authToken,
@@ -20,6 +20,7 @@ export function createApp({
 			description: {en_US: appDescription},
 			name: {en_US: appName},
 			productType: 'virtual',
+			lastUpdatedBy: Liferay.ThemeDisplay.getUserName()
 		}),
 		headers,
 		method: 'POST',
