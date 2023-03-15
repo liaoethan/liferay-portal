@@ -4,11 +4,20 @@ const headers = {
 	'X-CSRF-Token': Liferay.authToken,
 };
 
+type Categories = {
+	externalReferenceCode: string,
+	id: number,
+	name: string,
+	vocabulary: string
+};
+
 export function createApp({
+	appCategories,
 	appDescription,
 	appName,
 	catalogId
 }: {
+	appCategories: Categories[];
 	appDescription: string;
 	appName: string;
 	catalogId: number;
@@ -17,6 +26,7 @@ export function createApp({
 		body: JSON.stringify({
 			active: true,
 			catalogId,
+			categories: appCategories,
 			description: {en_US: appDescription},
 			name: {en_US: appName},
 			productStatus: 2,
@@ -181,6 +191,18 @@ export async function getCatalogs() {
 	return response.json();
 }
 
+export async function getCategories({vocabId}: {vocabId: number}) {
+	const response = await fetch(
+		`/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/${vocabId}/taxonomy-categories`,
+		{
+			headers,
+			method: 'GET'
+		}
+	);
+
+	return response.json();
+}
+
 export async function getProduct({appERC}: {appERC: string}) {
 	const response = await fetch(
 		`/o/headless-commerce-admin-catalog/v1.0/products/by-externalReferenceCode/${appERC}
@@ -244,6 +266,18 @@ export async function getProductSpecifications({
 	);
 
 	return await response.json();
+}
+
+export async function getVocabularies() {
+	const response = await fetch(
+		`/o/headless-admin-taxonomy/v1.0/sites/${Liferay.ThemeDisplay.getCompanyGroupId()}/taxonomy-vocabularies`,
+		{
+			headers,
+			method: 'GET'
+		}
+	);
+
+	return response.json();
 }
 
 export function patchAppByExternalReferenceCode({
