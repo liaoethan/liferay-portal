@@ -6,8 +6,6 @@ import './DashboardTableRow.scss';
 
 import classNames from 'classnames';
 
-import starEmpty from '../../assets/icons/star-empty.svg';
-import starFill from '../../assets/icons/star-fill.svg';
 import {AppProps} from './DashboardTable';
 
 interface DashboardTableRowProps {
@@ -18,7 +16,6 @@ export function DashboardTableRow({item}: DashboardTableRowProps) {
 	const {
 		image,
 		name,
-		rating,
 		status,
 		type,
 		updatedBy,
@@ -65,30 +62,6 @@ export function DashboardTableRow({item}: DashboardTableRowProps) {
 				<span className="dashboard-table-row-last-updated-by">
 					{updatedBy}
 				</span>
-			</ClayTable.Cell>
-
-			<ClayTable.Cell>
-				<div className="dashboard-table-row-rating-container">
-					<span className="dashboard-table-row-rating-text">
-						{rating}
-					</span>
-
-					<div>
-						{Array(5)
-							.fill(0)
-							.map((_, index) => (
-								<img
-									className="dashboard-table-row-rating-star"
-									key={index}
-									src={
-										index < Math.floor(Number(rating))
-											? starFill
-											: starEmpty
-									}
-								/>
-							))}
-					</div>
-				</div>
 			</ClayTable.Cell>
 
 			<ClayTable.Cell>

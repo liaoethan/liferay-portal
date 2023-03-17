@@ -13,7 +13,6 @@ export const appList: AppProps[] = [
 	{
 		image: appIconTransport,
 		name: 'A&Co Transport',
-		rating: '4.3',
 		selected: false,
 		status: 'Published',
 		type: 'SaaS',
@@ -25,7 +24,6 @@ export const appList: AppProps[] = [
 	{
 		image: appIconSales,
 		name: 'A&Co Sales',
-		rating: '4.7',
 		selected: false,
 		status: 'Pending',
 		type: 'OSGI',
@@ -37,7 +35,6 @@ export const appList: AppProps[] = [
 	{
 		image: appIconPayments,
 		name: 'A&Co Payments',
-		rating: '4.1',
 		selected: false,
 		status: 'Hidden',
 		type: 'OSGI',
