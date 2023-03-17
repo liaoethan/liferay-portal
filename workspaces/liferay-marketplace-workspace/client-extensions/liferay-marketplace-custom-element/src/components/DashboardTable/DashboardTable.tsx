@@ -9,7 +9,6 @@ import {DashboardTableRow} from './DashboardTableRow';
 export type AppProps = {
 	image: string;
 	name: string;
-	rating: string;
 	selected: boolean;
 	status: string;
 	type: string;
@@ -75,12 +74,6 @@ export function DashboardTable({
 					<ClayTable.Cell headingCell>
 						<span className="dashboard-table-header-text">
 							Last Updated
-						</span>
-					</ClayTable.Cell>
-
-					<ClayTable.Cell headingCell>
-						<span className="dashboard-table-header-text">
-							Rating
 						</span>
 					</ClayTable.Cell>
 
