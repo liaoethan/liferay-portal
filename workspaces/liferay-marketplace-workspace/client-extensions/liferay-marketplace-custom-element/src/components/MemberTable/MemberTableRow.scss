@@ -1,0 +1,32 @@
+.member-table-row {
+	&-name {
+		&-container {
+			align-items: center;
+			display: flex;
+			flex-direction: row;
+			gap: 1.5rem;
+		}
+
+		&-logo {
+			border-radius: 0.25rem;
+			height: 2.25rem;
+			width: 2.25rem;
+		}
+
+		&-text {
+			color: #282934;
+			font-family: 'Source Sans Pro', sans-serif;
+			font-size: 1rem;
+			font-weight: 600;
+			line-height: 1.5rem;
+		}
+	}
+
+	&-text {
+		color: #282934;
+		font-family: 'Source Sans Pro', sans-serif;
+		font-size: 1rem;
+		font-weight: 400;
+		line-height: 1.5rem;
+	}
+}
