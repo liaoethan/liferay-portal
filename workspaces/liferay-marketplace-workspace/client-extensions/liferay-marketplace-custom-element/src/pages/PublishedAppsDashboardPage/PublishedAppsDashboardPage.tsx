@@ -2,9 +2,10 @@ import {useEffect, useState} from 'react';
 
 import accountLogo from '../../assets/icons/mainAppLogo.svg';
 import {AppProps, DashboardTable} from '../../components/DashboardTable/DashboardTable';
-import {DashboardTableRow} from '../../components/DashboardTable/DashboardTableRow';
-import {getProducts, getProductSpecifications} from '../../utils/api';
-import {DashboardPage} from '../DashBoardPage/DashboardPage';
+import { DashboardTableRow } from '../../components/DashboardTable/DashboardTableRow';
+import { MemberProps } from '../../components/MemberTable/MemberTable';
+import {getAccounts, getProducts, getProductSpecifications} from '../../utils/api';
+import {DashboardListItems, DashboardPage} from '../DashBoardPage/DashboardPage';
 import {initialDashboardNavigationItems} from './PublishedDashboardPageUtil';
 
 declare let Liferay: {authToken: string, ThemeDisplay: any};
@@ -36,6 +37,8 @@ export function PublishedAppsDashboardPage() {
 	const [dashboardNavigationItems, setDashboardNavigationItems] = useState(
 		initialDashboardNavigationItems
 	);
+	const [selectedNavigationItem, setSelectedNavigationItem] = useState('Apps');
+	const [members, setMembers] = useState<MemberProps[]>(Array<MemberProps>());
 
 	const messages = {
 		description: 'Manage and publish apps on the Marketplace',
@@ -130,9 +133,53 @@ export function PublishedAppsDashboardPage() {
 				}
 			})
 
+			const currentAppNavigationItem = dashboardNavigationItems.find((navigationItem) => navigationItem.itemName === 'apps') as DashboardListItems;
+
+			const newAppNavigationItem = {
+                ...currentAppNavigationItem,
+                items: newAppList,
+            }
+
+			setDashboardNavigationItems([
+				newAppNavigationItem,
+                ...dashboardNavigationItems.filter((navigationItem) => navigationItem.itemName !== 'apps')
+            ]);
+
 			setApps(newAppList);
 		})();
 	}, []);
+
+	useEffect(() => {
+		(() => {
+			const clickedNavigationItem: any = dashboardNavigationItems.find(
+				dashboardNavigationItem => dashboardNavigationItem.itemSelected
+			);
+
+			setSelectedNavigationItem(clickedNavigationItem.itemTitle);
+		})();
+	}, [dashboardNavigationItems]);
+
+	useEffect(() => {
+		(async () => {
+			if (selectedNavigationItem === "Members") {
+
+				const accountsListResponse = await getAccounts();
+
+				const membersList = accountsListResponse.items.map((account: any) => {
+					return {
+						name: account.name,
+						email: account.emailAddress,
+						role: account.roleBriefs[0].name,
+						dateCreated: account.dateCreated,
+						lastLoginDate: account.lastLoginDate,
+						userId: account.id
+					}
+				})
+
+				setMembers(membersList);
+			}
+		})();
+	}, [selectedNavigationItem]);
 
 	return (
 		<DashboardPage
@@ -144,6 +191,8 @@ export function PublishedAppsDashboardPage() {
 			items={apps}
 			messages={messages}
 			setDashboardNavigationItems={setDashboardNavigationItems}
+			selectedNavigationItem={selectedNavigationItem}
+			members={members}
 		>
 			<DashboardTable<AppProps>
 				emptyStateMessage={messages.emptyStateMessage}

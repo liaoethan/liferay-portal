@@ -72,7 +72,9 @@ export function PurchasedAppsDashboardPage() {
 			buttonMessage="Add Apps"
 			dashboardNavigationItems={dashboardNavigationItems}
 			items={orders}
+			members={[]}
 			messages={messages}
+			selectedNavigationItem={''}
 			setDashboardNavigationItems={setDashboardNavigationItems}
 		>
 			<DashboardTable<AppProps>
