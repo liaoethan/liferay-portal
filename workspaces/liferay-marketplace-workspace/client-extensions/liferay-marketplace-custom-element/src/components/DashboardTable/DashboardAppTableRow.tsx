@@ -5,12 +5,11 @@ import circleFill from '../../assets/icons/circle_fill.svg';
 import {AppProps} from './DashboardTable';
 
 import './DashboardTableRow.scss';
-
-interface DashboardTableRowProps {
+interface DashboardAppTableRowProps {
 	item: AppProps;
 }
 
-export function DashboardTableRow({item}: DashboardTableRowProps) {
+export function DashboardAppTableRow({item}: DashboardAppTableRowProps) {
 	const {
 		image,
 		name,
