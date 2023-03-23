@@ -147,10 +147,31 @@ export function PublishedAppsDashboardPage() {
 				}
 			);
 
+			const currentAppNavigationItem = dashboardNavigationItems.find((navigationItem) => navigationItem.itemName === 'apps') as DashboardListItems;
+
+			const newAppNavigationItem = {
+                ...currentAppNavigationItem,
+                items: newAppList,
+            }
+
+			setDashboardNavigationItems([
+				newAppNavigationItem,
+                ...dashboardNavigationItems.filter((navigationItem) => navigationItem.itemName !== 'apps')
+            ]);
+
 			setApps(newAppList);
 		})();
 	}, []);
 
+	useEffect(() => {
+		(() => {
+			const clickedNavigationItem: any = dashboardNavigationItems.find(
+				dashboardNavigationItem => dashboardNavigationItem.itemSelected
+			);
+
+			setSelectedNavigationItem(clickedNavigationItem.itemTitle);
+		})();
+	}, [dashboardNavigationItems]);
 	return (
 		<DashboardPage
 			accountAppsNumber="4"
