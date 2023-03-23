@@ -5,7 +5,7 @@ import {
 	AppProps,
 	DashboardTable,
 } from '../../components/DashboardTable/DashboardTable';
-import {DashboardTableRow} from '../../components/DashboardTable/DashboardTableRow';
+import {DashboardAppTableRow} from '../../components/DashboardTable/DashboardAppTableRow';
 import {getOrders} from '../../utils/api';
 import {DashboardPage} from '../DashBoardPage/DashboardPage';
 import {initialDashboardNavigationItems} from './PurchasedDashboardPageUtil';
@@ -80,7 +80,7 @@ export function PurchasedAppsDashboardPage() {
 				items={orders}
 				tableHeaders={tableHeaders}
 			>
-				{(item) => <DashboardTableRow item={item} key={item.name} />}
+				{(item) => <DashboardAppTableRow item={item} key={item.name} />}
 			</DashboardTable>
 		</DashboardPage>
 	);

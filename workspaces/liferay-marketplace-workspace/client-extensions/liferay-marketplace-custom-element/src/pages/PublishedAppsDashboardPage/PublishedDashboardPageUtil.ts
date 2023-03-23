@@ -35,3 +35,13 @@ export const initialDashboardNavigationItems: DashboardListItems[] = [
 		itemTitle: 'Account',
 	},
 ];
+
+export type MemberProps = {
+	dateCreated: string;
+	email: string;
+	image: string;
+	lastLoginDate: string;
+	name: string;
+	role: string;
+	userId: number;
+};

@@ -6,15 +6,13 @@ import './DashboardTableRow.scss';
 
 import classNames from 'classnames';
 
-import starEmpty from '../../assets/icons/star-empty.svg';
-import starFill from '../../assets/icons/star-fill.svg';
 import {AppProps} from './DashboardTable';
 
-interface DashboardTableRowProps {
+interface DashboardAppTableRowProps {
 	item: AppProps;
 }
 
-export function DashboardTableRow({item}: DashboardTableRowProps) {
+export function DashboardAppTableRow({item}: DashboardAppTableRowProps) {
 	const {
 		image,
 		name,
