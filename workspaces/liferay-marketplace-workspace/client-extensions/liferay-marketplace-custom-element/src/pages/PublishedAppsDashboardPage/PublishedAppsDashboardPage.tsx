@@ -7,6 +7,7 @@ import {getUserAccounts, getProducts, getProductSpecifications} from '../../util
 import {DashboardListItems, DashboardPage} from '../DashBoardPage/DashboardPage';
 import {initialDashboardNavigationItems, MemberProps} from './PublishedDashboardPageUtil';
 import { DashboardMemberTableRow } from '../../components/DashboardTable/DashboardMemberTableRow';
+import { MemberProfile } from '../../components/MemberProfile/MemberProfile';
 
 declare let Liferay: {authToken: string, ThemeDisplay: any};
 
@@ -49,6 +50,7 @@ export function PublishedAppsDashboardPage() {
 	);
 	const [selectedNavigationItem, setSelectedNavigationItem] = useState('Apps');
 	const [members, setMembers] = useState<MemberProps[]>(Array<MemberProps>());
+	const [selectedMember, setSelectedMember] = useState<MemberProps>();
 
 	const appMessages = {
 		description: 'Manage and publish apps on the Marketplace',
@@ -180,6 +182,12 @@ export function PublishedAppsDashboardPage() {
 	}, [dashboardNavigationItems]);
 
 	useEffect(() => {
+		(() => {
+			console.log(selectedMember);
+		})();
+	}, [selectedMember]);
+
+	useEffect(() => {
 		(async () => {
 			if (selectedNavigationItem === "Members") {
 
@@ -237,13 +245,18 @@ export function PublishedAppsDashboardPage() {
 							messages={memberMessages}
 							setDashboardNavigationItems={setDashboardNavigationItems}
 							>
-							<DashboardTable<MemberProps>
-								emptyStateMessage={memberMessages.emptyStateMessage}
-								items={members}
-								tableHeaders={memberTableHeaders}
-							>
-								{(item) => <DashboardMemberTableRow item={item} key={item.name} />}
-							</DashboardTable>
+
+							{selectedMember ? (
+								<MemberProfile member={selectedMember}></MemberProfile>
+							) : (
+								<DashboardTable<MemberProps>
+									emptyStateMessage={memberMessages.emptyStateMessage}
+									items={members}
+									tableHeaders={memberTableHeaders}
+								>
+									{(item) => <DashboardMemberTableRow item={item} key={item.name} onSelectedMemberChange={setSelectedMember}/>}
+								</DashboardTable>
+							)}
 						</DashboardPage>
 					)
 				}

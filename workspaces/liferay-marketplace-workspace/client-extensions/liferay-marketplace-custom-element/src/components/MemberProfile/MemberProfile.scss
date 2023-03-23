@@ -1,0 +1,12 @@
+.member-profile-view-container {
+	.member-profile-card, .member-roles-card, .member-account-card {
+		border: 1px solid #E2E2E4;
+		border-radius: 10px;
+		min-width: 524px;
+		padding: 34px 24px;
+	}
+
+	.member-profile-card-icon, .member-roles-card-icon, .member-account-card-icon {
+		right: 0;
+	}
+}
