@@ -10,6 +10,7 @@ import {getProductSpecifications, getProducts, getUserAccounts} from '../../util
 import {DashboardPage, DashboardListItems} from '../DashBoardPage/DashboardPage';
 import {initialDashboardNavigationItems, MemberProps} from './PublishedDashboardPageUtil';
 import {DashboardMemberTableRow} from '../../components/DashboardTable/DashboardMemberTableRow';
+import {MemberProfile} from '../../components/MemberProfile/MemberProfile';
 
 declare let Liferay: {ThemeDisplay: any; authToken: string};
 
@@ -52,6 +53,7 @@ export function PublishedAppsDashboardPage() {
 	);
 	const [selectedNavigationItem, setSelectedNavigationItem] = useState('Apps');
 	const [members, setMembers] = useState<MemberProps[]>(Array<MemberProps>());
+	const [selectedMember, setSelectedMember] = useState<MemberProps>();
 
 	const appMessages = {
 		description: 'Manage and publish apps on the Marketplace',
@@ -272,18 +274,23 @@ export function PublishedAppsDashboardPage() {
 							messages={memberMessages}
 							setDashboardNavigationItems={setDashboardNavigationItems}
 						>
-							<DashboardTable<MemberProps>
-								emptyStateMessage={memberMessages.emptyStateMessage}
-								items={members}
-								tableHeaders={memberTableHeaders}
-							>
-								{(item) => (
-									<DashboardMemberTableRow
-										item={item}
-										key={item.name}
-									/>
-								)}
-							</DashboardTable>
+							{selectedMember ? (
+								<MemberProfile member={selectedMember} setSelectedMember={setSelectedMember}></MemberProfile>
+							) : (
+								<DashboardTable<MemberProps>
+									emptyStateMessage={memberMessages.emptyStateMessage}
+									items={members}
+									tableHeaders={memberTableHeaders}
+								>
+									{(item) => (
+										<DashboardMemberTableRow
+											item={item}
+											key={item.name}
+											onSelectedMemberChange={setSelectedMember}
+										/>
+									)}
+								</DashboardTable>
+							)}
 						</DashboardPage>
 					)
 				}
