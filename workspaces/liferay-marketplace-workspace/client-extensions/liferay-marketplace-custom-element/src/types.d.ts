@@ -92,6 +92,8 @@ type SKU = {
 	skuOptions: [];
 };
 
-type UserAccount = {
-	accountBriefs: AccountBrief[];
+type Account = {
+	externalReferenceCode: string;
+	id: number;
+	name: string;
 };
