@@ -212,6 +212,15 @@ export async function getCatalogs() {
 	return response.json();
 }
 
+export async function getCatalogByExternalReferenceCode(externalReferenceCode: string) {
+	const response = await fetch(
+		`/o/headless-commerce-admin-catalog/v1.0/catalog/by-externalReferenceCode/${externalReferenceCode}`,
+		{headers, method: 'GET'}
+	);
+
+	return response.json();
+}
+
 export async function getCategories({vocabId}: {vocabId: number}) {
 	const response = await fetch(
 		`/o/headless-admin-taxonomy/v1.0/taxonomy-vocabularies/${vocabId}/taxonomy-categories`,
@@ -389,6 +398,15 @@ export async function getSpecifications() {
 	);
 
 	return await response.json();
+}
+
+export async function getAccounts() {
+	const response = await fetch('/o/headless-admin-user/v1.0/accounts', {
+		headers,
+		method: 'GET',
+	});
+
+	return response.json();
 }
 
 export async function getUserAccount() {

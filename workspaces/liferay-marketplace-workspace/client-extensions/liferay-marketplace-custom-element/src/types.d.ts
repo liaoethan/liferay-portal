@@ -95,4 +95,10 @@ type SKU = {
 
 type UserAccount = {
 	accountBriefs: AccountBrief[];
+}
+
+type Account = {
+	externalReferenceCode: string;
+	id: number;
+	name: string;
 };
