@@ -112,6 +112,11 @@ type SKU = {
 	skuOptions: [];
 };
 
+type Specification = {
+    specificationKey: string;
+    value: {[key: string] : string};
+}
+
 type UserAccount = {
 	accountBriefs: AccountBrief[];
 };
