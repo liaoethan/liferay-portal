@@ -283,6 +283,18 @@ export async function getDeliveryProduct({
 	return await response.json();
 }
 
+export async function getMyUserAccount() {
+	const response = await fetch(
+		'/o/headless-admin-user/v1.0/my-user-account',
+		{
+			headers,
+			method: 'GET',
+		}
+	);
+
+	return await response.json();
+}
+
 export async function getOptions() {
 	const response = await fetch(
 		`/o/headless-commerce-admin-catalog/v1.0/options`,
