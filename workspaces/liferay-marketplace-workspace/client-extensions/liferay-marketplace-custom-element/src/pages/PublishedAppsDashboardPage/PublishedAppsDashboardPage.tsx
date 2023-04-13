@@ -196,10 +196,12 @@ export function PublishedAppsDashboardPage() {
 		return productVersion;
 	}
 
-	function getRolesList(roles: RoleBriefProps[]) {
+	function getRolesList(accountBriefs: AccountBrief[]) {
 		const rolesList: string[] = [];
 
-		roles.forEach((role) => {
+		const accountBrief = accountBriefs.find(accountBrief => accountBrief.name === selectedAccount.name);
+
+		accountBrief?.roleBriefs.forEach((role) => {
 			rolesList.push(role.name);
 		});
 
@@ -342,7 +344,7 @@ export function PublishedAppsDashboardPage() {
 							image: member.image,
 							lastLoginDate: member.lastLoginDate,
 							name: member.name,
-							role: getRolesList(member.roleBriefs),
+							role: getRolesList(member.accountBriefs),
 							userId: member.id,
 						} as MemberProps;
 					}
