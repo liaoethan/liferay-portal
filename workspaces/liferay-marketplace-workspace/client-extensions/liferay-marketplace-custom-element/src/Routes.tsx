@@ -16,12 +16,12 @@ interface AppRoutesProps {
 }
 
 export default function AppRoutes({route}: AppRoutesProps) {
-	const [userPublisherChecker, setUserPublisherChecker] = useState(false);
+	// const [userPublisherChecker, setUserPublisherChecker] = useState(true);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const makePublisherUserChecker = async () => {
-			setUserPublisherChecker(await publisherUserChecker());
+			// setUserPublisherChecker(await publisherUserChecker());
 			setIsLoading(false);
 		};
 
@@ -48,7 +48,7 @@ export default function AppRoutes({route}: AppRoutesProps) {
 				</div>
 			);
 		}
-		else if (userPublisherChecker && Liferay.ThemeDisplay.isSignedIn()) {
+		else if (Liferay.ThemeDisplay.isSignedIn()) {
 			return <PublishedAppsDashboardPage />;
 		}
 		else {

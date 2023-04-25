@@ -166,7 +166,7 @@ export function PurchasedAppsDashboardPage() {
 
 			const channel =
 				channels.find(
-					(channel) => channel.name === 'Marketplace Channel'
+					(channel) => channel.name === 'Orders plz Portal'
 				) || channels[0];
 
 			const placedOrders = await getOrders(
@@ -179,6 +179,8 @@ export function PurchasedAppsDashboardPage() {
 			const newOrderItems = await Promise.all(
 				placedOrders.items.map(async (order) => {
 					const [placeOrderItem] = order.placedOrderItems;
+
+					console.log(order);
 
 					const date = new Date(order.createDate);
 					const options: Intl.DateTimeFormatOptions = {
@@ -197,6 +199,9 @@ export function PurchasedAppsDashboardPage() {
 						skuId: placeOrderItem.skuId,
 					});
 
+					console.log("VERSION");
+					console.log(version);
+
 					return {
 						image: placeOrderItem.thumbnail,
 						name: placeOrderItem.name,
@@ -207,7 +212,7 @@ export function PurchasedAppsDashboardPage() {
 						type: placeOrderItem.subscription
 							? 'Subscription'
 							: 'Perpetual',
-						version: version ?? '',
+						version: '2.2',
 					};
 				})
 			);
@@ -258,32 +263,46 @@ export function PurchasedAppsDashboardPage() {
 					isPublisherAccount: false,
 				};
 
+				console.log(currentUserAccount);
+				console.log('sanme');
+				console.log(selectedAccount.name);
+
 				const currentUserAccountRoleBriefs =
 					currentUserAccount.accountBriefs.find(
 						(accountBrief: {name: string}) =>
 							accountBrief.name === selectedAccount.name
 					).roleBriefs;
 
-				customerRoles.forEach((customerRole) => {
-					if (
-						currentUserAccountRoleBriefs.find(
-							(role: {name: string}) => role.name === customerRole
-						)
-					) {
-						currentUserAccount.isCustomerAccount = true;
-					}
-				});
+				console.log(currentUserAccountRoleBriefs);
 
-				publisherRoles.forEach((publisherRole) => {
-					if (
-						currentUserAccountRoleBriefs.find(
-							(role: {name: string}) =>
-								role.name === publisherRole
-						)
-					) {
-						currentUserAccount.isCustomerAccount = true;
-					}
-				});
+				const currentUserAccountBriefs =
+					currentUserAccount.accountBriefs.find(
+						(accountBrief: {name: string}) =>
+							accountBrief.name === selectedAccount.name
+					);
+
+				if (currentUserAccountBriefs) {
+					customerRoles.forEach((customerRole) => {
+						if (
+							currentUserAccountBriefs.roleBriefs.find(
+								(role: {name: string}) => role.name === customerRole
+							)
+						) {
+							currentUserAccount.isCustomerAccount = true;
+						}
+					});
+
+					publisherRoles.forEach((publisherRole) => {
+						if (
+							currentUserAccountBriefs.roleBriefs.find(
+								(role: {name: string}) =>
+									role.name === publisherRole
+							)
+						) {
+							currentUserAccount.isPublisherAccount = true;
+						}
+					});
+				}
 
 				const accountsListResponse = await getUserAccounts();
 
@@ -294,7 +313,7 @@ export function PurchasedAppsDashboardPage() {
 							dateCreated: member.dateCreated,
 							email: member.emailAddress,
 							image: member.image,
-							isCustomerAccount: false,
+							isCustomerAccount: true,
 							isPublisherAccount: false,
 							lastLoginDate: member.lastLoginDate,
 							name: member.name,
@@ -347,7 +366,7 @@ export function PurchasedAppsDashboardPage() {
 	return (
 		<div className="purchased-apps-dashboard-page-container">
 			<DashboardNavigation
-				accountAppsNumber="0"
+				accountAppsNumber={purchasedAppTable.items.length.toString()}
 				accountIcon={accountLogo}
 				accounts={accounts}
 				currentAccount={selectedAccount}
