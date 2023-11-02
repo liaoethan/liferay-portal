@@ -188,6 +188,16 @@ const SideMenu = () => {
 
 				<div className="d-flex">
 					<div className="align-items-center d-flex mr-2">
+						<AttachmentsIcon />
+					</div>
+
+					<MenuItem to={getKebabCase(MENU_TYPES.attachments)}>
+						{i18n.translate(getKebabCase(MENU_TYPES.attachments))}
+					</MenuItem>
+				</div>
+
+				<div className="d-flex">
+					<div className="align-items-center d-flex mr-2">
 						<TeamMembersIcon />
 					</div>
 
