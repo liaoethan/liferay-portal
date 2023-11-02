@@ -7,6 +7,7 @@ import classNames from 'classnames';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {useAppPropertiesContext} from '~/common/contexts/AppPropertiesContext';
 import {
+	AttachmentsIcon,
 	ExperienceCloudIcon,
 	OverviewIcon,
 	ProductActivationIcon,
