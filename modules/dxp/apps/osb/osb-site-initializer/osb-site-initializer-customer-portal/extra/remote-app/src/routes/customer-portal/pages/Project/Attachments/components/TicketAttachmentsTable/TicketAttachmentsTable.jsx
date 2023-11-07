@@ -9,6 +9,7 @@ import {getTicketAttachments} from '../../../../../../../common/services/liferay
 import useMyUserAccountByAccountExternalReferenceCode from '../../../../Project/TeamMembers/components/TeamMembersTable/hooks/useMyUserAccountByAccountExternalReferenceCode';
 import getAttachmentFormattedDateTime from './utils/getAttachmentFormattedDateTime';
 import {getColumns} from './utils/getColumns';
+import i18n from '../../../../../../../common/I18n';
 
 const TicketAttachmentsTable = ({
 	koroneikiAccount,
@@ -58,11 +59,15 @@ const TicketAttachmentsTable = ({
 								attached: (
 									<div className="d-flex flex-column">
 										<div className="m-0 text-neutral-10 text-truncate">
-											{ticketAttachment.dateCreated}
+											{getAttachmentFormattedDateTime(ticketAttachment.dateCreated)}
 										</div>
 
 										<div className="m-0 text-neutral-7 text-paragraph-sm text-truncate">
-											By {ticketAttachment.creator.name}
+											{i18n.translate('by')}
+
+											<span> </span>
+
+											{ticketAttachment.creator.name}
 										</div>
 									</div>
 								),
