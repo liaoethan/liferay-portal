@@ -3,13 +3,19 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useMemo} from 'react';
+import i18n from '../../../../../../../common/I18n';
 import Table from '../../../../../../../common/components/Table';
 import {getTicketAttachments} from '../../../../../../../common/services/liferay/api'
 import useMyUserAccountByAccountExternalReferenceCode from '../../../../Project/TeamMembers/components/TeamMembersTable/hooks/useMyUserAccountByAccountExternalReferenceCode';
 import getAttachmentFormattedDateTime from './utils/getAttachmentFormattedDateTime';
 import {getColumns} from './utils/getColumns';
-import i18n from '../../../../../../../common/I18n';
+import getSortedTicketAttachments from './utils/getSortedTicketAttachments';
+
+const DEFAULT_SORT_CONFIG = {
+	columnName: 'dateCreated',
+	direction: 'descending'
+};
 
 const TicketAttachmentsTable = ({
 	koroneikiAccount,
@@ -30,21 +36,52 @@ const TicketAttachmentsTable = ({
 
 	const [ticketAttachments, setTicketAttachments] = useState();
 
-	useEffect(() => {
-		fetchTicketAttachments();
-	}, []);
+	const [sortedTicketAttachments, setSortedTicketAttachments] = useState();
 
-	const fetchTicketAttachments = async () => {
-		const ticketAttachmentsResponse = await getTicketAttachments(1, 5, koroneikiAccount.accountKey);
+	const [sortConfig, setSortConfig] = useState(DEFAULT_SORT_CONFIG);
 
-		const ticketAttachmentsData = await ticketAttachmentsResponse.json();
-
-		setTicketAttachments(ticketAttachmentsData.items);
+	const handleSortChange = (column) => {
+		if (column === sortConfig.columnName) {
+			setSortConfig({columnName: column, direction: (sortConfig.direction === 'descending') ? 'ascending' : 'descending'});
+		} else {
+			setSortConfig({columnName: column, direction: (sortConfig.direction)});
+		}
 	};
+
+	const [pageSize, setPageSize] = useState(5);
+
+	const [currentPage, setCurrentPage] = useState(1);
+
+	useEffect(() => {
+		const fetchTicketAttachments = async () => {
+			const ticketAttachmentsResponse = await getTicketAttachments(currentPage, pageSize, koroneikiAccount.accountKey);
+
+			const ticketAttachmentsData = await ticketAttachmentsResponse.json();
+
+			const ticketAttachments = ticketAttachmentsData.items.map(ticketAttachment => ({
+				accountKey: ticketAttachment.accountKey,
+				creatorName: ticketAttachment.creator.name,
+				dateCreated: ticketAttachment.dateCreated,
+				fileName: ticketAttachment.fileName,
+				fileSize: ticketAttachment.fileSize,
+				storageBucket: ticketAttachment.storageBucket,
+				zendeskTicketId: ticketAttachment.zendeskTicketId
+			}));
+
+			setTicketAttachments(ticketAttachments);
+		};
+		fetchTicketAttachments();
+	}, [currentPage, koroneikiAccount.accountKey, pageSize]);
+
+	useMemo(() => {
+		const sortedTicketAttachments = getSortedTicketAttachments(ticketAttachments, sortConfig);
+
+		setSortedTicketAttachments(sortedTicketAttachments);
+	}, [sortConfig, ticketAttachments]);
 
 	return (
 		<>
-			{(ticketAttachments !== undefined && !loading) ? (
+			{(sortedTicketAttachments !== undefined && !loading) ? (
 				<div className="cp-ticket-attachments-table-wrapper">
 					<Table
 						className="border-0"
@@ -52,9 +89,11 @@ const TicketAttachmentsTable = ({
 							loggedUserAccount?.selectedAccountSummary
 								.hasAdministratorRole
 						)}
+						handleSortChange={handleSortChange}
 						hasPagination
+						hasSorting
 						isLoading={loading}
-						rows={ticketAttachments?.map(
+						rows={sortedTicketAttachments?.map(
 							(ticketAttachment) => ({
 								attached: (
 									<div className="d-flex flex-column">
@@ -67,7 +106,7 @@ const TicketAttachmentsTable = ({
 
 											<span> </span>
 
-											{ticketAttachment.creator.name}
+											{ticketAttachment.creatorName}
 										</div>
 									</div>
 								),
