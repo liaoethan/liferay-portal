@@ -11,11 +11,8 @@ import useMyUserAccountByAccountExternalReferenceCode from '../../../../Project/
 import getAttachmentFormattedDateTime from './utils/getAttachmentFormattedDateTime';
 import {getColumns} from './utils/getColumns';
 import getSortedTicketAttachments from './utils/getSortedTicketAttachments';
-
-const DEFAULT_SORT_CONFIG = {
-	columnName: 'dateCreated',
-	direction: 'descending'
-};
+import usePagination from './hooks/usePaginationTicketAttachments';
+import useSort from './hooks/useSortTicketAttachments';
 
 const TicketAttachmentsTable = ({
 	koroneikiAccount,
@@ -36,25 +33,13 @@ const TicketAttachmentsTable = ({
 
 	const [ticketAttachments, setTicketAttachments] = useState();
 
-	const [sortedTicketAttachments, setSortedTicketAttachments] = useState();
+	const {handleSortChange, sortConfig} = useSort();
 
-	const [sortConfig, setSortConfig] = useState(DEFAULT_SORT_CONFIG);
-
-	const handleSortChange = (column) => {
-		if (column === sortConfig.columnName) {
-			setSortConfig({columnName: column, direction: (sortConfig.direction === 'descending') ? 'ascending' : 'descending'});
-		} else {
-			setSortConfig({columnName: column, direction: (sortConfig.direction)});
-		}
-	};
-
-	const [pageSize, setPageSize] = useState(5);
-
-	const [currentPage, setCurrentPage] = useState(1);
+	const {paginationConfig, sortedTicketAttachmentsFilteredPerPage} = usePagination(sortConfig, ticketAttachments);
 
 	useEffect(() => {
 		const fetchTicketAttachments = async () => {
-			const ticketAttachmentsResponse = await getTicketAttachments(currentPage, pageSize, koroneikiAccount.accountKey);
+			const ticketAttachmentsResponse = await getTicketAttachments(koroneikiAccount?.accountKey);
 
 			const ticketAttachmentsData = await ticketAttachmentsResponse.json();
 
@@ -71,17 +56,11 @@ const TicketAttachmentsTable = ({
 			setTicketAttachments(ticketAttachments);
 		};
 		fetchTicketAttachments();
-	}, [currentPage, koroneikiAccount.accountKey, pageSize]);
-
-	useMemo(() => {
-		const sortedTicketAttachments = getSortedTicketAttachments(ticketAttachments, sortConfig);
-
-		setSortedTicketAttachments(sortedTicketAttachments);
-	}, [sortConfig, ticketAttachments]);
+	}, [koroneikiAccount?.accountKey, paginationConfig.activePage, paginationConfig.itemsPerPage]);
 
 	return (
 		<>
-			{(sortedTicketAttachments !== undefined && !loading) ? (
+			{(sortedTicketAttachmentsFilteredPerPage !== undefined && !loading) ? (
 				<div className="cp-ticket-attachments-table-wrapper">
 					<Table
 						className="border-0"
@@ -93,12 +72,13 @@ const TicketAttachmentsTable = ({
 						hasPagination
 						hasSorting
 						isLoading={loading}
-						rows={sortedTicketAttachments?.map(
+						paginationConfig={paginationConfig}
+						rows={sortedTicketAttachmentsFilteredPerPage?.map(
 							(ticketAttachment) => ({
 								attached: (
 									<div className="d-flex flex-column">
 										<div className="m-0 text-neutral-10 text-truncate">
-											{getAttachmentFormattedDateTime(ticketAttachment.dateCreated)}
+											{getAttachmentFormattedDateTime(ticketAttachment?.dateCreated)}
 										</div>
 
 										<div className="m-0 text-neutral-7 text-paragraph-sm text-truncate">
@@ -106,23 +86,23 @@ const TicketAttachmentsTable = ({
 
 											<span> </span>
 
-											{ticketAttachment.creatorName}
+											{ticketAttachment?.creatorName}
 										</div>
 									</div>
 								),
 								fileName: (
-									<a className="m-0 text-truncate" href={ticketAttachment.storageBucket}>
-										{ticketAttachment.fileName}
+									<a className="m-0 text-truncate" href={ticketAttachment?.storageBucket}>
+										{ticketAttachment?.fileName}
 									</a>
 								),
 								fileSize: (
 									<div className="m-0 text-neutral-10 text-paragraph text-truncate">
-										{ticketAttachment.fileSize}
+										{ticketAttachment?.fileSize}
 									</div>
 								),
 								ticket: (
 									<a className="m-0 text-truncate" href="/link-to-ticket">
-										{ticketAttachment.zendeskTicketId}
+										{ticketAttachment?.zendeskTicketId}
 									</a>
 								),
 							})
