@@ -22,7 +22,8 @@ export default function useSort() {
 						? 'ascending'
 						: 'descending',
 			});
-		} else {
+		}
+		else {
 			setSortConfig({
 				columnName: column,
 				direction: sortConfig.direction,
